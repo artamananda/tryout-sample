@@ -1,8 +1,12 @@
 package main
 
-import "github.com/gofiber/fiber/v2"
+import (
+	"github.com/artamananda/tryout-sample/config"
+	"github.com/gofiber/fiber/v2"
+)
 
 func main() {
+	config.NewDB()
 	app := fiber.New()
 
 	app.Get("/", func(c *fiber.Ctx) error {
@@ -14,5 +18,5 @@ func main() {
 		return c.SendString("Hello, " + name + "!")
 	})
 
-	app.Listen(":3001")
+	app.Listen(":8080")
 }
