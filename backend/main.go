@@ -1,7 +1,7 @@
 package main
 
 import (
-	"github.com/artamananda/tryout-sample/config"
+	"github.com/artamananda/tryout-sample/internal/config"
 	"github.com/gofiber/fiber/v2"
 )
 

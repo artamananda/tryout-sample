@@ -6,7 +6,7 @@ import (
 	"os"
 	"time"
 
-	"github.com/artamananda/tryout-sample/helper"
+	"github.com/artamananda/tryout-sample/internal/helper"
 	"github.com/joho/godotenv"
 )
 
