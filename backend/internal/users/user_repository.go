@@ -59,8 +59,10 @@ func (repository *UserRepository) FindAll(ctx context.Context, tx *sql.Tx) []Use
 	sql := "SELECT * FROM users"
 	rows, err := tx.QueryContext(ctx, sql)
 	helper.PanicIfError(err)
+	defer rows.Close()
+
 	users := []UserModel{}
-	if rows.Next() {
+	for rows.Next() {
 		user := UserModel{}
 		err := rows.Scan(&user.UserId, &user.Username, &user.Name, &user.Email, &user.Password, &user.Role, &user.CreatedAt, &user.UpdatedAt)
 		helper.PanicIfError(err)
