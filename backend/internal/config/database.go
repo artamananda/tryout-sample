@@ -6,7 +6,7 @@ import (
 	"os"
 	"time"
 
-	"github.com/artamananda/tryout-sample/internal/helper"
+	"github.com/artamananda/tryout-sample/internal/exception"
 	"github.com/joho/godotenv"
 )
 
@@ -24,7 +24,7 @@ func NewDB() *sql.DB {
 
 	connStr := fmt.Sprintf("postgres://%s:%s%s:%s/%s?sslmode=disable", db_user, db_password, db_host, db_port, db_name)
 	db, err := sql.Open("postgres", connStr)
-	helper.PanicIfError(err)
+	exception.PanicLogging(err)
 
 	db.SetConnMaxIdleTime(5)
 	db.SetMaxOpenConns(20)
