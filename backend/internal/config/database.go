@@ -3,24 +3,17 @@ package config
 import (
 	"database/sql"
 	"fmt"
-	"os"
 	"time"
 
 	"github.com/artamananda/tryout-sample/internal/exception"
-	"github.com/joho/godotenv"
 )
 
-func NewDB() *sql.DB {
-	err := godotenv.Load()
-	if err != nil {
-		fmt.Println("Error loading .env file")
-	}
-
-	db_user := os.Getenv("DB_USER")
-	db_password := os.Getenv("DB_PASSWORD")
-	db_host := os.Getenv("DB_HOST")
-	db_port := os.Getenv("DB_PORT")
-	db_name := os.Getenv("DB_NAME")
+func NewDB(config Config) *sql.DB {
+	db_user := config.Get("DB_USER")
+	db_password := config.Get("DB_PASSWORD")
+	db_host := config.Get("DB_HOST")
+	db_port := config.Get("DB_PORT")
+	db_name := config.Get("DB_NAME")
 
 	connStr := fmt.Sprintf("postgres://%s:%s%s:%s/%s?sslmode=disable", db_user, db_password, db_host, db_port, db_name)
 	db, err := sql.Open("postgres", connStr)
