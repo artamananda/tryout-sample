@@ -15,8 +15,8 @@ type UserController struct {
 	config.Config
 }
 
-func NewUserController(userService *service.UserService, config *config.Config) *UserController {
-	return &UserController{UserService: *userService, Config: *config}
+func NewUserController(userService *service.UserService, config config.Config) *UserController {
+	return &UserController{UserService: *userService, Config: config}
 }
 
 func (controller UserController) Route(app *fiber.App) {

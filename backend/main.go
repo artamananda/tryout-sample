@@ -2,15 +2,28 @@ package main
 
 import (
 	"github.com/artamananda/tryout-sample/internal/config"
+	"github.com/artamananda/tryout-sample/internal/controller"
 	"github.com/artamananda/tryout-sample/internal/exception"
+	"github.com/artamananda/tryout-sample/internal/repository"
+	"github.com/artamananda/tryout-sample/internal/service"
+	"github.com/go-playground/validator/v10"
 	"github.com/gofiber/fiber/v2"
 )
 
 func main() {
-	newConfig := config.New()
-	config.NewDB(newConfig)
+	initConfig := config.New()
+	db := config.NewDB(initConfig)
+	validate := validator.New()
+
+	userRepository := repository.NewUserRepository()
+
+	userService := service.NewUserService(&userRepository, db, validate)
+
+	userController := controller.NewUserController(&userService, initConfig)
 
 	app := fiber.New()
+
+	userController.Route(app)
 
 	app.Get("/", func(c *fiber.Ctx) error {
 		return c.SendString("Hello, Fiber!")
@@ -21,6 +34,6 @@ func main() {
 		return c.SendString("Hello, " + name + "!")
 	})
 
-	err := app.Listen(newConfig.Get("SERVER.PORT"))
+	err := app.Listen(initConfig.Get("SERVER.PORT"))
 	exception.PanicLogging(err)
 }

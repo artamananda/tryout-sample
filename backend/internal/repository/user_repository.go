@@ -14,6 +14,10 @@ import (
 type UserRepository struct {
 }
 
+func NewUserRepository() UserRepository {
+	return UserRepository{}
+}
+
 func (repository *UserRepository) Create(ctx context.Context, tx *sql.Tx, user model.UserModel) model.UserModel {
 	user_id := uuid.New()
 	sql := "INSERT INTO users (user_id, username, name, email, password, role, created_at) VALUES ($1, $2, $3, $4, $5, $6, $7)"

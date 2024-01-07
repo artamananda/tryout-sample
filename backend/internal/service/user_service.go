@@ -13,9 +13,17 @@ import (
 )
 
 type UserService struct {
-	UserRepository repository.UserRepository
+	UserRepository *repository.UserRepository
 	DB             *sql.DB
 	Validate       *validator.Validate
+}
+
+func NewUserService(userRepository *repository.UserRepository, DB *sql.DB, validate *validator.Validate) UserService {
+	return UserService{
+		UserRepository: userRepository,
+		DB:             DB,
+		Validate:       validate,
+	}
 }
 
 func (service *UserService) Create(ctx context.Context, request entity.RegisterRequest) entity.RegisterResponse {
