@@ -42,7 +42,7 @@ func (repository *UserRepository) Delete(ctx context.Context, tx *sql.Tx, user m
 	exception.PanicLogging(err)
 }
 
-func (repository *UserRepository) FindById(ctx context.Context, tx *sql.Tx, userId uuid.UUID) (model.UserModel, error) {
+func (repository *UserRepository) FindById(ctx context.Context, tx *sql.Tx, userId string) (model.UserModel, error) {
 	sql := "SELECT * FROM users WHERE user_id=$1"
 	rows, err := tx.QueryContext(ctx, sql, userId)
 	exception.PanicLogging(err)

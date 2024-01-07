@@ -10,7 +10,6 @@ import (
 	"github.com/artamananda/tryout-sample/internal/model"
 	"github.com/artamananda/tryout-sample/internal/repository"
 	"github.com/go-playground/validator/v10"
-	"github.com/google/uuid"
 )
 
 type UserService struct {
@@ -46,7 +45,7 @@ func (service *UserService) Create(ctx context.Context, request entity.RegisterR
 	}
 }
 
-func (service *UserService) Update(ctx context.Context, request entity.UpdateUserRequest) entity.UpdateUserResponse {
+func (service *UserService) Update(ctx context.Context, request entity.UpdateUserRequest, userId string) entity.UpdateUserResponse {
 	err := service.Validate.Struct(request)
 	exception.PanicLogging(err)
 
@@ -54,7 +53,7 @@ func (service *UserService) Update(ctx context.Context, request entity.UpdateUse
 	exception.PanicLogging(err)
 	defer helper.CommitOrRollback(tx)
 
-	user, err := service.UserRepository.FindById(ctx, tx, request.UserId)
+	user, err := service.UserRepository.FindById(ctx, tx, userId)
 
 	if err != nil {
 		panic(exception.NotFoundError{
@@ -79,7 +78,7 @@ func (service *UserService) Update(ctx context.Context, request entity.UpdateUse
 	}
 }
 
-func (service *UserService) Delete(ctx context.Context, userId uuid.UUID) {
+func (service *UserService) Delete(ctx context.Context, userId string) {
 	tx, err := service.DB.Begin()
 	exception.PanicLogging(err)
 	defer helper.CommitOrRollback(tx)
@@ -90,7 +89,7 @@ func (service *UserService) Delete(ctx context.Context, userId uuid.UUID) {
 	service.UserRepository.Delete(ctx, tx, user)
 }
 
-func (service *UserService) FindById(ctx context.Context, userId uuid.UUID) entity.GetUserResponse {
+func (service *UserService) FindById(ctx context.Context, userId string) entity.GetUserResponse {
 	tx, err := service.DB.Begin()
 	exception.PanicLogging(err)
 	defer helper.CommitOrRollback(tx)
