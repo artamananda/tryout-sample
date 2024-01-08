@@ -2,7 +2,6 @@ package controller
 
 import (
 	"github.com/artamananda/tryout-sample/internal/config"
-	"github.com/artamananda/tryout-sample/internal/entity"
 	"github.com/artamananda/tryout-sample/internal/exception"
 	"github.com/artamananda/tryout-sample/internal/model"
 	"github.com/artamananda/tryout-sample/internal/service"
@@ -27,11 +26,15 @@ func (controller UserController) Route(app *fiber.App) {
 }
 
 func (controller UserController) Create(c *fiber.Ctx) error {
-	var request entity.RegisterRequest
+	var request model.RegisterRequest
 	err := c.BodyParser(&request)
 	exception.PanicLogging(err)
 
-	response := controller.UserService.Create(c.Context(), request)
+	response, err := controller.UserService.Create(c.Context(), request)
+	if err != nil {
+		return err
+	}
+
 	return c.Status(fiber.StatusCreated).JSON(model.GeneralResponse{
 		Code:    200,
 		Message: "Success",
@@ -40,12 +43,15 @@ func (controller UserController) Create(c *fiber.Ctx) error {
 }
 
 func (controller UserController) Update(c *fiber.Ctx) error {
-	var request entity.UpdateUserRequest
+	var request model.UpdateUserRequest
 	id := c.Params("id")
 	err := c.BodyParser(&request)
 	exception.PanicLogging(err)
 
-	response := controller.UserService.Update(c.Context(), request, id)
+	response, err := controller.UserService.Update(c.Context(), request, id)
+	if err != nil {
+		return err
+	}
 	return c.Status(fiber.StatusOK).JSON(model.GeneralResponse{
 		Code:    200,
 		Message: "Success",
@@ -56,7 +62,11 @@ func (controller UserController) Update(c *fiber.Ctx) error {
 func (controller UserController) Delete(c *fiber.Ctx) error {
 	id := c.Params("id")
 
-	controller.UserService.Delete(c.Context(), id)
+	err := controller.UserService.Delete(c.Context(), id)
+	if err != nil {
+		return err
+	}
+
 	return c.Status(fiber.StatusOK).JSON(model.GeneralResponse{
 		Code:    200,
 		Message: "Success",
@@ -66,7 +76,10 @@ func (controller UserController) Delete(c *fiber.Ctx) error {
 func (controller UserController) FindById(c *fiber.Ctx) error {
 	id := c.Params("id")
 
-	result := controller.UserService.FindById(c.Context(), id)
+	result, err := controller.UserService.FindById(c.Context(), id)
+	if err != nil {
+		return err
+	}
 	return c.Status(fiber.StatusOK).JSON(model.GeneralResponse{
 		Code:    200,
 		Message: "Success",

@@ -20,9 +20,13 @@ func NewUserService(userRepository *repository.UserRepository) UserService {
 	}
 }
 
-func (service *UserService) Create(ctx context.Context, request entity.RegisterRequest) entity.RegisterResponse {
-	common.Validate(request)
-	user := model.UserModel{
+func (service *UserService) Create(ctx context.Context, request model.RegisterRequest) (model.RegisterResponse, error) {
+	err := common.Validate(request)
+	if err != nil {
+		return model.RegisterResponse{}, err
+	}
+
+	user := entity.User{
 		Username: request.Username,
 		Name:     request.Name,
 		Email:    request.Email,
@@ -32,24 +36,27 @@ func (service *UserService) Create(ctx context.Context, request entity.RegisterR
 
 	user = service.UserRepository.Create(ctx, user)
 
-	return entity.RegisterResponse{
+	return model.RegisterResponse{
 		UserId:   user.UserId,
 		Username: user.Username,
 		Name:     user.Name,
 		Email:    user.Email,
 		Role:     user.Role,
-	}
+	}, nil
 }
 
-func (service *UserService) Update(ctx context.Context, request entity.UpdateUserRequest, userId string) entity.UpdateUserResponse {
-	common.Validate(request)
+func (service *UserService) Update(ctx context.Context, request model.UpdateUserRequest, userId string) (model.UpdateUserResponse, error) {
+	err := common.Validate(request)
+	if err != nil {
+		return model.UpdateUserResponse{}, err
+	}
 
 	user, err := service.UserRepository.FindById(ctx, userId)
 
 	if err != nil {
-		panic(exception.NotFoundError{
-			Message: "user not found",
-		})
+		return model.UpdateUserResponse{}, exception.NotFoundError{
+			Message: err.Error(),
+		}
 	}
 
 	user.Username = request.Username
@@ -60,50 +67,52 @@ func (service *UserService) Update(ctx context.Context, request entity.UpdateUse
 
 	user = service.UserRepository.Update(ctx, user)
 
-	return entity.UpdateUserResponse{
+	return model.UpdateUserResponse{
 		UserId:   user.UserId,
 		Username: user.Username,
 		Name:     user.Name,
 		Email:    user.Email,
 		Role:     user.Role,
-	}
+	}, nil
 }
 
-func (service *UserService) Delete(ctx context.Context, userId string) {
+func (service *UserService) Delete(ctx context.Context, userId string) error {
 	user, err := service.UserRepository.FindById(ctx, userId)
 	if err != nil {
-		panic(exception.NotFoundError{
+		return exception.NotFoundError{
 			Message: err.Error(),
-		})
+		}
 	}
 
 	service.UserRepository.Delete(ctx, user)
+
+	return nil
 }
 
-func (service *UserService) FindById(ctx context.Context, userId string) entity.GetUserResponse {
+func (service *UserService) FindById(ctx context.Context, userId string) (model.GetUserResponse, error) {
 	user, err := service.UserRepository.FindById(ctx, userId)
 	if err != nil {
-		panic(exception.NotFoundError{
+		return model.GetUserResponse{}, exception.NotFoundError{
 			Message: err.Error(),
-		})
+		}
 	}
 
-	return entity.GetUserResponse{
+	return model.GetUserResponse{
 		UserId:   user.UserId,
 		Username: user.Username,
 		Name:     user.Name,
 		Email:    user.Email,
 		Role:     user.Role,
-	}
+	}, nil
 }
 
-func (service *UserService) FindAll(ctx context.Context) []entity.GetUserResponse {
+func (service *UserService) FindAll(ctx context.Context) []model.GetUserResponse {
 	users := service.UserRepository.FindAll(ctx)
 
-	userResponses := []entity.GetUserResponse{}
+	userResponses := []model.GetUserResponse{}
 	for _, user := range users {
 		userResponses = append(userResponses,
-			entity.GetUserResponse{
+			model.GetUserResponse{
 				UserId:   user.UserId,
 				Username: user.Username,
 				Name:     user.Name,
@@ -113,7 +122,7 @@ func (service *UserService) FindAll(ctx context.Context) []entity.GetUserRespons
 		)
 	}
 	if len(users) == 0 {
-		return []entity.GetUserResponse{}
+		return []model.GetUserResponse{}
 	}
 	return userResponses
 }

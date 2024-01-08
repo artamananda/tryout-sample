@@ -7,7 +7,7 @@ import (
 	"github.com/go-playground/validator/v10"
 )
 
-func Validate(modelValidate interface{}) {
+func Validate(modelValidate interface{}) error {
 	validate := validator.New()
 	err := validate.Struct(modelValidate)
 	if err != nil {
@@ -22,8 +22,10 @@ func Validate(modelValidate interface{}) {
 		jsonMessage, errJson := json.Marshal(messages)
 		exception.PanicLogging(errJson)
 
-		panic(exception.ValidationError{
+		return exception.ValidationError{
 			Message: string(jsonMessage),
-		})
+		}
 	}
+
+	return nil
 }
