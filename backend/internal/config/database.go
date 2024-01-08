@@ -1,27 +1,64 @@
 package config
 
 import (
-	"database/sql"
 	"fmt"
+	"log"
+	"math/rand"
+	"os"
+	"strconv"
 	"time"
 
 	"github.com/artamananda/tryout-sample/internal/exception"
+	_ "github.com/lib/pq"
+	"gorm.io/driver/postgres"
+	"gorm.io/gorm"
+	"gorm.io/gorm/logger"
 )
 
-func NewDB(config Config) *sql.DB {
-	db_user := config.Get("DB_USER")
-	db_password := config.Get("DB_PASSWORD")
-	db_host := config.Get("DB_HOST")
-	db_port := config.Get("DB_PORT")
-	db_name := config.Get("DB_NAME")
-
-	connStr := fmt.Sprintf("postgres://%s:%s%s:%s/%s?sslmode=disable", db_user, db_password, db_host, db_port, db_name)
-	db, err := sql.Open("postgres", connStr)
+func NewDB(config Config) *gorm.DB {
+	username := config.Get("DB_USER")
+	password := config.Get("DB_PASSWORD")
+	host := config.Get("DB_HOST")
+	port := config.Get("DB_PORT")
+	dbName := config.Get("DB_NAME")
+	maxPoolOpen, err := strconv.Atoi(config.Get("DB_POOL_MAX_CONN"))
+	maxPoolIdle, err := strconv.Atoi(config.Get("DB_POOL_IDLE_CONN"))
+	maxPollLifeTime, err := strconv.Atoi(config.Get("DB_POOL_LIFE_TIME"))
 	exception.PanicLogging(err)
 
-	db.SetConnMaxIdleTime(5)
-	db.SetMaxOpenConns(20)
-	db.SetConnMaxLifetime(60 * time.Minute)
-	db.SetConnMaxIdleTime(10 * time.Minute)
+	loggerDb := logger.New(
+		log.New(os.Stdout, "\r\n", log.LstdFlags),
+		logger.Config{
+			SlowThreshold:             time.Second,
+			LogLevel:                  logger.Info,
+			IgnoreRecordNotFoundError: true,
+			Colorful:                  true,
+		},
+	)
+
+	dsn := fmt.Sprintf(
+		"host=%s user=%s password=%s dbname=%s port=%s sslmode=disable TimeZone=Asia/Shanghai",
+		host, username, password, dbName, port,
+	)
+
+	db, err := gorm.Open(postgres.Open(dsn), &gorm.Config{
+		Logger: loggerDb,
+	})
+	exception.PanicLogging(err)
+
+	sqlDB, err := db.DB()
+	exception.PanicLogging(err)
+
+	sqlDB.SetMaxOpenConns(maxPoolOpen)
+	sqlDB.SetMaxIdleConns(maxPoolIdle)
+	sqlDB.SetConnMaxLifetime(time.Duration(rand.Int31n(int32(maxPollLifeTime))) * time.Millisecond)
+
+	//autoMigrate
+	//err = db.AutoMigrate(&entity.Product{})
+	//err = db.AutoMigrate(&entity.Transaction{})
+	//err = db.AutoMigrate(&entity.TransactionDetail{})
+	//err = db.AutoMigrate(&entity.User{})
+	//err = db.AutoMigrate(&entity.UserRole{})
+	//exception.PanicLogging(err)
 	return db
 }

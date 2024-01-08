@@ -6,18 +6,16 @@ import (
 	"github.com/artamananda/tryout-sample/internal/exception"
 	"github.com/artamananda/tryout-sample/internal/repository"
 	"github.com/artamananda/tryout-sample/internal/service"
-	"github.com/go-playground/validator/v10"
 	"github.com/gofiber/fiber/v2"
 )
 
 func main() {
 	initConfig := config.New()
 	db := config.NewDB(initConfig)
-	validate := validator.New()
 
-	userRepository := repository.NewUserRepository()
+	userRepository := repository.NewUserRepository(db)
 
-	userService := service.NewUserService(&userRepository, db, validate)
+	userService := service.NewUserService(&userRepository)
 
 	userController := controller.NewUserController(&userService, initConfig)
 

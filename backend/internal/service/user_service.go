@@ -2,38 +2,26 @@ package service
 
 import (
 	"context"
-	"database/sql"
 
+	"github.com/artamananda/tryout-sample/internal/common"
 	"github.com/artamananda/tryout-sample/internal/entity"
 	"github.com/artamananda/tryout-sample/internal/exception"
-	"github.com/artamananda/tryout-sample/internal/helper"
 	"github.com/artamananda/tryout-sample/internal/model"
 	"github.com/artamananda/tryout-sample/internal/repository"
-	"github.com/go-playground/validator/v10"
 )
 
 type UserService struct {
 	UserRepository *repository.UserRepository
-	DB             *sql.DB
-	Validate       *validator.Validate
 }
 
-func NewUserService(userRepository *repository.UserRepository, DB *sql.DB, validate *validator.Validate) UserService {
+func NewUserService(userRepository *repository.UserRepository) UserService {
 	return UserService{
 		UserRepository: userRepository,
-		DB:             DB,
-		Validate:       validate,
 	}
 }
 
 func (service *UserService) Create(ctx context.Context, request entity.RegisterRequest) entity.RegisterResponse {
-	err := service.Validate.Struct(request)
-	exception.PanicLogging(err)
-
-	tx, err := service.DB.Begin()
-	exception.PanicLogging(err)
-	defer helper.CommitOrRollback(tx)
-
+	common.Validate(request)
 	user := model.UserModel{
 		Username: request.Username,
 		Name:     request.Name,
@@ -42,7 +30,7 @@ func (service *UserService) Create(ctx context.Context, request entity.RegisterR
 		Role:     request.Role,
 	}
 
-	user = service.UserRepository.Create(ctx, tx, user)
+	user = service.UserRepository.Create(ctx, user)
 
 	return entity.RegisterResponse{
 		UserId:   user.UserId,
@@ -54,14 +42,9 @@ func (service *UserService) Create(ctx context.Context, request entity.RegisterR
 }
 
 func (service *UserService) Update(ctx context.Context, request entity.UpdateUserRequest, userId string) entity.UpdateUserResponse {
-	err := service.Validate.Struct(request)
-	exception.PanicLogging(err)
+	common.Validate(request)
 
-	tx, err := service.DB.Begin()
-	exception.PanicLogging(err)
-	defer helper.CommitOrRollback(tx)
-
-	user, err := service.UserRepository.FindById(ctx, tx, userId)
+	user, err := service.UserRepository.FindById(ctx, userId)
 
 	if err != nil {
 		panic(exception.NotFoundError{
@@ -75,7 +58,7 @@ func (service *UserService) Update(ctx context.Context, request entity.UpdateUse
 	user.Password = request.Password
 	user.Role = request.Role
 
-	user = service.UserRepository.Update(ctx, tx, user)
+	user = service.UserRepository.Update(ctx, user)
 
 	return entity.UpdateUserResponse{
 		UserId:   user.UserId,
@@ -87,23 +70,23 @@ func (service *UserService) Update(ctx context.Context, request entity.UpdateUse
 }
 
 func (service *UserService) Delete(ctx context.Context, userId string) {
-	tx, err := service.DB.Begin()
-	exception.PanicLogging(err)
-	defer helper.CommitOrRollback(tx)
+	user, err := service.UserRepository.FindById(ctx, userId)
+	if err != nil {
+		panic(exception.NotFoundError{
+			Message: err.Error(),
+		})
+	}
 
-	user, err := service.UserRepository.FindById(ctx, tx, userId)
-	exception.PanicLogging(err)
-
-	service.UserRepository.Delete(ctx, tx, user)
+	service.UserRepository.Delete(ctx, user)
 }
 
 func (service *UserService) FindById(ctx context.Context, userId string) entity.GetUserResponse {
-	tx, err := service.DB.Begin()
-	exception.PanicLogging(err)
-	defer helper.CommitOrRollback(tx)
-
-	user, err := service.UserRepository.FindById(ctx, tx, userId)
-	exception.PanicLogging(err)
+	user, err := service.UserRepository.FindById(ctx, userId)
+	if err != nil {
+		panic(exception.NotFoundError{
+			Message: err.Error(),
+		})
+	}
 
 	return entity.GetUserResponse{
 		UserId:   user.UserId,
@@ -115,11 +98,7 @@ func (service *UserService) FindById(ctx context.Context, userId string) entity.
 }
 
 func (service *UserService) FindAll(ctx context.Context) []entity.GetUserResponse {
-	tx, err := service.DB.Begin()
-	exception.PanicLogging(err)
-	defer helper.CommitOrRollback(tx)
-
-	users := service.UserRepository.FindAll(ctx, tx)
+	users := service.UserRepository.FindAll(ctx)
 
 	userResponses := []entity.GetUserResponse{}
 	for _, user := range users {
@@ -132,6 +111,9 @@ func (service *UserService) FindAll(ctx context.Context) []entity.GetUserRespons
 				Role:     user.Role,
 			},
 		)
+	}
+	if len(users) == 0 {
+		return []entity.GetUserResponse{}
 	}
 	return userResponses
 }

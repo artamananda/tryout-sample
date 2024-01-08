@@ -4,7 +4,6 @@ import (
 	"github.com/artamananda/tryout-sample/internal/config"
 	"github.com/artamananda/tryout-sample/internal/entity"
 	"github.com/artamananda/tryout-sample/internal/exception"
-	"github.com/artamananda/tryout-sample/internal/middleware"
 	"github.com/artamananda/tryout-sample/internal/model"
 	"github.com/artamananda/tryout-sample/internal/service"
 	"github.com/gofiber/fiber/v2"
@@ -20,11 +19,11 @@ func NewUserController(userService *service.UserService, config config.Config) *
 }
 
 func (controller UserController) Route(app *fiber.App) {
-	app.Post("/v1/api/user", middleware.AuthenticateJWT("ROLE_ADMIN", controller.Config), controller.Create)
-	app.Put("/v1/api/user/:id", middleware.AuthenticateJWT("ROLE_ADMIN", controller.Config), controller.Update)
-	app.Delete("/v1/api/user/:id", middleware.AuthenticateJWT("ROLE_ADMIN", controller.Config), controller.Delete)
-	app.Get("/v1/api/user/:id", middleware.AuthenticateJWT("ROLE_ADMIN", controller.Config), controller.FindById)
-	app.Get("/v1/api/user", middleware.AuthenticateJWT("ROLE_ADMIN", controller.Config), controller.FindAll)
+	app.Post("/v1/api/user", controller.Create)
+	app.Put("/v1/api/user/:id", controller.Update)
+	app.Delete("/v1/api/user/:id", controller.Delete)
+	app.Get("/v1/api/user/:id", controller.FindById)
+	app.Get("/v1/api/user", controller.FindAll)
 }
 
 func (controller UserController) Create(c *fiber.Ctx) error {
