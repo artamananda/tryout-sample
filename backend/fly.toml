@@ -6,6 +6,9 @@
 app = "tryout-sample"
 primary_region = "sin"
 
+[deploy]
+  pre = ["./migration.sh"]
+
 [build]
   builder = "paketobuildpacks/builder:base"
   buildpacks = ["gcr.io/paketo-buildpacks/go"]
