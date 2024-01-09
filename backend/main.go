@@ -32,6 +32,6 @@ func main() {
 		return c.SendString("Hello, " + name + "!")
 	})
 
-	err := app.Listen(initConfig.Get("SERVER.PORT"))
+	err := app.Listen(initConfig.Get("SERVER") + ":" + initConfig.Get("PORT"))
 	exception.PanicLogging(err)
 }
