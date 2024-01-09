@@ -19,21 +19,21 @@ func NewUserRepository(DB *gorm.DB) UserRepository {
 }
 
 func (repository *UserRepository) Create(ctx context.Context, user entity.User) entity.User {
-	user.UserId = uuid.New()
+	user.UserID = uuid.New()
 	err := repository.DB.WithContext(ctx).Create(&user).Error
 	exception.PanicLogging(err)
 	return user
 }
 
 func (repository *UserRepository) Update(ctx context.Context, user entity.User) entity.User {
-	err := repository.DB.WithContext(ctx).Where("user_id = ?", user.UserId).Updates(&user).Error
+	err := repository.DB.WithContext(ctx).Where("user_id = ?", user.UserID).Updates(&user).Error
 	exception.PanicLogging(err)
 
 	return user
 }
 
 func (repository *UserRepository) Delete(ctx context.Context, user entity.User) {
-	err := repository.DB.WithContext(ctx).Where("user_id = ?", user.UserId).Delete(&user).Error
+	err := repository.DB.WithContext(ctx).Where("user_id = ?", user.UserID).Delete(&user).Error
 	exception.PanicLogging(err)
 }
 

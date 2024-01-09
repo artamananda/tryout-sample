@@ -37,7 +37,7 @@ func (service *UserService) Create(ctx context.Context, request model.RegisterRe
 	user = service.UserRepository.Create(ctx, user)
 
 	return model.RegisterResponse{
-		UserId:   user.UserId,
+		UserID:   user.UserID,
 		Username: user.Username,
 		Name:     user.Name,
 		Email:    user.Email,
@@ -68,7 +68,7 @@ func (service *UserService) Update(ctx context.Context, request model.UpdateUser
 	user = service.UserRepository.Update(ctx, user)
 
 	return model.UpdateUserResponse{
-		UserId:   user.UserId,
+		UserID:   user.UserID,
 		Username: user.Username,
 		Name:     user.Name,
 		Email:    user.Email,
@@ -98,7 +98,7 @@ func (service *UserService) FindById(ctx context.Context, userId string) (model.
 	}
 
 	return model.GetUserResponse{
-		UserId:   user.UserId,
+		UserID:   user.UserID,
 		Username: user.Username,
 		Name:     user.Name,
 		Email:    user.Email,
@@ -113,7 +113,7 @@ func (service *UserService) FindAll(ctx context.Context) []model.GetUserResponse
 	for _, user := range users {
 		userResponses = append(userResponses,
 			model.GetUserResponse{
-				UserId:   user.UserId,
+				UserID:   user.UserID,
 				Username: user.Username,
 				Name:     user.Name,
 				Email:    user.Email,

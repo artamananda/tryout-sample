@@ -20,7 +20,7 @@ type RegisterRequest struct {
 }
 
 type RegisterResponse struct {
-	UserId   uuid.UUID `json:"user_id"`
+	UserID   uuid.UUID `json:"user_id"`
 	Username string    `json:"username"`
 	Name     string    `json:"name"`
 	Email    string    `json:"email"`
@@ -36,7 +36,7 @@ type UpdateUserRequest struct {
 }
 
 type UpdateUserResponse struct {
-	UserId   uuid.UUID `json:"user_id"`
+	UserID   uuid.UUID `json:"user_id"`
 	Username string    `json:"username"`
 	Name     string    `json:"name"`
 	Email    string    `json:"email"`
@@ -44,7 +44,7 @@ type UpdateUserResponse struct {
 }
 
 type GetUserResponse struct {
-	UserId   uuid.UUID `json:"user_id"`
+	UserID   uuid.UUID `json:"user_id"`
 	Username string    `json:"username"`
 	Name     string    `json:"name"`
 	Email    string    `json:"email"`
