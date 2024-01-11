@@ -1,17 +1,19 @@
 package controller
 
 import (
+	"github.com/artamananda/tryout-sample/internal/config"
 	"github.com/artamananda/tryout-sample/internal/model"
 	"github.com/artamananda/tryout-sample/internal/service"
 	"github.com/gofiber/fiber/v2"
 )
 
 type QuestionController struct {
-	QuestionService service.QuestionService
+	service.QuestionService
+	config.Config
 }
 
-func NewQuestionController(questionService service.QuestionService) *QuestionController {
-	return &QuestionController{QuestionService: questionService}
+func NewQuestionController(questionService *service.QuestionService, config config.Config) *QuestionController {
+	return &QuestionController{QuestionService: *questionService, Config: config}
 }
 
 func (controller QuestionController) Route(app *fiber.App) {

@@ -1,17 +1,19 @@
 package controller
 
 import (
+	"github.com/artamananda/tryout-sample/internal/config"
 	"github.com/artamananda/tryout-sample/internal/model"
 	"github.com/artamananda/tryout-sample/internal/service"
 	"github.com/gofiber/fiber/v2"
 )
 
 type OptionController struct {
-	OptionService service.OptionService
+	service.OptionService
+	config.Config
 }
 
-func NewOptionController(optionService service.OptionService) *OptionController {
-	return &OptionController{OptionService: optionService}
+func NewOptionController(optionService *service.OptionService, config config.Config) *OptionController {
+	return &OptionController{OptionService: *optionService, Config: config}
 }
 
 func (controller OptionController) Route(app *fiber.App) {

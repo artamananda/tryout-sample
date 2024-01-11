@@ -1,17 +1,19 @@
 package controller
 
 import (
+	"github.com/artamananda/tryout-sample/internal/config"
 	"github.com/artamananda/tryout-sample/internal/model"
 	"github.com/artamananda/tryout-sample/internal/service"
 	"github.com/gofiber/fiber/v2"
 )
 
 type TryoutController struct {
-	TryoutService service.TryoutService
+	service.TryoutService
+	config.Config
 }
 
-func NewTryoutController(tryoutService service.TryoutService) *TryoutController {
-	return &TryoutController{TryoutService: tryoutService}
+func NewTryoutController(tryoutService *service.TryoutService, config config.Config) *TryoutController {
+	return &TryoutController{TryoutService: *tryoutService, Config: config}
 }
 
 func (controller TryoutController) Route(app *fiber.App) {
