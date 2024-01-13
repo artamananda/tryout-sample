@@ -5,10 +5,10 @@ import (
 )
 
 type Question struct {
-	QuestionID    uuid.UUID `json:"question_id"`
+	QuestionID    uuid.UUID `gorm:"primaryKey" json:"question_id"`
 	TryoutID      uuid.UUID `json:"tryout_id"`
 	Text          string    `json:"text"`
-	Options       []Option  `gorm:"column:options;type:json" json:"options"`
+	Options       []Option  `gorm:"foreignkey:QuestionID" json:"options"`
 	CorrectAnswer string    `json:"correct_answer"`
 	Points        int       `json:"points"`
 }

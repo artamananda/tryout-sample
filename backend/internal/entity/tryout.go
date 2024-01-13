@@ -7,12 +7,12 @@ import (
 )
 
 type Tryout struct {
-	TryoutID  uuid.UUID  `json:"tryout_id"`
+	TryoutID  uuid.UUID  `gorm:"primaryKey" json:"tryout_id"`
 	Title     string     `json:"title"`
 	Duration  int        `json:"duration"`
 	StartTime time.Time  `json:"start_time"`
 	EndTime   time.Time  `json:"end_time"`
-	Questions []Question `json:"questions"`
+	Questions []Question `gorm:"foreignKey:TryoutID" json:"questions"`
 	CreatedAt time.Time  `json:"created_at"`
 	UpdatedAt time.Time  `json:"updated_at"`
 }
