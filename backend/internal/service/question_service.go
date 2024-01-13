@@ -44,6 +44,7 @@ func (service *QuestionService) Create(ctx context.Context, request model.Create
 
 	return model.QuestionResponse{
 		QuestionID:    question.QuestionID,
+		TryoutID:      question.TryoutID,
 		Text:          question.Text,
 		CorrectAnswer: question.CorrectAnswer,
 		Points:        question.Points,
@@ -116,6 +117,7 @@ func (service *QuestionService) FindAll(ctx context.Context) ([]model.QuestionRe
 		questionResponses = append(questionResponses,
 			model.QuestionResponse{
 				QuestionID:    question.QuestionID,
+				TryoutID:      question.TryoutID,
 				Text:          question.Text,
 				CorrectAnswer: question.CorrectAnswer,
 				Points:        question.Points,

@@ -1,6 +1,8 @@
 package entity
 
 import (
+	"time"
+
 	"github.com/google/uuid"
 )
 
@@ -11,6 +13,8 @@ type Question struct {
 	Options       []Option  `gorm:"column:options;type:jsonb" json:"options"`
 	CorrectAnswer string    `json:"correct_answer"`
 	Points        int       `json:"points"`
+	CreatedAt     time.Time `json:"created_at"`
+	UpdatedAt     time.Time `json:"updated_at"`
 }
 
 func (Question) TableName() string {
