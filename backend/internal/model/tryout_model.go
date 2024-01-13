@@ -29,38 +29,3 @@ type TryoutResponse struct {
 	CreatedAt time.Time `json:"created_at"`
 	UpdatedAt time.Time `json:"updated_at"`
 }
-
-type CreateQuestionRequest struct {
-	Text          string          `json:"text" validate:"required"`
-	Options       []OptionRequest `json:"options" validate:"required,min=2,dive"`
-	CorrectAnswer string          `json:"correct_answer" validate:"required"`
-	Points        int             `json:"points" validate:"required"`
-}
-
-type UpdateQuestionRequest struct {
-	Text          string          `json:"text"`
-	Options       []OptionRequest `json:"options" validate:"min=2,dive"`
-	CorrectAnswer string          `json:"correct_answer"`
-	Points        int             `json:"points"`
-}
-
-type QuestionResponse struct {
-	QuestionID    uuid.UUID        `json:"question_id"`
-	TryoutID      uuid.UUID        `json:"tryout_id"`
-	Text          string           `json:"text"`
-	Options       []OptionResponse `json:"options"`
-	CorrectAnswer string           `json:"correct_answer"`
-	Points        int              `json:"points"`
-	CreatedAt     time.Time        `json:"created_at"`
-	UpdatedAt     time.Time        `json:"updated_at"`
-}
-
-type OptionRequest struct {
-	Text string `json:"text" validate:"required"`
-}
-
-type OptionResponse struct {
-	OptionID   uuid.UUID `json:"option_id"`
-	QuestionID uuid.UUID `json:"question_id"`
-	Text       string    `json:"text"`
-}

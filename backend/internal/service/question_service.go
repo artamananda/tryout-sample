@@ -21,7 +21,7 @@ func NewQuestionService(questionRepository *repository.QuestionRepository) Quest
 	}
 }
 
-func (service *QuestionService) Create(ctx context.Context, request model.CreateQuestionRequest) (model.QuestionResponse, error) {
+func (service *QuestionService) Create(ctx context.Context, request model.CreateQuestionRequest, tryoutID string) (model.QuestionResponse, error) {
 	err := common.Validate(request)
 	if err != nil {
 		return model.QuestionResponse{}, exception.ValidationError{
@@ -30,6 +30,7 @@ func (service *QuestionService) Create(ctx context.Context, request model.Create
 	}
 
 	question := entity.Question{
+		TryoutID:      uuid.MustParse(tryoutID),
 		Text:          request.Text,
 		CorrectAnswer: request.CorrectAnswer,
 		Points:        request.Points,

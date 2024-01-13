@@ -17,7 +17,7 @@ func NewQuestionController(questionService *service.QuestionService, config conf
 }
 
 func (controller QuestionController) Route(app *fiber.App) {
-	app.Post("/v1/api/question", controller.Create)
+	app.Post("/v1/api/question/:tryoutId", controller.Create)
 	app.Put("/v1/api/question/:id", controller.Update)
 	app.Delete("/v1/api/question/:id", controller.Delete)
 	app.Get("/v1/api/question/:id", controller.FindById)
@@ -26,12 +26,13 @@ func (controller QuestionController) Route(app *fiber.App) {
 
 func (controller QuestionController) Create(c *fiber.Ctx) error {
 	var request model.CreateQuestionRequest
+	tryoutID := c.Params("tryoutId")
 	err := c.BodyParser(&request)
 	if err != nil {
 		return err
 	}
 
-	response, err := controller.QuestionService.Create(c.Context(), request)
+	response, err := controller.QuestionService.Create(c.Context(), request, tryoutID)
 	if err != nil {
 		return err
 	}

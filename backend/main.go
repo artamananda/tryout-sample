@@ -16,24 +16,20 @@ func main() {
 	userRepository := repository.NewUserRepository(db)
 	tryoutRepository := repository.NewTryoutRepository(db)
 	questionRepository := repository.NewQuestionRepository(db)
-	optionRepository := repository.NewOptionRepository(db)
 
 	userService := service.NewUserService(&userRepository)
 	tryoutService := service.NewTryoutService(&tryoutRepository)
 	questionService := service.NewQuestionService(&questionRepository)
-	optionService := service.NewOptionService(&optionRepository)
 
 	userController := controller.NewUserController(&userService, initConfig)
 	tryoutController := controller.NewTryoutController(&tryoutService, initConfig)
 	questionController := controller.NewQuestionController(&questionService, initConfig)
-	optionController := controller.NewOptionController(&optionService, initConfig)
 
 	app := fiber.New()
 
 	userController.Route(app)
 	tryoutController.Route(app)
 	questionController.Route(app)
-	optionController.Route(app)
 
 	app.Get("/", func(c *fiber.Ctx) error {
 		return c.SendString("Hello, Fiber!")
