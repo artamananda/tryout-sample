@@ -32,6 +32,7 @@ func (service *QuestionService) Create(ctx context.Context, request model.Create
 	question := entity.Question{
 		TryoutID:      uuid.MustParse(tryoutID),
 		Text:          request.Text,
+		Options:       request.Options,
 		CorrectAnswer: request.CorrectAnswer,
 		Points:        request.Points,
 	}
@@ -46,6 +47,7 @@ func (service *QuestionService) Create(ctx context.Context, request model.Create
 		QuestionID:    question.QuestionID,
 		TryoutID:      question.TryoutID,
 		Text:          question.Text,
+		Options:       question.Options,
 		CorrectAnswer: question.CorrectAnswer,
 		Points:        question.Points,
 	}, nil
@@ -78,7 +80,9 @@ func (service *QuestionService) Update(ctx context.Context, request model.Update
 
 	return model.QuestionResponse{
 		QuestionID:    question.QuestionID,
+		TryoutID:      question.TryoutID,
 		Text:          question.Text,
+		Options:       question.Options,
 		CorrectAnswer: question.CorrectAnswer,
 		Points:        question.Points,
 	}, nil
@@ -100,7 +104,9 @@ func (service *QuestionService) FindByID(ctx context.Context, questionID string)
 
 	return model.QuestionResponse{
 		QuestionID:    question.QuestionID,
+		TryoutID:      question.TryoutID,
 		Text:          question.Text,
+		Options:       question.Options,
 		CorrectAnswer: question.CorrectAnswer,
 		Points:        question.Points,
 	}, nil
@@ -119,6 +125,7 @@ func (service *QuestionService) FindAll(ctx context.Context) ([]model.QuestionRe
 				QuestionID:    question.QuestionID,
 				TryoutID:      question.TryoutID,
 				Text:          question.Text,
+				Options:       question.Options,
 				CorrectAnswer: question.CorrectAnswer,
 				Points:        question.Points,
 			},
