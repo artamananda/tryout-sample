@@ -1,5 +1,5 @@
 import React from 'react';
-import { Space, Table, Tag, Typography } from 'antd';
+import { Table, Tag, Typography } from 'antd';
 import type { TableProps } from 'antd';
 
 const { Text } = Typography;
