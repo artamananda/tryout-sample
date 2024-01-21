@@ -3,7 +3,7 @@ import Option from './Option';
 import Question from './Question';
 import { Content, Footer, Header } from 'antd/es/layout/layout';
 import Timer from './Timer';
-import logo from '../../assets/logo.png';
+import logo from '../../assets/logo-yellow.png';
 import { Typography } from 'antd';
 
 const { Text } = Typography;
@@ -30,8 +30,8 @@ const Tryout = () => {
         }}
       >
         <Header style={headerStyle}>
+          <Image src={logo} width={120} preview={false} />
           <div>Penalaran Umum</div>
-          {/* <div style={{ color: '#F9C92D' }}>TELISIK Tryout</div> */}
           <div>{Timer()}</div>
         </Header>
         <Content style={{ fontSize: 30, margin: 30 }}>
