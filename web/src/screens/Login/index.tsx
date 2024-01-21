@@ -1,9 +1,7 @@
+import Login from '../../components/Login/Login';
+
 const LoginScreen = () => {
-    return(
-        <div>
-            Login
-        </div>
-    );
-}
+  return <Login />;
+};
 
 export default LoginScreen;
