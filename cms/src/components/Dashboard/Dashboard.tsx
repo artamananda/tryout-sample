@@ -3,11 +3,13 @@ import {
   CalendarOutlined,
   UserOutlined,
   PoweroffOutlined,
+  UsergroupAddOutlined,
+  BarChartOutlined,
 } from "@ant-design/icons";
 import type { MenuProps } from "antd";
 import { Layout, Menu, theme, Image } from "antd";
 import logo from "../../assets/logo-yellow.png";
-import ListTryout from "./ListTryout";
+import ListTryout from "../Tryout/ListTryout";
 
 const { Content, Footer, Sider } = Layout;
 
@@ -32,6 +34,11 @@ const items: MenuItem[] = [
     getItem("Logout", "logout", <PoweroffOutlined />),
   ]),
   getItem("Tryout", "tryout", <CalendarOutlined />),
+  getItem("Tryout Result", "result", <BarChartOutlined />),
+  getItem("Role", "role", <UsergroupAddOutlined />, [
+    getItem("Admin", "admin"),
+    getItem("Student", "student"),
+  ]),
 ];
 
 const Dashboard = () => {
