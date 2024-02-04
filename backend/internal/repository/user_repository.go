@@ -51,3 +51,12 @@ func (repository *UserRepository) FindAll(ctx context.Context) []entity.User {
 	repository.DB.WithContext(ctx).Find(&users)
 	return users
 }
+
+func (repository *UserRepository) Authentication(ctx context.Context, email string) (entity.User, error) {
+	var userResult entity.User
+	result := repository.DB.WithContext(ctx).Unscoped().Where("email = ?", email).First(&userResult)
+	if result.RowsAffected == 0 {
+		return entity.User{}, errors.New("user not found")
+	}
+	return userResult, nil
+}

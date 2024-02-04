@@ -1,6 +1,7 @@
 package controller
 
 import (
+	"github.com/artamananda/tryout-sample/internal/common"
 	"github.com/artamananda/tryout-sample/internal/config"
 	"github.com/artamananda/tryout-sample/internal/exception"
 	"github.com/artamananda/tryout-sample/internal/model"
@@ -18,6 +19,7 @@ func NewUserController(userService *service.UserService, config config.Config) *
 }
 
 func (controller UserController) Route(app *fiber.App) {
+	app.Post("/v1/api/login", controller.Authentication)
 	app.Post("/v1/api/user", controller.Create)
 	app.Put("/v1/api/user/:id", controller.Update)
 	app.Delete("/v1/api/user/:id", controller.Delete)
@@ -93,5 +95,25 @@ func (controller UserController) FindAll(c *fiber.Ctx) error {
 		Code:    200,
 		Message: "Success",
 		Data:    result,
+	})
+}
+
+func (controller UserController) Authentication(c *fiber.Ctx) error {
+	var request model.LoginRequest
+	err := c.BodyParser(&request)
+	exception.PanicLogging(err)
+
+	result := controller.UserService.Authentication(c.Context(), request)
+
+	tokenJwtResult := common.GenerateToken(result.Username, result.Role, controller.Config)
+	resultWithToken := map[string]interface{}{
+		"token":    tokenJwtResult,
+		"username": result.Username,
+		"role":     result.Role,
+	}
+	return c.Status(fiber.StatusOK).JSON(model.GeneralResponse{
+		Code:    200,
+		Message: "Success",
+		Data:    resultWithToken,
 	})
 }

@@ -8,6 +8,7 @@ import (
 	"github.com/artamananda/tryout-sample/internal/exception"
 	"github.com/artamananda/tryout-sample/internal/model"
 	"github.com/artamananda/tryout-sample/internal/repository"
+	"golang.org/x/crypto/bcrypt"
 )
 
 type UserService struct {
@@ -26,11 +27,13 @@ func (service *UserService) Create(ctx context.Context, request model.RegisterRe
 		return model.RegisterResponse{}, err
 	}
 
+	hashedPassword, _ := bcrypt.GenerateFromPassword([]byte(request.Password), bcrypt.DefaultCost)
+
 	user := entity.User{
 		Username: request.Username,
 		Name:     request.Name,
 		Email:    request.Email,
-		Password: request.Password,
+		Password: string(hashedPassword),
 		Role:     request.Role,
 	}
 
@@ -125,4 +128,20 @@ func (service *UserService) FindAll(ctx context.Context) []model.GetUserResponse
 		return []model.GetUserResponse{}
 	}
 	return userResponses
+}
+
+func (service *UserService) Authentication(ctx context.Context, model model.LoginRequest) entity.User {
+	userResult, err := service.UserRepository.Authentication(ctx, model.Email)
+	if err != nil {
+		panic(exception.UnauthorizedError{
+			Message: err.Error(),
+		})
+	}
+	err = bcrypt.CompareHashAndPassword([]byte(userResult.Password), []byte(model.Password))
+	if err != nil {
+		panic(exception.UnauthorizedError{
+			Message: "incorrect username and password",
+		})
+	}
+	return userResult
 }

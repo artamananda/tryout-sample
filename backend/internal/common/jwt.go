@@ -9,7 +9,7 @@ import (
 	"github.com/golang-jwt/jwt/v4"
 )
 
-func GenerateToken(username string, roles []map[string]interface{}, config config.Config) string {
+func GenerateToken(username string, roles string, config config.Config) string {
 	jwtSecret := config.Get("JWT_SECRET_KEY")
 	jwtExpired, err := strconv.Atoi(config.Get("JWT_EXPIRE_MINUTES_COUNT"))
 	exception.PanicLogging(err)
