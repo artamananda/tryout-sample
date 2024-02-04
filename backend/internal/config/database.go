@@ -9,7 +9,6 @@ import (
 	"time"
 
 	"github.com/artamananda/tryout-sample/internal/exception"
-	_ "github.com/lib/pq"
 	"gorm.io/driver/postgres"
 	"gorm.io/gorm"
 	"gorm.io/gorm/logger"
@@ -22,7 +21,9 @@ func NewDB(config Config) *gorm.DB {
 	port := config.Get("DB_PORT")
 	dbName := config.Get("DB_NAME")
 	maxPoolOpen, err := strconv.Atoi(config.Get("DB_POOL_MAX_CONN"))
+    exception.PanicLogging(err)
 	maxPoolIdle, err := strconv.Atoi(config.Get("DB_POOL_IDLE_CONN"))
+    exception.PanicLogging(err)
 	maxPollLifeTime, err := strconv.Atoi(config.Get("DB_POOL_LIFE_TIME"))
 	exception.PanicLogging(err)
 

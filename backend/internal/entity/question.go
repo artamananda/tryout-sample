@@ -4,13 +4,14 @@ import (
 	"time"
 
 	"github.com/google/uuid"
+	pq "github.com/lib/pq"
 )
 
 type Question struct {
 	QuestionID    uuid.UUID `gorm:"primaryKey" json:"question_id"`
 	TryoutID      uuid.UUID `json:"tryout_id"`
 	Text          string    `json:"text"`
-	Options       []Option  `gorm:"column:options;type:jsonb" json:"options"`
+	Options       pq.StringArray  `gorm:"type:text[]" json:"options"`
 	CorrectAnswer string    `json:"correct_answer"`
 	Points        int       `json:"points"`
 	CreatedAt     time.Time `json:"created_at"`
@@ -19,9 +20,4 @@ type Question struct {
 
 func (Question) TableName() string {
 	return "questions"
-}
-
-type Option struct {
-	OptionName string `json:"option_name"`
-	OptionText string `json:"option_text"`
 }
