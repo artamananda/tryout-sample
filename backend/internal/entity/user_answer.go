@@ -5,9 +5,9 @@ import (
 )
 
 type UserAnswer struct {
-	UserID           uuid.UUID `json:"user_id"`
-	QuestionID       uuid.UUID `json:"question_id"`
-	SelectedOptionID string    `json:"selected_option"`
+	UserID         uuid.UUID `json:"user_id"`
+	QuestionID     uuid.UUID `json:"question_id"`
+	SelectedOption []string  `json:"selected_option"`
 }
 
 func (UserAnswer) TableName() string {
