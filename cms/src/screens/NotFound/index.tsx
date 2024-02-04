@@ -1,7 +1,5 @@
 const NotFoundScreen = () => {
-    return(
-        "NotFound Screen"
-    );
-}
+  return <div>NotFound Screen</div>;
+};
 
 export default NotFoundScreen;
