@@ -5,11 +5,13 @@ import (
 )
 
 type UserAnswer struct {
-	UserID         uuid.UUID `json:"user_id"`
-	QuestionID     uuid.UUID `json:"question_id"`
-	SelectedOption []string  `json:"selected_option"`
+	UserAnswerID uuid.UUID `json:"user_answer_id"`
+	UserID       uuid.UUID `json:"user_id"`
+	TryoutID     uuid.UUID `json:"tryout_id"`
+	QuestionID   uuid.UUID `json:"question_id"`
+	UserAnswer   string    `json:"user_answer"`
 }
 
 func (UserAnswer) TableName() string {
-	return "user_answers"
+	return "users_answers"
 }
