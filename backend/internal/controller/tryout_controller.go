@@ -2,6 +2,7 @@ package controller
 
 import (
 	"github.com/artamananda/tryout-sample/internal/config"
+	"github.com/artamananda/tryout-sample/internal/middleware"
 	"github.com/artamananda/tryout-sample/internal/model"
 	"github.com/artamananda/tryout-sample/internal/service"
 	"github.com/gofiber/fiber/v2"
@@ -17,9 +18,9 @@ func NewTryoutController(tryoutService *service.TryoutService, config config.Con
 }
 
 func (controller TryoutController) Route(app *fiber.App) {
-	app.Post("/v1/api/tryout", controller.Create)
-	app.Put("/v1/api/tryout/:id", controller.Update)
-	app.Delete("/v1/api/tryout/:id", controller.Delete)
+	app.Post("/v1/api/tryout", middleware.AuthenticateJWT("admin", controller.Config), controller.Create)
+	app.Put("/v1/api/tryout/:id", middleware.AuthenticateJWT("admin", controller.Config), controller.Update)
+	app.Delete("/v1/api/tryout/:id", middleware.AuthenticateJWT("admin", controller.Config), controller.Delete)
 	app.Get("/v1/api/tryout/:id", controller.FindById)
 	app.Get("/v1/api/tryout", controller.FindAll)
 }

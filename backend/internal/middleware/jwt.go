@@ -16,14 +16,12 @@ func AuthenticateJWT(role string, config config.Config) func(*fiber.Ctx) error {
 		SuccessHandler: func(ctx *fiber.Ctx) error {
 			user := ctx.Locals("user").(*jwt.Token)
 			claims := user.Claims.(jwt.MapClaims)
-			roles := claims["roles"].([]interface{})
+			roles := claims["roles"].(string)
 
 			common.NewLogger().Info("role function ", role, " role user ", roles)
-			for _, roleInterface := range roles {
-				roleMap := roleInterface.(map[string]interface{})
-				if roleMap["role"] == role {
-					return ctx.Next()
-				}
+
+			if roles == role {
+				return ctx.Next()
 			}
 
 			return ctx.

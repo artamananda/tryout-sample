@@ -2,6 +2,7 @@ package controller
 
 import (
 	"github.com/artamananda/tryout-sample/internal/config"
+	"github.com/artamananda/tryout-sample/internal/middleware"
 	"github.com/artamananda/tryout-sample/internal/model"
 	"github.com/artamananda/tryout-sample/internal/service"
 	"github.com/gofiber/fiber/v2"
@@ -17,9 +18,9 @@ func NewQuestionController(questionService *service.QuestionService, config conf
 }
 
 func (controller QuestionController) Route(app *fiber.App) {
-	app.Post("/v1/api/question/:tryoutId", controller.Create)
-	app.Put("/v1/api/question/:id", controller.Update)
-	app.Delete("/v1/api/question/:id", controller.Delete)
+	app.Post("/v1/api/question/:tryoutId", middleware.AuthenticateJWT("admin", controller.Config), controller.Create)
+	app.Put("/v1/api/question/:id", middleware.AuthenticateJWT("admin", controller.Config), controller.Update)
+	app.Delete("/v1/api/question/:id", middleware.AuthenticateJWT("admin", controller.Config), controller.Delete)
 	app.Get("/v1/api/question/:id", controller.FindById)
 	app.Get("/v1/api/question", controller.FindAll)
 }

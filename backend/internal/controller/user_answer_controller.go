@@ -2,6 +2,7 @@ package controller
 
 import (
 	"github.com/artamananda/tryout-sample/internal/config"
+	"github.com/artamananda/tryout-sample/internal/middleware"
 	"github.com/artamananda/tryout-sample/internal/model"
 	"github.com/artamananda/tryout-sample/internal/service"
 	"github.com/gofiber/fiber/v2"
@@ -17,11 +18,11 @@ func NewUserAnswerController(userAnswerService *service.UserAnswerService, confi
 }
 
 func (controller UserAnswerController) Route(app *fiber.App) {
-	app.Post("/v1/api/user-answer", controller.Create)
-	app.Put("/v1/api/user-answer/:id", controller.Update)
-	app.Delete("/v1/api/user-answer/:id", controller.Delete)
-	app.Get("/v1/api/user-answer/:id", controller.FindById)
-	app.Get("/v1/api/user-answer", controller.FindAll)
+	app.Post("/v1/api/user-answer", middleware.AuthenticateJWT("user", controller.Config), controller.Create)
+	app.Put("/v1/api/user-answer/:id", middleware.AuthenticateJWT("user", controller.Config), controller.Update)
+	app.Delete("/v1/api/user-answer/:id", middleware.AuthenticateJWT("user", controller.Config), controller.Delete)
+	app.Get("/v1/api/user-answer/:id", middleware.AuthenticateJWT("user", controller.Config), controller.FindById)
+	app.Get("/v1/api/user-answer", middleware.AuthenticateJWT("user", controller.Config), controller.FindAll)
 }
 
 func (controller UserAnswerController) Create(c *fiber.Ctx) error {
