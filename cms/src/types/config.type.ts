@@ -6,7 +6,7 @@ export type ConfigState = {
 export interface BaseResponseProps<T> {
   code: string;
   message: string;
-  payload: T;
+  data: T;
 }
 
 export interface BaseResponsePropsNoPayload {
@@ -22,7 +22,7 @@ export interface UploadResponseProps {
 export interface BaseResponsePaginationProps<T> {
   code: string;
   message: string;
-  payload: {
+  data: {
     count: number;
     prev: string;
     next: string;

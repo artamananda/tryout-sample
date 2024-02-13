@@ -109,6 +109,7 @@ func (controller UserController) Authentication(c *fiber.Ctx) error {
 	tokenJwtResult := common.GenerateToken(result.Username, result.Role, controller.Config)
 	resultWithToken := map[string]interface{}{
 		"token":    tokenJwtResult,
+		"user_id": result.UserID,
 		"username": result.Username,
 		"role":     result.Role,
 	}

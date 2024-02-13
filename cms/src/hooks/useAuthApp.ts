@@ -26,22 +26,22 @@ export default function useAuthApp(props?: Props) {
     try {
       const resultAuthLogin = await httpRequest.post<
         BaseResponseProps<{
-          access_token: string;
-          refresh_token: string;
+          token: string;
+          username: string;
+          user_id: string;
+          role: string;
         }>
-      >(
-        props?.apiLoginUrl || process.env.REACT_APP_BASE_URL + "/auth/signin",
-        data
-      );
+      >(props?.apiLoginUrl || process.env.REACT_APP_BASE_URL + "/login", data);
 
       if (!resultAuthLogin) {
         //
+        console.log(process.env.REACT_APP_BASE_URL + "/login");
         message.error("Login failed. Empty response.");
         return;
       }
 
       if (resultAuthLogin) {
-        saveToken(resultAuthLogin.data.payload.access_token);
+        saveToken(resultAuthLogin.data.data.token);
       }
 
       console.log(resultAuthLogin);
@@ -51,11 +51,14 @@ export default function useAuthApp(props?: Props) {
         }>
       >(
         props?.apiGetMyProfileUrl ||
-          process.env.REACT_APP_BASE_URL + "/users/me",
+          process.env.REACT_APP_BASE_URL +
+            "/user/" +
+            resultAuthLogin.data.data.user_id,
         {
           headers: {
-            Authorization:
-              "Bearer " + resultAuthLogin.data.payload.access_token,
+            Authorization: "Bearer " + resultAuthLogin.data.data.token,
+            username: resultAuthLogin.data.data.username,
+            role: resultAuthLogin.data.data.role,
           },
         }
       );
@@ -68,10 +71,10 @@ export default function useAuthApp(props?: Props) {
 
       if (
         signIn({
-          token: resultAuthLogin.data.payload.access_token,
+          token: resultAuthLogin.data.data.token,
           expiresIn: 10000,
           tokenType: "Bearer",
-          authState: resProfile.data.payload,
+          authState: resProfile.data.data,
         })
       ) {
         // Redirect or do-something

@@ -10,6 +10,7 @@ httpRequest.interceptors.request.use(
   async (config: any) => {
     config.headers["Content-Type"] = "application/json";
     config.headers["Authorization"] = "Bearer " + getToken();
+    config.headers["Access-Control-Allow-Origin"] = "*";
     return config;
   },
   (error) => {

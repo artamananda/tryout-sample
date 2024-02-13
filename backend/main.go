@@ -7,11 +7,21 @@ import (
 	"github.com/artamananda/tryout-sample/internal/repository"
 	"github.com/artamananda/tryout-sample/internal/service"
 	"github.com/gofiber/fiber/v2"
+	"github.com/gofiber/fiber/v2/middleware/cors"
 )
 
 func main() {
 	initConfig := config.New()
 	db := config.NewDB(initConfig)
+	app := fiber.New()
+
+	app.Use(cors.New(cors.Config{
+        AllowHeaders:     "*",
+        AllowOrigins:     "*",
+        AllowCredentials: true,
+        AllowMethods:     "GET,POST,HEAD,PUT,DELETE,PATCH,OPTIONS",
+    }))
+
 
 	userRepository := repository.NewUserRepository(db)
 	tryoutRepository := repository.NewTryoutRepository(db)
@@ -28,8 +38,7 @@ func main() {
 	questionController := controller.NewQuestionController(&questionService, initConfig)
 	userAnswerController := controller.NewUserAnswerController(&userAnswerService, initConfig)
 
-	app := fiber.New()
-
+	
 	userController.Route(app)
 	tryoutController.Route(app)
 	questionController.Route(app)
