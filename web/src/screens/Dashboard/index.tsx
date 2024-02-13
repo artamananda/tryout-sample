@@ -1,5 +1,7 @@
-import Dashboard from '../../components/Dashboard/Dashboard';
+import ListTryout from '../../components/Dashboard/ListTryout';
 
-export const DashboardScreen = () => {
-  return <Dashboard />;
+const DashboardScreen = () => {
+  return <ListTryout />;
 };
+
+export default DashboardScreen;

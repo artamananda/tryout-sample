@@ -1,11 +1,10 @@
 import React from 'react';
 import { Button, Form, Input } from 'antd';
 import { UserOutlined, LockOutlined } from '@ant-design/icons';
+import useAuthApp from '../../hooks/useAuthApp';
 
 const LoginForm = () => {
-  const onFinish = (values: any) => {
-    console.log('Success:', values);
-  };
+  const { isAuthLoading, doLogin } = useAuthApp();
 
   const onFinishFailed = (errorInfo: any) => {
     console.log('Failed:', errorInfo);
@@ -18,18 +17,19 @@ const LoginForm = () => {
       labelCol={{ span: 8 }}
       wrapperCol={{ span: 24 }}
       initialValues={{ remember: true }}
-      onFinish={onFinish}
+      onFinish={doLogin}
       onFinishFailed={onFinishFailed}
       autoComplete="off"
     >
       <Form.Item
-        name="username"
-        label="Username"
-        rules={[{ required: true, message: 'Please input your username!' }]}
+        name="email"
+        label="Email"
+        rules={[{ required: true, message: 'Please input your email!' }]}
       >
         <Input
           prefix={<UserOutlined className="site-form-item-icon" />}
-          placeholder="Username"
+          type="email"
+          placeholder="Email"
         />
       </Form.Item>
 
@@ -49,7 +49,7 @@ const LoginForm = () => {
       </Form.Item> */}
 
       <Form.Item wrapperCol={{ offset: 8, span: 16 }}>
-        <Button type="primary" htmlType="submit">
+        <Button type="primary" htmlType="submit" loading={isAuthLoading}>
           Login
         </Button>
       </Form.Item>
