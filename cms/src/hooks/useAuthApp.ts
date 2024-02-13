@@ -35,7 +35,6 @@ export default function useAuthApp(props?: Props) {
 
       if (!resultAuthLogin) {
         //
-        console.log(process.env.REACT_APP_BASE_URL + "/login");
         message.error("Login failed. Empty response.");
         return;
       }
@@ -44,7 +43,6 @@ export default function useAuthApp(props?: Props) {
         saveToken(resultAuthLogin.data.data.token);
       }
 
-      console.log(resultAuthLogin);
       const resProfile = await axios.get<
         BaseResponseProps<{
           token: string;
@@ -62,7 +60,6 @@ export default function useAuthApp(props?: Props) {
           },
         }
       );
-      console.log("resProfile", resProfile);
 
       if (!resProfile) {
         message.error("Login failed. No profile.");
