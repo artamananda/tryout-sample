@@ -9,6 +9,7 @@ import PrivateRoute from "./PrivateRoute";
 import AppLayout from "../screens/Layout/AppLayout";
 import TryoutScreen from "../screens/Tryout";
 import TryoutResultScreen from "../screens/TryoutResult";
+import EditTryoutScreen from "../screens/Tryout/Edit";
 
 const RootNavigator = () => {
   return (
@@ -51,6 +52,14 @@ const RootNavigator = () => {
             element={
               <PrivateRoute loginPath="/login">
                 <TryoutScreen />
+              </PrivateRoute>
+            }
+          />
+          <Route
+            path="/tryout/add"
+            element={
+              <PrivateRoute loginPath="/login">
+                <EditTryoutScreen />
               </PrivateRoute>
             }
           />
