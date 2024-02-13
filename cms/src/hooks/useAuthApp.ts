@@ -40,7 +40,7 @@ export default function useAuthApp(props?: Props) {
       }
 
       if (resultAuthLogin) {
-        saveToken(resultAuthLogin.data.data.token);
+        saveToken(resultAuthLogin.data.payload.token);
       }
 
       const resProfile = await axios.get<
@@ -51,12 +51,12 @@ export default function useAuthApp(props?: Props) {
         props?.apiGetMyProfileUrl ||
           process.env.REACT_APP_BASE_URL +
             "/user/" +
-            resultAuthLogin.data.data.user_id,
+            resultAuthLogin.data.payload.user_id,
         {
           headers: {
-            Authorization: "Bearer " + resultAuthLogin.data.data.token,
-            username: resultAuthLogin.data.data.username,
-            role: resultAuthLogin.data.data.role,
+            Authorization: "Bearer " + resultAuthLogin.data.payload.token,
+            username: resultAuthLogin.data.payload.username,
+            role: resultAuthLogin.data.payload.role,
           },
         }
       );
@@ -68,10 +68,10 @@ export default function useAuthApp(props?: Props) {
 
       if (
         signIn({
-          token: resultAuthLogin.data.data.token,
+          token: resultAuthLogin.data.payload.token,
           expiresIn: 10000,
           tokenType: "Bearer",
-          authState: resProfile.data.data,
+          authState: resProfile.data.payload,
         })
       ) {
         // Redirect or do-something

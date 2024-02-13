@@ -1,11 +1,11 @@
-import { BaseResponseProps } from "../types/config.type";
-import { message } from "antd";
-import { useState } from "react";
-import { httpRequest } from "../helpers/api";
-import { saveToken } from "../helpers/auth";
-import { useSignIn } from "react-auth-kit";
-import axios from "axios";
-import { useNavigate } from "react-router-dom";
+import { BaseResponseProps } from '../types/config.type';
+import { message } from 'antd';
+import { useState } from 'react';
+import { httpRequest } from '../helpers/api';
+import { saveToken } from '../helpers/auth';
+import { useSignIn } from 'react-auth-kit';
+import axios from 'axios';
+import { useNavigate } from 'react-router-dom';
 
 type Props = {
   apiLoginUrl?: string;
@@ -31,16 +31,16 @@ export default function useAuthApp(props?: Props) {
           user_id: string;
           role: string;
         }>
-      >(props?.apiLoginUrl || process.env.REACT_APP_BASE_URL + "/login", data);
+      >(props?.apiLoginUrl || process.env.REACT_APP_BASE_URL + '/login', data);
 
       if (!resultAuthLogin) {
         //
-        message.error("Login failed. Empty response.");
+        message.error('Login failed. Empty response.');
         return;
       }
 
       if (resultAuthLogin) {
-        saveToken(resultAuthLogin.data.data.token);
+        saveToken(resultAuthLogin.data.payload.token);
       }
 
       const resProfile = await axios.get<
@@ -50,28 +50,28 @@ export default function useAuthApp(props?: Props) {
       >(
         props?.apiGetMyProfileUrl ||
           process.env.REACT_APP_BASE_URL +
-            "/user/" +
-            resultAuthLogin.data.data.user_id,
+            '/user/' +
+            resultAuthLogin.data.payload.user_id,
         {
           headers: {
-            Authorization: "Bearer " + resultAuthLogin.data.data.token,
-            username: resultAuthLogin.data.data.username,
-            role: resultAuthLogin.data.data.role,
-          },
+            Authorization: 'Bearer ' + resultAuthLogin.data.payload.token,
+            username: resultAuthLogin.data.payload.username,
+            role: resultAuthLogin.data.payload.role
+          }
         }
       );
 
       if (!resProfile) {
-        message.error("Login failed. No profile.");
+        message.error('Login failed. No profile.');
         return;
       }
 
       if (
         signIn({
-          token: resultAuthLogin.data.data.token,
+          token: resultAuthLogin.data.payload.token,
           expiresIn: 10000,
-          tokenType: "Bearer",
-          authState: resProfile.data.data,
+          tokenType: 'Bearer',
+          authState: resProfile.data.payload
         })
       ) {
         // Redirect or do-something
@@ -79,15 +79,15 @@ export default function useAuthApp(props?: Props) {
         if (callback) {
           callback();
         } else {
-          navigate("/dashboard", { replace: true });
+          navigate('/dashboard', { replace: true });
         }
-        message.success("Welcome to " + process.env.REACT_APP_WEBSITE_NAME);
+        message.success('Welcome to ' + process.env.REACT_APP_WEBSITE_NAME);
       } else {
-        message.error("Login failed.");
+        message.error('Login failed.');
         //Throw error
       }
     } catch (err) {
-      message.error("Login failed. " + err);
+      message.error('Login failed. ' + err);
     }
 
     setIsAuthLoading(false);
@@ -95,6 +95,6 @@ export default function useAuthApp(props?: Props) {
 
   return {
     isAuthLoading,
-    doLogin,
+    doLogin
   };
 }

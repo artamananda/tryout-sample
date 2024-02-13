@@ -12,8 +12,8 @@ export const INITIAL_PAGINATION: IPagination = {
   perPage: 25,
   totalData: 0,
   countPage: 1,
-  next: "",
-  prev: "",
+  next: '',
+  prev: ''
 };
 
 export type IQuery<ExtendType> = ExtendType & {
@@ -23,7 +23,7 @@ export type IQuery<ExtendType> = ExtendType & {
 
 export const INITIAL_QUERY = {
   offset: 0,
-  limit: 25,
+  limit: 25
 };
 
 export type IPayloadPagination<ResultItem> = {

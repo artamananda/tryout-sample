@@ -1,50 +1,60 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { Table, Tag, Typography, Modal, Form, Input } from 'antd';
 import type { TableProps } from 'antd';
+import useFetchList from '../../hooks/useFetchList';
+import { TryoutProps } from '../../types/tryout.type';
 
 const { Text, Link } = Typography;
 
-interface DataType {
-  key: string;
-  tryout: string;
-  startTime: Date;
-  endTime: Date;
-}
+// interface DataType {
+//   key: string;
+//   tryout: string;
+//   startTime: Date;
+//   endTime: Date;
+// }
 
 type FieldType = {
   token?: string;
 };
 
-const data: DataType[] = [
-  {
-    key: '1',
-    tryout: 'Tryout December',
-    startTime: new Date('2023-12-21T12:00:00'),
-    endTime: new Date('2023-12-31T14:00:00')
-  },
-  {
-    key: '2',
-    tryout: 'Tryout January',
-    startTime: new Date('2024-01-21T12:00:00'),
-    endTime: new Date('2024-01-31T20:00:00')
-  },
-  {
-    key: '3',
-    tryout: 'Tryout February',
-    startTime: new Date('2024-02-21T12:00:00'),
-    endTime: new Date('2024-02-21T14:00:00')
-  }
-];
+// const data: DataType[] = [
+//   {
+//     key: '1',
+//     tryout: 'Tryout December',
+//     startTime: new Date('2023-12-21T12:00:00'),
+//     endTime: new Date('2023-12-31T14:00:00')
+//   },
+//   {
+//     key: '2',
+//     tryout: 'Tryout January',
+//     startTime: new Date('2024-01-21T12:00:00'),
+//     endTime: new Date('2024-01-31T20:00:00')
+//   },
+//   {
+//     key: '3',
+//     tryout: 'Tryout February',
+//     startTime: new Date('2024-02-21T12:00:00'),
+//     endTime: new Date('2024-02-21T14:00:00')
+//   }
+// ];
 
 const ListTryout = () => {
-  const columns: TableProps<DataType>['columns'] = [
+  const { data: tryoutData, fetchList } = useFetchList<TryoutProps>({
+    endpoint: 'tryout'
+  });
+
+  useEffect(() => {
+    fetchList();
+  }, []);
+
+  const columns: TableProps<TryoutProps>['columns'] = [
     {
       title: 'Tryout',
       dataIndex: 'tryout',
       key: 'tryout',
       render: (_, record) => (
-        <Link underline onClick={() => showModal(record.tryout)}>
-          {record.tryout}
+        <Link underline onClick={() => showModal(record.title)}>
+          {record.title}
         </Link>
       )
     },
@@ -52,25 +62,25 @@ const ListTryout = () => {
       title: 'Start Time',
       dataIndex: 'startTime',
       key: 'startTime',
-      render: (_, { startTime }) => (
-        <Text>{formatDateToCustomString(startTime)}</Text>
+      render: (_, { start_time }) => (
+        <Text>{formatDateToCustomString(start_time)}</Text>
       )
     },
     {
       title: 'End Time',
       dataIndex: 'endTime',
       key: 'endTime',
-      render: (_, { endTime }) => (
-        <Text>{formatDateToCustomString(endTime)}</Text>
+      render: (_, { end_time }) => (
+        <Text>{formatDateToCustomString(end_time)}</Text>
       )
     },
     {
       title: 'Status',
       key: 'status',
       dataIndex: 'status',
-      render: (_, { startTime, endTime }) => (
-        <Tag color={statusColor(checkStatus(startTime, endTime))}>
-          {checkStatus(startTime, endTime)}
+      render: (_, { start_time, end_time }) => (
+        <Tag color={statusColor(checkStatus(start_time, end_time))}>
+          {checkStatus(start_time, end_time)}
         </Tag>
       )
     }
@@ -112,7 +122,7 @@ const ListTryout = () => {
     }
   };
 
-  const checkStatus = (startTime: Date, endTime: Date) => {
+  const checkStatus = (startTime: Date | string, endTime: Date | string) => {
     if (startTime < new Date() && endTime > new Date()) {
       return 'ON GOING';
     } else if (startTime > new Date()) {
@@ -134,7 +144,7 @@ const ListTryout = () => {
 
   return (
     <div>
-      <Table columns={columns} dataSource={data} />
+      <Table columns={columns} dataSource={tryoutData} />
 
       <Modal
         title={modalTitle}
