@@ -2,6 +2,7 @@ import React, { useState } from "react";
 import { Table, Tag, Typography, Modal, Form, Input, Button } from "antd";
 import type { TableProps } from "antd";
 import { PlusOutlined } from "@ant-design/icons";
+import { useNavigate } from "react-router-dom";
 
 const { Text, Link } = Typography;
 
@@ -38,6 +39,7 @@ const data: DataType[] = [
 ];
 
 const ListTryout = () => {
+  const navigate = useNavigate();
   const columns: TableProps<DataType>["columns"] = [
     {
       title: "Tryout",
@@ -142,9 +144,11 @@ const ListTryout = () => {
           justifyContent: "flex-end",
           justifyItems: "flex-end",
           paddingBlock: 20,
+          marginBottom: 20,
           color: "white",
           backgroundColor: "#04073B",
         }}
+        onClick={() => navigate("/tryout/add")}
       >
         <PlusOutlined />
         Create Tryout

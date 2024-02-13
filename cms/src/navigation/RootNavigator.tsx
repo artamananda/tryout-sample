@@ -7,6 +7,8 @@ import { Suspense } from "react";
 import { Spin } from "antd";
 import PrivateRoute from "./PrivateRoute";
 import AppLayout from "../screens/Layout/AppLayout";
+import TryoutScreen from "../screens/Tryout";
+import TryoutResultScreen from "../screens/TryoutResult";
 
 const RootNavigator = () => {
   return (
@@ -34,12 +36,30 @@ const RootNavigator = () => {
         />
         <Route path="*" element={<NotFoundScreen />} />
 
-        <Route>
+        <Route element={<AppLayout />}>
           <Route
             path="/dashboard"
             element={
               <PrivateRoute loginPath="/login">
                 <DashboardScreen />
+              </PrivateRoute>
+            }
+          />
+
+          <Route
+            path="/tryout"
+            element={
+              <PrivateRoute loginPath="/login">
+                <TryoutScreen />
+              </PrivateRoute>
+            }
+          />
+
+          <Route
+            path="/tryout-result"
+            element={
+              <PrivateRoute loginPath="/login">
+                <TryoutResultScreen />
               </PrivateRoute>
             }
           />
