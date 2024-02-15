@@ -93,9 +93,15 @@ func (controller TryoutController) FindById(c *fiber.Ctx) error {
 
 func (controller TryoutController) FindAll(c *fiber.Ctx) error {
 	result := controller.TryoutService.FindAll(c.Context())
+	payload := map[string]interface{}{
+        "count":   len(result),
+        "next":    nil,
+        "prev":    nil,
+        "results": result,
+    }
 	return c.Status(fiber.StatusOK).JSON(model.GeneralResponse{
 		Code:    200,
 		Message: "Success",
-		Data:    result,
+		Data:    payload,
 	})
 }

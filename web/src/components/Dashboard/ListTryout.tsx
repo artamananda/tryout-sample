@@ -3,6 +3,7 @@ import { Table, Tag, Typography, Modal, Form, Input } from 'antd';
 import type { TableProps } from 'antd';
 import useFetchList from '../../hooks/useFetchList';
 import { TryoutProps } from '../../types/tryout.type';
+import dayjs from 'dayjs';
 
 const { Text, Link } = Typography;
 
@@ -96,20 +97,7 @@ const ListTryout = () => {
   };
 
   function formatDateToCustomString(date: any) {
-    const options = {
-      year: 'numeric',
-      month: 'long',
-      day: 'numeric',
-      hour: 'numeric',
-      minute: 'numeric',
-      hour12: false
-    };
-
-    const formattedDate = date
-      .toLocaleDateString('id-ID', options)
-      .replace(/,/g, '');
-
-    return formattedDate;
+    return dayjs(date).locale('id').format('DD MMMM YYYY HH:mm');
   }
 
   const statusColor = (status: string) => {
@@ -123,11 +111,11 @@ const ListTryout = () => {
   };
 
   const checkStatus = (startTime: Date | string, endTime: Date | string) => {
-    if (startTime < new Date() && endTime > new Date()) {
+    if (new Date(startTime) < new Date() && new Date(endTime) > new Date()) {
       return 'ON GOING';
-    } else if (startTime > new Date()) {
+    } else if (new Date(startTime) > new Date()) {
       return 'IN COMING';
-    } else if (endTime < new Date()) {
+    } else if (new Date(endTime) < new Date()) {
       return 'FINISHED';
     } else {
       return 'UNKNOWN';
