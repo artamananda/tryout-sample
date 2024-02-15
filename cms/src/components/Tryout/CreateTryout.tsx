@@ -1,90 +1,90 @@
-import {
-  Button,
-  DatePicker,
-  Form,
-  Input,
-  InputNumber,
-  Typography,
-  message,
-} from "antd";
-import type { DatePickerProps, GetProps } from "antd";
-import { apiCreateTryout } from "../../api/tryout";
-import { getErrorMessage } from "../../helpers/errorHandler";
-type RangePickerProps = GetProps<typeof DatePicker.RangePicker>;
+import { Button, Divider, Form, Input, Typography } from "antd";
+import React from "react";
+import { useState } from "react";
+import ReactQuill from "react-quill";
+import "react-quill/dist/quill.snow.css";
 
 const { Title } = Typography;
 
+const quillModules = {
+  toolbar: [
+    [{ header: [1, 2, false] }],
+    ["bold", "italic", "underline"],
+    [{ list: "ordered" }, { list: "bullet" }],
+    ["clean"],
+  ],
+};
+
+const quillFormats = [
+  "header",
+  "bold",
+  "italic",
+  "underline",
+  "list",
+  "bullet",
+];
+
 const CreateTryout = () => {
-  const handleCreate = async (data: any) => {
-    const res = await apiCreateTryout(data);
-    if (res) {
-      message.success("Create Tryout Success");
-    }
-  };
-  const onFinishFailed = (errorInfo: any) => {
-    message.error(getErrorMessage(errorInfo));
-  };
-
-  const onChange = (
-    value: DatePickerProps["value"] | RangePickerProps["value"],
-    dateString: [string, string] | string
-  ) => {
-    console.log("Selected Time: ", value);
-    console.log("Formatted Selected Time: ", dateString);
-  };
-
-  const onOk = (
-    value: DatePickerProps["value"] | RangePickerProps["value"]
-  ) => {
-    console.log("onOk: ", value);
-  };
+  const [value, setValue] = useState("");
 
   return (
     <div>
-      <Title level={3} style={{ fontWeight: "bold" }}>
-        Create Tryout
-      </Title>
-      <Form
-        name="createTryout"
-        onFinish={handleCreate}
-        onFinishFailed={onFinishFailed}
-        layout="vertical"
-      >
-        <Form.Item
-          label="Tryout Name"
-          name="title"
-          rules={[{ required: true }]}
-        >
-          <Input />
-        </Form.Item>
+      <Form layout="vertical">
+        <Title level={3}>Basic Config</Title>
+        <Title style={{ fontWeight: "bold" }}>
+          {"Tes Potensi Skolastik (TPS)"}
+        </Title>
+        <Title level={3}>Kemampuan Penalaran Umum</Title>
+        {Array.from({ length: 30 }, (_, index) => (
+          <React.Fragment key={index}>
+            <Form.Item
+              name={`question${index}`}
+              label={`Question ${index + 1}`}
+            >
+              <ReactQuill
+                style={{ backgroundColor: "white" }}
+                theme="snow"
+                value={value}
+                onChange={setValue}
+                modules={quillModules}
+                formats={quillFormats}
+              />
+            </Form.Item>
+            <Form.Item name={`answer${index}`} label={`Answer ${index + 1}`}>
+              <div style={{ display: "flex", flexDirection: "column", gap: 2 }}>
+                <Input addonBefore="A" />
+                <Input addonBefore="B" />
+                <Input addonBefore="C" />
+                <Input addonBefore="D" />
+                <Input addonBefore="E" />
+              </div>
+            </Form.Item>
+            <Divider />
+          </React.Fragment>
+        ))}
 
-        <Form.Item
-          label="Duration (Minutes)"
-          name="duration"
-          rules={[{ required: true }]}
-        >
-          <InputNumber />
-        </Form.Item>
+        <Title level={3}>Pengetahuan dan Pemahaman Umum</Title>
+        <Title level={3}>Kemampuan Memahami Bacaan dan Menulis</Title>
+        <Title level={3}>Pengetahuan Kuantitatif</Title>
 
-        <Form.Item
-          label="Start Time"
-          name="start_time"
-          rules={[{ required: true }]}
-        >
-          <DatePicker showTime onChange={onChange} onOk={onOk} />
-        </Form.Item>
-
-        <Form.Item
-          label="End Time"
-          name="end_time"
-          rules={[{ required: true }]}
-        >
-          <DatePicker showTime onChange={onChange} onOk={onOk} />
-        </Form.Item>
-
-        <Form.Item wrapperCol={{ offset: 8, span: 16 }}>
-          <Button type="primary" htmlType="submit">
-            Submit
+        <Title style={{ fontWeight: "bold" }}>Tes Literasi</Title>
+        <Title level={3}>Literasi Bahasa Indonesia</Title>
+        <Title level={3}>Literasi Bahasa Inggris</Title>
+        <Title level={3}>Penalaran Matematika</Title>
+        <Form.Item>
+          <Button
+            type="primary"
+            style={{
+              display: "flex",
+              width: "100%",
+              paddingBlock: 20,
+              alignItems: "center",
+              justifyContent: "center",
+              fontWeight: "bold",
+              marginTop: 10,
+            }}
+          >
+            Save
           </Button>
         </Form.Item>
       </Form>

@@ -63,6 +63,14 @@ const RootNavigator = () => {
               </PrivateRoute>
             }
           />
+          <Route
+            path="/tryout/:tryoutId/edit"
+            element={
+              <PrivateRoute loginPath="/login">
+                <EditTryoutScreen />
+              </PrivateRoute>
+            }
+          />
 
           <Route
             path="/tryout-result"

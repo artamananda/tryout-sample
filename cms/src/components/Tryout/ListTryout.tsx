@@ -1,17 +1,34 @@
-import React, { useEffect } from "react";
-import { Table, Tag, Typography, Button, message } from "antd";
+import React, { useEffect, useState } from "react";
+import {
+  Table,
+  Tag,
+  Typography,
+  DatePicker,
+  Button,
+  message,
+  Modal,
+  Form,
+  Input,
+  InputNumber,
+} from "antd";
 import type { TableProps } from "antd";
 import { DeleteOutlined, PlusOutlined } from "@ant-design/icons";
 import { useNavigate } from "react-router-dom";
 import useFetchList from "../../hooks/useFetchList";
 import { TryoutProps } from "../../types/tryout.type";
 import dayjs from "dayjs";
-import { apiDeleteTryout } from "../../api/tryout";
+import { apiCreateTryout, apiDeleteTryout } from "../../api/tryout";
+import type { DatePickerProps, GetProps } from "antd";
+import { getErrorMessage } from "../../helpers/errorHandler";
+type RangePickerProps = GetProps<typeof DatePicker.RangePicker>;
+
+const { Title } = Typography;
 
 const { Text, Link } = Typography;
 
 const ListTryout = () => {
   const navigate = useNavigate();
+  const [showModal, setShowModal] = useState(false);
   const { data: tryoutData, fetchList } = useFetchList<TryoutProps>({
     endpoint: "tryout",
   });
@@ -33,7 +50,10 @@ const ListTryout = () => {
       dataIndex: "tryout",
       key: "tryout",
       render: (_, record) => (
-        <Link underline onClick={() => navigate("/tryout/" + record.tryout_id)}>
+        <Link
+          underline
+          onClick={() => navigate("/tryout/" + record.tryout_id + "/edit")}
+        >
           {record.title}
         </Link>
       ),
@@ -109,6 +129,32 @@ const ListTryout = () => {
     }
   };
 
+  const handleCreate = async (data: any) => {
+    const res = await apiCreateTryout(data);
+    if (res) {
+      setShowModal(false);
+      fetchList();
+      message.success("Create Tryout Success");
+    }
+  };
+  const onFinishFailed = (errorInfo: any) => {
+    message.error(getErrorMessage(errorInfo));
+  };
+
+  const onChange = (
+    value: DatePickerProps["value"] | RangePickerProps["value"],
+    dateString: [string, string] | string
+  ) => {
+    console.log("Selected Time: ", value);
+    console.log("Formatted Selected Time: ", dateString);
+  };
+
+  const onOk = (
+    value: DatePickerProps["value"] | RangePickerProps["value"]
+  ) => {
+    console.log("onOk: ", value);
+  };
+
   return (
     <div>
       <Button
@@ -122,12 +168,62 @@ const ListTryout = () => {
           color: "white",
           backgroundColor: "#04073B",
         }}
-        onClick={() => navigate("/tryout/add")}
+        onClick={() => setShowModal(true)}
       >
         <PlusOutlined />
         Create Tryout
       </Button>
       <Table columns={columns} dataSource={tryoutData} />
+
+      <Modal open={showModal} footer={false}>
+        <Title level={3} style={{ fontWeight: "bold" }}>
+          Create Tryout
+        </Title>
+        <Form
+          name="createTryout"
+          onFinish={handleCreate}
+          onFinishFailed={onFinishFailed}
+          layout="vertical"
+        >
+          <Form.Item
+            label="Tryout Name"
+            name="title"
+            rules={[{ required: true }]}
+          >
+            <Input />
+          </Form.Item>
+
+          <Form.Item
+            label="Duration (Minutes)"
+            name="duration"
+            rules={[{ required: true }]}
+          >
+            <InputNumber />
+          </Form.Item>
+
+          <Form.Item
+            label="Start Time"
+            name="start_time"
+            rules={[{ required: true }]}
+          >
+            <DatePicker showTime onChange={onChange} onOk={onOk} />
+          </Form.Item>
+
+          <Form.Item
+            label="End Time"
+            name="end_time"
+            rules={[{ required: true }]}
+          >
+            <DatePicker showTime onChange={onChange} onOk={onOk} />
+          </Form.Item>
+
+          <Form.Item wrapperCol={{ offset: 8, span: 16 }}>
+            <Button type="primary" htmlType="submit">
+              Submit
+            </Button>
+          </Form.Item>
+        </Form>
+      </Modal>
     </div>
   );
 };
