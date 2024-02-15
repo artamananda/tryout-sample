@@ -1,22 +1,28 @@
-import { Button, DatePicker, Form, Input, Typography } from "antd";
+import {
+  Button,
+  DatePicker,
+  Form,
+  Input,
+  InputNumber,
+  Typography,
+  message,
+} from "antd";
 import type { DatePickerProps, GetProps } from "antd";
+import { apiCreateTryout } from "../../api/tryout";
+import { getErrorMessage } from "../../helpers/errorHandler";
 type RangePickerProps = GetProps<typeof DatePicker.RangePicker>;
 
 const { Title } = Typography;
 
-type FieldType = {
-  tryoutName: string;
-  startTime: Date;
-  endTime: Date;
-};
-
 const CreateTryout = () => {
-  const onFinish = (values: any) => {
-    console.log("Success:", values);
+  const handleCreate = async (data: any) => {
+    const res = await apiCreateTryout(data);
+    if (res) {
+      message.success("Create Tryout Success");
+    }
   };
-
   const onFinishFailed = (errorInfo: any) => {
-    console.log("Failed:", errorInfo);
+    message.error(getErrorMessage(errorInfo));
   };
 
   const onChange = (
@@ -40,29 +46,37 @@ const CreateTryout = () => {
       </Title>
       <Form
         name="createTryout"
-        onFinish={onFinish}
+        onFinish={handleCreate}
         onFinishFailed={onFinishFailed}
         layout="vertical"
       >
-        <Form.Item<FieldType>
+        <Form.Item
           label="Tryout Name"
-          name="tryoutName"
+          name="title"
           rules={[{ required: true }]}
         >
           <Input />
         </Form.Item>
 
-        <Form.Item<FieldType>
+        <Form.Item
+          label="Duration (Minutes)"
+          name="duration"
+          rules={[{ required: true }]}
+        >
+          <InputNumber />
+        </Form.Item>
+
+        <Form.Item
           label="Start Time"
-          name="startTime"
+          name="start_time"
           rules={[{ required: true }]}
         >
           <DatePicker showTime onChange={onChange} onOk={onOk} />
         </Form.Item>
 
-        <Form.Item<FieldType>
+        <Form.Item
           label="End Time"
-          name="endTime"
+          name="end_time"
           rules={[{ required: true }]}
         >
           <DatePicker showTime onChange={onChange} onOk={onOk} />
