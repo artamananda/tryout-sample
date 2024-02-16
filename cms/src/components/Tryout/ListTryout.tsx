@@ -175,7 +175,7 @@ const ListTryout = () => {
       </Button>
       <Table columns={columns} dataSource={tryoutData} />
 
-      <Modal open={showModal} footer={false}>
+      <Modal open={showModal} onCancel={() => setShowModal(false)} footer={false}>
         <Title level={3} style={{ fontWeight: "bold" }}>
           Create Tryout
         </Title>
