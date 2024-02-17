@@ -7,6 +7,7 @@ import (
 )
 
 type CreateQuestionRequest struct {
+	Type          string   `json:"type"`
 	Text          string   `json:"text" validate:"required"`
 	Options       []string `json:"options"`
 	CorrectAnswer string   `json:"correct_answer" validate:"required"`
@@ -14,6 +15,7 @@ type CreateQuestionRequest struct {
 }
 
 type UpdateQuestionRequest struct {
+	Type          string   `json:"type"`
 	Text          string   `json:"text"`
 	Options       []string `json:"options" validate:"min=1,dive"`
 	CorrectAnswer string   `json:"correct_answer"`
@@ -23,6 +25,7 @@ type UpdateQuestionRequest struct {
 type QuestionResponse struct {
 	QuestionID    uuid.UUID `json:"question_id"`
 	TryoutID      uuid.UUID `json:"tryout_id"`
+	Type          string    `json:"type"`
 	Text          string    `json:"text"`
 	Options       []string  `json:"options"`
 	CorrectAnswer string    `json:"correct_answer"`

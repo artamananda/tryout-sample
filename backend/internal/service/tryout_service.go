@@ -6,6 +6,7 @@ import (
 	"github.com/artamananda/tryout-sample/internal/common"
 	"github.com/artamananda/tryout-sample/internal/entity"
 	"github.com/artamananda/tryout-sample/internal/exception"
+	"github.com/artamananda/tryout-sample/internal/helper"
 	"github.com/artamananda/tryout-sample/internal/model"
 	"github.com/artamananda/tryout-sample/internal/repository"
 )
@@ -33,6 +34,7 @@ func (service *TryoutService) Create(ctx context.Context, request model.CreateTr
 		Duration:  request.Duration,
 		StartTime: request.StartTime,
 		EndTime:   request.EndTime,
+		Token:     helper.GenerateOTP(6),
 	}
 
 	tryout = service.TryoutRepository.Create(ctx, tryout)
@@ -43,6 +45,7 @@ func (service *TryoutService) Create(ctx context.Context, request model.CreateTr
 		Duration:  tryout.Duration,
 		StartTime: tryout.StartTime,
 		EndTime:   tryout.EndTime,
+		Token:     helper.GenerateOTP(6),
 	}, nil
 }
 
@@ -74,6 +77,7 @@ func (service *TryoutService) Update(ctx context.Context, request model.UpdateTr
 		Duration:  tryout.Duration,
 		StartTime: tryout.StartTime,
 		EndTime:   tryout.EndTime,
+		Token:     tryout.Token,
 	}, nil
 }
 
@@ -102,6 +106,7 @@ func (service *TryoutService) FindByID(ctx context.Context, tryoutID string) (mo
 		Duration:  tryout.Duration,
 		StartTime: tryout.StartTime,
 		EndTime:   tryout.EndTime,
+		Token:     tryout.Token,
 	}, nil
 }
 
@@ -117,6 +122,7 @@ func (service *TryoutService) FindAll(ctx context.Context) []model.TryoutRespons
 				Duration:  tryout.Duration,
 				StartTime: tryout.StartTime,
 				EndTime:   tryout.EndTime,
+				Token:     tryout.Token,
 			},
 		)
 	}

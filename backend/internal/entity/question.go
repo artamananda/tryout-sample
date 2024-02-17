@@ -8,14 +8,15 @@ import (
 )
 
 type Question struct {
-	QuestionID    uuid.UUID `gorm:"primaryKey" json:"question_id"`
-	TryoutID      uuid.UUID `json:"tryout_id"`
-	Text          string    `json:"text"`
-	Options       pq.StringArray  `gorm:"type:text[]" json:"options"`
-	CorrectAnswer string    `json:"correct_answer"`
-	Points        int       `json:"points"`
-	CreatedAt     time.Time `json:"created_at"`
-	UpdatedAt     time.Time `json:"updated_at"`
+	QuestionID    uuid.UUID      `gorm:"primaryKey" json:"question_id"`
+	TryoutID      uuid.UUID      `json:"tryout_id"`
+	Type          string         `json:"type"`
+	Text          string         `json:"text"`
+	Options       pq.StringArray `gorm:"type:text[]" json:"options"`
+	CorrectAnswer string         `json:"correct_answer"`
+	Points        int            `json:"points"`
+	CreatedAt     time.Time      `json:"created_at"`
+	UpdatedAt     time.Time      `json:"updated_at"`
 }
 
 func (Question) TableName() string {

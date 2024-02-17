@@ -2,6 +2,7 @@ package service
 
 import (
 	"context"
+	"fmt"
 
 	"github.com/artamananda/tryout-sample/internal/common"
 	"github.com/artamananda/tryout-sample/internal/entity"
@@ -133,15 +134,17 @@ func (service *UserService) FindAll(ctx context.Context) []model.GetUserResponse
 func (service *UserService) Authentication(ctx context.Context, model model.LoginRequest) entity.User {
 	userResult, err := service.UserRepository.Authentication(ctx, model.Email)
 	if err != nil {
-		panic(exception.UnauthorizedError{
+		fmt.Println(exception.UnauthorizedError{
 			Message: err.Error(),
 		})
+		return entity.User{}
 	}
 	err = bcrypt.CompareHashAndPassword([]byte(userResult.Password), []byte(model.Password))
 	if err != nil {
-		panic(exception.UnauthorizedError{
+		fmt.Println(exception.UnauthorizedError{
 			Message: "incorrect username and password",
 		})
+		return entity.User{}
 	}
 	return userResult
 }
