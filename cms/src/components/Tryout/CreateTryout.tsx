@@ -3,16 +3,25 @@ import React from "react";
 import { useState } from "react";
 import ReactQuill from "react-quill";
 import "react-quill/dist/quill.snow.css";
+import katex from "katex";
+import "katex/dist/katex.min.css";
+window.katex = katex;
 
 const { Title } = Typography;
 
 const quillModules = {
-  toolbar: [
-    [{ header: [1, 2, false] }],
-    ["bold", "italic", "underline"],
-    [{ list: "ordered" }, { list: "bullet" }],
-    ["clean"],
-  ],
+  toolbar: {
+    container: [
+      [{ header: [1, 2, 3, 4, 5, 6, false] }],
+      ["bold", "italic", "underline"],
+      [{ list: "ordered" }, { list: "bullet" }],
+      [{ align: [] }],
+      ["link", "image"],
+      ["clean"],
+      ["formula"],
+      [{ color: [] }],
+    ],
+  },
 };
 
 const quillFormats = [
@@ -22,6 +31,7 @@ const quillFormats = [
   "underline",
   "list",
   "bullet",
+  "formula",
 ];
 
 const CreateTryout = () => {
