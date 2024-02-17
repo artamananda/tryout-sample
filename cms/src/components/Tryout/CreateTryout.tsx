@@ -1,4 +1,4 @@
-import { Button, Divider, Form, Input, Typography } from "antd";
+import { Button, Divider, Form, Input, Typography, Switch } from "antd";
 import React from "react";
 import { useState } from "react";
 import ReactQuill from "react-quill";
@@ -7,7 +7,7 @@ import katex from "katex";
 import "katex/dist/katex.min.css";
 window.katex = katex;
 
-const { Title } = Typography;
+const { Title, Text } = Typography;
 
 const quillModules = {
   toolbar: {
@@ -36,6 +36,11 @@ const quillFormats = [
 
 const CreateTryout = () => {
   const [value, setValue] = useState("");
+  const [pilgan, setPilgan] = useState(true);
+
+  const handleOption = (checked: boolean) => {
+    setPilgan(checked);
+  };
 
   return (
     <div>
@@ -61,13 +66,34 @@ const CreateTryout = () => {
               />
             </Form.Item>
             <Form.Item name={`answer${index}`} label={`Answer ${index + 1}`}>
-              <div style={{ display: "flex", flexDirection: "column", gap: 2 }}>
-                <Input addonBefore="A" />
-                <Input addonBefore="B" />
-                <Input addonBefore="C" />
-                <Input addonBefore="D" />
-                <Input addonBefore="E" />
+              <div
+                style={{
+                  display: "flex",
+                  flexDirection: "row",
+                  gap: 10,
+                  marginBottom: 10,
+                }}
+              >
+                <Text>Pilihan Ganda</Text>
+                <Switch checked={pilgan} onChange={handleOption} />
               </div>
+              {pilgan ? (
+                <div
+                  style={{ display: "flex", flexDirection: "column", gap: 2 }}
+                >
+                  <Input addonBefore="A" />
+                  <Input addonBefore="B" />
+                  <Input addonBefore="C" />
+                  <Input addonBefore="D" />
+                  <Input addonBefore="E" />
+                </div>
+              ) : (
+                <div
+                  style={{ display: "flex", flexDirection: "column", gap: 2 }}
+                >
+                  <Input />
+                </div>
+              )}
             </Form.Item>
             <Divider />
           </React.Fragment>
