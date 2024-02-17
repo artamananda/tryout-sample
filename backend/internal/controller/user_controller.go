@@ -92,10 +92,16 @@ func (controller UserController) FindById(c *fiber.Ctx) error {
 
 func (controller UserController) FindAll(c *fiber.Ctx) error {
 	result := controller.UserService.FindAll(c.Context())
+	payload := map[string]interface{}{
+        "count":   len(result),
+        "next":    nil,
+        "prev":    nil,
+        "results": result,
+    }
 	return c.Status(fiber.StatusOK).JSON(model.GeneralResponse{
 		Code:    200,
 		Message: "Success",
-		Data:    result,
+		Data:    payload,
 	})
 }
 
@@ -109,6 +115,7 @@ func (controller UserController) Authentication(c *fiber.Ctx) error {
 	tokenJwtResult := common.GenerateToken(result.Username, result.Role, controller.Config)
 	resultWithToken := map[string]interface{}{
 		"token":    tokenJwtResult,
+		"user_id": result.UserID,
 		"username": result.Username,
 		"role":     result.Role,
 	}

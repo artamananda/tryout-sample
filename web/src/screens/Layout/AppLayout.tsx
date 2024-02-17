@@ -1,13 +1,14 @@
-import React, { useState } from 'react';
+import React, { Suspense, useState } from 'react';
 import {
   CalendarOutlined,
   UserOutlined,
   PoweroffOutlined
 } from '@ant-design/icons';
 import type { MenuProps } from 'antd';
-import { Layout, Menu, theme, Image } from 'antd';
+import { Layout, Menu, Image, Spin } from 'antd';
 import logo from '../../assets/logo-yellow.png';
-import ListTryout from './ListTryout';
+import { Outlet, useNavigate } from 'react-router-dom';
+import { useAuthUser, useSignOut } from 'react-auth-kit';
 
 const { Content, Footer, Sider } = Layout;
 
@@ -27,18 +28,19 @@ function getItem(
   } as MenuItem;
 }
 
-const items: MenuItem[] = [
-  getItem('User', 'user', <UserOutlined />, [
-    getItem('Logout', 'logout', <PoweroffOutlined />)
-  ]),
-  getItem('Tryout', 'tryout', <CalendarOutlined />)
-];
-
-const Dashboard = () => {
+const AppLayout = () => {
   const [collapsed, setCollapsed] = useState(false);
-  const {
-    token: { colorBgContainer, borderRadiusLG }
-  } = theme.useToken();
+  const navigate = useNavigate();
+  const signOut = useSignOut();
+  const userAuth = useAuthUser();
+  const name = userAuth() ? userAuth()?.name : 'User';
+
+  const items: MenuItem[] = [
+    getItem(name, '/user', <UserOutlined />, [
+      getItem('Logout', '/logout', <PoweroffOutlined />)
+    ]),
+    getItem('Tryout', '/tryout', <CalendarOutlined />)
+  ];
 
   return (
     <Layout style={{ minHeight: '100vh' }}>
@@ -47,26 +49,27 @@ const Dashboard = () => {
         collapsed={collapsed}
         onCollapse={(value) => setCollapsed(value)}
       >
-        <Image src={logo} width={150} style={{ margin: 20 }} />
+        <Image src={logo} width={150} style={{ margin: 20 }} preview={false} />
         <Menu
           theme="dark"
           defaultSelectedKeys={['tryout']}
           mode="inline"
           items={items}
+          onClick={({ key }) => {
+            if (key === '/logout') {
+              signOut();
+              navigate('/login');
+            } else {
+              navigate(key);
+            }
+          }}
         />
       </Sider>
       <Layout>
-        <Content style={{ margin: '0 16px' }}>
-          <div
-            style={{
-              padding: 24,
-              minHeight: 360,
-              background: colorBgContainer,
-              borderRadius: borderRadiusLG
-            }}
-          >
-            <ListTryout />
-          </div>
+        <Content style={{ margin: 20 }}>
+          <Suspense fallback={<Spin spinning={true} />}>
+            <Outlet />
+          </Suspense>
         </Content>
         <Footer style={{ textAlign: 'center' }}>
           Telisik Tryout ©2024 Created by Artamananda
@@ -76,4 +79,4 @@ const Dashboard = () => {
   );
 };
 
-export default Dashboard;
+export default AppLayout;

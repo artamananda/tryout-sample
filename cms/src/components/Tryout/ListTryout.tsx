@@ -1,106 +1,110 @@
-import React, { useState } from "react";
-import { Table, Tag, Typography, Modal, Form, Input, Button } from "antd";
+import React, { useEffect, useState } from "react";
+import {
+  Table,
+  Tag,
+  Typography,
+  DatePicker,
+  Button,
+  message,
+  Modal,
+  Form,
+  Input,
+  InputNumber,
+} from "antd";
 import type { TableProps } from "antd";
-import { PlusOutlined } from "@ant-design/icons";
+import { DeleteOutlined, PlusOutlined } from "@ant-design/icons";
+import { useNavigate } from "react-router-dom";
+import useFetchList from "../../hooks/useFetchList";
+import { TryoutProps } from "../../types/tryout.type";
+import dayjs from "dayjs";
+import { apiCreateTryout, apiDeleteTryout } from "../../api/tryout";
+import type { DatePickerProps, GetProps } from "antd";
+import { getErrorMessage } from "../../helpers/errorHandler";
+type RangePickerProps = GetProps<typeof DatePicker.RangePicker>;
+
+const { Title } = Typography;
 
 const { Text, Link } = Typography;
 
-interface DataType {
-  key: string;
-  tryout: string;
-  startTime: Date;
-  endTime: Date;
-}
-
-type FieldType = {
-  token?: string;
-};
-
-const data: DataType[] = [
-  {
-    key: "1",
-    tryout: "Tryout December",
-    startTime: new Date("2023-12-21T12:00:00"),
-    endTime: new Date("2023-12-31T14:00:00"),
-  },
-  {
-    key: "2",
-    tryout: "Tryout January",
-    startTime: new Date("2024-01-21T12:00:00"),
-    endTime: new Date("2024-01-31T20:00:00"),
-  },
-  {
-    key: "3",
-    tryout: "Tryout February",
-    startTime: new Date("2024-02-21T12:00:00"),
-    endTime: new Date("2024-02-21T14:00:00"),
-  },
-];
-
 const ListTryout = () => {
-  const columns: TableProps<DataType>["columns"] = [
+  const navigate = useNavigate();
+  const [showModal, setShowModal] = useState(false);
+  const { data: tryoutData, fetchList } = useFetchList<TryoutProps>({
+    endpoint: "tryout",
+  });
+
+  useEffect(() => {
+    fetchList();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  const handleDelete = async (tryoutId: string) => {
+    await apiDeleteTryout(tryoutId);
+    fetchList();
+    message.success("Success Delete");
+  };
+
+  const columns: TableProps<TryoutProps>["columns"] = [
     {
       title: "Tryout",
       dataIndex: "tryout",
       key: "tryout",
       render: (_, record) => (
-        <Link underline onClick={() => showModal(record.tryout)}>
-          {record.tryout}
+        <Link
+          underline
+          onClick={() => navigate("/tryout/" + record.tryout_id + "/edit")}
+        >
+          {record.title}
         </Link>
       ),
+    },
+    {
+      title: "Duration",
+      dataIndex: "duration",
+      key: "duration",
+      render: (_, record) => <Text>{record.duration + " Minutes"}</Text>,
     },
     {
       title: "Start Time",
       dataIndex: "startTime",
       key: "startTime",
-      render: (_, { startTime }) => (
-        <Text>{formatDateToCustomString(startTime)}</Text>
+      render: (_, { start_time }) => (
+        <Text>{formatDateToCustomString(start_time)}</Text>
       ),
     },
     {
       title: "End Time",
       dataIndex: "endTime",
       key: "endTime",
-      render: (_, { endTime }) => (
-        <Text>{formatDateToCustomString(endTime)}</Text>
+      render: (_, { end_time }) => (
+        <Text>{formatDateToCustomString(end_time)}</Text>
       ),
     },
     {
       title: "Status",
       key: "status",
       dataIndex: "status",
-      render: (_, { startTime, endTime }) => (
-        <Tag color={statusColor(checkStatus(startTime, endTime))}>
-          {checkStatus(startTime, endTime)}
+      render: (_, { start_time, end_time }) => (
+        <Tag color={statusColor(checkStatus(start_time, end_time))}>
+          {checkStatus(start_time, end_time)}
         </Tag>
+      ),
+    },
+    {
+      title: "Action",
+      key: "action",
+      dataIndex: "action",
+      render: (_, record) => (
+        <DeleteOutlined
+          onClick={() => handleDelete(record.tryout_id)}
+          style={{ color: "red" }}
+        />
       ),
     },
   ];
 
-  const [isModalOpen, setIsModalOpen] = useState(false);
-  const [modalTitle, setModalTitle] = useState("Input Token");
-  const [form] = Form.useForm();
-
-  const showModal = (modalTitle: string) => {
-    setModalTitle(modalTitle);
-    setIsModalOpen(true);
-  };
-
   function formatDateToCustomString(date: any) {
-    const options = {
-      year: "numeric",
-      month: "long",
-      day: "numeric",
-      hour: "numeric",
-      minute: "numeric",
-      hour12: false,
-    };
-
-    const formattedDate = date
-      .toLocaleDateString("id-ID", options)
-      .replace(/,/g, "");
-
-    return formattedDate;
+    return dayjs(date).locale("id").format("DD MMMM YYYY HH:mm");
   }
 
   const statusColor = (status: string) => {
@@ -113,24 +117,42 @@ const ListTryout = () => {
     }
   };
 
-  const checkStatus = (startTime: Date, endTime: Date) => {
-    if (startTime < new Date() && endTime > new Date()) {
+  const checkStatus = (startTime: Date | string, endTime: Date | string) => {
+    if (new Date(startTime) < new Date() && new Date(endTime) > new Date()) {
       return "ON GOING";
-    } else if (startTime > new Date()) {
+    } else if (new Date(startTime) > new Date()) {
       return "IN COMING";
-    } else if (endTime < new Date()) {
+    } else if (new Date(endTime) < new Date()) {
       return "FINISHED";
     } else {
       return "UNKNOWN";
     }
   };
 
-  const onFinish = (values: any) => {
-    console.log("Success:", values);
+  const handleCreate = async (data: any) => {
+    const res = await apiCreateTryout(data);
+    if (res) {
+      setShowModal(false);
+      fetchList();
+      message.success("Create Tryout Success");
+    }
+  };
+  const onFinishFailed = (errorInfo: any) => {
+    message.error(getErrorMessage(errorInfo));
   };
 
-  const onFinishFailed = (errorInfo: any) => {
-    console.log("Failed:", errorInfo);
+  const onChange = (
+    value: DatePickerProps["value"] | RangePickerProps["value"],
+    dateString: [string, string] | string
+  ) => {
+    console.log("Selected Time: ", value);
+    console.log("Formatted Selected Time: ", dateString);
+  };
+
+  const onOk = (
+    value: DatePickerProps["value"] | RangePickerProps["value"]
+  ) => {
+    console.log("onOk: ", value);
   };
 
   return (
@@ -142,35 +164,63 @@ const ListTryout = () => {
           justifyContent: "flex-end",
           justifyItems: "flex-end",
           paddingBlock: 20,
+          marginBottom: 20,
           color: "white",
           backgroundColor: "#04073B",
         }}
+        onClick={() => setShowModal(true)}
       >
         <PlusOutlined />
         Create Tryout
       </Button>
-      <Table columns={columns} dataSource={data} />
+      <Table columns={columns} dataSource={tryoutData} />
 
-      <Modal
-        title={modalTitle}
-        open={isModalOpen}
-        onCancel={() => setIsModalOpen(false)}
-        onOk={form.submit}
-      >
+      <Modal open={showModal} onCancel={() => setShowModal(false)} footer={false}>
+        <Title level={3} style={{ fontWeight: "bold" }}>
+          Create Tryout
+        </Title>
         <Form
-          form={form}
-          name="basic"
-          onFinish={onFinish}
+          name="createTryout"
+          onFinish={handleCreate}
           onFinishFailed={onFinishFailed}
-          autoComplete="off"
           layout="vertical"
         >
-          <Form.Item<FieldType>
-            label="Token"
-            name="token"
-            rules={[{ required: true, message: "Please input your token!" }]}
+          <Form.Item
+            label="Tryout Name"
+            name="title"
+            rules={[{ required: true }]}
           >
             <Input />
+          </Form.Item>
+
+          <Form.Item
+            label="Duration (Minutes)"
+            name="duration"
+            rules={[{ required: true }]}
+          >
+            <InputNumber />
+          </Form.Item>
+
+          <Form.Item
+            label="Start Time"
+            name="start_time"
+            rules={[{ required: true }]}
+          >
+            <DatePicker showTime onChange={onChange} onOk={onOk} />
+          </Form.Item>
+
+          <Form.Item
+            label="End Time"
+            name="end_time"
+            rules={[{ required: true }]}
+          >
+            <DatePicker showTime onChange={onChange} onOk={onOk} />
+          </Form.Item>
+
+          <Form.Item wrapperCol={{ offset: 8, span: 16 }}>
+            <Button type="primary" htmlType="submit">
+              Submit
+            </Button>
           </Form.Item>
         </Form>
       </Modal>

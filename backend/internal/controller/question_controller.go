@@ -97,9 +97,15 @@ func (controller QuestionController) FindAll(c *fiber.Ctx) error {
 	if err != nil {
 		return err
 	}
+	payload := map[string]interface{}{
+        "count":   len(result),
+        "next":    nil,
+        "prev":    nil,
+        "results": result,
+    }
 	return c.Status(fiber.StatusOK).JSON(model.GeneralResponse{
 		Code:    200,
 		Message: "Success",
-		Data:    result,
+		Data:    payload,
 	})
 }
