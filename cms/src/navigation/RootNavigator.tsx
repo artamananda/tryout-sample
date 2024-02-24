@@ -10,6 +10,7 @@ import AppLayout from "../screens/Layout/AppLayout";
 import TryoutScreen from "../screens/Tryout";
 import TryoutResultScreen from "../screens/TryoutResult";
 import EditTryoutScreen from "../screens/Tryout/Edit";
+import FormKpu from "../components/Tryout/FormKpu";
 
 const RootNavigator = () => {
   return (
@@ -68,6 +69,15 @@ const RootNavigator = () => {
             element={
               <PrivateRoute loginPath="/login">
                 <EditTryoutScreen />
+              </PrivateRoute>
+            }
+          />
+
+          <Route
+            path="/tryout/:tryoutId/edit/kpu"
+            element={
+              <PrivateRoute loginPath="/login">
+                <FormKpu />
               </PrivateRoute>
             }
           />
