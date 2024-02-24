@@ -12,6 +12,7 @@ type Question struct {
 	TryoutID      uuid.UUID      `json:"tryout_id"`
 	Type          string         `json:"type"`
 	Text          string         `json:"text"`
+	ImageUrl      string         `json:"image_url"`
 	Options       pq.StringArray `gorm:"type:text[]" json:"options"`
 	CorrectAnswer string         `json:"correct_answer"`
 	Points        int            `json:"points"`

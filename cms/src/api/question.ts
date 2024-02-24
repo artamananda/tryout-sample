@@ -17,3 +17,18 @@ export async function apiCreateQuestion(data: CreateQuestionRequest) {
     message.error(error);
   }
 }
+
+export async function doCreateQuestions(data: any) {
+  try {
+    let newData: CreateQuestionRequest[] = [];
+    await Promise.all(
+      newData.map(async (item) => {
+        await apiCreateQuestion(item);
+      })
+    );
+  } catch (err) {
+    const error = getErrorMessage(err);
+    console.error(error);
+    message.error(error);
+  }
+}

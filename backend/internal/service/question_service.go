@@ -33,6 +33,7 @@ func (service *QuestionService) Create(ctx context.Context, request model.Create
 		TryoutID:      uuid.MustParse(tryoutID),
 		Type:          request.Type,
 		Text:          request.Text,
+		ImageUrl:      request.ImageUrl,
 		Options:       request.Options,
 		CorrectAnswer: request.CorrectAnswer,
 		Points:        request.Points,
@@ -49,6 +50,7 @@ func (service *QuestionService) Create(ctx context.Context, request model.Create
 		TryoutID:      question.TryoutID,
 		Type:          question.Type,
 		Text:          question.Text,
+		ImageUrl:      question.ImageUrl,
 		Options:       question.Options,
 		CorrectAnswer: question.CorrectAnswer,
 		Points:        question.Points,
@@ -70,6 +72,7 @@ func (service *QuestionService) Update(ctx context.Context, request model.Update
 
 	question.Type = request.Type
 	question.Text = request.Text
+	question.ImageUrl = request.ImageUrl
 	question.CorrectAnswer = request.CorrectAnswer
 	question.Points = request.Points
 
@@ -86,6 +89,7 @@ func (service *QuestionService) Update(ctx context.Context, request model.Update
 		TryoutID:      question.TryoutID,
 		Type:          question.Type,
 		Text:          question.Text,
+		ImageUrl:      question.ImageUrl,
 		Options:       question.Options,
 		CorrectAnswer: question.CorrectAnswer,
 		Points:        question.Points,
@@ -111,6 +115,7 @@ func (service *QuestionService) FindByID(ctx context.Context, questionID string)
 		TryoutID:      question.TryoutID,
 		Type:          question.Type,
 		Text:          question.Text,
+		ImageUrl:      question.ImageUrl,
 		Options:       question.Options,
 		CorrectAnswer: question.CorrectAnswer,
 		Points:        question.Points,
@@ -131,6 +136,7 @@ func (service *QuestionService) FindAll(ctx context.Context) ([]model.QuestionRe
 				TryoutID:      question.TryoutID,
 				Type:          question.Type,
 				Text:          question.Text,
+				ImageUrl:      question.ImageUrl,
 				Options:       question.Options,
 				CorrectAnswer: question.CorrectAnswer,
 				Points:        question.Points,

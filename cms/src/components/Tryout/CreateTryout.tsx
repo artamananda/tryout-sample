@@ -42,9 +42,13 @@ const CreateTryout = () => {
     setPilgan(checked);
   };
 
+  const handleUpdateQuestion = (data: any) => {
+    console.log(data);
+  };
+
   return (
     <div>
-      <Form layout="vertical">
+      <Form layout="vertical" onFinish={handleUpdateQuestion}>
         <Title level={3}>Basic Config</Title>
         <Title style={{ fontWeight: "bold" }}>
           {"Tes Potensi Skolastik (TPS)"}
@@ -53,7 +57,7 @@ const CreateTryout = () => {
         {Array.from({ length: 30 }, (_, index) => (
           <React.Fragment key={index}>
             <Form.Item
-              name={`question${index}`}
+              name={`question${index + 1}_kpu`}
               label={`Question ${index + 1}`}
             >
               <ReactQuill
@@ -65,7 +69,10 @@ const CreateTryout = () => {
                 formats={quillFormats}
               />
             </Form.Item>
-            <Form.Item name={`answer${index}`} label={`Answer ${index + 1}`}>
+            <Form.Item
+              name={`answer${index + 1}_kpu`}
+              label={`Answer ${index + 1}`}
+            >
               <div
                 style={{
                   display: "flex",
@@ -110,6 +117,7 @@ const CreateTryout = () => {
         <Form.Item>
           <Button
             type="primary"
+            htmlType="submit"
             style={{
               display: "flex",
               width: "100%",
