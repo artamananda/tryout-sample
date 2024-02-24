@@ -18,14 +18,18 @@ export async function apiCreateQuestion(data: CreateQuestionRequest) {
   }
 }
 
-export async function doCreateQuestions(data: any) {
+export async function doCreateQuestions(data: CreateQuestionRequest[]) {
   try {
-    let newData: CreateQuestionRequest[] = [];
-    await Promise.all(
-      newData.map(async (item) => {
+    const res = await Promise.all(
+      data.map(async (item) => {
+        console.log(item);
         await apiCreateQuestion(item);
       })
     );
+
+    if (res) {
+      message.success("success update question");
+    }
   } catch (err) {
     const error = getErrorMessage(err);
     console.error(error);

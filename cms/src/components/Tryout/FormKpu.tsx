@@ -1,9 +1,12 @@
-import { Button, Divider, Form, Input, Typography } from "antd";
-import React, { useState } from "react";
+import { Button, Divider, Form, Input, Typography, message } from "antd";
+import React, { useEffect, useState } from "react";
 import ReactQuill from "react-quill";
 import "react-quill/dist/quill.snow.css";
 import katex from "katex";
 import "katex/dist/katex.min.css";
+import { CreateQuestionRequest } from "../../types/question";
+import { getErrorMessage } from "../../helpers/errorHandler";
+import { doCreateQuestions } from "../../api/question";
 window.katex = katex;
 
 const quillModules = {
@@ -34,14 +37,74 @@ const quillFormats = [
 const { Title } = Typography;
 
 const FormKpu = () => {
-  const [value, setValue] = useState("");
-  const handleUpdateQuestion = (data: any) => {
-    console.log(data);
+  const questionLength = 30;
+  const questionType = "kpu";
+  const url = new URL(window.location.href);
+  const pathname = url.pathname;
+  const parts = pathname.split("/");
+  const tryoutId = parts[parts.length - 3];
+  const [questions, setQuestions] = useState<string[]>(
+    Array.from({ length: questionLength }, () => "")
+  );
+
+  const [options, setOptions] = useState<string[][]>(
+    Array.from({ length: questionLength }, () =>
+      Array.from({ length: 5 }, () => "")
+    )
+  );
+
+  const [answers, setAnswers] = useState<string[]>(
+    Array.from({ length: questionLength }, () => "")
+  );
+
+  const handleUpdateQuestion = async (data: any) => {
+    try {
+      let newData: CreateQuestionRequest[] = [];
+      for (let i = 0; i < questionLength; i++) {
+        const createQuestion: CreateQuestionRequest = {
+          tryout_id: tryoutId,
+          type: questionType,
+          text: questions[i],
+          options: options[i],
+          correct_answer: answers[i],
+        };
+        newData.push(createQuestion);
+      }
+      await doCreateQuestions(newData);
+    } catch (err) {
+      message.error(getErrorMessage(err));
+    }
   };
+
+  const updateQuestionAtIndex = (index: number, newValue: string) => {
+    const updatedQuestions = [...questions];
+    updatedQuestions[index] = newValue;
+    setQuestions(updatedQuestions);
+  };
+
+  const updateOptionAtIndex = (
+    index: number,
+    subIndex: number,
+    newValue: string
+  ) => {
+    const updatedOptions = [...options];
+    updatedOptions[index][subIndex] = newValue;
+    setOptions(updatedOptions);
+  };
+
+  const updateAnswerAtIndex = (index: number, newValue: string) => {
+    const updatedAnswers = [...answers];
+    updatedAnswers[index] = newValue;
+    setAnswers(updatedAnswers);
+  };
+
+  useEffect(() => {
+    console.log(questions);
+  }, [questions]);
   return (
     <Form layout="vertical" onFinish={handleUpdateQuestion}>
       <Title>Kemampuan Penalaran Umum</Title>
-      {Array.from({ length: 30 }, (_, index) => (
+      {Array.from({ length: questionLength }, (_, index) => (
         <React.Fragment key={index}>
           <Form.Item
             name={`question_${index + 1}_kpu`}
@@ -50,8 +113,8 @@ const FormKpu = () => {
             <ReactQuill
               style={{ backgroundColor: "white" }}
               theme="snow"
-              value={value}
-              onChange={setValue}
+              value={questions[index]}
+              onChange={(value) => updateQuestionAtIndex(index, value)}
               modules={quillModules}
               formats={quillFormats}
             />
@@ -61,38 +124,51 @@ const FormKpu = () => {
             name={`option_${index + 1}_A_kpu`}
             label={`Option ${index + 1} A`}
           >
-            <Input />
+            <Input
+              onChange={(e) => updateOptionAtIndex(index, 0, e.target.value)}
+            />
           </Form.Item>
           <Form.Item
             name={`option_${index + 1}_B_kpu`}
             label={`Option ${index + 1} B`}
           >
-            <Input />
+            <Input
+              onChange={(e) => updateOptionAtIndex(index, 1, e.target.value)}
+            />
           </Form.Item>
           <Form.Item
             name={`option_${index + 1}_C_kpu`}
             label={`Option ${index + 1} C`}
           >
-            <Input />
+            <Input
+              onChange={(e) => updateOptionAtIndex(index, 2, e.target.value)}
+            />
           </Form.Item>
           <Form.Item
             name={`option_${index + 1}_D_kpu`}
             label={`Option ${index + 1} D`}
           >
-            <Input />
+            <Input
+              onChange={(e) => updateOptionAtIndex(index, 3, e.target.value)}
+            />
           </Form.Item>
           <Form.Item
             name={`option_${index + 1}_E_kpu`}
             label={`Option ${index + 1} E`}
           >
-            <Input />
+            <Input
+              onChange={(e) => updateOptionAtIndex(index, 4, e.target.value)}
+            />
           </Form.Item>
 
           <Form.Item
             name={`answer_${index + 1}_kpu`}
             label={`Answer ${index + 1}`}
           >
-            <Input />
+            <Input
+              value={answers[index]}
+              onChange={(e) => updateAnswerAtIndex(index, e.target.value)}
+            />
           </Form.Item>
 
           <Divider />
