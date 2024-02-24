@@ -1,9 +1,11 @@
 import React, { useEffect, useState } from 'react';
-import { Table, Tag, Typography, Modal, Form, Input } from 'antd';
+import { Table, Tag, Typography, Modal, Form, Input, message } from 'antd';
 import type { TableProps } from 'antd';
 import useFetchList from '../../hooks/useFetchList';
 import { TryoutProps } from '../../types/tryout.type';
 import dayjs from 'dayjs';
+import { checkToken } from '../../api/tryout';
+import { useNavigate } from 'react-router-dom';
 
 const { Text, Link } = Typography;
 
@@ -44,9 +46,27 @@ const ListTryout = () => {
     endpoint: 'tryout'
   });
 
+  const [id, setId] = useState('');
+  const navigate = useNavigate();
+
   useEffect(() => {
     fetchList();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+
+  const onFinish = async (data: { tryout_id: string; token: string }) => {
+    try {
+      const res = await checkToken(data);
+      if (res) {
+        message.success('Validation success');
+        navigate('/tryout/' + id);
+      } else {
+        message.error('Token Wrong');
+      }
+    } catch (err) {
+      message.error('Token Wrong');
+    }
+  };
 
   const columns: TableProps<TryoutProps>['columns'] = [
     {
@@ -54,7 +74,13 @@ const ListTryout = () => {
       dataIndex: 'tryout',
       key: 'tryout',
       render: (_, record) => (
-        <Link underline onClick={() => showModal(record.title)}>
+        <Link
+          underline
+          onClick={() => {
+            setId(record.tryout_id);
+            showModal(record.title);
+          }}
+        >
           {record.title}
         </Link>
       )
@@ -122,12 +148,8 @@ const ListTryout = () => {
     }
   };
 
-  const onFinish = (values: any) => {
-    console.log('Success:', values);
-  };
-
   const onFinishFailed = (errorInfo: any) => {
-    console.log('Failed:', errorInfo);
+    message.error('Wrong Token');
   };
 
   return (
@@ -137,7 +159,10 @@ const ListTryout = () => {
       <Modal
         title={modalTitle}
         open={isModalOpen}
-        onCancel={() => setIsModalOpen(false)}
+        onCancel={() => {
+          setId('');
+          setIsModalOpen(false);
+        }}
         onOk={form.submit}
       >
         <Form
@@ -148,6 +173,9 @@ const ListTryout = () => {
           autoComplete="off"
           layout="vertical"
         >
+          <Form.Item name="tryout_id" initialValue={id} hidden>
+            <Input value={id} />
+          </Form.Item>
           <Form.Item<FieldType>
             label="Token"
             name="token"

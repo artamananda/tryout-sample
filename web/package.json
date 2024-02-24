@@ -13,9 +13,13 @@
     "antd": "^5.11.5",
     "axios": "^1.6.7",
     "env-cmd": "^10.1.0",
+    "html-react-parser": "^5.1.7",
+    "katex": "^0.16.9",
     "react": "^18.2.0",
     "react-auth-kit": "2.12.4",
     "react-dom": "^18.2.0",
+    "react-html-parser": "^2.0.2",
+    "react-katex": "^3.0.1",
     "react-scripts": "5.0.1",
     "typescript": "^4.4.2",
     "use-debounce": "8.0.4",
@@ -46,5 +50,9 @@
       "last 1 firefox version",
       "last 1 safari version"
     ]
+  },
+  "devDependencies": {
+    "@types/katex": "^0.16.7",
+    "@types/react-html-parser": "^2.0.6"
   }
 }

@@ -122,6 +122,31 @@ func (service *QuestionService) FindByID(ctx context.Context, questionID string)
 	}, nil
 }
 
+func (service *QuestionService) FindByTryoutID(ctx context.Context, tryoutID string) ([]model.QuestionResponse, error) {
+	questions, err := service.QuestionRepository.FindByTryoutID(ctx, uuid.MustParse(tryoutID))
+	if err != nil {
+		return nil, err
+	}
+
+	var questionResponses []model.QuestionResponse
+	for _, question := range questions {
+		questionResponses = append(questionResponses, model.QuestionResponse{
+			QuestionID:    question.QuestionID,
+			TryoutID:      question.TryoutID,
+			Type:          question.Type,
+			Text:          question.Text,
+			ImageUrl:      question.ImageUrl,
+			Options:       question.Options,
+			CorrectAnswer: question.CorrectAnswer,
+			Points:        question.Points,
+		})
+	}
+	if len(questions) == 0 {
+		return []model.QuestionResponse{}, nil
+	}
+	return questionResponses, nil
+}
+
 func (service *QuestionService) FindAll(ctx context.Context) ([]model.QuestionResponse, error) {
 	questions, err := service.QuestionRepository.FindAll(ctx)
 	if err != nil {

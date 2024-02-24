@@ -51,8 +51,6 @@ export default function useFetchList<DataType, ExtendType = {}>(props: Props) {
       const res = await apiRequest.get<
         IHttpResponse<IPayloadPagination<DataType>>
       >(`${props.endpoint}${generateQueryString(query)}`);
-      console.log('hello');
-      console.log('data', res.data.payload);
 
       setPagination((oldVal) => {
         return {
