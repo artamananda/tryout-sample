@@ -4,11 +4,15 @@ import { Typography } from 'antd';
 
 const { Text } = Typography;
 
-const Option = (props: { options: string[] }) => {
+const Option = (props: {
+  options: string[];
+  setAnswer: (value: string) => void;
+}) => {
   const options = props.options || ['A', 'B', 'C', 'D', 'E'];
   const [value, setValue] = useState(options[0]);
 
   const onChange = (e: RadioChangeEvent) => {
+    props.setAnswer(e.target.value);
     setValue(e.target.value);
   };
 

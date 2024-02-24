@@ -7,7 +7,10 @@ import logo from '../../assets/logo-yellow.png';
 import { Typography } from 'antd';
 import useFetchList from '../../hooks/useFetchList';
 import { QuestionProps } from '../../types/question';
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { sendAnswer } from '../../api/userAnswer';
+import { useAuthUser } from 'react-auth-kit';
 
 const { Text } = Typography;
 
@@ -23,6 +26,8 @@ const headerStyle: React.CSSProperties = {
 };
 
 const Tryout = () => {
+  const auth = useAuthUser();
+  const navigate = useNavigate();
   const splitLink = window.location.href.split('/');
   const tryoutId = splitLink[splitLink.length - 3];
   const questionType = splitLink[splitLink.length - 2];
@@ -30,6 +35,44 @@ const Tryout = () => {
   const { data: questionData } = useFetchList<QuestionProps>({
     endpoint: 'tryout/question/' + tryoutId
   });
+
+  const [answer, setAnswer] = useState('');
+
+  const handleNext = async () => {
+    if (answer) {
+      const data = {
+        user_id: auth()?.user_id,
+        tryout_id: tryoutId,
+        question_id: questionData?.[1]?.question_id,
+        user_answer: answer
+      };
+      console.log(data);
+      await sendAnswer(data);
+    }
+    setAnswer('');
+    navigate(
+      `/tryout/${tryoutId}/${questionType}/${Number(questionNumber) + 1}`
+    );
+  };
+
+  const handlePrev = async () => {
+    if (answer) {
+      const data = {
+        user_id: auth()?.user_id,
+        tryout_id: tryoutId,
+        question_id: questionData?.[1]?.question_id,
+        user_answer: answer
+      };
+      console.log(data);
+      await sendAnswer(data);
+    }
+    setAnswer('');
+    navigate(
+      `/tryout/${tryoutId}/${questionType}/${
+        Number(questionNumber) - 1 > 0 ? Number(questionNumber) - 1 : 1
+      }`
+    );
+  };
 
   useEffect(() => {
     console.log(questionData);
@@ -45,15 +88,25 @@ const Tryout = () => {
       >
         <Header style={headerStyle}>
           <Image src={logo} width={120} preview={false} />
-          <div>Penalaran Umum</div>
+          <div>
+            {questionType === 'kpu'
+              ? 'Penalaran Umum'
+              : questionType === 'ppu'
+              ? 'Pengetahuan dan Pemahaman Umum'
+              : questionType === 'pbm'
+              ? 'Pemahaman Bacaan dan Menulis'
+              : questionType === 'pku'
+              ? 'Pengetahuan Kuantitatif'
+              : 'Literasi'}
+          </div>
           <div>{Timer()}</div>
         </Header>
         <Content style={{ fontSize: 30, margin: 30 }}>
-          <Text style={{ fontSize: 30 }}>Soal No. 1</Text>
+          <Text style={{ fontSize: 30 }}>{`Soal No. ${questionNumber}`}</Text>
           <div>
             <Question text={questionData?.[1]?.text} />
           </div>
-          <Option options={questionData?.[1]?.options} />
+          <Option setAnswer={setAnswer} options={questionData?.[1]?.options} />
         </Content>
         <Button
           style={{
@@ -65,6 +118,21 @@ const Tryout = () => {
             alignItems: 'center',
             justifyContent: 'center'
           }}
+          onClick={handlePrev}
+        >
+          {'<<<Soal Sebelumnya'}
+        </Button>
+        <Button
+          style={{
+            color: 'white',
+            backgroundColor: '#04073B',
+            marginInline: '30vw',
+            paddingBlock: 25,
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center'
+          }}
+          onClick={handleNext}
         >
           {'Soal Selanjutnya >>>'}
         </Button>
