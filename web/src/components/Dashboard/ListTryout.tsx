@@ -59,7 +59,7 @@ const ListTryout = () => {
       const res = await checkToken(data);
       if (res) {
         message.success('Validation success');
-        navigate('/tryout/' + id);
+        navigate('/tryout/' + id + '/kpu/1');
       } else {
         message.error('Token Wrong');
       }

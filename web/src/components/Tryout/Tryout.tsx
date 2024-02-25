@@ -25,6 +25,13 @@ const headerStyle: React.CSSProperties = {
   backgroundColor: '#04073B'
 };
 
+const enum Direction {
+  Up = 'UP',
+  Down = 'DOWN',
+  Left = 'LEFT',
+  Right = 'RIGHT'
+}
+
 const Tryout = () => {
   const auth = useAuthUser();
   const navigate = useNavigate();
@@ -36,6 +43,13 @@ const Tryout = () => {
     endpoint: 'tryout/question/' + tryoutId
   });
 
+  const plusData: { [key: string]: number } = {
+    kpu: 0,
+    ppu: 30,
+    pbm: 50,
+    pku: 70
+  };
+
   const [answer, setAnswer] = useState('');
 
   const handleNext = async () => {
@@ -43,16 +57,28 @@ const Tryout = () => {
       const data = {
         user_id: auth()?.user_id,
         tryout_id: tryoutId,
-        question_id: questionData?.[1]?.question_id,
+        question_id:
+          questionData?.[plusData[questionType] + Number(questionNumber) - 1]
+            ?.question_id,
         user_answer: answer
       };
       console.log(data);
       await sendAnswer(data);
     }
     setAnswer('');
-    navigate(
-      `/tryout/${tryoutId}/${questionType}/${Number(questionNumber) + 1}`
-    );
+    if (questionType === 'kpu' && Number(questionNumber) === 30) {
+      navigate(`/tryout/${tryoutId}/ppu/1`);
+    } else if (questionType === 'ppu' && Number(questionNumber) === 20) {
+      navigate(`/tryout/${tryoutId}/pbm/1`);
+    } else if (questionType === 'pbm' && Number(questionNumber) === 20) {
+      navigate(`/tryout/${tryoutId}/pku/1`);
+    } else if (questionType === 'pku' && Number(questionNumber) === 15) {
+      navigate(`/tryout`);
+    } else {
+      navigate(
+        `/tryout/${tryoutId}/${questionType}/${Number(questionNumber) + 1}`
+      );
+    }
   };
 
   const handlePrev = async () => {
@@ -60,7 +86,9 @@ const Tryout = () => {
       const data = {
         user_id: auth()?.user_id,
         tryout_id: tryoutId,
-        question_id: questionData?.[1]?.question_id,
+        question_id:
+          questionData?.[plusData[questionType] + Number(questionNumber) - 1]
+            ?.question_id,
         user_answer: answer
       };
       console.log(data);
@@ -104,9 +132,22 @@ const Tryout = () => {
         <Content style={{ fontSize: 30, margin: 30 }}>
           <Text style={{ fontSize: 30 }}>{`Soal No. ${questionNumber}`}</Text>
           <div>
-            <Question text={questionData?.[1]?.text} />
+            <Question
+              text={
+                questionData?.[
+                  plusData[questionType] + Number(questionNumber) - 1
+                ]?.text
+              }
+            />
           </div>
-          <Option setAnswer={setAnswer} options={questionData?.[1]?.options} />
+          <Option
+            setAnswer={setAnswer}
+            options={
+              questionData?.[
+                plusData[questionType] + Number(questionNumber) - 1
+              ]?.options
+            }
+          />
         </Content>
         <Button
           style={{
@@ -134,7 +175,9 @@ const Tryout = () => {
           }}
           onClick={handleNext}
         >
-          {'Soal Selanjutnya >>>'}
+          {questionType === 'pku' && Number(questionNumber) === 15
+            ? 'Selesai'
+            : 'Soal Selanjutnya >>>'}
         </Button>
         <Footer style={{ textAlign: 'center' }}>
           Telisik Tryout ©2024 Created by Artamananda
