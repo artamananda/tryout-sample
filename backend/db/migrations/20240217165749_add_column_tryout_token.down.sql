@@ -1,0 +1,2 @@
+ALTER TABLE tryouts
+DROP COLUMN token;

@@ -10,6 +10,13 @@ import AppLayout from "../screens/Layout/AppLayout";
 import TryoutScreen from "../screens/Tryout";
 import TryoutResultScreen from "../screens/TryoutResult";
 import EditTryoutScreen from "../screens/Tryout/Edit";
+import FormKpu from "../components/Tryout/FormKpu";
+import FormPpu from "../components/Tryout/FormPpu";
+import FormPbm from "../components/Tryout/FormPbm";
+import FormPku from "../components/Tryout/FormPku";
+import FormInd from "../components/Tryout/FormInd";
+import FormIng from "../components/Tryout/FormIng";
+import FormMtk from "../components/Tryout/FormMtk";
 
 const RootNavigator = () => {
   return (
@@ -68,6 +75,63 @@ const RootNavigator = () => {
             element={
               <PrivateRoute loginPath="/login">
                 <EditTryoutScreen />
+              </PrivateRoute>
+            }
+          />
+
+          <Route
+            path="/tryout/:tryoutId/edit/kpu"
+            element={
+              <PrivateRoute loginPath="/login">
+                <FormKpu />
+              </PrivateRoute>
+            }
+          />
+          <Route
+            path="/tryout/:tryoutId/edit/ppu"
+            element={
+              <PrivateRoute loginPath="/login">
+                <FormPpu />
+              </PrivateRoute>
+            }
+          />
+          <Route
+            path="/tryout/:tryoutId/edit/pbm"
+            element={
+              <PrivateRoute loginPath="/login">
+                <FormPbm />
+              </PrivateRoute>
+            }
+          />
+          <Route
+            path="/tryout/:tryoutId/edit/pku"
+            element={
+              <PrivateRoute loginPath="/login">
+                <FormPku />
+              </PrivateRoute>
+            }
+          />
+          <Route
+            path="/tryout/:tryoutId/edit/ind"
+            element={
+              <PrivateRoute loginPath="/login">
+                <FormInd />
+              </PrivateRoute>
+            }
+          />
+          <Route
+            path="/tryout/:tryoutId/edit/ing"
+            element={
+              <PrivateRoute loginPath="/login">
+                <FormIng />
+              </PrivateRoute>
+            }
+          />
+          <Route
+            path="/tryout/:tryoutId/edit/mtk"
+            element={
+              <PrivateRoute loginPath="/login">
+                <FormMtk />
               </PrivateRoute>
             }
           />

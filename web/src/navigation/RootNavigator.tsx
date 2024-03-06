@@ -56,7 +56,7 @@ const RootNavigator = () => {
         </Route>
 
         <Route
-          path="/tryout/:id"
+          path="/tryout/:id/:type/:qNumber"
           element={
             <PrivateRoute loginPath="/login">
               <TryoutScreen />

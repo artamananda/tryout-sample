@@ -23,6 +23,7 @@ func (controller QuestionController) Route(app *fiber.App) {
 	app.Delete("/v1/api/question/:id", middleware.AuthenticateJWT("admin", controller.Config), controller.Delete)
 	app.Get("/v1/api/question/:id", controller.FindById)
 	app.Get("/v1/api/question", controller.FindAll)
+	app.Get("/v1/api/tryout/question/:id", controller.FindByTryoutId)
 }
 
 func (controller QuestionController) Create(c *fiber.Ctx) error {
@@ -89,6 +90,26 @@ func (controller QuestionController) FindById(c *fiber.Ctx) error {
 		Code:    200,
 		Message: "Success",
 		Data:    result,
+	})
+}
+
+func (controller QuestionController) FindByTryoutId(c *fiber.Ctx) error {
+	id := c.Params("id")
+
+	result, err := controller.QuestionService.FindByTryoutID(c.Context(), id)
+	if err != nil {
+		return err
+	}
+	payload := map[string]interface{}{
+        "count":   len(result),
+        "next":    nil,
+        "prev":    nil,
+        "results": result,
+    }
+	return c.Status(fiber.StatusOK).JSON(model.GeneralResponse{
+		Code:    200,
+		Message: "Success",
+		Data:    payload,
 	})
 }
 

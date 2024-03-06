@@ -31,7 +31,9 @@ func (service *QuestionService) Create(ctx context.Context, request model.Create
 
 	question := entity.Question{
 		TryoutID:      uuid.MustParse(tryoutID),
+		Type:          request.Type,
 		Text:          request.Text,
+		ImageUrl:      request.ImageUrl,
 		Options:       request.Options,
 		CorrectAnswer: request.CorrectAnswer,
 		Points:        request.Points,
@@ -46,7 +48,9 @@ func (service *QuestionService) Create(ctx context.Context, request model.Create
 	return model.QuestionResponse{
 		QuestionID:    question.QuestionID,
 		TryoutID:      question.TryoutID,
+		Type:          question.Type,
 		Text:          question.Text,
+		ImageUrl:      question.ImageUrl,
 		Options:       question.Options,
 		CorrectAnswer: question.CorrectAnswer,
 		Points:        question.Points,
@@ -66,7 +70,9 @@ func (service *QuestionService) Update(ctx context.Context, request model.Update
 		return model.QuestionResponse{}, err
 	}
 
+	question.Type = request.Type
 	question.Text = request.Text
+	question.ImageUrl = request.ImageUrl
 	question.CorrectAnswer = request.CorrectAnswer
 	question.Points = request.Points
 
@@ -81,7 +87,9 @@ func (service *QuestionService) Update(ctx context.Context, request model.Update
 	return model.QuestionResponse{
 		QuestionID:    question.QuestionID,
 		TryoutID:      question.TryoutID,
+		Type:          question.Type,
 		Text:          question.Text,
+		ImageUrl:      question.ImageUrl,
 		Options:       question.Options,
 		CorrectAnswer: question.CorrectAnswer,
 		Points:        question.Points,
@@ -105,11 +113,38 @@ func (service *QuestionService) FindByID(ctx context.Context, questionID string)
 	return model.QuestionResponse{
 		QuestionID:    question.QuestionID,
 		TryoutID:      question.TryoutID,
+		Type:          question.Type,
 		Text:          question.Text,
+		ImageUrl:      question.ImageUrl,
 		Options:       question.Options,
 		CorrectAnswer: question.CorrectAnswer,
 		Points:        question.Points,
 	}, nil
+}
+
+func (service *QuestionService) FindByTryoutID(ctx context.Context, tryoutID string) ([]model.QuestionResponse, error) {
+	questions, err := service.QuestionRepository.FindByTryoutID(ctx, uuid.MustParse(tryoutID))
+	if err != nil {
+		return nil, err
+	}
+
+	var questionResponses []model.QuestionResponse
+	for _, question := range questions {
+		questionResponses = append(questionResponses, model.QuestionResponse{
+			QuestionID:    question.QuestionID,
+			TryoutID:      question.TryoutID,
+			Type:          question.Type,
+			Text:          question.Text,
+			ImageUrl:      question.ImageUrl,
+			Options:       question.Options,
+			CorrectAnswer: question.CorrectAnswer,
+			Points:        question.Points,
+		})
+	}
+	if len(questions) == 0 {
+		return []model.QuestionResponse{}, nil
+	}
+	return questionResponses, nil
 }
 
 func (service *QuestionService) FindAll(ctx context.Context) ([]model.QuestionResponse, error) {
@@ -124,7 +159,9 @@ func (service *QuestionService) FindAll(ctx context.Context) ([]model.QuestionRe
 			model.QuestionResponse{
 				QuestionID:    question.QuestionID,
 				TryoutID:      question.TryoutID,
+				Type:          question.Type,
 				Text:          question.Text,
+				ImageUrl:      question.ImageUrl,
 				Options:       question.Options,
 				CorrectAnswer: question.CorrectAnswer,
 				Points:        question.Points,

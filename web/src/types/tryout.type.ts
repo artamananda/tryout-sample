@@ -8,6 +8,7 @@ export interface TryoutProps {
   end_time: Date | string;
   created_at: Date | string;
   updated_at: Date | string;
+  token: string;
 }
 
 export interface FetchAllTryoutsResponse

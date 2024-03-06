@@ -1,20 +1,28 @@
 import { useState, useEffect } from 'react';
+import dayjs from 'dayjs';
 
 const Timer = () => {
-  const [currentTime, setCurrentTime] = useState(new Date());
+  const targetTime = dayjs().add(95, 'minute');
+
+  const [remainingTime, setRemainingTime] = useState(
+    targetTime.diff(dayjs(), 'millisecond') / 1000
+  );
 
   useEffect(() => {
-    const updateTime = () => {
-      setCurrentTime(new Date());
-    };
-    const intervalId = setInterval(updateTime, 1000);
+    const intervalId = setInterval(() => {
+      setRemainingTime((prevRemainingTime) => prevRemainingTime - 1);
+    }, 1000);
 
     return () => clearInterval(intervalId);
   }, []);
 
-  const formattedTime = currentTime.toLocaleTimeString([], { hour12: false });
+  const hours = Math.floor(remainingTime / 3600);
+  const minutes = Math.floor((remainingTime % 3600) / 60);
+  const seconds = remainingTime % 60;
 
-  return formattedTime;
+  return `${hours.toString().padStart(2, '0')}:${minutes
+    .toString()
+    .padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
 };
 
 export default Timer;
