@@ -25,13 +25,6 @@ const headerStyle: React.CSSProperties = {
   backgroundColor: '#04073B'
 };
 
-const enum Direction {
-  Up = 'UP',
-  Down = 'DOWN',
-  Left = 'LEFT',
-  Right = 'RIGHT'
-}
-
 const Tryout = () => {
   const auth = useAuthUser();
   const navigate = useNavigate();
