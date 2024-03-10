@@ -1,5 +1,7 @@
+import ResultTable from "../../components/TryoutResult/ResultTable";
+
 const TryoutResultScreen = () => {
-  return <div>ini tryout result screen</div>;
+  return <ResultTable />;
 };
 
 export default TryoutResultScreen;

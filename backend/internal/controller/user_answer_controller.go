@@ -21,8 +21,8 @@ func (controller UserAnswerController) Route(app *fiber.App) {
 	app.Post("/v1/api/user-answer", middleware.AuthenticateJWT("user", controller.Config), controller.Create)
 	app.Put("/v1/api/user-answer/:id", middleware.AuthenticateJWT("user", controller.Config), controller.Update)
 	app.Delete("/v1/api/user-answer/:id", middleware.AuthenticateJWT("user", controller.Config), controller.Delete)
-	app.Get("/v1/api/user-answer/:id", middleware.AuthenticateJWT("user", controller.Config), controller.FindById)
-	app.Get("/v1/api/user-answer", middleware.AuthenticateJWT("user", controller.Config), controller.FindAll)
+	app.Get("/v1/api/user-answer/:id", controller.FindById)
+	app.Get("/v1/api/user-answer", controller.FindAll)
 }
 
 func (controller UserAnswerController) Create(c *fiber.Ctx) error {
