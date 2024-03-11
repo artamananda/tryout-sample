@@ -5,7 +5,8 @@ env:
 on: [push]
 
 jobs:
-  Deploy-Production:
+  deploy:
+    name: Deploy CMS
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v2
@@ -13,10 +14,6 @@ jobs:
         run: npm install --global vercel@latest
       - name: Change to cms directory
         run: cd cms
-      - name: Install project dependencies
-        run: yarn install
-      - name: Run Yarn build
-        run: yarn build
       - name: Pull Vercel Environment Information
         run: vercel pull --yes --environment=production --token=${{ secrets.VERCEL_TOKEN }}
       - name: Build Project Artifacts
