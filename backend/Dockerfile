@@ -32,5 +32,4 @@ COPY --from=builder $BUILDDIR/db/migrations $PROJECT_DIR/db/migrations/
 COPY --from=builder $BUILDDIR/migration.sh $PROJECT_DIR/migration.sh
 
 # Define the command to run the application
-# RUN ./migration.sh
 CMD ["sh","-c","/opt/tryout-sample/tryout-sample"]
