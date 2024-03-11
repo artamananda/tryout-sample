@@ -1,4 +1,4 @@
-name: Deploy to Fly
+name: Telisik Backend Production Deployment
 on:
   push:
     branches:
