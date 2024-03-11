@@ -2,12 +2,7 @@ name: Telisik CMS Production Deployment
 env:
   VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
   VERCEL_PROJECT_ID: ${{ secrets.VERCEL_CMS_PROJECT_ID }}
-on:
-  push:
-    branches:
-      - development
-    paths:
-      - cms/**
+on: [push]
 
 jobs:
   Deploy-Production:
@@ -16,6 +11,8 @@ jobs:
       - uses: actions/checkout@v2
       - name: Install Vercel CLI
         run: npm install --global vercel@latest
+      - name: Change to cms directory
+        run: cd cms
       - name: Pull Vercel Environment Information
         run: vercel pull --yes --environment=production --token=${{ secrets.VERCEL_TOKEN }}
       - name: Build Project Artifacts
