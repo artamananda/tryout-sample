@@ -1,13 +1,11 @@
-name: Fly Deploy Backend
-on:
-  push:
-    branches:
-      - development
+name: Deploy to Fly
+on: [push]
 jobs:
   deploy:
-    name: Deploy app
+    name: Deploy proxy
     runs-on: ubuntu-latest
     steps:
+      # This step checks out a copy of your repository.
       - uses: actions/checkout@v2
       - uses: superfly/flyctl-actions/setup-flyctl@master
       - run: flyctl deploy --remote-only
