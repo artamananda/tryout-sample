@@ -4,7 +4,7 @@ on:
     branches:
       - development
     paths:
-      - cms/**
+      - backend/**
 jobs:
   deploy:
     name: Deploy proxy
