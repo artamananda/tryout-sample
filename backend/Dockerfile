@@ -27,7 +27,7 @@ RUN mkdir -p $PROJECT_DIR/database/migration
 WORKDIR $PROJECT_DIR
 
 COPY --from=builder $BUILDDIR/tryout-sample tryout-sample
-COPY --from=builder $BUILDDIR/.env $PROJECT_DIR/.env
+# COPY --from=builder $BUILDDIR/.env $PROJECT_DIR/.env
 COPY --from=builder $BUILDDIR/db/migrations $PROJECT_DIR/db/migrations/
 COPY --from=builder $BUILDDIR/migration.sh $PROJECT_DIR/migration.sh
 
