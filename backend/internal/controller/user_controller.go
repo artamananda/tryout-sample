@@ -130,7 +130,10 @@ func (controller UserController) Authentication(c *fiber.Ctx) error {
 	err := c.BodyParser(&request)
 	exception.PanicLogging(err)
 
-	result := controller.UserService.Authentication(c.Context(), request)
+	result, err := controller.UserService.Authentication(c.Context(), request)
+	if err != nil {
+		return exception.ErrorHandler(c, exception.NotFoundError{Message: err.Error()})
+	}
 
 	tokenJwtResult := common.GenerateToken(result.Username, result.Role, controller.Config)
 	resultWithToken := map[string]interface{}{

@@ -153,20 +153,20 @@ func (service *UserService) FindAll(ctx context.Context) []model.GetUserResponse
 	return userResponses
 }
 
-func (service *UserService) Authentication(ctx context.Context, model model.LoginRequest) entity.User {
+func (service *UserService) Authentication(ctx context.Context, model model.LoginRequest) (entity.User, error) {
 	userResult, err := service.UserRepository.Authentication(ctx, model.Email)
 	if err != nil {
 		fmt.Println(exception.UnauthorizedError{
 			Message: err.Error(),
 		})
-		return entity.User{}
+		return entity.User{}, err
 	}
 	err = bcrypt.CompareHashAndPassword([]byte(userResult.Password), []byte(model.Password))
 	if err != nil {
 		fmt.Println(exception.UnauthorizedError{
 			Message: "incorrect username and password",
 		})
-		return entity.User{}
+		return entity.User{}, err
 	}
-	return userResult
+	return userResult, nil
 }
