@@ -49,6 +49,28 @@ func (service *UserService) Create(ctx context.Context, request model.RegisterRe
 	}, nil
 }
 
+func (service *UserService) CreateBulk(ctx context.Context, requests []model.RegisterRequest) ([]model.RegisterResponse, error) {
+	var responses []model.RegisterResponse
+
+	for _, request := range requests {
+		err := common.Validate(request)
+		if err != nil {
+			return responses, err
+		}
+	}
+
+	for _, request := range requests {
+		response, err := service.Create(ctx, request)
+		if err != nil {
+			responses = append(responses, model.RegisterResponse{})
+			continue
+		}
+		responses = append(responses, response)
+	}
+
+	return responses, nil
+}
+
 func (service *UserService) Update(ctx context.Context, request model.UpdateUserRequest, userId string) (model.UpdateUserResponse, error) {
 	err := common.Validate(request)
 	if err != nil {
