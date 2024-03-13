@@ -11,6 +11,7 @@ import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { sendAnswer } from '../../api/userAnswer';
 import { useAuthUser } from 'react-auth-kit';
+import { EColor } from '../../constants/color';
 
 const { Text } = Typography;
 
@@ -22,7 +23,7 @@ const headerStyle: React.CSSProperties = {
   fontWeight: 'bold',
   fontSize: '1.4rem',
   padding: 25,
-  backgroundColor: '#04073B'
+  backgroundColor: EColor.PRIMARY
 };
 
 const Tryout = () => {
