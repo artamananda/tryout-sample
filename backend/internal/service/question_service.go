@@ -31,6 +31,7 @@ func (service *QuestionService) Create(ctx context.Context, request model.Create
 
 	question := entity.Question{
 		TryoutID:      uuid.MustParse(tryoutID),
+		LocalID:       request.LocalID,
 		Type:          request.Type,
 		Text:          request.Text,
 		ImageUrl:      request.ImageUrl,
@@ -48,6 +49,7 @@ func (service *QuestionService) Create(ctx context.Context, request model.Create
 	return model.QuestionResponse{
 		QuestionID:    question.QuestionID,
 		TryoutID:      question.TryoutID,
+		LocalID:       question.LocalID,
 		Type:          question.Type,
 		Text:          question.Text,
 		ImageUrl:      question.ImageUrl,
@@ -70,6 +72,7 @@ func (service *QuestionService) Update(ctx context.Context, request model.Update
 		return model.QuestionResponse{}, err
 	}
 
+	question.LocalID = request.LocalID
 	question.Type = request.Type
 	question.Text = request.Text
 	question.ImageUrl = request.ImageUrl
@@ -87,6 +90,7 @@ func (service *QuestionService) Update(ctx context.Context, request model.Update
 	return model.QuestionResponse{
 		QuestionID:    question.QuestionID,
 		TryoutID:      question.TryoutID,
+		LocalID:       question.LocalID,
 		Type:          question.Type,
 		Text:          question.Text,
 		ImageUrl:      question.ImageUrl,
@@ -113,6 +117,7 @@ func (service *QuestionService) FindByID(ctx context.Context, questionID string)
 	return model.QuestionResponse{
 		QuestionID:    question.QuestionID,
 		TryoutID:      question.TryoutID,
+		LocalID:       question.LocalID,
 		Type:          question.Type,
 		Text:          question.Text,
 		ImageUrl:      question.ImageUrl,
@@ -133,6 +138,7 @@ func (service *QuestionService) FindByTryoutID(ctx context.Context, tryoutID str
 		questionResponses = append(questionResponses, model.QuestionResponse{
 			QuestionID:    question.QuestionID,
 			TryoutID:      question.TryoutID,
+			LocalID:       question.LocalID,
 			Type:          question.Type,
 			Text:          question.Text,
 			ImageUrl:      question.ImageUrl,
@@ -159,6 +165,7 @@ func (service *QuestionService) FindAll(ctx context.Context) ([]model.QuestionRe
 			model.QuestionResponse{
 				QuestionID:    question.QuestionID,
 				TryoutID:      question.TryoutID,
+				LocalID:       question.LocalID,
 				Type:          question.Type,
 				Text:          question.Text,
 				ImageUrl:      question.ImageUrl,
