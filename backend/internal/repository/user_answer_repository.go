@@ -21,20 +21,25 @@ func NewUserAnswerRepository(DB *gorm.DB) UserAnswerRepository {
 func (repository *UserAnswerRepository) Create(ctx context.Context, user_answer entity.UserAnswer) entity.UserAnswer {
 	user_answer.UserAnswerID = uuid.New()
 	err := repository.DB.WithContext(ctx).Create(&user_answer).Error
-	fmt.Println(err)
+	if err != nil {
+		fmt.Println(err)
+	}
 	return user_answer
 }
 
 func (repository *UserAnswerRepository) Update(ctx context.Context, user_answer entity.UserAnswer) entity.UserAnswer {
 	err := repository.DB.WithContext(ctx).Where("user_answer_id = ?", user_answer.UserAnswerID).Updates(&user_answer).Error
-	fmt.Println(err)
-
+	if err != nil {
+		fmt.Println(err)
+	}
 	return user_answer
 }
 
 func (repository *UserAnswerRepository) Delete(ctx context.Context, user_answer entity.UserAnswer) {
 	err := repository.DB.WithContext(ctx).Where("user_answer_id = ?", user_answer.UserAnswerID).Delete(&user_answer).Error
-	fmt.Println(err)
+	if err != nil {
+		fmt.Println(err)
+	}
 }
 
 func (repository *UserAnswerRepository) FindById(ctx context.Context, user_answer_id string) (entity.UserAnswer, error) {
