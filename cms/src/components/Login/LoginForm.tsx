@@ -29,7 +29,7 @@ const LoginForm = () => {
         <Input
           prefix={<UserOutlined className="site-form-item-icon" />}
           type="email"
-          placeholder="email"
+          placeholder="Email"
         />
       </Form.Item>
 

@@ -7,6 +7,7 @@ import (
 )
 
 type CreateQuestionRequest struct {
+	LocalID       int      `json:"local_id"`
 	Type          string   `json:"type"`
 	Text          string   `json:"text" validate:"required"`
 	ImageUrl      string   `json:"image_url"`
@@ -16,6 +17,7 @@ type CreateQuestionRequest struct {
 }
 
 type UpdateQuestionRequest struct {
+	LocalID       int      `json:"local_id"`
 	Type          string   `json:"type"`
 	Text          string   `json:"text"`
 	ImageUrl      string   `json:"image_url"`
@@ -27,6 +29,7 @@ type UpdateQuestionRequest struct {
 type QuestionResponse struct {
 	QuestionID    uuid.UUID `json:"question_id"`
 	TryoutID      uuid.UUID `json:"tryout_id"`
+	LocalID       int       `json:"local_id"`
 	Type          string    `json:"type"`
 	Text          string    `json:"text"`
 	ImageUrl      string    `json:"image_url"`
