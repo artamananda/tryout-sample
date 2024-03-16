@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import dayjs from 'dayjs';
 
 const Timer = () => {
-  const targetTime = dayjs().add(95, 'minute');
+  const targetTime = dayjs().add(195, 'minute');
 
   const [remainingTime, setRemainingTime] = useState(
     targetTime.diff(dayjs(), 'millisecond') / 1000
