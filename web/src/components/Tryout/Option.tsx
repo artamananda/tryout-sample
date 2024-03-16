@@ -1,15 +1,16 @@
 import { Radio, RadioChangeEvent, Space, Input } from 'antd';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Typography } from 'antd';
 
 const { Text } = Typography;
 
 const Option = (props: {
+  initialAnswer?: number;
   options: string[];
   setAnswer: (value: string) => void;
 }) => {
   const options = props.options || ['A', 'B', 'C', 'D', 'E'];
-  const [value, setValue] = useState(options[0]);
+  const [value, setValue] = useState(options[props.initialAnswer || 0]);
 
   const onChange = (e: RadioChangeEvent) => {
     props.setAnswer(e.target.value);
@@ -24,6 +25,14 @@ const Option = (props: {
     }
     return false;
   };
+
+  useEffect(() => {
+    if (props.initialAnswer !== undefined && props.options) {
+      setValue(props.options[props.initialAnswer]);
+    } else {
+      setValue('');
+    }
+  }, [props.options, props.initialAnswer]);
 
   return (
     <div>

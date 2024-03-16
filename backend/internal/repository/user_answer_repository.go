@@ -46,6 +46,12 @@ func (repository *UserAnswerRepository) FindById(ctx context.Context, user_answe
 	return user_answer, nil
 }
 
+func (repository *UserAnswerRepository) FindByUserId(ctx context.Context, user_id string) ([]entity.UserAnswer) {
+	var user_answers []entity.UserAnswer
+	repository.DB.WithContext(ctx).Unscoped().Where("user_id = ?", user_id).Find(&user_answers)
+	return user_answers
+}
+
 func (repository *UserAnswerRepository) FindAll(ctx context.Context) []entity.UserAnswer {
 	var user_answers []entity.UserAnswer
 	repository.DB.WithContext(ctx).Find(&user_answers)
