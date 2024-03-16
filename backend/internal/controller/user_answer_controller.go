@@ -6,6 +6,7 @@ import (
 	"github.com/artamananda/tryout-sample/internal/model"
 	"github.com/artamananda/tryout-sample/internal/service"
 	"github.com/gofiber/fiber/v2"
+	"github.com/google/uuid"
 )
 
 type UserAnswerController struct {
@@ -22,6 +23,7 @@ func (controller UserAnswerController) Route(app *fiber.App) {
 	app.Put("/v1/api/user-answer/:id", middleware.AuthenticateJWT("user", controller.Config), controller.Update)
 	app.Delete("/v1/api/user-answer/:id", middleware.AuthenticateJWT("user", controller.Config), controller.Delete)
 	app.Get("/v1/api/user-answer/:id", controller.FindById)
+	app.Get("/v1/api/user-answer/user/:id", controller.FindByUserId)
 	app.Get("/v1/api/user-answer", controller.FindAll)
 }
 
@@ -77,6 +79,41 @@ func (controller UserAnswerController) Delete(c *fiber.Ctx) error {
 	})
 }
 
+func (controller UserAnswerController) FindByUserId(c *fiber.Ctx) error {
+	id := c.Params("id")
+	questionId := c.Query("question_id")
+
+	results := controller.UserAnswerService.FindByUserID(c.Context(), id)
+	if questionId != "" {
+		for _, result := range results {
+			if result.QuestionID == uuid.MustParse(questionId) {
+				payload := map[string]interface{}{
+					"count":   1,
+					"next":    nil,
+					"prev":    nil,
+					"results": result,
+				}
+				return c.Status(fiber.StatusOK).JSON(model.GeneralResponse{
+					Code:    200,
+					Message: "Success",
+					Data:    payload,
+				})
+			}
+		}
+	}
+	payload := map[string]interface{}{
+		"count":   len(results),
+		"next":    nil,
+		"prev":    nil,
+		"results": results,
+	}
+	return c.Status(fiber.StatusOK).JSON(model.GeneralResponse{
+		Code:    200,
+		Message: "Success",
+		Data:    payload,
+	})
+}
+
 func (controller UserAnswerController) FindById(c *fiber.Ctx) error {
 	id := c.Params("id")
 
@@ -94,11 +131,11 @@ func (controller UserAnswerController) FindById(c *fiber.Ctx) error {
 func (controller UserAnswerController) FindAll(c *fiber.Ctx) error {
 	result := controller.UserAnswerService.FindAll(c.Context())
 	payload := map[string]interface{}{
-        "count":   len(result),
-        "next":    nil,
-        "prev":    nil,
-        "results": result,
-    }
+		"count":   len(result),
+		"next":    nil,
+		"prev":    nil,
+		"results": result,
+	}
 	return c.Status(fiber.StatusOK).JSON(model.GeneralResponse{
 		Code:    200,
 		Message: "Success",

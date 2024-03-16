@@ -9,8 +9,9 @@ import useFetchList from '../../hooks/useFetchList';
 import { QuestionProps } from '../../types/question';
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { sendAnswer } from '../../api/userAnswer';
+import { putAnswer, sendAnswer } from '../../api/userAnswer';
 import { useAuthUser } from 'react-auth-kit';
+import { UserAnswerProps } from '../../types/userAnswer';
 
 const { Text } = Typography;
 
@@ -37,6 +38,11 @@ const Tryout = () => {
     endpoint: 'tryout/question/' + tryoutId
   });
 
+  const { data: answerData, fetchList: fetchAnswerData } =
+    useFetchList<UserAnswerProps>({
+      endpoint: 'user-answer/user/' + auth()?.user_id
+    });
+
   const plusData: { [key: string]: number } = {
     kpu: 0,
     ppu: 30,
@@ -48,6 +54,8 @@ const Tryout = () => {
   };
 
   const [answer, setAnswer] = useState('');
+  const [answerIdx, setAnswerIdx] = useState<number>();
+  const [answerId, setAnswerId] = useState<string>();
 
   const handleNext = async () => {
     if (answer) {
@@ -60,7 +68,12 @@ const Tryout = () => {
         user_answer: answer
       };
       console.log(data);
-      await sendAnswer(data);
+      if (answerIdx !== undefined && answerId) {
+        await putAnswer(answerId, data);
+      } else {
+        await sendAnswer(data);
+      }
+      fetchAnswerData();
     }
     setAnswer('');
     if (questionType === 'kpu' && Number(questionNumber) === 30) {
@@ -95,7 +108,12 @@ const Tryout = () => {
         user_answer: answer
       };
       console.log(data);
-      await sendAnswer(data);
+      if (answerIdx !== undefined && answerId) {
+        await putAnswer(answerId, data);
+      } else {
+        await sendAnswer(data);
+      }
+      fetchAnswerData();
     }
     setAnswer('');
     navigate(
@@ -118,6 +136,31 @@ const Tryout = () => {
 
     setQuestionData(sortedQuestionDataFetch);
   }, [questionDataFetch]);
+
+  useEffect(() => {
+    const currentQuestion =
+      questionData?.[plusData[questionType] + Number(questionNumber) - 1];
+
+    if (currentQuestion) {
+      const answerIndex = answerData.findIndex(
+        (item) => item.question_id === currentQuestion.question_id
+      );
+
+      if (answerIndex !== -1) {
+        const userAnswer = answerData[answerIndex].user_answer;
+        const optionIndex = currentQuestion.options.findIndex(
+          (option) => option === userAnswer
+        );
+        setAnswerId(answerData[answerIndex].user_answer_id);
+        setAnswerIdx(optionIndex);
+        console.log('set to ', optionIndex);
+      } else {
+        setAnswerId(undefined);
+        setAnswerIdx(undefined);
+        console.log('set to undefined');
+      }
+    }
+  }, [questionData, answerData, questionNumber, questionType]);
   return (
     <Flex gap="middle" wrap="wrap">
       <Layout
@@ -171,6 +214,7 @@ const Tryout = () => {
                 plusData[questionType] + Number(questionNumber) - 1
               ]?.options
             }
+            initialAnswer={answerIdx}
           />
         </Content>
         <Button
