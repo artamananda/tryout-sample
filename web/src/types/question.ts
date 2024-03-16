@@ -1,6 +1,7 @@
 export interface QuestionProps {
   question_id: string;
   tryout_id: string;
+  local_id: number;
   type: string;
   text: string;
   options: string[];
@@ -12,6 +13,7 @@ export interface QuestionProps {
 
 export interface CreateQuestionRequest {
   tryout_id: string;
+  local_id: number;
   type: string;
   text: string;
   options: string[];
@@ -22,6 +24,7 @@ export interface CreateQuestionRequest {
 export interface UpdateQuestionRequest {
   question_id: string;
   tryout_id: string;
+  local_id: number;
   type?: string;
   text?: string;
   options?: string[];

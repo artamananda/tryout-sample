@@ -32,7 +32,8 @@ const Tryout = () => {
   const tryoutId = splitLink[splitLink.length - 3];
   const questionType = splitLink[splitLink.length - 2];
   const questionNumber = splitLink.pop();
-  const { data: questionData } = useFetchList<QuestionProps>({
+  const [questionData, setQuestionData] = useState<QuestionProps[]>([]);
+  const { data: questionDataFetch } = useFetchList<QuestionProps>({
     endpoint: 'tryout/question/' + tryoutId
   });
 
@@ -40,7 +41,10 @@ const Tryout = () => {
     kpu: 0,
     ppu: 30,
     pbm: 50,
-    pku: 70
+    pku: 70,
+    ind: 85,
+    ing: 115,
+    mtk: 135
   };
 
   const [answer, setAnswer] = useState('');
@@ -66,6 +70,12 @@ const Tryout = () => {
     } else if (questionType === 'pbm' && Number(questionNumber) === 20) {
       navigate(`/tryout/${tryoutId}/pku/1`);
     } else if (questionType === 'pku' && Number(questionNumber) === 15) {
+      navigate(`/tryout/${tryoutId}/ind/1`);
+    } else if (questionType === 'ind' && Number(questionNumber) === 30) {
+      navigate(`/tryout/${tryoutId}/ing/1`);
+    } else if (questionType === 'ing' && Number(questionNumber) === 20) {
+      navigate(`/tryout/${tryoutId}/mtk/1`);
+    } else if (questionType === 'mtk' && Number(questionNumber) === 20) {
       navigate(`/tryout`);
     } else {
       navigate(
@@ -96,8 +106,18 @@ const Tryout = () => {
   };
 
   useEffect(() => {
-    console.log(questionData);
-  }, [questionData]);
+    const sortedQuestionDataFetch = questionDataFetch
+      .slice()
+      .sort((a, b) => a.local_id - b.local_id);
+    const typeOrder = ['kpu', 'ppu', 'pbm', 'pku', 'ind', 'ing', 'mtk'];
+    sortedQuestionDataFetch.sort((a, b) => {
+      return typeOrder.indexOf(a.type) - typeOrder.indexOf(b.type);
+    });
+
+    console.log('sorted data', sortedQuestionDataFetch);
+
+    setQuestionData(sortedQuestionDataFetch);
+  }, [questionDataFetch]);
   return (
     <Flex gap="middle" wrap="wrap">
       <Layout
@@ -118,6 +138,12 @@ const Tryout = () => {
               ? 'Pemahaman Bacaan dan Menulis'
               : questionType === 'pku'
               ? 'Pengetahuan Kuantitatif'
+              : questionType === 'ind'
+              ? 'Literasi Bahasa Indonesia'
+              : questionType === 'ing'
+              ? 'Literasi Bahasa Inggris'
+              : questionType === 'mtk'
+              ? 'Penalaran Matematika'
               : 'Literasi'}
           </div>
           <div>{Timer()}</div>
@@ -168,7 +194,7 @@ const Tryout = () => {
           }}
           onClick={handleNext}
         >
-          {questionType === 'pku' && Number(questionNumber) === 15
+          {questionType === 'mtk' && Number(questionNumber) === 20
             ? 'Selesai'
             : 'Soal Selanjutnya >>>'}
         </Button>
