@@ -8,7 +8,7 @@ import {
   UploadProps,
   message,
 } from "antd";
-import React, { useEffect, useRef, useState } from "react";
+import React, { useEffect, useState } from "react";
 import ReactQuill from "react-quill";
 import "react-quill/dist/quill.snow.css";
 import katex from "katex";
@@ -139,34 +139,28 @@ const FormInd = () => {
     setImages(updatedImages);
   };
 
-  const debouncedUpdateQuestionAtIndex = useRef(
-    debounce((index, value) => {
-      updateQuestionAtIndex(index, value);
-    }, 300)
-  );
+  const debouncedUpdateQuestionAtIndex = debounce((index, value) => {
+    updateQuestionAtIndex(index, value);
+  }, 300);
 
   const handleQuestionChange = (index: number, value: any) => {
-    debouncedUpdateQuestionAtIndex.current(index, value);
+    debouncedUpdateQuestionAtIndex(index, value);
   };
 
-  const debouncedUpdateOptionAtIndex = useRef(
-    debounce((index, subIndex, value) => {
-      updateOptionAtIndex(index, subIndex, value);
-    }, 300)
-  );
+  const debouncedUpdateOptionAtIndex = debounce((index, subIndex, value) => {
+    updateOptionAtIndex(index, subIndex, value);
+  }, 300);
 
   const handleOptionChange = (index: number, subIndex: number, value: any) => {
-    debouncedUpdateOptionAtIndex.current(index, subIndex, value);
+    debouncedUpdateOptionAtIndex(index, subIndex, value);
   };
 
-  const debouncedUpdateAnswerAtIndex = useRef(
-    debounce((index, value) => {
-      updateAnswerAtIndex(index, value);
-    }, 300)
-  );
+  const debouncedUpdateAnswerAtIndex = debounce((index, value) => {
+    updateAnswerAtIndex(index, value);
+  }, 300);
 
   const handleAnswerChange = (index: number, value: any) => {
-    debouncedUpdateAnswerAtIndex.current(index, value);
+    debouncedUpdateAnswerAtIndex(index, value);
   };
 
   useEffect(() => {
