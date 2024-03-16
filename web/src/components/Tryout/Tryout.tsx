@@ -157,6 +157,11 @@ const Tryout = () => {
                   plusData[questionType] + Number(questionNumber) - 1
                 ]?.text
               }
+              imageUrl={
+                questionData?.[
+                  plusData[questionType] + Number(questionNumber) - 1
+                ]?.image_url
+              }
             />
           </div>
           <Option
