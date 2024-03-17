@@ -12,7 +12,7 @@ import {
   InputNumber,
 } from "antd";
 import type { TableProps } from "antd";
-import { DeleteOutlined, PlusOutlined } from "@ant-design/icons";
+import { CopyOutlined, DeleteOutlined, PlusOutlined } from "@ant-design/icons";
 import { useNavigate } from "react-router-dom";
 import useFetchList from "../../hooks/useFetchList";
 import { TryoutProps } from "../../types/tryout.type";
@@ -20,6 +20,7 @@ import dayjs from "dayjs";
 import { apiCreateTryout, apiDeleteTryout } from "../../api/tryout";
 import type { DatePickerProps, GetProps } from "antd";
 import { getErrorMessage } from "../../helpers/errorHandler";
+import copy from "copy-to-clipboard";
 type RangePickerProps = GetProps<typeof DatePicker.RangePicker>;
 
 const { Title } = Typography;
@@ -88,6 +89,28 @@ const ListTryout = () => {
         <Tag color={statusColor(checkStatus(start_time, end_time))}>
           {checkStatus(start_time, end_time)}
         </Tag>
+      ),
+    },
+    {
+      title: "Token",
+      key: "token",
+      dataIndex: "token",
+      render: (_, record) => (
+        <div>
+          <Input.Password
+            disabled={!record.token}
+            style={{ width: 100 }}
+            value={record.token}
+          />
+          <CopyOutlined
+            onClick={() => {
+              if (copy(record.token)) {
+                message.success("Token has been copied!");
+              }
+            }}
+            style={{ marginLeft: 10, color: "grey" }}
+          />
+        </div>
       ),
     },
     // {

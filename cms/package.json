@@ -16,6 +16,7 @@
     "antd": "^5.13.2",
     "antd-table-saveas-excel": "^2.2.1",
     "axios": "^1.6.7",
+    "copy-to-clipboard": "^3.3.3",
     "env-cmd": "^10.1.0",
     "katex": "^0.16.9",
     "lodash": "^4.17.21",

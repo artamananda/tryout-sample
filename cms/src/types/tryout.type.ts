@@ -4,6 +4,7 @@ export interface TryoutProps {
   tryout_id: string;
   title: string;
   duration: number;
+  token: string;
   start_time: Date | string;
   end_time: Date | string;
   created_at: Date | string;
