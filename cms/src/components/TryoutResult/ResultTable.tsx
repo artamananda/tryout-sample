@@ -13,6 +13,8 @@ interface TableRowData {
   question_id: string;
 }
 
+type FixedType = "left" | "right" | boolean;
+
 const ResultTable = () => {
   const tryoutId = "f9d32639-9bbd-4c06-acb5-a2f181d5a310";
   const [userAnswers, setUserAnswers] = useState<UserAnswerProps[]>([]);
@@ -80,6 +82,7 @@ const ResultTable = () => {
       title: "No.",
       dataIndex: "no",
       key: "no",
+      fixed: "left" as FixedType,
       render: (_: any, __: any, index: number) => index + 1,
     },
     // {
@@ -91,6 +94,7 @@ const ResultTable = () => {
       title: "Subtest",
       dataIndex: "subtest",
       key: "subtest",
+      fixed: "left" as FixedType,
       render: (value: string) => (
         <div style={{ fontWeight: "bold" }}>{value?.toUpperCase()}</div>
       ),
@@ -108,8 +112,8 @@ const ResultTable = () => {
             color: value ? "white" : "grey",
             textAlign: "center",
             fontStyle: !value ? "italic" : undefined,
-            padding: "5px",
-            borderRadius: "5px",
+            borderRadius: "100px",
+            width: 25,
           }}
         >
           {value || "Not Set"}
