@@ -22,6 +22,17 @@ export async function apiGetTryouts() {
   }
 }
 
+export async function apiGetTryout(tryoutId: string) {
+  try {
+    const res = await httpRequest.get<TryoutProps>(
+      process.env.REACT_APP_BASE_URL + "/tryout/" + tryoutId
+    );
+    return res;
+  } catch (err) {
+    return null;
+  }
+}
+
 export async function apiCreateTryout(data: CreateTryoutRequest) {
   try {
     const res = await httpRequest.post<BaseResponseProps<TryoutProps>>(

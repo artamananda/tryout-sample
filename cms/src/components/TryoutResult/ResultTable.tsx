@@ -14,7 +14,7 @@ interface TableRowData {
 }
 
 const ResultTable = () => {
-  const tryoutId = "bc8b74f5-d81e-4cf8-8abb-657cbb055862";
+  const tryoutId = "f9d32639-9bbd-4c06-acb5-a2f181d5a310";
   const [userAnswers, setUserAnswers] = useState<UserAnswerProps[]>([]);
   const [users, setUsers] = useState<{ user_id: string; name: string }[]>([]);
   const [uniqueUserIds, setUniqueUserIds] = useState<string[]>([]);
@@ -91,12 +91,30 @@ const ResultTable = () => {
       title: "Subtest",
       dataIndex: "subtest",
       key: "subtest",
+      render: (value: string) => (
+        <div style={{ fontWeight: "bold" }}>{value?.toUpperCase()}</div>
+      ),
     },
     // Menambahkan kolom untuk setiap user ID yang unik
     ...uniqueUserIds.map((userId) => ({
       title: user[userId],
       dataIndex: userId,
       key: userId,
+      render: (value: string) => (
+        <div
+          style={{
+            backgroundColor:
+              value === "X" ? "red" : value === "V" ? "green" : undefined,
+            color: value ? "white" : "grey",
+            textAlign: "center",
+            fontStyle: !value ? "italic" : undefined,
+            padding: "5px",
+            borderRadius: "5px",
+          }}
+        >
+          {value || "Not Set"}
+        </div>
+      ),
     })),
   ];
 
