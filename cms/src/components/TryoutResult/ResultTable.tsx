@@ -6,7 +6,6 @@ import { UserAnswerProps } from "../../types/userAnswer.type";
 import { apiGetUsers } from "../../api/user";
 import useFetchList from "../../hooks/useFetchList";
 import { QuestionProps } from "../../types/question";
-import { sortBy } from "lodash";
 
 interface TableRowData {
   [key: string]: string;
@@ -96,7 +95,9 @@ const ResultTable = () => {
       key: "subtest",
       fixed: "left" as FixedType,
       render: (value: string) => (
-        <div style={{ fontWeight: "bold" }}>{value?.toUpperCase()}</div>
+        <div style={{ fontWeight: "bold" }}>
+          {value ? value?.toUpperCase() : "-"}
+        </div>
       ),
     },
     // Menambahkan kolom untuk setiap user ID yang unik
@@ -147,19 +148,15 @@ const ResultTable = () => {
     excel
       .addSheet("sheet 1")
       .addColumns(columns)
-      .addDataSource(sortBy(dataSource, "subtest"), {
+      .addDataSource(dataSource, {
         str2Percent: true,
       })
-      .saveAs("Excel.xlsx");
+      .saveAs(`${tryoutId || "result"}.xlsx`);
   };
 
   return (
     <div>
-      <Table
-        dataSource={sortBy(dataSource, "subtest")}
-        columns={columns}
-        pagination={false}
-      />
+      <Table dataSource={dataSource} columns={columns} pagination={false} />
       <div
         style={{
           margin: 20,
