@@ -4,6 +4,6 @@ This is a sample project showcasing a tryout web application using React for the
 
 ## Technology Stack
 
-- **Frontend (Web):** React
-- **Backend:** Golang (Go)
-- **CMS:** React
+- **Front End (Web & CMS):** Using React with typescript deployed on [vercel.com](https://vercel.com)
+
+- **Back End:** Using Golang (Go) with GoFiber deployed on [fly.io](https://fly.io)
