@@ -77,8 +77,21 @@ const ListTryout = () => {
         <Link
           underline
           onClick={() => {
-            setId(record.tryout_id);
-            showModal(record.title);
+            const tryoutStatus = checkStatus(
+              record.start_time,
+              record.end_time
+            );
+            if (tryoutStatus === 'FINISHED') {
+              message.error('Waktu tryout sudah lewat!');
+            } else if (
+              tryoutStatus === 'IN COMING' ||
+              tryoutStatus === 'UNKNOWN'
+            ) {
+              message.error('Tryout belum mulai!');
+            } else {
+              setId(record.tryout_id);
+              showModal(record.title);
+            }
           }}
         >
           {record.title}

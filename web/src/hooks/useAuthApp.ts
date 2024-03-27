@@ -69,7 +69,7 @@ export default function useAuthApp(props?: Props) {
       if (
         signIn({
           token: resultAuthLogin.data.payload.token,
-          expiresIn: 10000,
+          expiresIn: 350,
           tokenType: 'Bearer',
           authState: resProfile.data.payload
         })
