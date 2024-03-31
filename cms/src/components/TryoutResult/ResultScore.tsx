@@ -159,10 +159,6 @@ const ResultScore = () => {
       .saveAs(`${tryoutId || "result"}.xlsx`);
   };
 
-  useEffect(() => {
-    console.log("datasource", dataSource);
-  }, dataSource);
-
   return (
     <div>
       <Table dataSource={dataSource} columns={columns} pagination={false} />
