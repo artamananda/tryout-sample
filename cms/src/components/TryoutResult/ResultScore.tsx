@@ -71,7 +71,11 @@ const ResultScore = () => {
 
         const newIds = answersTmp
           .map((item) => item.user_id)
-          .filter((id, index, self) => self.indexOf(id) === index);
+          .filter(
+            (id, index, self) =>
+              self.indexOf(id) === index &&
+              users.find((item) => item.user_id === id)
+          );
         setUniqueUserIds(newIds);
       }
     };
@@ -156,7 +160,7 @@ const ResultScore = () => {
   };
 
   useEffect(() => {
-    console.log("DataSource", dataSource);
+    console.log("datasource", dataSource);
   }, dataSource);
 
   return (
