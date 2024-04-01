@@ -24,10 +24,25 @@ const ResultScore = () => {
   const [questionTypes, setQuestionTypes] = useState<{ [key: string]: string }>(
     {}
   );
+  const [questionData, setQuestionData] = useState<QuestionProps[]>([]);
 
-  const { data: questionData } = useFetchList<QuestionProps>({
+  const { data: questionDataFetch } = useFetchList<QuestionProps>({
     endpoint: "tryout/question/" + tryoutId,
   });
+
+  useEffect(() => {
+    const sortedQuestionDataFetch = questionDataFetch
+      .slice()
+      .sort((a, b) => a.local_id! - b.local_id!);
+    const typeOrder = ["kpu", "ppu", "pbm", "pku", "ind", "ing", "mtk"];
+    sortedQuestionDataFetch.sort((a, b) => {
+      return typeOrder.indexOf(a.type) - typeOrder.indexOf(b.type);
+    });
+
+    console.log("sorted data", sortedQuestionDataFetch);
+
+    setQuestionData(sortedQuestionDataFetch);
+  }, [questionDataFetch]);
 
   useEffect(() => {
     const ans: { [key: string]: string } = {};

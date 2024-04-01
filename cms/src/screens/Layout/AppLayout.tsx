@@ -55,6 +55,15 @@ const AppLayout = () => {
         // collapsible
         collapsed={collapsed}
         onCollapse={(value) => setCollapsed(value)}
+        style={{
+          overflow: "auto",
+          height: "100vh",
+          position: "fixed",
+          left: 0,
+          top: 0,
+          bottom: 0,
+          zIndex: 99,
+        }}
       >
         <Image src={logo} width={150} style={{ margin: 20 }} preview={false} />
         <Menu
@@ -72,8 +81,8 @@ const AppLayout = () => {
           }}
         />
       </Sider>
-      <Layout>
-        <Content style={{ margin: 20 }}>
+      <Layout style={{ marginLeft: 200 }}>
+        <Content style={{ margin: 20, overflowY: "auto" }}>
           <Suspense fallback={<Spin spinning={true} />}>
             <Outlet />
           </Suspense>
