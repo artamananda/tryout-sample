@@ -10,6 +10,13 @@ import { QuestionProps } from "../../types/question";
 interface TableRowData {
   [key: string]: string | number;
   question_id: string;
+  subtest: string;
+}
+
+interface Score {
+  point: number;
+  question_id: string;
+  subtest: string;
 }
 
 type FixedType = "left" | "right" | boolean;
@@ -20,29 +27,17 @@ const ResultScore = () => {
   const [users, setUsers] = useState<{ user_id: string; name: string }[]>([]);
   const [uniqueUserIds, setUniqueUserIds] = useState<string[]>([]);
   const [user, setUser] = useState<{ [key: string]: string }>({});
+  const [scores, setScores] = useState<Score[]>([]);
+  const [newDataSource, setNewDataSource] = useState<TableRowData[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
   const [answers, setAnswers] = useState<{ [key: string]: string }>({});
   const [questionTypes, setQuestionTypes] = useState<{ [key: string]: string }>(
     {}
   );
-  const [questionData, setQuestionData] = useState<QuestionProps[]>([]);
 
-  const { data: questionDataFetch } = useFetchList<QuestionProps>({
+  const { data: questionData } = useFetchList<QuestionProps>({
     endpoint: "tryout/question/" + tryoutId,
   });
-
-  useEffect(() => {
-    const sortedQuestionDataFetch = questionDataFetch
-      .slice()
-      .sort((a, b) => a.local_id! - b.local_id!);
-    const typeOrder = ["kpu", "ppu", "pbm", "pku", "ind", "ing", "mtk"];
-    sortedQuestionDataFetch.sort((a, b) => {
-      return typeOrder.indexOf(a.type) - typeOrder.indexOf(b.type);
-    });
-
-    console.log("sorted data", sortedQuestionDataFetch);
-
-    setQuestionData(sortedQuestionDataFetch);
-  }, [questionDataFetch]);
 
   useEffect(() => {
     const ans: { [key: string]: string } = {};
@@ -100,18 +95,6 @@ const ResultScore = () => {
   // Menyiapkan kolom-kolom tabel
   const columns = [
     {
-      title: "No.",
-      dataIndex: "no",
-      key: "no",
-      fixed: "left" as FixedType,
-      render: (_: any, __: any, index: number) => index + 1,
-    },
-    // {
-    //   title: "Question ID",
-    //   dataIndex: "question_id",
-    //   key: "question_id",
-    // },
-    {
       title: "Subtest",
       dataIndex: "subtest",
       key: "subtest",
@@ -130,7 +113,7 @@ const ResultScore = () => {
       render: (value: string | number) => (
         <div
           style={{
-            backgroundColor: value === 1 ? "green" : "red",
+            backgroundColor: Number(value) > 0 ? "green" : "red",
             color: "white",
             textAlign: "center",
             borderRadius: "100px",
@@ -163,20 +146,89 @@ const ResultScore = () => {
     }
   });
 
+  useEffect(() => {
+    let scoreArr: any = [];
+    dataSource.map((item) => {
+      let countTrue = 0;
+      let countTotal = 0;
+      uniqueUserIds.forEach((userId) => {
+        if (Number(item[userId]) === 1) {
+          countTrue++;
+        }
+        countTotal++;
+      });
+      const scoreRes = countTrue === 0 ? 0 : (countTrue / countTotal) * 100;
+      const newScore: Score = {
+        question_id: item.question_id,
+        subtest: item.subtest,
+        point: scoreRes,
+      };
+      scoreArr.push(newScore);
+    });
+    setScores(scoreArr);
+  }, [dataSource]);
+
+  useEffect(() => {
+    userAnswers.forEach((answer) => {
+      const existingRow = newDataSource.find(
+        (row) => row.question_id === answer.question_id
+      );
+      if (existingRow) {
+        existingRow[answer.user_id] =
+          answer.user_answer === answers[answer.question_id]
+            ? Math.round(
+                scores.find((item) => item.question_id === answer.question_id)
+                  ?.point || 0
+              )
+            : 0;
+      } else {
+        const newRow: TableRowData = {
+          question_id: answer.question_id,
+          subtest: questionTypes[answer.question_id],
+          [answer.user_id]:
+            answer.user_answer === answers[answer.question_id]
+              ? Math.round(
+                  scores.find((item) => item.question_id === answer.question_id)
+                    ?.point || 0
+                )
+              : 0,
+        };
+        newDataSource.push(newRow);
+      }
+    });
+
+    const typeOrder = ["kpu", "ppu", "pbm", "pku", "ind", "ing", "mtk"];
+    const newSortedDataSource = newDataSource.sort((a, b) => {
+      return typeOrder.indexOf(a.subtest) - typeOrder.indexOf(b.subtest);
+    });
+    setNewDataSource(newSortedDataSource);
+  }, [scores]);
+
+  useEffect(() => {
+    if (newDataSource.length > 0) {
+      setIsLoading(false);
+    }
+  }, [newDataSource]);
+
   const handlePrint = () => {
     const excel = new Excel();
     excel
       .addSheet("sheet 1")
       .addColumns(columns)
-      .addDataSource(dataSource, {
+      .addDataSource(newDataSource, {
         str2Percent: true,
       })
-      .saveAs(`${tryoutId || "result"}.xlsx`);
+      .saveAs(`score_${tryoutId || "result"}.xlsx`);
   };
 
   return (
     <div>
-      <Table dataSource={dataSource} columns={columns} pagination={false} />
+      <Table
+        dataSource={newDataSource}
+        loading={isLoading}
+        columns={columns}
+        pagination={false}
+      />
       <div
         style={{
           margin: 20,
@@ -195,6 +247,7 @@ const ResultScore = () => {
           }}
           type="primary"
           onClick={handlePrint}
+          disabled={isLoading}
         >
           Download
         </Button>
