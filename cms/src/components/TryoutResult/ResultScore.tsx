@@ -28,6 +28,7 @@ const ResultScore = () => {
   const [uniqueUserIds, setUniqueUserIds] = useState<string[]>([]);
   const [user, setUser] = useState<{ [key: string]: string }>({});
   const [scores, setScores] = useState<Score[]>([]);
+  const [oldDataSource, setOldDataSource] = useState<TableRowData[]>([]);
   const [newDataSource, setNewDataSource] = useState<TableRowData[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [answers, setAnswers] = useState<{ [key: string]: string }>({});
@@ -38,17 +39,6 @@ const ResultScore = () => {
   const { data: questionData } = useFetchList<QuestionProps>({
     endpoint: "tryout/question/" + tryoutId,
   });
-
-  useEffect(() => {
-    const ans: { [key: string]: string } = {};
-    const qType: { [key: string]: string } = {};
-    questionData.forEach((item) => {
-      ans[item.question_id] = item.correct_answer;
-      qType[item.question_id] = item.type;
-    });
-    setAnswers(ans);
-    setQuestionTypes(qType);
-  }, [questionData]);
 
   useEffect(() => {
     const fetchUser = async () => {
@@ -92,6 +82,17 @@ const ResultScore = () => {
     fetchAnswer();
   }, [users]);
 
+  useEffect(() => {
+    const ans: { [key: string]: string } = {};
+    const qType: { [key: string]: string } = {};
+    questionData.forEach((item) => {
+      ans[item.question_id] = item.correct_answer;
+      qType[item.question_id] = item.type;
+    });
+    setAnswers(ans);
+    setQuestionTypes(qType);
+  }, [questionData]);
+
   // Menyiapkan kolom-kolom tabel
   const columns = [
     {
@@ -127,28 +128,32 @@ const ResultScore = () => {
   ];
 
   // Menyiapkan data untuk tabel
-  const dataSource: TableRowData[] = [];
-  userAnswers.forEach((answer) => {
-    const existingRow = dataSource.find(
-      (row) => row.question_id === answer.question_id
-    );
-    if (existingRow) {
-      existingRow[answer.user_id] =
-        answer.user_answer === answers[answer.question_id] ? 1 : 0;
-    } else {
-      const newRow: TableRowData = {
-        question_id: answer.question_id,
-        subtest: questionTypes[answer.question_id],
-        [answer.user_id]:
-          answer.user_answer === answers[answer.question_id] ? 1 : 0,
-      };
-      dataSource.push(newRow);
-    }
-  });
+  useEffect(() => {
+    let dataSource: TableRowData[] = [];
+    userAnswers.forEach((answer) => {
+      const existingRow = dataSource.find(
+        (row) => row.question_id === answer.question_id
+      );
+      if (existingRow) {
+        existingRow[answer.user_id] =
+          answer.user_answer === answers[answer.question_id] ? 1 : 0;
+      } else {
+        const newRow: TableRowData = {
+          question_id: answer.question_id,
+          subtest: questionTypes[answer.question_id],
+          [answer.user_id]:
+            answer.user_answer === answers[answer.question_id] ? 1 : 0,
+        };
+        dataSource.push(newRow);
+      }
+    });
+
+    setOldDataSource(dataSource);
+  }, [userAnswers]);
 
   useEffect(() => {
     let scoreArr: any = [];
-    dataSource.map((item) => {
+    oldDataSource.map((item) => {
       let countTrue = 0;
       let countTotal = 0;
       uniqueUserIds.forEach((userId) => {
@@ -166,11 +171,11 @@ const ResultScore = () => {
       scoreArr.push(newScore);
     });
     setScores(scoreArr);
-  }, [dataSource]);
+  }, [oldDataSource]);
 
   useEffect(() => {
     userAnswers.forEach((answer) => {
-      const existingRow = newDataSource.find(
+      const existingRow = oldDataSource.find(
         (row) => row.question_id === answer.question_id
       );
       if (existingRow) {
@@ -193,19 +198,19 @@ const ResultScore = () => {
                 )
               : 0,
         };
-        newDataSource.push(newRow);
+        oldDataSource.push(newRow);
       }
     });
 
     const typeOrder = ["kpu", "ppu", "pbm", "pku", "ind", "ing", "mtk"];
-    const newSortedDataSource = newDataSource.sort((a, b) => {
+    const newSortedDataSource = oldDataSource.sort((a, b) => {
       return typeOrder.indexOf(a.subtest) - typeOrder.indexOf(b.subtest);
     });
     setNewDataSource(newSortedDataSource);
   }, [scores]);
 
   useEffect(() => {
-    if (newDataSource.length > 0) {
+    if (newDataSource.length !== 0) {
       setIsLoading(false);
     }
   }, [newDataSource]);
