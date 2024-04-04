@@ -162,7 +162,7 @@ const ResultScore = () => {
         }
         countTotal++;
       });
-      const scoreRes = countTrue === 0 ? 0 : (countTrue / countTotal) * 100;
+      const scoreRes = countScore(countTrue, countTotal, item.subtest);
       const newScore: Score = {
         question_id: item.question_id,
         subtest: item.subtest,
@@ -173,6 +173,32 @@ const ResultScore = () => {
     setScores(scoreArr);
   }, [oldDataSource]);
 
+  const countScore = (
+    countTrue: number,
+    countTotal: number,
+    subtest: string
+  ) => {
+    const percentIsTrue = (countTrue / countTotal) * 100;
+    const maxScore = 800;
+    if (subtest === "kpu" || subtest === "bind") {
+      const defaultScore = maxScore / 30;
+      return ((100 - percentIsTrue) / 100) * defaultScore;
+    } else if (
+      subtest === "ppu" ||
+      subtest === "pbm" ||
+      subtest === "bing" ||
+      subtest === "mtk"
+    ) {
+      const defaultScore = maxScore / 20;
+      return ((100 - percentIsTrue) / 100) * defaultScore;
+    } else if (subtest === "pku") {
+      const defaultScore = maxScore / 15;
+      return ((100 - percentIsTrue) / 100) * defaultScore;
+    } else {
+      return 0;
+    }
+  };
+
   useEffect(() => {
     userAnswers.forEach((answer) => {
       const existingRow = oldDataSource.find(
@@ -181,10 +207,8 @@ const ResultScore = () => {
       if (existingRow) {
         existingRow[answer.user_id] =
           answer.user_answer === answers[answer.question_id]
-            ? Math.round(
-                scores.find((item) => item.question_id === answer.question_id)
-                  ?.point || 0
-              )
+            ? scores.find((item) => item.question_id === answer.question_id)
+                ?.point || 0
             : 0;
       } else {
         const newRow: TableRowData = {
@@ -192,10 +216,8 @@ const ResultScore = () => {
           subtest: questionTypes[answer.question_id],
           [answer.user_id]:
             answer.user_answer === answers[answer.question_id]
-              ? Math.round(
-                  scores.find((item) => item.question_id === answer.question_id)
-                    ?.point || 0
-                )
+              ? scores.find((item) => item.question_id === answer.question_id)
+                  ?.point || 0
               : 0,
         };
         oldDataSource.push(newRow);
@@ -203,9 +225,32 @@ const ResultScore = () => {
     });
 
     const typeOrder = ["kpu", "ppu", "pbm", "pku", "ind", "ing", "mtk"];
-    const newSortedDataSource = oldDataSource.sort((a, b) => {
-      return typeOrder.indexOf(a.subtest) - typeOrder.indexOf(b.subtest);
-    });
+    const newSortedDataSource: TableRowData[] = [];
+    const totalScore = (subtestTyped: string) => {
+      uniqueUserIds.map((userId) => {
+        const subtestType = subtestTyped;
+        let userScore = 250;
+        oldDataSource.map((oldDataItem) =>
+          oldDataItem.subtest === subtestType && oldDataItem[userId]
+            ? (userScore += Number(oldDataItem[userId]))
+            : (userScore += 0)
+        );
+        const existingRow = newSortedDataSource.find(
+          (row) => row.question_id === subtestType
+        );
+        if (existingRow) {
+          existingRow[userId] = Math.round(userScore);
+        } else {
+          const newRowData: TableRowData = {
+            question_id: subtestType,
+            subtest: subtestType,
+            [userId]: Math.round(userScore),
+          };
+          newSortedDataSource.push(newRowData);
+        }
+      });
+    };
+    typeOrder.forEach((item) => totalScore(item));
     setNewDataSource(newSortedDataSource);
   }, [scores]);
 
@@ -262,27 +307,3 @@ const ResultScore = () => {
 };
 
 export default ResultScore;
-
-class Subtes {
-  private respons: number[][];
-  private skorMaksimal: number;
-
-  constructor(respons: number[][], skorMaksimal: number) {
-    this.respons = respons;
-    this.skorMaksimal = skorMaksimal;
-  }
-
-  private hitungSkorSoal(soal: number[]): number {
-    const jumlahBenar: number = soal.reduce((acc, val) => acc + val, 0);
-    const proporsiBenar: number = jumlahBenar / soal.length;
-    return proporsiBenar * this.skorMaksimal;
-  }
-
-  public hitungSkorSubtes(): number[] {
-    const skorSubtes: number[] = [];
-    for (const soal of this.respons) {
-      skorSubtes.push(this.hitungSkorSoal(soal));
-    }
-    return skorSubtes;
-  }
-}
