@@ -121,7 +121,7 @@ const ResultScore = () => {
             width: 25,
           }}
         >
-          {value || 0}
+          {value.toString() || ""}
         </div>
       ),
     })),
@@ -182,13 +182,13 @@ const ResultScore = () => {
     const percentIsTrue =
       countPercentIsTrue < 30 ? 0 : countPercentIsTrue < 50 ? 30 : 50;
     const maxScore = 750;
-    if (subtest === "kpu" || subtest === "bind") {
+    if (subtest === "kpu" || subtest === "ind") {
       const defaultScore = maxScore / 30;
       return ((100 - percentIsTrue) / 100) * defaultScore;
     } else if (
       subtest === "ppu" ||
       subtest === "pbm" ||
-      subtest === "bing" ||
+      subtest === "ing" ||
       subtest === "mtk"
     ) {
       const defaultScore = maxScore / 20;
