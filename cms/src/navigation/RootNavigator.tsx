@@ -18,6 +18,7 @@ import FormInd from "../components/Tryout/FormInd";
 import FormIng from "../components/Tryout/FormIng";
 import FormMtk from "../components/Tryout/FormMtk";
 import ResultTable from "../components/TryoutResult/ResultTable";
+import ResultScore from "../components/TryoutResult/ResultScore";
 
 const RootNavigator = () => {
   return (
@@ -150,6 +151,14 @@ const RootNavigator = () => {
             element={
               <PrivateRoute loginPath="/login">
                 <ResultTable />
+              </PrivateRoute>
+            }
+          />
+          <Route
+            path="/tryout-score/:id"
+            element={
+              <PrivateRoute loginPath="/login">
+                <ResultScore />
               </PrivateRoute>
             }
           />

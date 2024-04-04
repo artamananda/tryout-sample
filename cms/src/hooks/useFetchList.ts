@@ -1,16 +1,16 @@
-import { AxiosInstance } from 'axios';
-import React from 'react';
-import { useDebounce } from 'use-debounce';
-import { httpRequest } from '../helpers/api';
-import { generateQueryString } from '../helpers/generateQueryString';
+import { AxiosInstance } from "axios";
+import React from "react";
+import { useDebounce } from "use-debounce";
+import { httpRequest } from "../helpers/api";
+import { generateQueryString } from "../helpers/generateQueryString";
 import {
   IHttpResponse,
   INITIAL_PAGINATION,
   INITIAL_QUERY,
   IPagination,
   IPayloadPagination,
-  IQuery
-} from '../helpers/pagination';
+  IQuery,
+} from "../helpers/pagination";
 
 type Props = {
   endpoint: string;
@@ -30,12 +30,12 @@ export default function useFetchList<DataType, ExtendType = {}>(props: Props) {
   const [data, setData] = React.useState<Array<DataType>>([]);
   const [pagination, setPagination] = React.useState<IPagination>({
     ...INITIAL_PAGINATION,
-    perPage: props.limit || DEFAULT_LIMIT
+    perPage: props.limit || DEFAULT_LIMIT,
   } as IPagination);
   const [query, setQuery] = React.useState<IQuery<ExtendType>>({
     ...INITIAL_QUERY,
     limit: props.limit || DEFAULT_LIMIT,
-    ...props.initialQuery
+    ...props.initialQuery,
   } as IQuery<ExtendType>);
 
   const [search, setSearch] = React.useState<string>();
@@ -51,8 +51,6 @@ export default function useFetchList<DataType, ExtendType = {}>(props: Props) {
       const res = await apiRequest.get<
         IHttpResponse<IPayloadPagination<DataType>>
       >(`${props.endpoint}${generateQueryString(query)}`);
-      console.log('hello');
-      console.log('data', res.data.payload);
 
       setPagination((oldVal) => {
         return {
@@ -63,7 +61,7 @@ export default function useFetchList<DataType, ExtendType = {}>(props: Props) {
           totalData: res.data.payload?.count,
           countPage: Math.ceil(
             res.data.payload?.count / (props.limit || DEFAULT_LIMIT)
-          )
+          ),
         };
       });
 
@@ -95,14 +93,14 @@ export default function useFetchList<DataType, ExtendType = {}>(props: Props) {
       return {
         ...oldVal,
         page,
-        perPage
+        perPage,
       };
     });
     setQuery((oldVal) => {
       return {
         ...oldVal,
         limit: perPage,
-        offset: (page - 1) * (perPage || props.limit || DEFAULT_LIMIT)
+        offset: (page - 1) * (perPage || props.limit || DEFAULT_LIMIT),
       };
     });
   };
@@ -111,14 +109,14 @@ export default function useFetchList<DataType, ExtendType = {}>(props: Props) {
     setPagination((oldVal) => {
       return {
         ...oldVal,
-        perPage
+        perPage,
       };
     });
     setQuery((oldVal) => {
       return {
         ...oldVal,
         limit: perPage,
-        offset: 0
+        offset: 0,
       };
     });
   };
@@ -137,6 +135,6 @@ export default function useFetchList<DataType, ExtendType = {}>(props: Props) {
     changePage,
     fetchList,
     setIsLoading,
-    changeLimit
+    changeLimit,
   };
 }

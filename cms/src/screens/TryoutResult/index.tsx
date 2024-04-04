@@ -34,6 +34,19 @@ const TryOutResultScreen = () => {
       ),
     },
     {
+      title: "Score",
+      dataIndex: "score",
+      key: "score",
+      render: (_, record) => (
+        <Link
+          underline
+          onClick={() => navigate("/tryout-score/" + record.tryout_id)}
+        >
+          {record.title} - Score
+        </Link>
+      ),
+    },
+    {
       title: "Duration",
       dataIndex: "duration",
       key: "duration",
