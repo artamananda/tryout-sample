@@ -114,7 +114,7 @@ const ResultScore = () => {
       render: (value: string | number) => (
         <div
           style={{
-            backgroundColor: Number(value) > 0 ? "green" : "red",
+            backgroundColor: Number(value) > 250 ? "green" : "red",
             color: "white",
             textAlign: "center",
             borderRadius: "100px",
@@ -178,8 +178,10 @@ const ResultScore = () => {
     countTotal: number,
     subtest: string
   ) => {
-    const percentIsTrue = (countTrue / countTotal) * 100;
-    const maxScore = 800;
+    const countPercentIsTrue = (countTrue / countTotal) * 100;
+    const percentIsTrue =
+      countPercentIsTrue < 30 ? 0 : countPercentIsTrue < 50 ? 30 : 50;
+    const maxScore = 750;
     if (subtest === "kpu" || subtest === "bind") {
       const defaultScore = maxScore / 30;
       return ((100 - percentIsTrue) / 100) * defaultScore;
