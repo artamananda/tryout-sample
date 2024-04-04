@@ -114,11 +114,8 @@ const ResultScore = () => {
       render: (value: string | number) => (
         <div
           style={{
-            backgroundColor: Number(value) > 250 ? "green" : "red",
-            color: "white",
+            color: Number(value) > 250 ? "green" : "red",
             textAlign: "center",
-            borderRadius: "100px",
-            width: 25,
           }}
         >
           {value.toString() || ""}
