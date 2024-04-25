@@ -76,6 +76,7 @@ func (service *QuestionService) Update(ctx context.Context, request model.Update
 	question.Type = request.Type
 	question.Text = request.Text
 	question.ImageUrl = request.ImageUrl
+	question.Options = request.Options
 	question.CorrectAnswer = request.CorrectAnswer
 	question.Points = request.Points
 
