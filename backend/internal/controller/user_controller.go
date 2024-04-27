@@ -22,11 +22,11 @@ func NewUserController(userService *service.UserService, config config.Config) *
 func (controller UserController) Route(app *fiber.App) {
 	app.Post("/v1/api/login", controller.Authentication)
 	app.Post("/v1/api/user", controller.Create)
-	app.Post("/v1/api/users", middleware.AuthenticateJWT("admin", controller.Config), controller.CreateBulk)
-	app.Put("/v1/api/user/:id", middleware.AuthenticateJWT("admin", controller.Config), controller.Update)
-	app.Delete("/v1/api/user/:id", middleware.AuthenticateJWT("admin", controller.Config), controller.Delete)
+	app.Post("/v1/api/users", middleware.AuthenticateJWT([]string{"admin"}, controller.Config), controller.CreateBulk)
+	app.Put("/v1/api/user/:id", middleware.AuthenticateJWT([]string{"admin"}, controller.Config), controller.Update)
+	app.Delete("/v1/api/user/:id", middleware.AuthenticateJWT([]string{"admin"}, controller.Config), controller.Delete)
 	app.Get("/v1/api/user/:id", controller.FindById)
-	app.Get("/v1/api/user", middleware.AuthenticateJWT("admin", controller.Config), controller.FindAll)
+	app.Get("/v1/api/user", middleware.AuthenticateJWT([]string{"admin", "user"}, controller.Config), controller.FindAll)
 }
 
 func (controller UserController) Create(c *fiber.Ctx) error {
