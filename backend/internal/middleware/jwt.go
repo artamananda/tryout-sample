@@ -9,19 +9,21 @@ import (
 	"github.com/golang-jwt/jwt/v4"
 )
 
-func AuthenticateJWT(role string, config config.Config) func(*fiber.Ctx) error {
+func AuthenticateJWT(roles []string, config config.Config) func(*fiber.Ctx) error {
 	jwtSecret := config.Get("JWT_SECRET_KEY")
 	return jwtware.New(jwtware.Config{
 		SigningKey: []byte(jwtSecret),
 		SuccessHandler: func(ctx *fiber.Ctx) error {
 			user := ctx.Locals("user").(*jwt.Token)
 			claims := user.Claims.(jwt.MapClaims)
-			roles := claims["roles"].(string)
+			role := claims["roles"].(string)
 
-			common.NewLogger().Info("role function ", role, " role user ", roles)
+			common.NewLogger().Info("role function ", roles, " role user ", role)
 
-			if roles == role {
-				return ctx.Next()
+			for _, val := range roles {
+				if val == role {
+					return ctx.Next()
+				}
 			}
 
 			return ctx.

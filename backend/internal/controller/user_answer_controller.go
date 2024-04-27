@@ -19,9 +19,9 @@ func NewUserAnswerController(userAnswerService *service.UserAnswerService, confi
 }
 
 func (controller UserAnswerController) Route(app *fiber.App) {
-	app.Post("/v1/api/user-answer", middleware.AuthenticateJWT("user", controller.Config), controller.Create)
-	app.Put("/v1/api/user-answer/:id", middleware.AuthenticateJWT("user", controller.Config), controller.Update)
-	app.Delete("/v1/api/user-answer/:id", middleware.AuthenticateJWT("user", controller.Config), controller.Delete)
+	app.Post("/v1/api/user-answer", middleware.AuthenticateJWT([]string{"admin", "user"}, controller.Config), controller.Create)
+	app.Put("/v1/api/user-answer/:id", middleware.AuthenticateJWT([]string{"admin", "user"}, controller.Config), controller.Update)
+	app.Delete("/v1/api/user-answer/:id", middleware.AuthenticateJWT([]string{"admin", "user"}, controller.Config), controller.Delete)
 	app.Get("/v1/api/user-answer/:id", controller.FindById)
 	app.Get("/v1/api/user-answer/user/:id", controller.FindByUserId)
 	app.Get("/v1/api/user-answer", controller.FindAll)

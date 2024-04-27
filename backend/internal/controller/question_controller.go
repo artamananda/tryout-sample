@@ -18,9 +18,9 @@ func NewQuestionController(questionService *service.QuestionService, config conf
 }
 
 func (controller QuestionController) Route(app *fiber.App) {
-	app.Post("/v1/api/question/:tryoutId", middleware.AuthenticateJWT("admin", controller.Config), controller.Create)
-	app.Put("/v1/api/question/:id", middleware.AuthenticateJWT("admin", controller.Config), controller.Update)
-	app.Delete("/v1/api/question/:id", middleware.AuthenticateJWT("admin", controller.Config), controller.Delete)
+	app.Post("/v1/api/question/:tryoutId", middleware.AuthenticateJWT([]string{"admin"}, controller.Config), controller.Create)
+	app.Put("/v1/api/question/:id", middleware.AuthenticateJWT([]string{"admin"}, controller.Config), controller.Update)
+	app.Delete("/v1/api/question/:id", middleware.AuthenticateJWT([]string{"admin"}, controller.Config), controller.Delete)
 	app.Get("/v1/api/question/:id", controller.FindById)
 	app.Get("/v1/api/question", controller.FindAll)
 	app.Get("/v1/api/tryout/question/:id", controller.FindByTryoutId)
@@ -101,11 +101,11 @@ func (controller QuestionController) FindByTryoutId(c *fiber.Ctx) error {
 		return err
 	}
 	payload := map[string]interface{}{
-        "count":   len(result),
-        "next":    nil,
-        "prev":    nil,
-        "results": result,
-    }
+		"count":   len(result),
+		"next":    nil,
+		"prev":    nil,
+		"results": result,
+	}
 	return c.Status(fiber.StatusOK).JSON(model.GeneralResponse{
 		Code:    200,
 		Message: "Success",
@@ -119,11 +119,11 @@ func (controller QuestionController) FindAll(c *fiber.Ctx) error {
 		return err
 	}
 	payload := map[string]interface{}{
-        "count":   len(result),
-        "next":    nil,
-        "prev":    nil,
-        "results": result,
-    }
+		"count":   len(result),
+		"next":    nil,
+		"prev":    nil,
+		"results": result,
+	}
 	return c.Status(fiber.StatusOK).JSON(model.GeneralResponse{
 		Code:    200,
 		Message: "Success",
