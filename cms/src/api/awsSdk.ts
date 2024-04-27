@@ -1,35 +1,32 @@
-import {
-  GetObjectCommand,
-  PutObjectCommand,
-  S3Client,
-} from "@aws-sdk/client-s3";
+import { GetObjectCommand, PutObjectCommand, S3Client } from '@aws-sdk/client-s3';
 
-const bucketName = "telisik-bucket";
+const bucketName = 'telisik-bucket';
 
 const S3 = new S3Client({
-  region: "auto",
+  region: 'auto',
   endpoint: `https://${process.env.REACT_APP_S3_ACCOUNT_ID}.r2.cloudflarestorage.com`,
   credentials: {
-    accessKeyId: process.env.REACT_APP_S3_ACCESS_ID || "",
-    secretAccessKey: process.env.REACT_APP_S3_SECRET_ID || "",
+    accessKeyId: process.env.REACT_APP_S3_ACCESS_ID || '',
+    secretAccessKey: process.env.REACT_APP_S3_SECRET_ID || '',
   },
 });
 
 export const S3Upload = async (file: any, fileName?: string) => {
+  console.log(file);
   try {
     const res = await S3.send(
       new PutObjectCommand({
         Bucket: bucketName,
         Body: file,
         Key: fileName || file?.name,
-        ContentType: `image/${file?.name.split(".").pop()}`,
+        ContentType: `image/${file?.name.split('.').pop()}`,
       })
     );
     if (res) {
       return file.name;
     }
   } catch (err) {
-    console.log("Storage err: ", err);
+    console.log('Storage err: ', err);
     return null;
   }
 };
@@ -44,7 +41,7 @@ export const ApiGetFileById = async (fileId: string) => {
     );
     console.log(res);
   } catch (err) {
-    console.log("Storage err: ", err);
+    console.log('Storage err: ', err);
   }
 };
 
