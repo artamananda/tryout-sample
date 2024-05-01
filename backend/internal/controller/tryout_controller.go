@@ -18,9 +18,9 @@ func NewTryoutController(tryoutService *service.TryoutService, config config.Con
 }
 
 func (controller TryoutController) Route(app *fiber.App) {
-	app.Post("/v1/api/tryout", middleware.AuthenticateJWT("admin", controller.Config), controller.Create)
-	app.Put("/v1/api/tryout/:id", middleware.AuthenticateJWT("admin", controller.Config), controller.Update)
-	app.Delete("/v1/api/tryout/:id", middleware.AuthenticateJWT("admin", controller.Config), controller.Delete)
+	app.Post("/v1/api/tryout", middleware.AuthenticateJWT([]string{"admin"}, controller.Config), controller.Create)
+	app.Put("/v1/api/tryout/:id", middleware.AuthenticateJWT([]string{"admin"}, controller.Config), controller.Update)
+	app.Delete("/v1/api/tryout/:id", middleware.AuthenticateJWT([]string{"admin"}, controller.Config), controller.Delete)
 	app.Get("/v1/api/tryout/:id", controller.FindById)
 	app.Get("/v1/api/tryout", controller.FindAll)
 }
@@ -94,11 +94,11 @@ func (controller TryoutController) FindById(c *fiber.Ctx) error {
 func (controller TryoutController) FindAll(c *fiber.Ctx) error {
 	result := controller.TryoutService.FindAll(c.Context())
 	payload := map[string]interface{}{
-        "count":   len(result),
-        "next":    nil,
-        "prev":    nil,
-        "results": result,
-    }
+		"count":   len(result),
+		"next":    nil,
+		"prev":    nil,
+		"results": result,
+	}
 	return c.Status(fiber.StatusOK).JSON(model.GeneralResponse{
 		Code:    200,
 		Message: "Success",
