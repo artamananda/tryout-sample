@@ -20,7 +20,7 @@ type UpdateQuestionRequest struct {
 	LocalID       int      `json:"local_id"`
 	Type          string   `json:"type"`
 	Text          string   `json:"text"`
-	ImageUrl      string   `json:"image_url"`
+	ImageUrl      string   `json:"image_url" sql:"default:''"`
 	Options       []string `json:"options" validate:"min=1,dive"`
 	CorrectAnswer string   `json:"correct_answer"`
 	Points        int      `json:"points"`
