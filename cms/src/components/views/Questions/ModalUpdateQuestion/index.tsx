@@ -9,11 +9,13 @@ import { apiUpdateQuestion, fetchQuestions } from '../../../../api/question';
 import parse from 'html-react-parser';
 import { getErrorMessage } from '../../../../helpers/errorHandler';
 import copy from 'copy-to-clipboard';
+import { IisModalOpenTypes } from '..';
+import SwitchButton from '../../../Ui/SwitchButton';
 
 type PropTypes = {
-  setIsModalOpen: any;
-  isModalOpen: any;
-  setQuestionList: any;
+  setIsModalOpen: React.Dispatch<React.SetStateAction<IisModalOpenTypes>>;
+  isModalOpen: IisModalOpenTypes;
+  setQuestionList: React.Dispatch<React.SetStateAction<QuestionProps[]>>;
   tryoutId: string;
   questionType: string;
 };
@@ -24,7 +26,7 @@ const ModalUpdateQuestion = (props: PropTypes) => {
   const [options, setOptions] = useState<string[]>(isModalOpen?.question?.options || Array.from({ length: 5 }, () => ''));
   const [answer, setAnswer] = useState<string>('');
   const [image, setImage] = useState<string>('');
-  console.log(options);
+  const [optionShow, setOptionShow] = useState<boolean>(true);
 
   const quillModules = {
     toolbar: {
@@ -69,21 +71,24 @@ const ModalUpdateQuestion = (props: PropTypes) => {
   const handleUpdateQuestion = async () => {
     try {
       let newData: QuestionProps = {
-        tryout_id: isModalOpen?.question.tryout_id,
-        question_id: isModalOpen?.question.question_id,
-        local_id: isModalOpen?.question.local_id,
+        tryout_id: isModalOpen?.question?.tryout_id ?? '',
+        question_id: isModalOpen?.question?.question_id ?? '',
+        local_id: isModalOpen?.question?.local_id,
         type: questionType,
-        text: question !== '' ? question : isModalOpen.question.text,
+        text: question !== '' ? question : isModalOpen?.question?.text ?? '',
         options: options.every((option) => option !== '') ? options : ([''] as string[]),
-        correct_answer: answer !== '' ? answer : isModalOpen.question.correct_answer,
-        image_url: image !== '' ? ApiGetFileUrlById(image) : isModalOpen.question.image_url,
+        correct_answer: answer !== '' ? answer : isModalOpen?.question?.correct_answer ?? '',
+        image_url: image !== '' ? ApiGetFileUrlById(image) : isModalOpen?.question?.image_url,
       };
       const res = await apiUpdateQuestion(newData);
       if (res?.status === 200) {
-        setIsModalOpen(false);
+        setIsModalOpen({
+          status: false,
+        });
         const questionList = await fetchQuestions(tryoutId, questionType);
         const questions = questionList.sort((a: any, b: any) => a.local_id - b.local_id);
         setQuestionList(questions);
+        message.success('success update question');
       }
     } catch (err) {
       message.error(getErrorMessage(err));
@@ -92,11 +97,15 @@ const ModalUpdateQuestion = (props: PropTypes) => {
   };
 
   const handleOk = () => {
-    setIsModalOpen(false);
+    setIsModalOpen({
+      status: false,
+    });
   };
 
   const handleCancel = () => {
-    setIsModalOpen(false);
+    setIsModalOpen({
+      status: false,
+    });
   };
 
   return (
@@ -112,7 +121,7 @@ const ModalUpdateQuestion = (props: PropTypes) => {
       >
         <React.Fragment>
           <div>
-            {isModalOpen.question.image_url && (
+            {isModalOpen?.question?.image_url !== '' && (
               <div style={{ display: 'flex', justifyContent: 'center', marginBottom: '10px' }}>
                 <Image
                   src={isModalOpen.question?.image_url}
@@ -127,14 +136,16 @@ const ModalUpdateQuestion = (props: PropTypes) => {
               <h3>Question {isModalOpen?.question?.local_id}</h3>
               <CopyOutlined
                 onClick={() => {
-                  if (copy(isModalOpen?.question?.text)) {
-                    message.success('Question has been copied!');
+                  if (isModalOpen?.question?.text !== '') {
+                    if (copy(isModalOpen?.question?.text ?? '')) {
+                      message.success('Question has been copied!');
+                    }
                   }
                 }}
                 style={{ color: 'grey' }}
               />
             </div>
-            <p style={{ fontStyle: 'initial', color: '#777777' }}>{parse(isModalOpen?.question?.text)}</p>
+            {isModalOpen?.question?.text !== '' ? <p style={{ fontStyle: 'initial', color: '#777777' }}>{parse(isModalOpen?.question?.text ?? '')}</p> : <p style={{ fontStyle: 'initial', color: '#777777' }}>No question yet</p>}
           </div>
           <Form.Item
             name="question"
@@ -148,13 +159,13 @@ const ModalUpdateQuestion = (props: PropTypes) => {
               formats={quillFormats}
               defaultValue={isModalOpen?.question?.text ? '' : isModalOpen?.question?.text}
               onChange={(value) => handleQuestionChange(value)}
-              value={isModalOpen?.question?.text || ''}
+              value={isModalOpen?.question?.text ?? ''}
               placeholder="Enter New question"
             />
           </Form.Item>
 
           <Form.Item>
-            <Form.Item>
+            <div style={{ display: 'flex', flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
               <Upload {...imageUploadProps}>
                 <Button
                   type="primary"
@@ -163,69 +174,82 @@ const ModalUpdateQuestion = (props: PropTypes) => {
                   Click to Upload
                 </Button>
               </Upload>
-            </Form.Item>
+              <div style={{ display: 'flex', gap: '10px', alignItems: 'center', justifyContent: 'center' }}>
+                <h3 style={{ fontWeight: 'normal', fontSize: '15px' }}>
+                  Change to <span style={{ fontWeight: 'bold' }}>Essay Mode </span>:{' '}
+                </h3>
+                <SwitchButton
+                  setOptions={setOptions}
+                  options={options}
+                  setOptionShow={setOptionShow}
+                />
+              </div>
+            </div>
           </Form.Item>
-          <Form.Item
-            name="optionsA"
-            label={'Option A'}
-          >
-            <Input
-              name="optionsA"
-              type="options"
-              placeholder="Enter option A"
-              defaultValue={isModalOpen?.question?.options[0]}
-              onChange={(e) => handleOptionChange(0, e.target.value)}
-            />
-          </Form.Item>
-          <Form.Item
-            name="optionsB"
-            label={'Option B'}
-          >
-            <Input
-              name="optionsB"
-              type="options"
-              placeholder="Enter option B"
-              defaultValue={isModalOpen?.question?.options[1]}
-              onChange={(e) => handleOptionChange(1, e.target.value)}
-            />
-          </Form.Item>
-          <Form.Item
-            name="optionsC"
-            label={'Option C'}
-          >
-            <Input
-              name="optionsC"
-              type="options"
-              placeholder="Enter option C"
-              defaultValue={isModalOpen?.question?.options[2]}
-              onChange={(e) => handleOptionChange(2, e.target.value)}
-            />
-          </Form.Item>
-          <Form.Item
-            name="optionsD"
-            label={'Option D'}
-          >
-            <Input
-              name="optionsD"
-              type="options"
-              placeholder="Enter option D"
-              defaultValue={isModalOpen?.question?.options[3]}
-              onChange={(e) => handleOptionChange(3, e.target.value)}
-            />
-          </Form.Item>
-          <Form.Item
-            name="optionsE"
-            label={'Option E'}
-          >
-            <Input
-              name="optionsE"
-              type="options"
-              placeholder="Enter option E"
-              defaultValue={isModalOpen?.question?.options[4]}
-              onChange={(e) => handleOptionChange(4, e.target.value)}
-            />
-          </Form.Item>
-
+          {optionShow && (
+            <>
+              <Form.Item
+                name="optionsA"
+                label={'Option A'}
+              >
+                <Input
+                  name="optionsA"
+                  type="options"
+                  placeholder="Enter option A"
+                  defaultValue={isModalOpen?.question?.options[0]}
+                  onChange={(e) => handleOptionChange(0, e.target.value)}
+                />
+              </Form.Item>
+              <Form.Item
+                name="optionsB"
+                label={'Option B'}
+              >
+                <Input
+                  name="optionsB"
+                  type="options"
+                  placeholder="Enter option B"
+                  defaultValue={isModalOpen?.question?.options[1]}
+                  onChange={(e) => handleOptionChange(1, e.target.value)}
+                />
+              </Form.Item>
+              <Form.Item
+                name="optionsC"
+                label={'Option C'}
+              >
+                <Input
+                  name="optionsC"
+                  type="options"
+                  placeholder="Enter option C"
+                  defaultValue={isModalOpen?.question?.options[2]}
+                  onChange={(e) => handleOptionChange(2, e.target.value)}
+                />
+              </Form.Item>
+              <Form.Item
+                name="optionsD"
+                label={'Option D'}
+              >
+                <Input
+                  name="optionsD"
+                  type="options"
+                  placeholder="Enter option D"
+                  defaultValue={isModalOpen?.question?.options[3]}
+                  onChange={(e) => handleOptionChange(3, e.target.value)}
+                />
+              </Form.Item>
+              <Form.Item
+                name="optionsE"
+                label={'Option E'}
+              >
+                <Input
+                  name="optionsE"
+                  type="options"
+                  placeholder="Enter option E"
+                  defaultValue={isModalOpen?.question?.options[4]}
+                  onChange={(e) => handleOptionChange(4, e.target.value)}
+                />
+              </Form.Item>
+            </>
+          )}
           <Form.Item
             name="correct_answer"
             label={'Answer'}

@@ -1,27 +1,45 @@
-import parse from 'html-react-parser';
 import { QuestionProps } from '../../../types/question';
 import { useNavigate } from 'react-router-dom';
 import ButtonUi from '../../Ui/Button';
-import { Suspense, useEffect, useState } from 'react';
 import ModalUpdateQuestion from './ModalUpdateQuestion';
 import ModalConfirmDeleteQuestion from './ModalConfirmDeleteQuestion';
 import { Image, Spin } from 'antd';
-import { DeleteFilled, EditFilled, FileExcelOutlined } from '@ant-design/icons';
+import QuestionCard from '../../Ui/QuestionCard';
+import emptyIcon from '../../../assets/emptyIcon.png';
+import { useState } from 'react';
 
 type PropTypes = {
   questionList: QuestionProps[];
   questionType: string;
   tryoutId: string;
-  setQuestionList: any;
+  setQuestionList: React.Dispatch<React.SetStateAction<QuestionProps[]>>;
   loading: boolean;
 };
+
+export interface IisModalOpenTypes {
+  status: boolean;
+  type?: string;
+  question?: QuestionProps;
+}
 
 const QuestionView = (props: PropTypes) => {
   const { questionList, questionType, tryoutId, setQuestionList, loading } = props;
   const navigate = useNavigate();
-  const [isModalOpen, setIsModalOpen] = useState<any>({});
+  const [isModalOpen, setIsModalOpen] = useState<IisModalOpenTypes>({
+    status: false,
+    type: '',
+    question: {
+      question_id: '',
+      tryout_id: '',
+      type: '',
+      text: '',
+      options: [],
+      image_url: '',
+      correct_answer: '',
+    },
+  });
 
-  const showModal = (status: boolean, type: string, question: any) => {
+  const showModal = (status: boolean, type: string, question: QuestionProps) => {
     setIsModalOpen({
       status: status,
       type: type,
@@ -41,64 +59,20 @@ const QuestionView = (props: PropTypes) => {
       ) : questionList.length ? (
         <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
           {questionList?.map((question: any, index: number) => (
-            <div
-              style={{ display: 'flex', flexDirection: 'column', paddingInline: '20px', paddingBlock: '20px', backgroundColor: 'white', borderRadius: '10px', border: '1px solid #d9d9d9', justifyContent: 'center', gap: '5px' }}
+            <QuestionCard
+              question={question}
+              showModal={showModal}
               key={index}
-            >
-              <div style={{ display: 'flex', flexDirection: 'column' }}>
-                <div style={{ width: '100%', height: '35px', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-                  <h3>Question {question?.local_id}</h3>
-                  <div style={{ display: 'flex', gap: '10px' }}>
-                    <ButtonUi
-                      onClick={() => showModal(true, 'update', question)}
-                      icon={<EditFilled />}
-                      color="#8C59F1"
-                      backgroundColor="#f5f5f5"
-                    />
-                    <ButtonUi
-                      icon={<DeleteFilled />}
-                      onClick={() => showModal(true, 'delete', question)}
-                      color="#FF3E3E"
-                      backgroundColor="#f5f5f5"
-                    />
-                  </div>
-                </div>
-                {question.image_url && (
-                  <div style={{ display: 'flex', justifyContent: 'center' }}>
-                    <Image
-                      src={question?.image_url}
-                      width={400}
-                    />
-                  </div>
-                )}
-                <div>
-                  <p>{parse(question?.text)}</p>
-                </div>
-              </div>
-              {question.options.every((option: any) => option !== '') ? (
-                <div style={{ paddingInline: '10px' }}>
-                  {question?.options?.map((option: any, optionIndex: number) => (
-                    <p key={optionIndex}>
-                      {String.fromCharCode(97 + optionIndex)}. {option}
-                    </p>
-                  ))}
-                </div>
-              ) : null}
-              <div style={{ paddingInline: '10px', border: '1px solid #d9d9d9', borderRadius: '5px', backgroundColor: '#f5f5f5' }}>
-                <div style={{ display: 'flex', gap: '10px', alignItems: 'center', fontStyle: 'italic' }}>
-                  <h3>Answer : </h3>
-                  <p>{question?.correct_answer}</p>
-                </div>
-              </div>
-            </div>
+            />
           ))}
         </div>
       ) : (
         <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', height: '100vh' }}>
-          <div style={{ fontSize: '80px', color: 'grey' }}>
-            <FileExcelOutlined />
-          </div>
-          <h3 style={{ color: 'grey', fontWeight: 'bold', marginTop: '0px' }}>Questions haven't been made</h3>
+          <Image
+            src={emptyIcon}
+            width={150}
+          />
+          <h3 style={{ color: 'grey', fontStyle: 'italic', fontWeight: 'normal', marginTop: 0 }}>Question hasn't been made</h3>
           <ButtonUi
             title="Create Question"
             backgroundColor="#8C59F1"

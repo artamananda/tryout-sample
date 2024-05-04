@@ -229,7 +229,7 @@ const Tryout = () => {
           }}
           onClick={handlePrev}
         >
-          {'<<<Soal Sebelumnya'}
+          {'<<< Soal Sebelumnya'}
         </Button>
         <Button
           style={{

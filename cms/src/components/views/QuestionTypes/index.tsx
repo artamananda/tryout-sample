@@ -1,12 +1,10 @@
 import { Typography } from 'antd';
-import QuestionTypeCard from '../../Ui/QuestionTypeCard';
-import { useNavigate } from 'react-router-dom';
 
 const { Title } = Typography;
 
 type PropTypes = {
   title: string;
-  children: any;
+  children: JSX.Element[];
 };
 
 const QuestionTypes = ({ title, children }: PropTypes) => {

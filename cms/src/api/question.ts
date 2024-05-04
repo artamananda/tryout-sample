@@ -18,10 +18,6 @@ export async function apiCreateQuestion(data: CreateQuestionRequest) {
 export async function apiUpdateQuestion(data: QuestionProps) {
   try {
     const res = await httpRequest.put<BaseResponseProps<QuestionProps>>(process.env.REACT_APP_BASE_URL + '/question/' + data.question_id, data);
-    console.log(res);
-    if (res) {
-      message.success('success update question');
-    }
     return res;
   } catch (err) {
     const error = getErrorMessage(err);
@@ -34,7 +30,6 @@ export async function doCreateQuestions(data: CreateQuestionRequest[]) {
   try {
     const res = await Promise.all(
       data.map(async (item) => {
-        console.log(item);
         await apiCreateQuestion(item);
       })
     );
@@ -51,7 +46,8 @@ export async function doCreateQuestions(data: CreateQuestionRequest[]) {
 
 export async function fetchQuestions(tryoutId: string, questionType: string) {
   try {
-    const res = await httpRequest.get<BaseResponseProps<any>>(process.env.REACT_APP_BASE_URL + '/tryout/question/' + tryoutId);
+    const url = `${process.env.REACT_APP_BASE_URL}/question?tryoutId=${tryoutId}`;
+    const res = await httpRequest.get<BaseResponseProps<any>>(url);
     const questions = res.data.payload?.results?.filter((q: any) => q.type === questionType);
     console.log(questions);
 
@@ -60,5 +56,6 @@ export async function fetchQuestions(tryoutId: string, questionType: string) {
     const error = getErrorMessage(err);
     console.error(error);
     message.error(error);
+    throw error;
   }
 }
