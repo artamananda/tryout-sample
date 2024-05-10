@@ -11,6 +11,14 @@ const QuestionPage = () => {
   const questionType = parts[parts.length - 1];
   const [questionList, setQuestionList] = useState<QuestionProps[]>([]);
   const [loading, setIsLoading] = useState(true);
+
+  const scrollTop = () => {
+    window.scrollTo({
+      behavior: 'smooth',
+      top: 0,
+    });
+  };
+
   const fetchDataQuestion = async () => {
     const questionList = await fetchQuestions(tryoutId, questionType);
     const questions = questionList.sort((a: any, b: any) => a.local_id - b.local_id);
@@ -20,13 +28,15 @@ const QuestionPage = () => {
     } else {
       setTimeout(() => {
         setIsLoading(false);
-      }, 700);
+      }, 500);
     }
   };
 
   useEffect(() => {
     fetchDataQuestion();
+    scrollTop();
   }, []);
+
   return (
     <QuestionView
       questionList={questionList}

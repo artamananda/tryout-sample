@@ -10,8 +10,8 @@ export async function apiCreateQuestion(data: CreateQuestionRequest) {
     return res;
   } catch (err) {
     const error = getErrorMessage(err);
-    console.error(error);
-    message.error(error);
+    // console.error(error);
+    // message.error(error);
   }
 }
 

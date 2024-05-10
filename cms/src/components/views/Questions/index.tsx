@@ -7,6 +7,7 @@ import { Image, Spin } from 'antd';
 import QuestionCard from '../../Ui/QuestionCard';
 import emptyIcon from '../../../assets/emptyIcon.png';
 import { useState } from 'react';
+import { FaPlus } from 'react-icons/fa6';
 
 type PropTypes = {
   questionList: QuestionProps[];
@@ -24,6 +25,7 @@ export interface IisModalOpenTypes {
 
 const QuestionView = (props: PropTypes) => {
   const { questionList, questionType, tryoutId, setQuestionList, loading } = props;
+
   const navigate = useNavigate();
   const [isModalOpen, setIsModalOpen] = useState<IisModalOpenTypes>({
     status: false,
@@ -58,6 +60,50 @@ const QuestionView = (props: PropTypes) => {
         </div>
       ) : questionList.length ? (
         <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', backgroundColor: '#ECECFC', borderRadius: '10px', border: '1px solid #D0D0D0', paddingInline: '20px', paddingBlock: '15px', color: '#343672', fontSize: '13px' }}>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '3px' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '3px', marginBottom: 0, height: '20px' }}>
+                <p style={{ fontWeight: '600' }}>Jenis Soal : </p>
+                <p>
+                  {questionType === 'kpu'
+                    ? 'Penalaran Umum'
+                    : questionType === 'ppu'
+                    ? 'Pengetahuan dan Pemahaman Umum'
+                    : questionType === 'pbm'
+                    ? 'Pemahaman Bacaan dan Menulis'
+                    : questionType === 'pku'
+                    ? 'Pengetahuan Kuantitatif'
+                    : questionType === 'ind'
+                    ? 'Literasi Bahasa Indonesia'
+                    : questionType === 'ing'
+                    ? 'Literasi Bahasa Inggris'
+                    : questionType === 'mtk'
+                    ? 'Penalaran Matematika'
+                    : 'Literasi'}
+                  <span> ({questionType.toUpperCase()})</span>
+                </p>
+              </div>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '3px', height: '20px' }}>
+                <p style={{ fontWeight: '600' }}>Jumlah Soal : </p>
+                <p>
+                  {questionList.length}
+                  <span style={{ fontWeight: '600', color: 'red' }}>
+                    {questionType === 'kpu' ? '/30 Soal' : questionType === 'ppu' ? '/20 Soal' : questionType === 'pbm' ? '/20 Soal' : questionType === 'pku' ? '/15 Soal' : questionType === 'ind' ? '/30 Soal' : questionType === 'ing' ? '/20 Soal' : questionType === 'mtk' ? '/20 Soal' : 'Literasi'}
+                  </span>
+                </p>
+              </div>
+            </div>
+
+            <div style={{ display: 'flex', alignItems: 'center' }}>
+              <ButtonUi
+                title="Add More Question"
+                backgroundColor="#8C59F1"
+                color="white"
+                icon={<FaPlus />}
+                onClick={() => navigate('/tryout/' + tryoutId + '/create' + '/question/' + questionType)}
+              />
+            </div>
+          </div>
           {questionList?.map((question: any, index: number) => (
             <QuestionCard
               question={question}

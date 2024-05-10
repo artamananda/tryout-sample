@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { Table, Tag, Typography, DatePicker, Button, message, Modal, Form, Input, InputNumber } from 'antd';
 import type { TableProps } from 'antd';
-import { CopyOutlined, DeleteOutlined, PlusOutlined } from '@ant-design/icons';
+import { CopyOutlined, PlusOutlined } from '@ant-design/icons';
 import { useNavigate } from 'react-router-dom';
 import useFetchList from '../../hooks/useFetchList';
 import { TryoutProps } from '../../types/tryout.type';
@@ -28,11 +28,11 @@ const ListTryout = () => {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  const handleDelete = async (tryoutId: string) => {
-    await apiDeleteTryout(tryoutId);
-    fetchList();
-    message.success('Success Delete');
-  };
+  // const handleDelete = async (tryoutId: string) => {
+  //   await apiDeleteTryout(tryoutId);
+  //   fetchList();
+  //   message.success('Success Delete');
+  // };
 
   const columns: TableProps<TryoutProps>['columns'] = [
     {

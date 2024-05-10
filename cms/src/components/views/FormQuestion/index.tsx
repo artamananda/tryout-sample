@@ -2,14 +2,14 @@ import { Button, Divider, Form, Input, Upload, UploadProps, message } from 'antd
 import Title from 'antd/es/typography/Title';
 import React, { useEffect, useState } from 'react';
 import ReactQuill from 'react-quill';
-import { CreateQuestionRequest } from '../../../types/question';
+import { CreateQuestionRequest, QuestionProps } from '../../../types/question';
 import { ApiGetFileUrlById, S3Upload } from '../../../api/awsSdk';
-import { doCreateQuestions } from '../../../api/question';
+import { doCreateQuestions, fetchQuestions } from '../../../api/question';
 import { getErrorMessage } from '../../../helpers/errorHandler';
 import { debounce } from 'lodash';
 import katex from 'katex';
 import { UploadOutlined } from '@ant-design/icons';
-
+import { useNavigate } from 'react-router-dom';
 window.katex = katex;
 
 const quillModules = {
@@ -29,11 +29,29 @@ type PropTypes = {
 
 const FormQuestion = (props: PropTypes) => {
   const { questionType, tryoutId, questionLength, title } = props;
+  const [questionList, setQuestionList] = useState<QuestionProps[]>([]);
+  const navigate = useNavigate();
 
-  const [questions, setQuestions] = useState<string[]>(Array.from({ length: questionLength }, () => ''));
-  const [options, setOptions] = useState<string[][]>(Array.from({ length: questionLength }, () => Array.from({ length: 5 }, () => '')));
-  const [answers, setAnswers] = useState<string[]>(Array.from({ length: questionLength }, () => ''));
-  const [images, setImages] = useState<string[]>(Array.from({ length: questionLength }, () => ''));
+  const fetchDataQuestion = async () => {
+    const questionList = await fetchQuestions(tryoutId, questionType);
+    const questions = questionList.sort((a: any, b: any) => a.local_id - b.local_id);
+    setQuestionList(questions);
+  };
+
+  useEffect(() => {
+    fetchDataQuestion();
+  }, []);
+
+  //get local_id from question already created
+  const existingLocalId = questionList.map((question) => question.local_id);
+
+  //filtering local_id to get new local_id have not be created
+  const newLocalId = Array.from({ length: questionLength }, (_, index) => index + 1).filter((index) => !existingLocalId.includes(index));
+
+  const [questions, setQuestions] = useState<string[]>(Array.from({ length: newLocalId.length }, () => ''));
+  const [options, setOptions] = useState<string[][]>(Array.from({ length: newLocalId.length }, () => Array.from({ length: 5 }, () => '')));
+  const [answers, setAnswers] = useState<string[]>(Array.from({ length: newLocalId.length }, () => ''));
+  const [images, setImages] = useState<string[]>(Array.from({ length: newLocalId.length }, () => ''));
   const [idxImg, setIdxImg] = useState(0);
 
   const imageProps: UploadProps = {
@@ -57,7 +75,7 @@ const FormQuestion = (props: PropTypes) => {
       for (let i = 0; i < questionLength; i++) {
         const createQuestion: CreateQuestionRequest = {
           tryout_id: tryoutId,
-          local_id: i + 1,
+          local_id: i,
           type: questionType,
           text: questions[i],
           options: options[i],
@@ -68,6 +86,7 @@ const FormQuestion = (props: PropTypes) => {
       }
 
       await doCreateQuestions(newData);
+      navigate('/tryout/' + tryoutId + '/question/' + questionType);
     } catch (err) {
       message.error(getErrorMessage(err));
     }
@@ -131,11 +150,11 @@ const FormQuestion = (props: PropTypes) => {
       onFinish={handleUpdateQuestion}
     >
       <Title>{title}</Title>
-      {Array.from({ length: questionLength }, (_, index) => (
+      {newLocalId.map((index) => (
         <React.Fragment key={index}>
           <Form.Item
-            name={`question_${index + 1}_${questionType}`}
-            label={`Question ${index + 1}`}
+            name={`question_${index}_${questionType}`}
+            label={`Question ${index}`}
           >
             <ReactQuill
               style={{ backgroundColor: 'white' }}
@@ -157,39 +176,39 @@ const FormQuestion = (props: PropTypes) => {
           </Form.Item>
 
           <Form.Item
-            name={`option_${index + 1}_A_${questionType}`}
-            label={`Option ${index + 1} A`}
+            name={`option_${index}_A_${questionType}`}
+            label={`Option ${index} A`}
           >
             <Input onChange={(e) => handleOptionChange(index, 0, e.target.value)} />
           </Form.Item>
           <Form.Item
-            name={`option_${index + 1}_B_${questionType}`}
-            label={`Option ${index + 1} B`}
+            name={`option_${index}_B_${questionType}`}
+            label={`Option ${index} B`}
           >
             <Input onChange={(e) => handleOptionChange(index, 1, e.target.value)} />
           </Form.Item>
           <Form.Item
-            name={`option_${index + 1}_C_${questionType}`}
-            label={`Option ${index + 1} C`}
+            name={`option_${index}_C_${questionType}`}
+            label={`Option ${index} C`}
           >
             <Input onChange={(e) => handleOptionChange(index, 2, e.target.value)} />
           </Form.Item>
           <Form.Item
-            name={`option_${index + 1}_D_${questionType}`}
-            label={`Option ${index + 1} D`}
+            name={`option_${index}_D_${questionType}`}
+            label={`Option ${index} D`}
           >
             <Input onChange={(e) => handleOptionChange(index, 3, e.target.value)} />
           </Form.Item>
           <Form.Item
-            name={`option_${index + 1}_E_${questionType}`}
-            label={`Option ${index + 1} E`}
+            name={`option_${index}_E_${questionType}`}
+            label={`Option ${index} E`}
           >
             <Input onChange={(e) => handleOptionChange(index, 4, e.target.value)} />
           </Form.Item>
 
           <Form.Item
-            name={`answer_${index + 1}_${questionType}`}
-            label={`Answer ${index + 1}`}
+            name={`answer_${index}_${questionType}`}
+            label={`Answer ${index}`}
           >
             <Input
               value={answers[index]}
