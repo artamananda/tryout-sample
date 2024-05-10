@@ -10,6 +10,9 @@ import { debounce } from 'lodash';
 import katex from 'katex';
 import { UploadOutlined } from '@ant-design/icons';
 import { useNavigate } from 'react-router-dom';
+import ButtonUi from '../../Ui/Button';
+import { IoCheckmarkDoneCircle } from 'react-icons/io5';
+import { IoArrowBackCircleOutline } from 'react-icons/io5';
 window.katex = katex;
 
 const quillModules = {
@@ -145,97 +148,122 @@ const FormQuestion = (props: PropTypes) => {
     console.log(images);
   }, [questions, images]);
   return (
-    <Form
-      layout="vertical"
-      onFinish={handleUpdateQuestion}
-    >
-      <Title>{title}</Title>
-      {newLocalId.map((index) => (
-        <React.Fragment key={index}>
-          <Form.Item
-            name={`question_${index}_${questionType}`}
-            label={`Question ${index}`}
-          >
-            <ReactQuill
-              style={{ backgroundColor: 'white' }}
-              theme="snow"
-              value={questions[index]}
-              onChange={(value) => handleQuestionChange(index, value)}
-              modules={quillModules}
-              formats={quillFormats}
-            />
-          </Form.Item>
+    <Form layout="vertical">
+      {newLocalId.length !== 0 ? (
+        <>
+          <Title>{title}</Title>
+          {newLocalId.map((index) => (
+            <React.Fragment key={index}>
+              <Form.Item
+                name={`question_${index}_${questionType}`}
+                label={`Question ${index}`}
+              >
+                <ReactQuill
+                  style={{ backgroundColor: 'white' }}
+                  theme="snow"
+                  value={questions[index]}
+                  onChange={(value) => handleQuestionChange(index, value)}
+                  modules={quillModules}
+                  formats={quillFormats}
+                />
+              </Form.Item>
 
+              <Form.Item>
+                <Upload
+                  {...imageProps}
+                  onChange={() => setIdxImg(index)}
+                >
+                  <Button icon={<UploadOutlined />}>Click to Upload</Button>
+                </Upload>
+              </Form.Item>
+
+              <Form.Item
+                name={`option_${index}_A_${questionType}`}
+                label={`Option ${index} A`}
+              >
+                <Input onChange={(e) => handleOptionChange(index, 0, e.target.value)} />
+              </Form.Item>
+              <Form.Item
+                name={`option_${index}_B_${questionType}`}
+                label={`Option ${index} B`}
+              >
+                <Input onChange={(e) => handleOptionChange(index, 1, e.target.value)} />
+              </Form.Item>
+              <Form.Item
+                name={`option_${index}_C_${questionType}`}
+                label={`Option ${index} C`}
+              >
+                <Input onChange={(e) => handleOptionChange(index, 2, e.target.value)} />
+              </Form.Item>
+              <Form.Item
+                name={`option_${index}_D_${questionType}`}
+                label={`Option ${index} D`}
+              >
+                <Input onChange={(e) => handleOptionChange(index, 3, e.target.value)} />
+              </Form.Item>
+              <Form.Item
+                name={`option_${index}_E_${questionType}`}
+                label={`Option ${index} E`}
+              >
+                <Input onChange={(e) => handleOptionChange(index, 4, e.target.value)} />
+              </Form.Item>
+
+              <Form.Item
+                name={`answer_${index}_${questionType}`}
+                label={`Answer ${index}`}
+              >
+                <Input
+                  value={answers[index]}
+                  onChange={(e) => handleAnswerChange(index, e.target.value)}
+                />
+              </Form.Item>
+
+              <Divider />
+            </React.Fragment>
+          ))}
           <Form.Item>
-            <Upload
-              {...imageProps}
-              onChange={() => setIdxImg(index)}
+            <Button
+              type="primary"
+              htmlType="submit"
+              style={{
+                display: 'flex',
+                width: '100%',
+                paddingBlock: 20,
+                alignItems: 'center',
+                justifyContent: 'center',
+                fontWeight: 'bold',
+                marginTop: 10,
+              }}
+              onClick={handleUpdateQuestion}
             >
-              <Button icon={<UploadOutlined />}>Click to Upload</Button>
-            </Upload>
+              Save
+            </Button>
           </Form.Item>
+        </>
+      ) : (
+        <div style={{ display: 'flex', flexDirection: 'column', justifyContent: 'center', alignItems: 'center', height: '100vh' }}>
+          <IoCheckmarkDoneCircle
+            size={170}
+            color="primary"
+            style={{ color: '#8C59F1' }}
+          />
+          <div style={{ display: 'flex', justifyContent: 'center', flexDirection: 'column', alignItems: 'center' }}>
+            <div style={{ marginTop: '-8px', display: 'flex', flexDirection: 'column', alignItems: 'center', marginBottom: '10px' }}>
+              <h3 style={{ color: 'grey', fontStyle: 'italic', fontWeight: 'normal' }}>
+                <span style={{ fontWeight: 'bold' }}>{title}</span> has completed.
+              </h3>
 
-          <Form.Item
-            name={`option_${index}_A_${questionType}`}
-            label={`Option ${index} A`}
-          >
-            <Input onChange={(e) => handleOptionChange(index, 0, e.target.value)} />
-          </Form.Item>
-          <Form.Item
-            name={`option_${index}_B_${questionType}`}
-            label={`Option ${index} B`}
-          >
-            <Input onChange={(e) => handleOptionChange(index, 1, e.target.value)} />
-          </Form.Item>
-          <Form.Item
-            name={`option_${index}_C_${questionType}`}
-            label={`Option ${index} C`}
-          >
-            <Input onChange={(e) => handleOptionChange(index, 2, e.target.value)} />
-          </Form.Item>
-          <Form.Item
-            name={`option_${index}_D_${questionType}`}
-            label={`Option ${index} D`}
-          >
-            <Input onChange={(e) => handleOptionChange(index, 3, e.target.value)} />
-          </Form.Item>
-          <Form.Item
-            name={`option_${index}_E_${questionType}`}
-            label={`Option ${index} E`}
-          >
-            <Input onChange={(e) => handleOptionChange(index, 4, e.target.value)} />
-          </Form.Item>
-
-          <Form.Item
-            name={`answer_${index}_${questionType}`}
-            label={`Answer ${index}`}
-          >
-            <Input
-              value={answers[index]}
-              onChange={(e) => handleAnswerChange(index, e.target.value)}
-            />
-          </Form.Item>
-
-          <Divider />
-        </React.Fragment>
-      ))}
-      <Form.Item>
-        <Button
-          type="primary"
-          htmlType="submit"
-          style={{
-            display: 'flex',
-            width: '100%',
-            paddingBlock: 20,
-            alignItems: 'center',
-            justifyContent: 'center',
-            fontWeight: 'bold',
-            marginTop: 10,
-          }}
-        >
-          Save
-        </Button>
-      </Form.Item>
+              <button
+                style={{ color: '#f5f5f5', backgroundColor: '#8C59F1', paddingInline: '13px', borderRadius: '5px', border: '1px solid #d9d9d9', gap: '10px', display: 'flex', alignItems: 'center' }}
+                onClick={() => window.history.back()}
+              >
+                <IoArrowBackCircleOutline size={30} />
+                <p style={{ fontSize: '14px' }}>Back to Questions</p>
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </Form>
   );
 };
