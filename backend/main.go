@@ -27,21 +27,25 @@ func main() {
 	tryoutRepository := repository.NewTryoutRepository(db)
 	questionRepository := repository.NewQuestionRepository(db)
 	userAnswerRepository := repository.NewUserAnswerRepository(db)
+	transactionRepository := repository.NewTransactionTryoutRepository(db)
 
 	userService := service.NewUserService(&userRepository)
 	tryoutService := service.NewTryoutService(&tryoutRepository)
 	questionService := service.NewQuestionService(&questionRepository)
 	userAnswerService := service.NewUserAnswerService(&userAnswerRepository)
+	transactionTryoutService := service.NewTransactionTryoutService(&transactionRepository)
 
 	userController := controller.NewUserController(&userService, initConfig)
 	tryoutController := controller.NewTryoutController(&tryoutService, initConfig)
 	questionController := controller.NewQuestionController(&questionService, initConfig)
 	userAnswerController := controller.NewUserAnswerController(&userAnswerService, initConfig)
+	transactionTryoutController := controller.NewTransactionTryoutController(&transactionTryoutService, initConfig)
 
 	userController.Route(app)
 	tryoutController.Route(app)
 	questionController.Route(app)
 	userAnswerController.Route(app)
+	transactionTryoutController.Route(app)
 
 	app.Get("/", func(c *fiber.Ctx) error {
 		return c.Status(fiber.StatusCreated).JSON(model.GeneralResponse{
