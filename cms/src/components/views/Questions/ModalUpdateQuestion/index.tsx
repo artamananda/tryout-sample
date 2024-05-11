@@ -27,6 +27,7 @@ const ModalUpdateQuestion = (props: PropTypes) => {
   const [answer, setAnswer] = useState<string>('');
   const [image, setImage] = useState<string>('');
   const [optionShow, setOptionShow] = useState<boolean>(true);
+  console.log(options);
 
   const quillModules = {
     toolbar: {
@@ -76,7 +77,7 @@ const ModalUpdateQuestion = (props: PropTypes) => {
         local_id: isModalOpen?.question?.local_id,
         type: questionType,
         text: question !== '' ? question : isModalOpen?.question?.text ?? '',
-        options: options.every((option) => option !== '') ? options : ([''] as string[]),
+        options: options?.every((option) => option !== '') ? options : ([''] as string[]),
         correct_answer: answer !== '' ? answer : isModalOpen?.question?.correct_answer ?? '',
         image_url: image !== '' ? ApiGetFileUrlById(image) : isModalOpen?.question?.image_url,
       };

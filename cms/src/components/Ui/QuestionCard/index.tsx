@@ -45,7 +45,7 @@ const QuestionCard = ({ question, showModal }: PropTypes) => {
           <div>
             <p>{parse(question?.text ?? '')}</p>
           </div>
-          {question.options.every((option: any) => option !== '') ? (
+          {question?.options?.every((option: any) => option !== '') ? (
             <div style={{ paddingInline: '10px' }}>
               {question?.options?.map((option: any, optionIndex: number) => (
                 <p key={optionIndex}>
