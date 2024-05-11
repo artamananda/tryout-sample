@@ -37,8 +37,8 @@ const QuestionCard = ({ question, showModal }: PropTypes) => {
             <div style={{ display: 'flex', justifyContent: 'center' }}>
               <Image
                 src={question?.image_url}
-                width={400}
-                height={300}
+                width={350}
+                height={200}
               />
             </div>
           )}
