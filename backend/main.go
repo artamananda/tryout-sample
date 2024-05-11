@@ -47,7 +47,7 @@ func main() {
 		return c.Status(fiber.StatusCreated).JSON(model.GeneralResponse{
 			Code:    200,
 			Message: "Success",
-			Data:    "0.0.15",
+			Data:    "0.0.16",
 		})
 	})
 
