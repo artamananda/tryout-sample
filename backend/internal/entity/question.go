@@ -14,6 +14,7 @@ type Question struct {
 	Type          string         `json:"type"`
 	Text          string         `json:"text"`
 	ImageUrl      string         `json:"image_url"`
+	IsOptions     *bool          `json:"is_options"`
 	Options       pq.StringArray `gorm:"type:text[]" json:"options"`
 	CorrectAnswer string         `json:"correct_answer"`
 	Points        int            `json:"points"`
