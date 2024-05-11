@@ -35,6 +35,7 @@ func (service *QuestionService) Create(ctx context.Context, request model.Create
 		Type:          request.Type,
 		Text:          request.Text,
 		ImageUrl:      request.ImageUrl,
+		IsOptions:     request.IsOptions,
 		Options:       request.Options,
 		CorrectAnswer: request.CorrectAnswer,
 		Points:        request.Points,
@@ -52,6 +53,7 @@ func (service *QuestionService) Create(ctx context.Context, request model.Create
 		LocalID:       question.LocalID,
 		Type:          question.Type,
 		Text:          question.Text,
+		IsOptions:     question.IsOptions,
 		ImageUrl:      question.ImageUrl,
 		Options:       question.Options,
 		CorrectAnswer: question.CorrectAnswer,
@@ -76,6 +78,7 @@ func (service *QuestionService) Update(ctx context.Context, request model.Update
 	question.Type = request.Type
 	question.Text = request.Text
 	question.ImageUrl = request.ImageUrl
+	question.IsOptions = request.IsOptions
 	question.Options = request.Options
 	question.CorrectAnswer = request.CorrectAnswer
 	question.Points = request.Points
@@ -95,6 +98,7 @@ func (service *QuestionService) Update(ctx context.Context, request model.Update
 		Type:          question.Type,
 		Text:          question.Text,
 		ImageUrl:      question.ImageUrl,
+		IsOptions:     question.IsOptions,
 		Options:       question.Options,
 		CorrectAnswer: question.CorrectAnswer,
 		Points:        question.Points,
@@ -122,6 +126,7 @@ func (service *QuestionService) FindByID(ctx context.Context, questionID string)
 		Type:          question.Type,
 		Text:          question.Text,
 		ImageUrl:      question.ImageUrl,
+		IsOptions:     question.IsOptions,
 		Options:       question.Options,
 		CorrectAnswer: question.CorrectAnswer,
 		Points:        question.Points,
@@ -143,6 +148,7 @@ func (service *QuestionService) FindByTryoutID(ctx context.Context, tryoutID str
 			Type:          question.Type,
 			Text:          question.Text,
 			ImageUrl:      question.ImageUrl,
+			IsOptions:     question.IsOptions,
 			Options:       question.Options,
 			CorrectAnswer: question.CorrectAnswer,
 			Points:        question.Points,
@@ -170,6 +176,7 @@ func (service *QuestionService) FindAll(ctx context.Context) ([]model.QuestionRe
 				Type:          question.Type,
 				Text:          question.Text,
 				ImageUrl:      question.ImageUrl,
+				IsOptions:     question.IsOptions,
 				Options:       question.Options,
 				CorrectAnswer: question.CorrectAnswer,
 				Points:        question.Points,
