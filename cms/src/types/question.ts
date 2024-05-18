@@ -2,6 +2,7 @@ export interface QuestionProps {
   question_id: string;
   tryout_id: string;
   local_id?: number;
+  is_options?: boolean;
   type: string;
   text: string;
   options: string[];

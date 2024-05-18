@@ -14,6 +14,7 @@ import SwitchButton from '../../../Ui/SwitchButton';
 import { MdImageNotSupported } from 'react-icons/md';
 import ButtonUi from '../../../Ui/Button';
 import { IoReload } from 'react-icons/io5';
+import RunningAlert from '../../../Ui/RunningAlert';
 
 type PropTypes = {
   setIsModalOpen: React.Dispatch<React.SetStateAction<IisModalOpenTypes>>;
@@ -29,10 +30,11 @@ const ModalUpdateQuestion = (props: PropTypes) => {
   const [options, setOptions] = useState<string[]>(isModalOpen?.question?.options || Array.from({ length: 5 }, () => ''));
   const [answer, setAnswer] = useState<string>('');
   const [image, setImage] = useState<string>('');
-  const [optionShow, setOptionShow] = useState<boolean>(true);
+  const [isOptions, setIsOptions] = useState<boolean>(true);
   const [isImageEmpty, setIsImageEmpty] = useState(false);
-  console.log('ismodal woi : ', isModalOpen.question?.image_url);
-  console.log('image woi : ', image);
+  const [alertQuestionModeType, setAlertQuestionModeType] = useState<boolean>(false);
+  console.log('is modal data : ', isModalOpen);
+  console.log('is options', isOptions);
 
   const quillModules = {
     toolbar: {
@@ -85,6 +87,7 @@ const ModalUpdateQuestion = (props: PropTypes) => {
         options: options?.every((option) => option !== '') ? options : ([''] as string[]),
         correct_answer: answer !== '' ? answer : isModalOpen?.question?.correct_answer ?? '',
         image_url: image,
+        is_options: isOptions,
       };
       const res = await apiUpdateQuestion(newData);
       if (res?.status === 200) {
@@ -122,6 +125,13 @@ const ModalUpdateQuestion = (props: PropTypes) => {
       status: false,
     });
   };
+
+  useEffect(() => {
+    handleUnremoveImage();
+    if (isModalOpen.question?.is_options == null) {
+      setAlertQuestionModeType(true);
+    }
+  }, []);
 
   return (
     <ModalUi
@@ -219,20 +229,33 @@ const ModalUpdateQuestion = (props: PropTypes) => {
                   </Button>
                 </Upload>
               ) : null}
+              <div style={{ display: 'flex', gap: '3px', alignItems: 'center' }}>
+                <div>
+                  {alertQuestionModeType ? (
+                    <div style={{ marginInline: '5px' }}>
+                      <RunningAlert />
+                    </div>
+                  ) : isOptions ? (
+                    <h3 style={{ fontWeight: 'normal', fontSize: '15px' }}>
+                      <span style={{ fontWeight: 'bold' }}>Options Mode</span>, Change to <span style={{ fontWeight: 'bold' }}>Essay Mode </span>:{' '}
+                    </h3>
+                  ) : (
+                    <h3 style={{ fontWeight: 'normal', fontSize: '15px' }}>
+                      <span style={{ fontWeight: 'bold' }}>Essay Mode</span>, Change to <span style={{ fontWeight: 'bold' }}>Options Mode </span>:{' '}
+                    </h3>
+                  )}
+                </div>
 
-              <div style={{ display: 'flex', gap: '10px', alignItems: 'center', justifyContent: 'center' }}>
-                <h3 style={{ fontWeight: 'normal', fontSize: '15px' }}>
-                  Change to <span style={{ fontWeight: 'bold' }}>Essay Mode </span>:{' '}
-                </h3>
                 <SwitchButton
+                  isOptions={isModalOpen?.question?.is_options}
                   setOptions={setOptions}
-                  options={options}
-                  setOptionShow={setOptionShow}
+                  setIsOptions={setIsOptions}
+                  options={isModalOpen?.question?.options}
                 />
               </div>
             </div>
           </Form.Item>
-          {optionShow && (
+          {isOptions && (
             <>
               <Form.Item
                 name="optionsA"

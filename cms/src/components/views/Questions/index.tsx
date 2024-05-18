@@ -35,6 +35,7 @@ const QuestionView = (props: PropTypes) => {
       tryout_id: '',
       type: '',
       text: '',
+      is_options: true,
       options: [],
       image_url: '',
       correct_answer: '',

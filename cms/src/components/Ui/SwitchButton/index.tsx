@@ -1,32 +1,46 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import { Switch } from 'antd';
 
 type PropTypes = {
   setOptions: any;
-  setOptionShow: any;
-  options: string[];
+  isOptions: any;
+  setIsOptions: any;
+  options: any;
 };
 
 const SwitchButton = (props: PropTypes) => {
-  const { setOptionShow, setOptions, options } = props;
-  const onChange = (checked: boolean) => {
-    console.log(`switch to ${checked}`);
-    if (checked) {
+  const { setOptions, isOptions, setIsOptions, options } = props;
+  const [activedMode, setActivedMode] = useState<boolean>(false);
+  const onChange = (isOptions: boolean) => {
+    console.log(`switch to ${isOptions}`);
+    console.log(`optionsnya${options}`);
+    if (!isOptions) {
       setOptions([''] as string[]);
-      setOptionShow(false);
+      setIsOptions(false);
     } else {
-      setOptionShow(true);
+      setIsOptions(true);
+      setOptions(options);
+      setActivedMode(true);
     }
   };
 
   useEffect(() => {
-    onChange(options.every((option) => option !== '') ? false : true);
-  }, []);
+    onChange(isOptions);
+  }, [isOptions]);
   return (
-    <Switch
-      defaultChecked={options.every((option) => option !== '') ? false : true}
-      onChange={onChange}
-    />
+    <div style={{ height: '25px' }}>
+      <Switch
+        defaultChecked={isOptions}
+        onChange={onChange}
+      />
+      {isOptions == null && activedMode ? (
+        <div style={{ position: 'absolute', bottom: '10', right: '0' }}>
+          <p style={{ fontSize: '13px', fontStyle: 'italic', fontWeight: '700' }}>
+            Mode is <span style={{ color: 'blue' }}>active.</span> You can change to be <span style={{ color: 'blue' }}>Options</span> or <span style={{ color: 'blue' }}>Essay</span> mode.
+          </p>
+        </div>
+      ) : null}
+    </div>
   );
 };
 
