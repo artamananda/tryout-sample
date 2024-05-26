@@ -8,9 +8,13 @@ export const redeemToken = async (data: {
   token: string;
 }) => {
   try {
+    await httpRequest.post<BaseResponseProps<TransactionTryoutProps>>(
+      process.env.REACT_APP_BASE_URL + '/transaction-tryout',
+      data
+    );
     const res = await httpRequest.patch<
       BaseResponseProps<TransactionTryoutProps>
-    >(process.env.REACT_APP_BASE_URL + '/transaction-tryout', data);
+    >(process.env.REACT_APP_BASE_URL + '/transaction-tryout/paid', data);
     if (res.data.payload?.transaction_tryout_id) {
       return true;
     }
@@ -27,7 +31,7 @@ export const finishTryout = async (data: {
   try {
     const res = await httpRequest.patch<
       BaseResponseProps<TransactionTryoutProps>
-    >(process.env.REACT_APP_BASE_URL + '/transaction-tryout', data);
+    >(process.env.REACT_APP_BASE_URL + '/transaction-tryout/completed', data);
     if (res.data.payload?.transaction_tryout_id) {
       return true;
     }

@@ -12,6 +12,7 @@ import { useNavigate } from 'react-router-dom';
 import { putAnswer, sendAnswer } from '../../api/userAnswer';
 import { useAuthUser } from 'react-auth-kit';
 import { UserAnswerProps } from '../../types/userAnswer';
+import { TransactionTryoutProps } from '../../types/transactionTryout';
 
 const { Text } = Typography;
 
@@ -34,8 +35,20 @@ const Tryout = () => {
   const questionType = splitLink[splitLink.length - 2];
   const questionNumber = splitLink.pop();
   const [questionData, setQuestionData] = useState<QuestionProps[]>([]);
+  const [initialTime, setInitialTime] = useState<Date | string>();
+  const { data: transactionData } = useFetchList<TransactionTryoutProps>({
+    endpoint: `transaction-tryout`,
+    initialQuery: {
+      tryoutId: tryoutId,
+      userId: auth()?.user_id
+    }
+  });
+
   const { data: questionDataFetch } = useFetchList<QuestionProps>({
-    endpoint: 'tryout/question/' + tryoutId
+    endpoint: 'question',
+    initialQuery: {
+      tryoutId: tryoutId
+    }
   });
 
   const { data: answerData, fetchList: fetchAnswerData } =
@@ -160,7 +173,14 @@ const Tryout = () => {
         console.log('set to undefined');
       }
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [questionData, answerData, questionNumber, questionType]);
+
+  useEffect(() => {
+    if (transactionData?.[0]?.start_time) {
+      setInitialTime(transactionData[0].start_time);
+    }
+  }, [transactionData]);
   return (
     <Flex gap="middle" wrap="wrap">
       <Layout
@@ -189,7 +209,11 @@ const Tryout = () => {
               ? 'Penalaran Matematika'
               : 'Literasi'}
           </div>
-          <div>{Timer()}</div>
+          {initialTime ? (
+            <Timer startTime={initialTime} duration={300} />
+          ) : (
+            <div></div>
+          )}
         </Header>
         <Content style={{ fontSize: 30, margin: 30 }}>
           <Text style={{ fontSize: 30 }}>{`Soal No. ${questionNumber}`}</Text>

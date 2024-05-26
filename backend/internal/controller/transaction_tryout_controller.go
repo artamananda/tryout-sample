@@ -22,9 +22,9 @@ func NewTransactionTryoutController(transactionTryoutService *service.Transactio
 
 func (controller TransactionTryoutController) Route(app *fiber.App) {
 	app.Post("/v1/api/transaction-tryout", middleware.AuthenticateJWT([]string{"admin", "user"}, controller.Config), controller.Create)
-	app.Patch("/v1/api/transaction-tryout/:id", middleware.AuthenticateJWT([]string{"admin"}, controller.Config), controller.Update)
-	app.Patch("/v1/api/transaction-tryout/paid", middleware.AuthenticateJWT([]string{"admin", "user"}, controller.Config), controller.Update)
-	app.Patch("/v1/api/transaction-tryout/complete", middleware.AuthenticateJWT([]string{"admin", "user"}, controller.Config), controller.Update)
+	// app.Patch("/v1/api/transaction-tryout/:id", middleware.AuthenticateJWT([]string{"admin"}, controller.Config), controller.Update)
+	app.Patch("/v1/api/transaction-tryout/paid", middleware.AuthenticateJWT([]string{"admin", "user"}, controller.Config), controller.UpdateToPaid)
+	app.Patch("/v1/api/transaction-tryout/complete", middleware.AuthenticateJWT([]string{"admin", "user"}, controller.Config), controller.UpdateToFinish)
 	app.Delete("/v1/api/transaction-tryout/:id", middleware.AuthenticateJWT([]string{"admin"}, controller.Config), controller.Delete)
 	app.Get("/v1/api/transaction-tryout/:id", middleware.AuthenticateJWT([]string{"admin", "user"}, controller.Config), controller.FindById)
 	app.Get("/v1/api/transaction-tryout", middleware.AuthenticateJWT([]string{"admin", "user"}, controller.Config), controller.FindAll)
@@ -187,7 +187,19 @@ func (controller TransactionTryoutController) FindById(c *fiber.Ctx) error {
 }
 
 func (controller TransactionTryoutController) FindAll(c *fiber.Ctx) error {
-	results := controller.TransactionTryoutService.FindAll(c.Context())
+	var results []model.TransactionTryoutResponse
+	tryoutId := c.Query("tryoutId")
+	userId := c.Query("userId")
+
+	if tryoutId != "" && userId != "" {
+		result, err := controller.TransactionTryoutService.FindByTryoutIDAndUserID(c.Context(), tryoutId, userId)
+		if err == nil {
+			results = append(results, result)
+		}
+	} else {
+		results = controller.TransactionTryoutService.FindAll(c.Context())
+	}
+	
 	payload := map[string]interface{}{
 		"count":   len(results),
 		"next":    nil,
