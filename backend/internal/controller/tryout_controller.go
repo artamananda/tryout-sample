@@ -6,6 +6,7 @@ import (
 	"github.com/artamananda/tryout-sample/internal/model"
 	"github.com/artamananda/tryout-sample/internal/service"
 	"github.com/gofiber/fiber/v2"
+	"github.com/golang-jwt/jwt/v4"
 )
 
 type TryoutController struct {
@@ -22,7 +23,7 @@ func (controller TryoutController) Route(app *fiber.App) {
 	app.Put("/v1/api/tryout/:id", middleware.AuthenticateJWT([]string{"admin"}, controller.Config), controller.Update)
 	app.Delete("/v1/api/tryout/:id", middleware.AuthenticateJWT([]string{"admin"}, controller.Config), controller.Delete)
 	app.Get("/v1/api/tryout/:id", controller.FindById)
-	app.Get("/v1/api/tryout", controller.FindAll)
+	app.Get("/v1/api/tryout", middleware.AuthenticateJWT([]string{"admin", "user"}, controller.Config), controller.FindAll)
 }
 
 func (controller TryoutController) Create(c *fiber.Ctx) error {
@@ -92,6 +93,25 @@ func (controller TryoutController) FindById(c *fiber.Ctx) error {
 }
 
 func (controller TryoutController) FindAll(c *fiber.Ctx) error {
+	user := c.Locals("user").(*jwt.Token)
+	claims := user.Claims.(jwt.MapClaims)
+	role := claims["roles"].(string)
+
+	if role == "admin" {
+		result := controller.TryoutService.FindAllAsAdmin(c.Context())
+		payload := map[string]interface{}{
+			"count":   len(result),
+			"next":    nil,
+			"prev":    nil,
+			"results": result,
+		}
+		return c.Status(fiber.StatusOK).JSON(model.GeneralResponse{
+			Code:    200,
+			Message: "Success",
+			Data:    payload,
+		})
+	}
+
 	result := controller.TryoutService.FindAll(c.Context())
 	payload := map[string]interface{}{
 		"count":   len(result),

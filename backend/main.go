@@ -39,7 +39,7 @@ func main() {
 	tryoutController := controller.NewTryoutController(&tryoutService, initConfig)
 	questionController := controller.NewQuestionController(&questionService, initConfig)
 	userAnswerController := controller.NewUserAnswerController(&userAnswerService, initConfig)
-	transactionTryoutController := controller.NewTransactionTryoutController(&transactionTryoutService, initConfig)
+	transactionTryoutController := controller.NewTransactionTryoutController(&transactionTryoutService, &tryoutService, initConfig)
 
 	userController.Route(app)
 	tryoutController.Route(app)
@@ -51,7 +51,7 @@ func main() {
 		return c.Status(fiber.StatusCreated).JSON(model.GeneralResponse{
 			Code:    200,
 			Message: "Success",
-			Data:    "0.0.17",
+			Data:    "0.0.18",
 		})
 	})
 

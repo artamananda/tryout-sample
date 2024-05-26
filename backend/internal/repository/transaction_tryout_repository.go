@@ -19,9 +19,13 @@ func NewTransactionTryoutRepository(DB *gorm.DB) TransactionTryoutRepository {
 }
 
 func (repository *TransactionTryoutRepository) Create(ctx context.Context, transactionTryout entity.TransactionTryout) entity.TransactionTryout {
-	transactionTryout.TransactionTryoutID = uuid.New()
-	err := repository.DB.WithContext(ctx).Create(&transactionTryout).Error
-	exception.PanicLogging(err)
+	var transactionTryoutResult entity.TransactionTryout
+	result := repository.DB.WithContext(ctx).Unscoped().Where("tryout_id = ? AND user_id = ?", transactionTryout.TryoutID, transactionTryout.UserID).First(&transactionTryoutResult)
+	if result.RowsAffected == 0 {
+		transactionTryout.TransactionTryoutID = uuid.New()
+		err := repository.DB.WithContext(ctx).Create(&transactionTryout).Error
+		exception.PanicLogging(err)
+	}
 
 	return transactionTryout
 }
@@ -45,6 +49,15 @@ func (repository *TransactionTryoutRepository) FindById(ctx context.Context, tra
 		return entity.TransactionTryout{}, errors.New("transaction tryout Not Found")
 	}
 	return transactionTryout, nil
+}
+
+func (repository *TransactionTryoutRepository) FindByTryoutIdAndUserId(ctx context.Context, tryoutId string, userId string) (entity.TransactionTryout, error) {
+	var transactionTryoutResult entity.TransactionTryout
+	result := repository.DB.WithContext(ctx).Unscoped().Where("tryout_id = ? AND user_id = ?", tryoutId, userId).First(&transactionTryoutResult)
+	if result.RowsAffected == 0 {
+		return entity.TransactionTryout{}, errors.New("transaction tryout Not Found")
+	}
+	return transactionTryoutResult, nil
 }
 
 func (repository *TransactionTryoutRepository) FindAll(ctx context.Context) []entity.TransactionTryout {

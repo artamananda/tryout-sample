@@ -26,11 +26,9 @@ func (service *TransactionTryoutService) Create(ctx context.Context, request mod
 		return model.TransactionTryoutResponse{}, exception.ValidationError{Message: err.Error()}
 	}
 	transactionTryout := entity.TransactionTryout{
-		TryoutID:  request.TryoutID,
-		UserID:    request.UserID,
-		Status:    request.Status,
-		StartTime: request.StartTime,
-		EndTime:   request.EndTime,
+		TryoutID: request.TryoutID,
+		UserID:   request.UserID,
+		Status:   "UNPAID",
 	}
 
 	transactionTryout = service.TransactionTryoutRepository.Create(ctx, transactionTryout)
@@ -87,6 +85,22 @@ func (service *TransactionTryoutService) Delete(ctx context.Context, transaction
 
 func (service *TransactionTryoutService) FindByID(ctx context.Context, transactionTryoutID string) (model.TransactionTryoutResponse, error) {
 	transactionTryout, err := service.TransactionTryoutRepository.FindById(ctx, transactionTryoutID)
+	if err != nil {
+		return model.TransactionTryoutResponse{}, exception.NotFoundError{Message: err.Error()}
+	}
+
+	return model.TransactionTryoutResponse{
+		TransactionTryoutID: transactionTryout.TransactionTryoutID,
+		TryoutID:            transactionTryout.TryoutID,
+		UserID:              transactionTryout.UserID,
+		Status:              transactionTryout.Status,
+		StartTime:           transactionTryout.StartTime,
+		EndTime:             transactionTryout.EndTime,
+	}, nil
+}
+
+func (service *TransactionTryoutService) FindByTryoutIDAndUserID(ctx context.Context, tryoutId string, userId string) (model.TransactionTryoutResponse, error) {
+	transactionTryout, err := service.TransactionTryoutRepository.FindByTryoutIdAndUserId(ctx, tryoutId, userId)
 	if err != nil {
 		return model.TransactionTryoutResponse{}, exception.NotFoundError{Message: err.Error()}
 	}
