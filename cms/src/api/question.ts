@@ -49,7 +49,6 @@ export async function fetchQuestions(tryoutId: string, questionType: string) {
     const url = `${process.env.REACT_APP_BASE_URL}/question?tryoutId=${tryoutId}`;
     const res = await httpRequest.get<BaseResponseProps<any>>(url);
     const questions = res.data.payload?.results?.filter((q: any) => q.type === questionType);
-    console.log(questions);
 
     return questions;
   } catch (err) {

@@ -10,11 +10,11 @@ import parse from 'html-react-parser';
 import { getErrorMessage } from '../../../../helpers/errorHandler';
 import copy from 'copy-to-clipboard';
 import { IisModalOpenTypes } from '..';
-import SwitchButton from '../../../Ui/SwitchButton';
-import { MdImageNotSupported } from 'react-icons/md';
+import { MdEdit, MdImageNotSupported } from 'react-icons/md';
 import ButtonUi from '../../../Ui/Button';
 import { IoReload } from 'react-icons/io5';
 import RunningAlert from '../../../Ui/RunningAlert';
+import SwitchButton from '../../../Ui/SwitchButton';
 
 type PropTypes = {
   setIsModalOpen: React.Dispatch<React.SetStateAction<IisModalOpenTypes>>;
@@ -30,11 +30,9 @@ const ModalUpdateQuestion = (props: PropTypes) => {
   const [options, setOptions] = useState<string[]>(isModalOpen?.question?.options || Array.from({ length: 5 }, () => ''));
   const [answer, setAnswer] = useState<string>('');
   const [image, setImage] = useState<string>('');
-  const [isOptions, setIsOptions] = useState<boolean>(true);
+  const [isOptions, setIsOptions] = useState<boolean>(isModalOpen?.question?.is_options || false);
   const [isImageEmpty, setIsImageEmpty] = useState(false);
-  const [alertQuestionModeType, setAlertQuestionModeType] = useState<boolean>(false);
-  console.log('is modal data : ', isModalOpen);
-  console.log('is options', isOptions);
+  const [activedMode, setActivedMode] = useState<boolean>(false);
 
   const quillModules = {
     toolbar: {
@@ -47,8 +45,6 @@ const ModalUpdateQuestion = (props: PropTypes) => {
   const imageUploadProps: UploadProps = {
     multiple: false,
     customRequest: async ({ file }) => {
-      console.log(file);
-
       try {
         const url = await S3Upload(file);
         console.log(url);
@@ -126,12 +122,24 @@ const ModalUpdateQuestion = (props: PropTypes) => {
     });
   };
 
+  const HandleChangeButtonSwitch = (isOptions: boolean) => {
+    if (!isOptions) {
+      setOptions([''] as string[]);
+      setIsOptions(false);
+    } else {
+      setIsOptions(true);
+      setOptions(isModalOpen?.question?.options ?? Array.from({ length: 5 }, () => ''));
+      setActivedMode(true);
+    }
+  };
+
   useEffect(() => {
     handleUnremoveImage();
-    if (isModalOpen.question?.is_options == null) {
-      setAlertQuestionModeType(true);
-    }
   }, []);
+
+  useEffect(() => {
+    HandleChangeButtonSwitch(isOptions);
+  }, [isOptions]);
 
   return (
     <ModalUi
@@ -145,45 +153,6 @@ const ModalUpdateQuestion = (props: PropTypes) => {
         onFinish={handleUpdateQuestion}
       >
         <React.Fragment>
-          {isImageEmpty ? (
-            <div>
-              {isModalOpen?.question?.image_url !== '' && (
-                <div style={{ display: 'flex', justifyContent: 'center', marginBottom: '10px', flexDirection: 'column', alignItems: 'center' }}>
-                  <MdImageNotSupported
-                    size={70}
-                    style={{ color: 'gray' }}
-                  />
-                  <p style={{ fontSize: '13px', color: 'gray', fontStyle: 'italic' }}>No image</p>
-                  <ButtonUi
-                    icon={<IoReload size={17} />}
-                    title="Unremove"
-                    onClick={() => handleUnremoveImage()}
-                    backgroundColor="#8C59F1"
-                    color="white"
-                  />
-                </div>
-              )}
-            </div>
-          ) : (
-            <div>
-              {isModalOpen?.question?.image_url !== '' && (
-                <div style={{ display: 'flex', justifyContent: 'center', marginBottom: '10px', flexDirection: 'column', alignItems: 'center' }}>
-                  <Image
-                    src={isModalOpen.question?.image_url}
-                    width={300}
-                  />
-                  <ButtonUi
-                    title="remove"
-                    onClick={() => handleRemoveImage()}
-                    backgroundColor="#D74D4D"
-                    color="white"
-                    icon={<DeleteFilled />}
-                  />
-                </div>
-              )}
-            </div>
-          )}
-
           <div style={{ border: '1px solid #BABABA', marginBottom: '10px', paddingInline: '10px', borderRadius: '5px' }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', width: '100%', height: '30px', alignItems: 'center', marginTop: '5px' }}>
               <h3>Question {isModalOpen?.question?.local_id}</h3>
@@ -218,21 +187,92 @@ const ModalUpdateQuestion = (props: PropTypes) => {
           </Form.Item>
 
           <Form.Item>
-            <div style={{ display: 'flex', flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
-              {isModalOpen?.question?.image_url === '' ? (
-                <Upload {...imageUploadProps}>
-                  <Button
-                    type="primary"
-                    icon={<UploadOutlined />}
-                  >
-                    Click to Upload
-                  </Button>
-                </Upload>
-              ) : null}
-              <div style={{ display: 'flex', gap: '3px', alignItems: 'center' }}>
+            <div style={{ display: 'flex', flexDirection: 'column', justifyContent: 'center', alignItems: 'start', gap: '8px' }}>
+              {isImageEmpty ? (
                 <div>
-                  {alertQuestionModeType ? (
-                    <div style={{ marginInline: '5px' }}>
+                  {isModalOpen?.question?.image_url !== '' && (
+                    <div style={{ display: 'flex', justifyContent: 'center', marginBottom: '10px', flexDirection: 'column', alignItems: 'center' }}>
+                      <MdImageNotSupported
+                        size={100}
+                        style={{ color: 'gray' }}
+                      />
+                      <p style={{ fontSize: '13px', color: 'gray', fontStyle: 'italic' }}>No image</p>
+                      <ButtonUi
+                        icon={<IoReload size={17} />}
+                        title="Unremove"
+                        onClick={() => handleUnremoveImage()}
+                        backgroundColor="#8C59F1"
+                        color="white"
+                      />
+                    </div>
+                  )}
+                </div>
+              ) : (
+                <div>
+                  {isModalOpen?.question?.image_url !== '' && (
+                    <div style={{ display: 'flex', justifyContent: 'center', marginBottom: '10px', flexDirection: 'column', alignItems: 'start' }}>
+                      <Image
+                        src={isModalOpen.question?.image_url}
+                        width={300}
+                      />
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '5px' }}>
+                        <ButtonUi
+                          title="remove"
+                          onClick={() => handleRemoveImage()}
+                          backgroundColor="#D74D4D"
+                          color="white"
+                          icon={<DeleteFilled />}
+                        />
+                        <ButtonUi
+                          title="Change Image"
+                          backgroundColor="#8C59F1"
+                          color="white"
+                          icon={<MdEdit />}
+                        />
+                      </div>
+                    </div>
+                  )}
+                </div>
+              )}
+              {isModalOpen?.question?.image_url === '' ? (
+                <div style={{ display: 'flex', justifyContent: 'center', marginBottom: '10px', flexDirection: 'column', alignItems: 'center' }}>
+                  {image ? (
+                    <div style={{ display: 'flex', alignItems: 'start' }}>
+                      <Image
+                        src={image}
+                        width={300}
+                      />
+                      <button
+                        onClick={() => setImage('')}
+                        style={{ border: '1px solid #D9D9D9', color: '#9E9E9E', backgroundColor: 'white', padding: '2px', borderRadius: '5px' }}
+                      >
+                        <DeleteFilled size={20} />
+                      </button>
+                    </div>
+                  ) : (
+                    <>
+                      <MdImageNotSupported
+                        size={100}
+                        style={{ color: 'gray' }}
+                      />
+                      <p style={{ fontSize: '13px', color: 'gray', fontStyle: 'italic' }}>No image</p>
+                    </>
+                  )}
+
+                  <Upload {...imageUploadProps}>
+                    <Button
+                      type="primary"
+                      icon={<UploadOutlined />}
+                    >
+                      Click to Upload
+                    </Button>
+                  </Upload>
+                </div>
+              ) : null}
+              <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'start' }}>
+                <div style={{ display: 'flex', gap: '5px', alignItems: 'center', marginBottom: '-15px' }}>
+                  {isModalOpen.question?.is_options == null && !activedMode ? (
+                    <div style={{ marginInline: '5px', marginTop: '10px', width: '70%' }}>
                       <RunningAlert />
                     </div>
                   ) : isOptions ? (
@@ -244,14 +284,18 @@ const ModalUpdateQuestion = (props: PropTypes) => {
                       <span style={{ fontWeight: 'bold' }}>Essay Mode</span>, Change to <span style={{ fontWeight: 'bold' }}>Options Mode </span>:{' '}
                     </h3>
                   )}
+
+                  <SwitchButton
+                    defaultChecked={isOptions}
+                    onChange={HandleChangeButtonSwitch}
+                  />
                 </div>
 
-                <SwitchButton
-                  isOptions={isModalOpen?.question?.is_options}
-                  setOptions={setOptions}
-                  setIsOptions={setIsOptions}
-                  options={isModalOpen?.question?.options}
-                />
+                {isModalOpen.question?.is_options == null && activedMode ? (
+                  <p style={{ fontSize: '12px', fontStyle: 'italic', fontWeight: '300' }}>
+                    Mode is <span style={{ color: 'blue' }}>active.</span> You can change to be <span style={{ color: 'blue' }}>Options</span> or <span style={{ color: 'blue' }}>Essay</span> mode.
+                  </p>
+                ) : null}
               </div>
             </div>
           </Form.Item>

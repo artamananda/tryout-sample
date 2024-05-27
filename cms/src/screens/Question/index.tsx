@@ -31,8 +31,6 @@ const QuestionPage = () => {
       }, 500);
     }
   };
-  console.log(questionList);
-
   useEffect(() => {
     fetchDataQuestion();
     scrollTop();

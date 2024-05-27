@@ -28,6 +28,7 @@ const ModalConfirmDeleteQuestion = (props: PropTypes) => {
         options: [''] as string[],
         correct_answer: '',
         image_url: '',
+        is_options: false,
       };
       const res = await apiUpdateQuestion(newData);
       if (res?.status === 200) {

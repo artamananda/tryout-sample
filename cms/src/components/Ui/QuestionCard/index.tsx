@@ -38,7 +38,6 @@ const QuestionCard = ({ question, showModal }: PropTypes) => {
               <Image
                 src={question?.image_url}
                 width={350}
-                height={200}
               />
             </div>
           )}

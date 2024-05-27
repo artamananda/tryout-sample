@@ -22,6 +22,7 @@ export interface CreateQuestionRequest {
   image_url?: string;
   correct_answer: string;
   points?: string;
+  is_options?: boolean;
 }
 
 export interface UpdateQuestionRequest {

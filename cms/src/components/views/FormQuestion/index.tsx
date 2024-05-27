@@ -10,9 +10,9 @@ import { debounce } from 'lodash';
 import katex from 'katex';
 import { UploadOutlined } from '@ant-design/icons';
 import { useNavigate } from 'react-router-dom';
-import ButtonUi from '../../Ui/Button';
 import { IoCheckmarkDoneCircle } from 'react-icons/io5';
 import { IoArrowBackCircleOutline } from 'react-icons/io5';
+import SwitchButton from '../../Ui/SwitchButton';
 window.katex = katex;
 
 const quillModules = {
@@ -66,6 +66,7 @@ const FormQuestion = (props: PropTypes) => {
   const [answers, setAnswers] = useState<string[]>(Array.from({ length: indexForm.length }, () => ''));
   const [images, setImages] = useState<string[]>(Array.from({ length: indexForm.length }, () => ''));
   const [idxImg, setIdxImg] = useState(0);
+  const [isOptions, setIsOptions] = useState<boolean[]>(Array.from({ length: indexForm.length }, () => true));
 
   const imageProps: UploadProps = {
     multiple: false,
@@ -91,9 +92,10 @@ const FormQuestion = (props: PropTypes) => {
           local_id: i,
           type: questionType,
           text: questions[i],
-          options: options[i],
+          options: options[i] == null ? [] : options[i],
           correct_answer: answers[i],
           image_url: images[i] ? ApiGetFileUrlById(images[i]) : undefined,
+          is_options: isOptions[i] == null ? false : isOptions[i],
         };
         newData.push(createQuestion);
       }
@@ -113,7 +115,7 @@ const FormQuestion = (props: PropTypes) => {
 
   const updateOptionAtIndex = (index: number, subIndex: number, newValue: string) => {
     const updatedOptions = [...options];
-    if (!updatedOptions[index]) {
+    if (!updatedOptions[index] || updatedOptions[index] == null) {
       updatedOptions[index] = [];
     }
     updatedOptions[index][subIndex] = newValue;
@@ -156,10 +158,24 @@ const FormQuestion = (props: PropTypes) => {
     debouncedUpdateAnswerAtIndex(index, value);
   };
 
+  const updateIsOptionsAtIndex = (index: number, newValue: boolean) => {
+    const updatedIsOptions = [...isOptions];
+    updatedIsOptions[index] = newValue;
+    setIsOptions(updatedIsOptions);
+  };
+
+  const debouncedUpdateIsOptionsAtIndex = debounce((index, value) => {
+    updateIsOptionsAtIndex(index, value);
+  }, 300);
+
+  const handleIsOptionsChange = (index: number) => {
+    debouncedUpdateIsOptionsAtIndex(index, !isOptions[index]);
+  };
   useEffect(() => {
-    console.log(questions);
-    console.log(images);
-  }, [questions, images]);
+    // console.log(questions);
+    // console.log(images);
+    // console.log('isOptions nya bos', isOptions);
+  }, [questions, images, isOptions]);
   return (
     <>
       {loading ? (
@@ -173,9 +189,12 @@ const FormQuestion = (props: PropTypes) => {
         <Form layout="vertical">
           {indexForm.length !== 0 ? (
             <>
-              <Title>{title}</Title>
+              <Title style={{ fontSize: '28px' }}>{title}</Title>
               {indexForm.map((index) => (
-                <React.Fragment key={index}>
+                <div
+                  key={index}
+                  style={{ marginBottom: '15px', backgroundColor: 'white', padding: '10px', border: '1px solid #d9d9d9', borderRadius: '5px' }}
+                >
                   <Form.Item
                     name={`question_${index}_${questionType}`}
                     label={`Question ${index}`}
@@ -190,46 +209,67 @@ const FormQuestion = (props: PropTypes) => {
                     />
                   </Form.Item>
 
-                  <Form.Item>
-                    <Upload
-                      {...imageProps}
-                      onChange={() => setIdxImg(index)}
-                    >
-                      <Button icon={<UploadOutlined />}>Click to Upload</Button>
-                    </Upload>
-                  </Form.Item>
-
-                  <Form.Item
-                    name={`option_${index}_A_${questionType}`}
-                    label={`Option ${index} A`}
-                  >
-                    <Input onChange={(e) => handleOptionChange(index, 0, e.target.value)} />
-                  </Form.Item>
-                  <Form.Item
-                    name={`option_${index}_B_${questionType}`}
-                    label={`Option ${index} B`}
-                  >
-                    <Input onChange={(e) => handleOptionChange(index, 1, e.target.value)} />
-                  </Form.Item>
-                  <Form.Item
-                    name={`option_${index}_C_${questionType}`}
-                    label={`Option ${index} C`}
-                  >
-                    <Input onChange={(e) => handleOptionChange(index, 2, e.target.value)} />
-                  </Form.Item>
-                  <Form.Item
-                    name={`option_${index}_D_${questionType}`}
-                    label={`Option ${index} D`}
-                  >
-                    <Input onChange={(e) => handleOptionChange(index, 3, e.target.value)} />
-                  </Form.Item>
-                  <Form.Item
-                    name={`option_${index}_E_${questionType}`}
-                    label={`Option ${index} E`}
-                  >
-                    <Input onChange={(e) => handleOptionChange(index, 4, e.target.value)} />
-                  </Form.Item>
-
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                    <Form.Item>
+                      <Upload
+                        {...imageProps}
+                        onChange={() => setIdxImg(index)}
+                      >
+                        <Button icon={<UploadOutlined />}>Click to Upload</Button>
+                      </Upload>
+                    </Form.Item>
+                    <div style={{ height: '25px', display: 'flex', alignItems: 'center', gap: '10px' }}>
+                      {!isOptions[index] ? (
+                        <p style={{ fontSize: '13px', fontStyle: 'italic', fontWeight: '700' }}>
+                          This is <span style={{ color: 'blue' }}>Essay mode,</span> Click to change to be <span style={{ color: 'blue' }}>Options mode</span>
+                        </p>
+                      ) : (
+                        <p style={{ fontSize: '13px', fontStyle: 'italic', fontWeight: '700' }}>
+                          This is <span style={{ color: 'blue' }}>Options mode,</span> Click to change to be <span style={{ color: 'blue' }}>Essay Mode</span>
+                        </p>
+                      )}
+                      <SwitchButton
+                        defaultChecked={isOptions[index]}
+                        onChange={() => {
+                          handleIsOptionsChange(index);
+                        }}
+                      />
+                    </div>
+                  </div>
+                  {isOptions[index] && (
+                    <>
+                      <Form.Item
+                        name={`option_${index}_A_${questionType}`}
+                        label={`Option ${index} A`}
+                      >
+                        <Input onChange={(e) => handleOptionChange(index, 0, e.target.value)} />
+                      </Form.Item>
+                      <Form.Item
+                        name={`option_${index}_B_${questionType}`}
+                        label={`Option ${index} B`}
+                      >
+                        <Input onChange={(e) => handleOptionChange(index, 1, e.target.value)} />
+                      </Form.Item>
+                      <Form.Item
+                        name={`option_${index}_C_${questionType}`}
+                        label={`Option ${index} C`}
+                      >
+                        <Input onChange={(e) => handleOptionChange(index, 2, e.target.value)} />
+                      </Form.Item>
+                      <Form.Item
+                        name={`option_${index}_D_${questionType}`}
+                        label={`Option ${index} D`}
+                      >
+                        <Input onChange={(e) => handleOptionChange(index, 3, e.target.value)} />
+                      </Form.Item>
+                      <Form.Item
+                        name={`option_${index}_E_${questionType}`}
+                        label={`Option ${index} E`}
+                      >
+                        <Input onChange={(e) => handleOptionChange(index, 4, e.target.value)} />
+                      </Form.Item>
+                    </>
+                  )}
                   <Form.Item
                     name={`answer_${index}_${questionType}`}
                     label={`Answer ${index}`}
@@ -239,9 +279,8 @@ const FormQuestion = (props: PropTypes) => {
                       onChange={(e) => handleAnswerChange(index, e.target.value)}
                     />
                   </Form.Item>
-
                   <Divider />
-                </React.Fragment>
+                </div>
               ))}
               <Form.Item>
                 <Button
