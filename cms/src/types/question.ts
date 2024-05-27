@@ -2,6 +2,7 @@ export interface QuestionProps {
   question_id: string;
   tryout_id: string;
   local_id?: number;
+  is_options?: boolean;
   type: string;
   text: string;
   options: string[];
@@ -21,6 +22,7 @@ export interface CreateQuestionRequest {
   image_url?: string;
   correct_answer: string;
   points?: string;
+  is_options?: boolean;
 }
 
 export interface UpdateQuestionRequest {

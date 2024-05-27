@@ -1,16 +1,9 @@
-import { AxiosInstance } from "axios";
-import React from "react";
-import { useDebounce } from "use-debounce";
-import { httpRequest } from "../helpers/api";
-import { generateQueryString } from "../helpers/generateQueryString";
-import {
-  IHttpResponse,
-  INITIAL_PAGINATION,
-  INITIAL_QUERY,
-  IPagination,
-  IPayloadPagination,
-  IQuery,
-} from "../helpers/pagination";
+import { AxiosInstance } from 'axios';
+import React from 'react';
+import { useDebounce } from 'use-debounce';
+import { httpRequest } from '../helpers/api';
+import { generateQueryString } from '../helpers/generateQueryString';
+import { IHttpResponse, INITIAL_PAGINATION, INITIAL_QUERY, IPagination, IPayloadPagination, IQuery } from '../helpers/pagination';
 
 type Props = {
   endpoint: string;
@@ -48,9 +41,7 @@ export default function useFetchList<DataType, ExtendType = {}>(props: Props) {
     try {
       setIsLoading(true);
 
-      const res = await apiRequest.get<
-        IHttpResponse<IPayloadPagination<DataType>>
-      >(`${props.endpoint}${generateQueryString(query)}`);
+      const res = await apiRequest.get<IHttpResponse<IPayloadPagination<DataType>>>(`${props.endpoint}${generateQueryString(query)}`);
 
       setPagination((oldVal) => {
         return {
@@ -59,9 +50,7 @@ export default function useFetchList<DataType, ExtendType = {}>(props: Props) {
           prev: res.data.payload?.prev,
           next: res.data.payload?.next,
           totalData: res.data.payload?.count,
-          countPage: Math.ceil(
-            res.data.payload?.count / (props.limit || DEFAULT_LIMIT)
-          ),
+          countPage: Math.ceil(res.data.payload?.count / (props.limit || DEFAULT_LIMIT)),
         };
       });
 
