@@ -45,7 +45,7 @@ func (service *TryoutService) Create(ctx context.Context, request model.CreateTr
 		Duration:  tryout.Duration,
 		StartTime: tryout.StartTime,
 		EndTime:   tryout.EndTime,
-		Token:     helper.GenerateOTP(6),
+		Token:     tryout.Token,
 	}, nil
 }
 
@@ -68,6 +68,7 @@ func (service *TryoutService) Update(ctx context.Context, request model.UpdateTr
 	tryout.Duration = request.Duration
 	tryout.StartTime = request.StartTime
 	tryout.EndTime = request.EndTime
+	tryout.Token = helper.GenerateOTP(6)
 
 	tryout = service.TryoutRepository.Update(ctx, tryout)
 
@@ -106,11 +107,31 @@ func (service *TryoutService) FindByID(ctx context.Context, tryoutID string) (mo
 		Duration:  tryout.Duration,
 		StartTime: tryout.StartTime,
 		EndTime:   tryout.EndTime,
-		Token:     tryout.Token,
 	}, nil
 }
 
 func (service *TryoutService) FindAll(ctx context.Context) []model.TryoutResponse {
+	tryouts := service.TryoutRepository.FindAll(ctx)
+
+	tryoutResponses := []model.TryoutResponse{}
+	for _, tryout := range tryouts {
+		tryoutResponses = append(tryoutResponses,
+			model.TryoutResponse{
+				TryoutID:  tryout.TryoutID,
+				Title:     tryout.Title,
+				Duration:  tryout.Duration,
+				StartTime: tryout.StartTime,
+				EndTime:   tryout.EndTime,
+			},
+		)
+	}
+	if len(tryouts) == 0 {
+		return []model.TryoutResponse{}
+	}
+	return tryoutResponses
+}
+
+func (service *TryoutService) FindAllAsAdmin(ctx context.Context) []model.TryoutResponse {
 	tryouts := service.TryoutRepository.FindAll(ctx)
 
 	tryoutResponses := []model.TryoutResponse{}
@@ -130,4 +151,17 @@ func (service *TryoutService) FindAll(ctx context.Context) []model.TryoutRespons
 		return []model.TryoutResponse{}
 	}
 	return tryoutResponses
+}
+
+func (service *TryoutService) CheckTryoutToken(ctx context.Context, tryoutID string, token string) bool {
+	tryout, err := service.TryoutRepository.FindById(ctx, tryoutID)
+	if err != nil {
+		return false
+	}
+
+	if tryout.Token == token {
+		return true
+	}
+
+	return false
 }

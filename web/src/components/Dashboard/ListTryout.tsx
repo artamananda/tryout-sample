@@ -4,8 +4,9 @@ import type { TableProps } from 'antd';
 import useFetchList from '../../hooks/useFetchList';
 import { TryoutProps } from '../../types/tryout.type';
 import dayjs from 'dayjs';
-import { checkToken } from '../../api/tryout';
+import { redeemToken } from '../../api/tryout';
 import { useNavigate } from 'react-router-dom';
+import { useAuthUser } from 'react-auth-kit';
 
 const { Text, Link } = Typography;
 
@@ -48,15 +49,20 @@ const ListTryout = () => {
 
   const [id, setId] = useState('');
   const navigate = useNavigate();
+  const auth = useAuthUser();
 
   useEffect(() => {
     fetchList();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  const onFinish = async (data: { tryout_id: string; token: string }) => {
+  const onFinish = async (data: {
+    tryout_id: string;
+    user_id: string;
+    token: string;
+  }) => {
     try {
-      const res = await checkToken(data);
+      const res = await redeemToken(data);
       if (res) {
         message.success('Validation success');
         navigate('/tryout/' + id + '/kpu/1');
@@ -189,6 +195,7 @@ const ListTryout = () => {
           <Form.Item name="tryout_id" initialValue={id} hidden>
             <Input value={id} />
           </Form.Item>
+          <Form.Item name="user_id" initialValue={auth()?.user_id} hidden />
           <Form.Item<FieldType>
             label="Token"
             name="token"
