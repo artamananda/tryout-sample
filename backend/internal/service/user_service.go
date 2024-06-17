@@ -199,7 +199,7 @@ func (service *UserService) SendOtp(ctx context.Context, otpConfig model.SendOtp
 	mailer := gomail.NewMessage()
 	mailer.SetHeader("From", otpConfig.SenderName)
 	mailer.SetHeader("To", request.Email)
-	mailer.SetHeader("Subject", "Test otp mail")
+	mailer.SetHeader("Subject", "Kode Verifikasi Pendaftaran Akun Telisik")
 	mailer.SetBody("text/html", helper.TemplateEmailOtp(request.Name, otp))
 
 	smptPort, _ := strconv.Atoi(otpConfig.SmtpPort)
