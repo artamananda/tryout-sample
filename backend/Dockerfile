@@ -12,6 +12,8 @@ WORKDIR /go/src/github.com/artamananda/tryout-sample
 
 COPY . .
 
+RUN go install -tags 'postgres' github.com/golang-migrate/migrate/v4/cmd/migrate@latest
+
 # application builder step
 RUN go mod tidy && go mod download && go mod vendor
 RUN eval $GO_BUILD_COMMAND
@@ -32,4 +34,4 @@ COPY --from=builder $BUILDDIR/db/migrations $PROJECT_DIR/db/migrations/
 COPY --from=builder $BUILDDIR/migration.sh $PROJECT_DIR/migration.sh
 
 # Define the command to run the application
-CMD ["sh","-c","/opt/tryout-sample/tryout-sample"]
+CMD ["sh","-c","/opt/tryout-sample/migration.sh && /opt/tryout-sample/tryout-sample"]
