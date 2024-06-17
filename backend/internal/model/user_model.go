@@ -11,6 +11,14 @@ type LoginResponse struct {
 	Token string `json:"token"`
 }
 
+type SelfRegisterRequest struct {
+	Username string `json:"username" validate:"required"`
+	Name     string `json:"name" validate:"required"`
+	Email    string `json:"email" validate:"required"`
+	Password string `json:"password" validate:"required"`
+	Otp      string `json:"otp" validate:"required"`
+}
+
 type RegisterRequest struct {
 	Username string `json:"username" validate:"required"`
 	Name     string `json:"name" validate:"required"`

@@ -2,14 +2,20 @@ package service
 
 import (
 	"context"
+	"errors"
 	"fmt"
+	"log"
+	"strconv"
+	"time"
 
 	"github.com/artamananda/tryout-sample/internal/common"
 	"github.com/artamananda/tryout-sample/internal/entity"
 	"github.com/artamananda/tryout-sample/internal/exception"
+	"github.com/artamananda/tryout-sample/internal/helper"
 	"github.com/artamananda/tryout-sample/internal/model"
 	"github.com/artamananda/tryout-sample/internal/repository"
 	"golang.org/x/crypto/bcrypt"
+	"gopkg.in/gomail.v2"
 )
 
 type UserService struct {
@@ -169,4 +175,109 @@ func (service *UserService) Authentication(ctx context.Context, model model.Logi
 		return entity.User{}, err
 	}
 	return userResult, nil
+}
+
+func (service *UserService) SendOtp(ctx context.Context, otpConfig model.SendOtpConfig, request model.CreateUserOtpRequest) (model.UserOtpResponse, error) {
+	err := common.Validate(request)
+	if err != nil {
+		return model.UserOtpResponse{}, exception.ValidationError{
+			Message: err.Error(),
+		}
+	}
+
+	otp := helper.GenerateOTP(6)
+
+	userOtp := entity.UserOtp{
+		Email:     request.Email,
+		Otp:       otp,
+		ExpiredAt: time.Now().Add(15 * time.Minute),
+		CreatedAt: time.Now(),
+	}
+
+	userOtp = service.UserRepository.CreateOtp(ctx, userOtp)
+
+	mailer := gomail.NewMessage()
+	mailer.SetHeader("From", otpConfig.SenderName)
+	mailer.SetHeader("To", request.Email)
+	mailer.SetHeader("Subject", "Kode Verifikasi Pendaftaran Akun Telisik")
+	mailer.SetBody("text/html", helper.TemplateEmailOtp(request.Name, otp))
+
+	smptPort, _ := strconv.Atoi(otpConfig.SmtpPort)
+
+	dialer := gomail.NewDialer(
+		otpConfig.SmtpHost,
+		smptPort,
+		otpConfig.AuthEmail,
+		otpConfig.AuthPassword,
+	)
+
+	err = dialer.DialAndSend(mailer)
+	if err != nil {
+		log.Fatal(err.Error())
+	}
+
+	log.Println("Mail sent!")
+
+	return model.UserOtpResponse{
+		Email:     userOtp.Email,
+		ExpiredAt: userOtp.ExpiredAt,
+		CreatedAt: userOtp.CreatedAt,
+	}, nil
+}
+
+func (service *UserService) CheckOtp(ctx context.Context, email string, otpReq string) bool {
+	userOtp, err := service.UserRepository.FindOtpByEmail(ctx, email)
+	if err != nil {
+		return false
+	}
+
+	if userOtp.Otp != otpReq {
+		return false
+	}
+
+	if userOtp.ExpiredAt.Before(time.Now()) {
+		return false
+	}
+
+	return true
+}
+
+func (service *UserService) SelfRegister(ctx context.Context, request model.SelfRegisterRequest) (model.RegisterResponse, error) {
+	err := common.Validate(request)
+	if err != nil {
+		return model.RegisterResponse{}, err
+	}
+
+	userOtp, err := service.UserRepository.FindOtpByEmail(ctx, request.Email)
+	if err != nil {
+		return model.RegisterResponse{}, err
+	}
+
+	if userOtp.Otp != request.Otp {
+		return model.RegisterResponse{}, errors.New("otp is not valid")
+	}
+
+	if userOtp.ExpiredAt.Before(time.Now()) {
+		return model.RegisterResponse{}, errors.New("otp is expired")
+	}
+
+	hashedPassword, _ := bcrypt.GenerateFromPassword([]byte(request.Password), bcrypt.DefaultCost)
+
+	user := entity.User{
+		Username: request.Username,
+		Name:     request.Name,
+		Email:    request.Email,
+		Password: string(hashedPassword),
+		Role:     "user",
+	}
+
+	user = service.UserRepository.Create(ctx, user)
+
+	return model.RegisterResponse{
+		UserID:   user.UserID,
+		Username: user.Username,
+		Name:     user.Name,
+		Email:    user.Email,
+		Role:     user.Role,
+	}, nil
 }
