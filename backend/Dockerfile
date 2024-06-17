@@ -28,10 +28,14 @@ RUN mkdir -p $PROJECT_DIR/database/migration
 # Set the working directory
 WORKDIR $PROJECT_DIR
 
+COPY --from=builder /go/bin/migrate /usr/local/bin/migrate
 COPY --from=builder $BUILDDIR/tryout-sample tryout-sample
 COPY --from=builder $BUILDDIR/.env $PROJECT_DIR/.env
 COPY --from=builder $BUILDDIR/db/migrations $PROJECT_DIR/db/migrations/
 COPY --from=builder $BUILDDIR/migration.sh $PROJECT_DIR/migration.sh
+
+# Give execute permission to migrate binary
+RUN chmod +x /usr/local/bin/migrate
 
 # Define the command to run the application
 CMD ["sh","-c","/opt/tryout-sample/migration.sh && /opt/tryout-sample/tryout-sample"]
