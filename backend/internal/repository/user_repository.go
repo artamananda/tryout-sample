@@ -3,6 +3,7 @@ package repository
 import (
 	"context"
 	"errors"
+	"fmt"
 
 	"github.com/artamananda/tryout-sample/internal/entity"
 	"github.com/artamananda/tryout-sample/internal/exception"
@@ -59,4 +60,31 @@ func (repository *UserRepository) Authentication(ctx context.Context, email stri
 		return entity.User{}, errors.New("user not found")
 	}
 	return userResult, nil
+}
+
+func (repository *UserRepository) CreateOtp(ctx context.Context, user_otp entity.UserOtp) entity.UserOtp {
+	query := `INSERT INTO user_otp (email, otp, expired_at, created_at)
+	VALUES ($1, $2, $3, $4)
+	ON CONFLICT (email) DO UPDATE SET
+    otp = $2,
+	expired_at = $3,
+    created_at = $4;`
+	err := repository.DB.WithContext(ctx).Exec(query, user_otp.Email, user_otp.Otp, user_otp.ExpiredAt, user_otp.CreatedAt)
+	if err != nil {
+		fmt.Println(err)
+	}
+	return user_otp
+}
+
+func (repository *UserRepository) FindOtpByEmail(ctx context.Context, email string) (entity.UserOtp, error) {
+	var otp entity.UserOtp
+	result := repository.DB.WithContext(ctx).Where("email = ?", email).First(&otp)
+	if result.Error != nil {
+		if errors.Is(result.Error, gorm.ErrRecordNotFound) {
+			return entity.UserOtp{}, errors.New("otp not found")
+		}
+		return entity.UserOtp{}, result.Error
+	}
+
+	return otp, nil
 }

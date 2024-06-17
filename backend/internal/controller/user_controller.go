@@ -21,12 +21,31 @@ func NewUserController(userService *service.UserService, config config.Config) *
 
 func (controller UserController) Route(app *fiber.App) {
 	app.Post("/v1/api/login", controller.Authentication)
-	app.Post("/v1/api/user", controller.Create)
+	app.Post("/v1/api/email/send-otp", controller.SendOtp)
+	app.Post("/v1/api/register", controller.SelfRegister)
+	app.Post("/v1/api/user", middleware.AuthenticateJWT([]string{"admin"}, controller.Config), controller.Create)
 	app.Post("/v1/api/users", middleware.AuthenticateJWT([]string{"admin"}, controller.Config), controller.CreateBulk)
 	app.Put("/v1/api/user/:id", middleware.AuthenticateJWT([]string{"admin"}, controller.Config), controller.Update)
 	app.Delete("/v1/api/user/:id", middleware.AuthenticateJWT([]string{"admin"}, controller.Config), controller.Delete)
 	app.Get("/v1/api/user/:id", controller.FindById)
 	app.Get("/v1/api/user", middleware.AuthenticateJWT([]string{"admin", "user"}, controller.Config), controller.FindAll)
+}
+
+func (controller UserController) SelfRegister(c *fiber.Ctx) error {
+	var request model.SelfRegisterRequest
+	err := c.BodyParser(&request)
+	exception.PanicLogging(err)
+
+	response, err := controller.UserService.SelfRegister(c.Context(), request)
+	if err != nil {
+		return err
+	}
+
+	return c.Status(fiber.StatusCreated).JSON(model.GeneralResponse{
+		Code:    200,
+		Message: "Success",
+		Data:    response,
+	})
 }
 
 func (controller UserController) Create(c *fiber.Ctx) error {
@@ -146,5 +165,30 @@ func (controller UserController) Authentication(c *fiber.Ctx) error {
 		Code:    200,
 		Message: "Success",
 		Data:    resultWithToken,
+	})
+}
+
+func (controller UserController) SendOtp(c *fiber.Ctx) error {
+	var request model.CreateUserOtpRequest
+	err := c.BodyParser(&request)
+	exception.PanicLogging(err)
+
+	otpCfg := model.SendOtpConfig{
+		SmtpHost:     controller.Config.Get("GOMAIL_SMTP_HOST"),
+		SmtpPort:     controller.Config.Get("GOMAIL_SMTP_PORT"),
+		SenderName:   controller.Config.Get("GOMAIL_SENDER_NAME"),
+		AuthEmail:    controller.Config.Get("GOMAIL_AUTH_EMAIL"),
+		AuthPassword: controller.Config.Get("GOMAIL_AUTH_PASSWORD"),
+	}
+
+	result, err := controller.UserService.SendOtp(c.Context(), otpCfg, request)
+	if err != nil {
+		return exception.ErrorHandler(c, exception.NotFoundError{Message: err.Error()})
+	}
+
+	return c.Status(fiber.StatusOK).JSON(model.GeneralResponse{
+		Code:    200,
+		Message: "Success",
+		Data:    result,
 	})
 }
