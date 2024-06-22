@@ -26,6 +26,16 @@ const RegisterForm = () => {
   const [isShowModal, setIsShowModal] = useState(false);
   const [otp, setOtp] = useState<string[]>();
 
+  const validateUsername = (rule: any, value: string) => {
+    const regex = /^[a-zA-Z0-9_]+$/;
+    if (!value || regex.test(value)) {
+      return Promise.resolve();
+    }
+    return Promise.reject(
+      'Username should only contain letters, numbers, or underscores.'
+    );
+  };
+
   const onFinishFailed = (errorInfo: any) => {
     console.log('Failed:', errorInfo);
   };
@@ -50,12 +60,10 @@ const RegisterForm = () => {
     form.setFieldValue('otp', otp?.join('') || '');
   }, [otp]);
   return (
-    <div>
+    <div style={{ minWidth: '50vw' }}>
       <Form
         name="basic"
         layout="vertical"
-        labelCol={{ span: 12 }}
-        wrapperCol={{ span: 24 }}
         onFinish={handleResendOtp}
         onFinishFailed={onFinishFailed}
         autoComplete="off"
@@ -63,7 +71,13 @@ const RegisterForm = () => {
         <Form.Item
           name="email"
           label="Email"
-          rules={[{ required: true, message: 'Please input your email!' }]}
+          rules={[
+            { required: true, message: 'Please input your email!' },
+            {
+              type: 'email',
+              message: 'The input is not valid email!'
+            }
+          ]}
         >
           <Input
             prefix={<UserOutlined className="site-form-item-icon" />}
@@ -87,7 +101,15 @@ const RegisterForm = () => {
         <Form.Item
           name="username"
           label="Username"
-          rules={[{ required: true, message: 'Please input your username!' }]}
+          rules={[
+            {
+              required: true,
+              message: 'Please input your username!'
+            },
+            {
+              validator: validateUsername
+            }
+          ]}
         >
           <Input
             prefix={<UserOutlined className="site-form-item-icon" />}
@@ -108,7 +130,7 @@ const RegisterForm = () => {
           />
         </Form.Item>
 
-        <Form.Item wrapperCol={{ span: 24 }}>
+        <Form.Item>
           <Button
             style={{ width: '100%' }}
             type="primary"
@@ -119,27 +141,13 @@ const RegisterForm = () => {
           </Button>
         </Form.Item>
       </Form>
-      {/* <Modal style={{ maxWidth: 200 }} open footer={false}>
-        <Form>
-          <Form.Item name="otp" label="OTP">
-            <Input
-              onChange={(e) => setData({ ...data, otp: e.target.value })}
-            />
-          </Form.Item>
-          <Button type="primary" onClick={handleRegister}>
-            Verify OTP
-          </Button>
-        </Form>
-      </Modal> */}
 
       <Modal
         open={isShowModal}
         footer={false}
-        // onCancel={() => {
-        //   handleSave();
-        //   setIsShowModal(null);
-        //   setIsAuthLoading(false);
-        // }}
+        onCancel={() => {
+          setIsShowModal(false);
+        }}
       >
         <Form
           form={form}
