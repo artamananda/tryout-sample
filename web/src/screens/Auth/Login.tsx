@@ -4,6 +4,7 @@ import logo from '../../assets/logo.png';
 import { Typography } from 'antd';
 import { useNavigate } from 'react-router-dom';
 import LoginForm from '../../components/Auth/LoginForm';
+import FooterCopyright from '../../components/Footer';
 
 const { Text, Link } = Typography;
 
@@ -29,6 +30,9 @@ const LoginScreen = () => {
         Don't have an account?{' '}
         <Link onClick={() => navigate('/register')}>Register</Link>
       </Text>
+      <div style={{ position: 'absolute', bottom: 0, marginBlock: 20 }}>
+        <FooterCopyright />
+      </div>
     </div>
   );
 };

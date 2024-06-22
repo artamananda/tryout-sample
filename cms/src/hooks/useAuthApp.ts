@@ -39,6 +39,12 @@ export default function useAuthApp(props?: Props) {
         return;
       }
 
+      if (resultAuthLogin.data.payload.role !== "admin") {
+        message.error("Login failed. Permission denied.");
+        setIsAuthLoading(false);
+        return;
+      }
+
       if (resultAuthLogin) {
         saveToken(resultAuthLogin.data.payload.token);
       }

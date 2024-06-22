@@ -40,10 +40,12 @@ const RegisterForm = () => {
     console.log('Failed:', errorInfo);
   };
 
-  const handleResendOtp = () => {
-    doSendOtpEmail(data);
-    setCountdown(59);
-    setIsShowModal(true);
+  const handleResendOtp = async () => {
+    const result = await doSendOtpEmail(data);
+    if (result !== 1) {
+      setCountdown(59);
+      setIsShowModal(true);
+    }
   };
 
   useEffect(() => {
