@@ -88,7 +88,7 @@ const AppLayout = () => {
           </Suspense>
         </Content>
         <Footer style={{ textAlign: "center" }}>
-          Telisik Tryout ©2024 Created by Artamananda
+          {`Copyright © 2024 ${process.env.REACT_APP_WEBSITE_NAME} v${process.env.REACT_APP_VERSION_NAME} All rights reserved`}
         </Footer>
       </Layout>
     </Layout>

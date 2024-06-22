@@ -13,6 +13,7 @@ import { putAnswer, sendAnswer } from '../../api/userAnswer';
 import { useAuthUser } from 'react-auth-kit';
 import { UserAnswerProps } from '../../types/userAnswer';
 import { TransactionTryoutProps } from '../../types/transactionTryout';
+import FooterCopyright from '../Footer';
 
 const { Text } = Typography;
 
@@ -272,7 +273,7 @@ const Tryout = () => {
             : 'Soal Selanjutnya >>>'}
         </Button>
         <Footer style={{ textAlign: 'center' }}>
-          Telisik Tryout ©2024 Created by Artamananda
+          <FooterCopyright />
         </Footer>
       </Layout>
     </Flex>
