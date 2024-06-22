@@ -44,8 +44,8 @@ const AppLayout = () => {
     getItem("Tryout", "/tryout", <CalendarOutlined />),
     getItem("Tryout Result", "/tryout-result", <BarChartOutlined />),
     getItem("Role", "/role", <UsergroupAddOutlined />, [
-      getItem("Admin", "/role/admin"),
-      getItem("Student", "/role/student"),
+      getItem("Admin", "/role/admins"),
+      getItem("User", "/role/users"),
     ]),
   ];
 

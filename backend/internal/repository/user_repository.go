@@ -47,9 +47,14 @@ func (repository *UserRepository) FindById(ctx context.Context, userId string) (
 	return user, nil
 }
 
-func (repository *UserRepository) FindAll(ctx context.Context) []entity.User {
+func (repository *UserRepository) FindAll(ctx context.Context, role string) []entity.User {
 	var users []entity.User
-	repository.DB.WithContext(ctx).Find(&users)
+	query := repository.DB.WithContext(ctx)
+	if role != "" {
+		query = query.Where("role = ?", role)
+	}
+	query = query.Order("created_at DESC")
+	query.Find(&users)
 	return users
 }
 

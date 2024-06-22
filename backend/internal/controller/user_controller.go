@@ -130,7 +130,9 @@ func (controller UserController) FindById(c *fiber.Ctx) error {
 }
 
 func (controller UserController) FindAll(c *fiber.Ctx) error {
-	result := controller.UserService.FindAll(c.Context())
+	role := c.Query("role")
+	result := controller.UserService.FindAll(c.Context(), role)
+
 	payload := map[string]interface{}{
 		"count":   len(result),
 		"next":    nil,

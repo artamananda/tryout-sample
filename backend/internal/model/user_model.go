@@ -1,6 +1,10 @@
 package model
 
-import "github.com/google/uuid"
+import (
+	"time"
+
+	"github.com/google/uuid"
+)
 
 type LoginRequest struct {
 	Email    string `json:"email" validate:"required"`
@@ -52,9 +56,10 @@ type UpdateUserResponse struct {
 }
 
 type GetUserResponse struct {
-	UserID   uuid.UUID `json:"user_id"`
-	Username string    `json:"username"`
-	Name     string    `json:"name"`
-	Email    string    `json:"email"`
-	Role     string    `json:"role"`
+	UserID    uuid.UUID `json:"user_id"`
+	Username  string    `json:"username"`
+	Name      string    `json:"name"`
+	Email     string    `json:"email"`
+	Role      string    `json:"role"`
+	CreatedAt time.Time `json:"created_at"`
 }
