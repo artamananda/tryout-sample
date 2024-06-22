@@ -22,7 +22,7 @@ const RegisterScreen = () => {
         border: '1px solid black'
       }}
     >
-      <div style={{ marginBottom: '40px' }}>
+      <div style={{ marginBottom: '40px', marginTop: 'auto' }}>
         <Image width={250} src={logo} preview={false} />
       </div>
       <RegisterForm />
@@ -30,7 +30,14 @@ const RegisterScreen = () => {
         Already have an account?{' '}
         <Link onClick={() => navigate('/login')}>Login</Link>
       </Text>
-      <div style={{ position: 'absolute', bottom: 0, marginBlock: 20 }}>
+      <div
+        style={{
+          textAlign: 'center',
+          marginInline: 20,
+          marginTop: 'auto',
+          marginBottom: 20
+        }}
+      >
         <FooterCopyright />
       </div>
     </div>
