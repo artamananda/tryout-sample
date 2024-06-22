@@ -103,6 +103,8 @@ export default function useAuthApp(props?: Props) {
       >(process.env.REACT_APP_BASE_URL + '/email/send-otp', data);
     } catch (err) {
       message.error('Email/Username is already in use by another user.');
+      setIsAuthLoading(false);
+      return 1;
     }
     setIsAuthLoading(false);
   };
