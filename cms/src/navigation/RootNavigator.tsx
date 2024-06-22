@@ -1,25 +1,27 @@
-import { BrowserRouter as Router, Route, Routes } from 'react-router-dom';
-import DashboardScreen from '../screens/Dashboard';
-import LoginScreen from '../screens/Login';
-import NotFoundScreen from '../screens/NotFound';
-import PublicRoute from './PublicRoute';
-import { Suspense } from 'react';
-import { Spin } from 'antd';
-import PrivateRoute from './PrivateRoute';
-import AppLayout from '../screens/Layout/AppLayout';
-import TryoutScreen from '../screens/Tryout';
-import TryoutResultScreen from '../screens/TryoutResult';
-import FormKpu from '../components/Tryout/FormKpu';
-import FormPpu from '../components/Tryout/FormPpu';
-import FormPbm from '../components/Tryout/FormPbm';
-import FormPku from '../components/Tryout/FormPku';
-import FormInd from '../components/Tryout/FormInd';
-import FormIng from '../components/Tryout/FormIng';
-import FormMtk from '../components/Tryout/FormMtk';
-import ResultTable from '../components/TryoutResult/ResultTable';
-import ResultScore from '../components/TryoutResult/ResultScore';
-import QuestionPage from '../screens/Question';
-import EditTryoutScreen from '../screens/Tryout/Edit';
+import { BrowserRouter as Router, Route, Routes } from "react-router-dom";
+import DashboardScreen from "../screens/Dashboard";
+import LoginScreen from "../screens/Login";
+import NotFoundScreen from "../screens/NotFound";
+import PublicRoute from "./PublicRoute";
+import { Suspense } from "react";
+import { Spin } from "antd";
+import PrivateRoute from "./PrivateRoute";
+import AppLayout from "../screens/Layout/AppLayout";
+import TryoutScreen from "../screens/Tryout";
+import TryoutResultScreen from "../screens/TryoutResult";
+import FormKpu from "../components/Tryout/FormKpu";
+import FormPpu from "../components/Tryout/FormPpu";
+import FormPbm from "../components/Tryout/FormPbm";
+import FormPku from "../components/Tryout/FormPku";
+import FormInd from "../components/Tryout/FormInd";
+import FormIng from "../components/Tryout/FormIng";
+import FormMtk from "../components/Tryout/FormMtk";
+import ResultTable from "../components/TryoutResult/ResultTable";
+import ResultScore from "../components/TryoutResult/ResultScore";
+import QuestionPage from "../screens/Question";
+import EditTryoutScreen from "../screens/Tryout/Edit";
+import ListAdminScreen from "../screens/ListAdmin";
+import ListUserScreen from "../screens/ListUser";
 
 const RootNavigator = () => {
   return (
@@ -45,10 +47,7 @@ const RootNavigator = () => {
             </PublicRoute>
           }
         />
-        <Route
-          path="*"
-          element={<NotFoundScreen />}
-        />
+        <Route path="*" element={<NotFoundScreen />} />
 
         <Route element={<AppLayout />}>
           <Route
@@ -171,6 +170,23 @@ const RootNavigator = () => {
             element={
               <PrivateRoute loginPath="/login">
                 <ResultScore />
+              </PrivateRoute>
+            }
+          />
+
+          <Route
+            path="/role/admins"
+            element={
+              <PrivateRoute loginPath="/login">
+                <ListAdminScreen />
+              </PrivateRoute>
+            }
+          />
+          <Route
+            path="/role/users"
+            element={
+              <PrivateRoute loginPath="/login">
+                <ListUserScreen />
               </PrivateRoute>
             }
           />

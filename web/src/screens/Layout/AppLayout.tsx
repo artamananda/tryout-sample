@@ -9,6 +9,7 @@ import { Layout, Menu, Image, Spin } from 'antd';
 import logo from '../../assets/logo-yellow.png';
 import { Outlet, useNavigate } from 'react-router-dom';
 import { useAuthUser, useSignOut } from 'react-auth-kit';
+import FooterCopyright from '../../components/Footer';
 
 const { Content, Footer, Sider } = Layout;
 
@@ -72,7 +73,7 @@ const AppLayout = () => {
           </Suspense>
         </Content>
         <Footer style={{ textAlign: 'center' }}>
-          Telisik Tryout ©2024 Created by Artamananda
+          <FooterCopyright />
         </Footer>
       </Layout>
     </Layout>

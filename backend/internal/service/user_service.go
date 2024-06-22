@@ -130,26 +130,28 @@ func (service *UserService) FindById(ctx context.Context, userId string) (model.
 	}
 
 	return model.GetUserResponse{
-		UserID:   user.UserID,
-		Username: user.Username,
-		Name:     user.Name,
-		Email:    user.Email,
-		Role:     user.Role,
+		UserID:    user.UserID,
+		Username:  user.Username,
+		Name:      user.Name,
+		Email:     user.Email,
+		Role:      user.Role,
+		CreatedAt: user.CreatedAt,
 	}, nil
 }
 
-func (service *UserService) FindAll(ctx context.Context) []model.GetUserResponse {
-	users := service.UserRepository.FindAll(ctx)
+func (service *UserService) FindAll(ctx context.Context, role string) []model.GetUserResponse {
+	users := service.UserRepository.FindAll(ctx, role)
 
 	userResponses := []model.GetUserResponse{}
 	for _, user := range users {
 		userResponses = append(userResponses,
 			model.GetUserResponse{
-				UserID:   user.UserID,
-				Username: user.Username,
-				Name:     user.Name,
-				Email:    user.Email,
-				Role:     user.Role,
+				UserID:    user.UserID,
+				Username:  user.Username,
+				Name:      user.Name,
+				Email:     user.Email,
+				Role:      user.Role,
+				CreatedAt: user.CreatedAt,
 			},
 		)
 	}
@@ -183,6 +185,12 @@ func (service *UserService) SendOtp(ctx context.Context, otpConfig model.SendOtp
 		return model.UserOtpResponse{}, exception.ValidationError{
 			Message: err.Error(),
 		}
+	}
+
+	isEmailExist := service.UserRepository.FindAccountIsExist(ctx, request.Email, request.Username)
+
+	if isEmailExist {
+		return model.UserOtpResponse{}, errors.New("account is already exist")
 	}
 
 	otp := helper.GenerateOTP(6)

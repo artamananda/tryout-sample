@@ -130,7 +130,9 @@ func (controller UserController) FindById(c *fiber.Ctx) error {
 }
 
 func (controller UserController) FindAll(c *fiber.Ctx) error {
-	result := controller.UserService.FindAll(c.Context())
+	role := c.Query("role")
+	result := controller.UserService.FindAll(c.Context(), role)
+
 	payload := map[string]interface{}{
 		"count":   len(result),
 		"next":    nil,
@@ -183,7 +185,7 @@ func (controller UserController) SendOtp(c *fiber.Ctx) error {
 
 	result, err := controller.UserService.SendOtp(c.Context(), otpCfg, request)
 	if err != nil {
-		return exception.ErrorHandler(c, exception.NotFoundError{Message: err.Error()})
+		return exception.ErrorHandler(c, err)
 	}
 
 	return c.Status(fiber.StatusOK).JSON(model.GeneralResponse{

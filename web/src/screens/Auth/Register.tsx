@@ -1,9 +1,14 @@
 import React from 'react';
-import LoginForm from './LoginForm';
 import { Image } from 'antd';
 import logo from '../../assets/logo.png';
+import { Typography } from 'antd';
+import { useNavigate } from 'react-router-dom';
+import RegisterForm from '../../components/Auth/RegisterForm';
 
-const Login = () => {
+const { Text, Link } = Typography;
+
+const RegisterScreen = () => {
+  const navigate = useNavigate();
   return (
     <div
       style={{
@@ -19,9 +24,13 @@ const Login = () => {
       <div style={{ marginBottom: '40px' }}>
         <Image width={250} src={logo} preview={false} />
       </div>
-      <LoginForm />
+      <RegisterForm />
+      <Text>
+        Already have an account?{' '}
+        <Link onClick={() => navigate('/login')}>Login</Link>
+      </Text>
     </div>
   );
 };
 
-export default Login;
+export default RegisterScreen;

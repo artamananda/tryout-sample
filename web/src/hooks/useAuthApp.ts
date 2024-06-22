@@ -93,8 +93,61 @@ export default function useAuthApp(props?: Props) {
     setIsAuthLoading(false);
   };
 
+  const doSendOtpEmail = async (data: { email: string }) => {
+    try {
+      setIsAuthLoading(true);
+      const result = await httpRequest.post<
+        BaseResponseProps<{
+          email: string;
+        }>
+      >(process.env.REACT_APP_BASE_URL + '/email/send-otp', data);
+    } catch (err) {
+      message.error('Email/Username is already in use by another user.');
+    }
+    setIsAuthLoading(false);
+  };
+
+  const doRegister = async (
+    data: {
+      username: string;
+      name: string;
+      email: string;
+      password: string;
+      otp: string;
+    },
+    callback?: () => void
+  ) => {
+    setIsAuthLoading(true);
+    try {
+      const result = await httpRequest.post<
+        BaseResponseProps<{
+          email: string;
+        }>
+      >(process.env.REACT_APP_BASE_URL + '/register', data);
+
+      if (!result) {
+        message.error('Register failed. Empty response.');
+        return;
+      }
+
+      if (result) {
+        if (callback) {
+          callback();
+        } else {
+          navigate('/login', { replace: true });
+        }
+        message.success('Your account has been registered successfully.');
+      }
+    } catch (err) {
+      message.error('Send Otp Failed. ' + err);
+    }
+    setIsAuthLoading(false);
+  };
+
   return {
     isAuthLoading,
-    doLogin
+    doLogin,
+    doSendOtpEmail,
+    doRegister
   };
 }
