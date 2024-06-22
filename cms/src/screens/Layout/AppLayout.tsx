@@ -11,6 +11,7 @@ import { Layout, Menu, Image, Spin } from "antd";
 import logo from "../../assets/logo-yellow.png";
 import { Outlet, useNavigate } from "react-router-dom";
 import { useAuthUser, useSignOut } from "react-auth-kit";
+import FooterCopyright from "../../components/Footer";
 
 const { Content, Footer, Sider } = Layout;
 
@@ -88,7 +89,7 @@ const AppLayout = () => {
           </Suspense>
         </Content>
         <Footer style={{ textAlign: "center" }}>
-          {`Copyright © 2024 ${process.env.REACT_APP_WEBSITE_NAME} v${process.env.REACT_APP_VERSION_NAME} All rights reserved`}
+          <FooterCopyright />
         </Footer>
       </Layout>
     </Layout>
