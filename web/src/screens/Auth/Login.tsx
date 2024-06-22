@@ -22,7 +22,7 @@ const LoginScreen = () => {
         border: '1px solid black'
       }}
     >
-      <div style={{ marginBottom: '40px' }}>
+      <div style={{ marginBottom: '40px', marginTop: 'auto' }}>
         <Image width={250} src={logo} preview={false} />
       </div>
       <LoginForm />
@@ -30,7 +30,14 @@ const LoginScreen = () => {
         Don't have an account?{' '}
         <Link onClick={() => navigate('/register')}>Register</Link>
       </Text>
-      <div style={{ position: 'absolute', bottom: 0, marginBlock: 20 }}>
+      <div
+        style={{
+          textAlign: 'center',
+          marginInline: 20,
+          marginTop: 'auto',
+          marginBottom: 20
+        }}
+      >
         <FooterCopyright />
       </div>
     </div>
