@@ -187,6 +187,12 @@ func (service *UserService) SendOtp(ctx context.Context, otpConfig model.SendOtp
 		}
 	}
 
+	isEmailExist := service.UserRepository.FindAccountIsExist(ctx, request.Email, request.Username)
+
+	if isEmailExist {
+		return model.UserOtpResponse{}, errors.New("account is already exist")
+	}
+
 	otp := helper.GenerateOTP(6)
 
 	userOtp := entity.UserOtp{

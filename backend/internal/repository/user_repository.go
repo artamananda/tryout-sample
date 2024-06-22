@@ -20,6 +20,10 @@ func NewUserRepository(DB *gorm.DB) UserRepository {
 }
 
 func (repository *UserRepository) Create(ctx context.Context, user entity.User) entity.User {
+	accountIsExist := repository.FindAccountIsExist(ctx, user.Email, user.Email)
+	if accountIsExist {
+		return entity.User{}
+	}
 	user.UserID = uuid.New()
 	err := repository.DB.WithContext(ctx).Create(&user).Error
 	exception.PanicLogging(err)
@@ -92,4 +96,15 @@ func (repository *UserRepository) FindOtpByEmail(ctx context.Context, email stri
 	}
 
 	return otp, nil
+}
+
+func (repository *UserRepository) FindAccountIsExist(ctx context.Context, email string, username string) bool {
+	var count int64
+	repository.DB.WithContext(ctx).Model(&entity.User{}).
+		Unscoped().
+		Where("email = ?", email).
+		Or("username = ?", username).
+		Count(&count)
+
+	return count > 0
 }

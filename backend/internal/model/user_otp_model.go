@@ -7,6 +7,7 @@ import (
 type CreateUserOtpRequest struct {
 	Email string `json:"email"`
 	Name  string `json:"name"`
+	Username string `json:"username"`
 }
 
 type UserOtpResponse struct {

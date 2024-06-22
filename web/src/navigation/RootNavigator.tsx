@@ -1,6 +1,6 @@
 import { BrowserRouter as Router, Route, Routes } from 'react-router-dom';
 import DashboardScreen from '../screens/Dashboard';
-import LoginScreen from '../screens/Login';
+import LoginScreen from '../screens/Auth/Login';
 import NotFoundScreen from '../screens/NotFound';
 import PublicRoute from './PublicRoute';
 import { Suspense } from 'react';
@@ -8,6 +8,7 @@ import { Spin } from 'antd';
 import PrivateRoute from './PrivateRoute';
 import AppLayout from '../screens/Layout/AppLayout';
 import TryoutScreen from '../screens/Tryout';
+import RegisterScreen from '../screens/Auth/Register';
 
 const RootNavigator = () => {
   return (
@@ -29,6 +30,16 @@ const RootNavigator = () => {
             <PublicRoute>
               <Suspense fallback={<Spin spinning={true} />}>
                 <LoginScreen />
+              </Suspense>
+            </PublicRoute>
+          }
+        />
+        <Route
+          path="/register"
+          element={
+            <PublicRoute>
+              <Suspense fallback={<Spin spinning={true} />}>
+                <RegisterScreen />
               </Suspense>
             </PublicRoute>
           }

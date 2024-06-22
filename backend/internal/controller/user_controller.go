@@ -185,7 +185,7 @@ func (controller UserController) SendOtp(c *fiber.Ctx) error {
 
 	result, err := controller.UserService.SendOtp(c.Context(), otpCfg, request)
 	if err != nil {
-		return exception.ErrorHandler(c, exception.NotFoundError{Message: err.Error()})
+		return exception.ErrorHandler(c, err)
 	}
 
 	return c.Status(fiber.StatusOK).JSON(model.GeneralResponse{
