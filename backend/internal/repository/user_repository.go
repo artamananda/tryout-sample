@@ -20,7 +20,7 @@ func NewUserRepository(DB *gorm.DB) UserRepository {
 }
 
 func (repository *UserRepository) Create(ctx context.Context, user entity.User) entity.User {
-	accountIsExist := repository.FindAccountIsExist(ctx, user.Email, user.Email)
+	accountIsExist := repository.FindAccountIsExist(ctx, user.Email, user.Username)
 	if accountIsExist {
 		return entity.User{}
 	}
