@@ -1,6 +1,8 @@
 package controller
 
 import (
+	"path/filepath"
+
 	"github.com/artamananda/tryout-sample/internal/config"
 	"github.com/artamananda/tryout-sample/internal/middleware"
 	"github.com/artamananda/tryout-sample/internal/model"
@@ -23,6 +25,7 @@ func (controller QuestionController) Route(app *fiber.App) {
 	app.Delete("/v1/api/question/:id", middleware.AuthenticateJWT([]string{"admin"}, controller.Config), controller.Delete)
 	app.Get("/v1/api/question/:id", controller.FindById)
 	app.Get("/v1/api/question", controller.FindAll)
+	app.Put("/v1/api/question/:id/upload-image", middleware.AuthenticateJWT([]string{"admin"}, controller.Config), controller.UpdateImage)
 }
 
 func (controller QuestionController) Create(c *fiber.Ctx) error {
@@ -54,6 +57,52 @@ func (controller QuestionController) Update(c *fiber.Ctx) error {
 	}
 
 	response, err := controller.QuestionService.Update(c.Context(), request, id)
+	if err != nil {
+		return err
+	}
+	return c.Status(fiber.StatusOK).JSON(model.GeneralResponse{
+		Code:    200,
+		Message: "Success",
+		Data:    response,
+	})
+}
+
+func (controller QuestionController) UpdateImage(c *fiber.Ctx) error {
+	var request model.UploadFileRequest
+	id := c.Params("id")
+	form, err := c.MultipartForm()
+	if err != nil {
+		return err
+	}
+
+	// Ambil file dari form
+	files := form.File["file"]
+	if len(files) == 0 {
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+			"error": "No file uploaded",
+		})
+	}
+
+	// Ambil file pertama (asumsi hanya satu file yang di-upload)
+	file := files[0]
+
+	// Buka file yang di-upload
+	fileOpened, err := file.Open()
+	if err != nil {
+		return err
+	}
+
+	defer fileOpened.Close()
+
+	// Isi struct request dengan informasi file
+	request = model.UploadFileRequest{
+		FileHeader:  file,
+		ContentType: file.Header.Get("Content-Type"),
+		FolderName:  "questions",
+		FileName:    id + filepath.Ext(file.Filename),
+	}
+
+	response, err := controller.QuestionService.UpdateImage(c.Context(), request, id)
 	if err != nil {
 		return err
 	}
