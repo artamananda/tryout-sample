@@ -12,9 +12,9 @@
             "name": "Apache 2.0",
             "url": "http://www.apache.org/licenses/LICENSE-2.0.html"
         },
-        "version": "0.0.28"
+        "version": "0.0.30"
     },
-    "host": "localhost:8080",
+    "host": "tryout-sample.fly.dev",
     "basePath": "/v1/api",
     "paths": {
         "/email/send-otp": {

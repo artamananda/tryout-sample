@@ -207,7 +207,7 @@ definitions:
       username:
         type: string
     type: object
-host: localhost:8080
+host: tryout-sample.fly.dev
 info:
   contact:
     email: artamananda@gmail.com
@@ -218,7 +218,7 @@ info:
     url: http://www.apache.org/licenses/LICENSE-2.0.html
   termsOfService: http://swagger.io/terms/
   title: Tryout Sample
-  version: 0.0.28
+  version: 0.0.30
 paths:
   /email/send-otp:
     post:
