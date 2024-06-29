@@ -16,7 +16,10 @@ type QuestionController struct {
 }
 
 func NewQuestionController(questionService *service.QuestionService, config config.Config) *QuestionController {
-	return &QuestionController{QuestionService: *questionService, Config: config}
+	return &QuestionController{
+		QuestionService: *questionService,
+		Config:          config,
+	}
 }
 
 func (controller QuestionController) Route(app *fiber.App) {
@@ -28,6 +31,17 @@ func (controller QuestionController) Route(app *fiber.App) {
 	app.Put("/v1/api/question/:id/upload-image", middleware.AuthenticateJWT([]string{"admin"}, controller.Config), controller.UpdateImage)
 }
 
+// Create handles creation of a question for a specific tryout.
+// @Summary Create a question
+// @Description Create a new question for a specific tryout
+// @Tags Questions
+// @Accept json
+// @Produce json
+// @Param tryoutId path string true "Tryout ID"
+// @Param request body model.CreateQuestionRequest true "Request Body"
+// @Security JWT
+// @Success 201 {object} model.GeneralResponse
+// @Router /question/{tryoutId} [post]
 func (controller QuestionController) Create(c *fiber.Ctx) error {
 	var request model.CreateQuestionRequest
 	tryoutID := c.Params("tryoutId")
@@ -48,6 +62,17 @@ func (controller QuestionController) Create(c *fiber.Ctx) error {
 	})
 }
 
+// Update handles updating a question by ID.
+// @Summary Update a question by ID
+// @Description Update an existing question by its unique ID
+// @Tags Questions
+// @Accept json
+// @Produce json
+// @Param id path string true "Question ID"
+// @Param request body model.UpdateQuestionRequest true "Request Body"
+// @Security JWT
+// @Success 200 {object} model.GeneralResponse
+// @Router /question/{id} [put]
 func (controller QuestionController) Update(c *fiber.Ctx) error {
 	var request model.UpdateQuestionRequest
 	id := c.Params("id")
@@ -60,6 +85,7 @@ func (controller QuestionController) Update(c *fiber.Ctx) error {
 	if err != nil {
 		return err
 	}
+
 	return c.Status(fiber.StatusOK).JSON(model.GeneralResponse{
 		Code:    200,
 		Message: "Success",
@@ -67,6 +93,16 @@ func (controller QuestionController) Update(c *fiber.Ctx) error {
 	})
 }
 
+// UpdateImage handles updating the image of a question by ID.
+// @Summary Update the image of a question by ID
+// @Description Update the image of an existing question by its unique ID
+// @Tags Questions
+// @Accept multipart/form-data
+// @Param id path string true "Question ID"
+// @Param file formData file true "Image File"
+// @Security JWT
+// @Success 200 {object} model.GeneralResponse
+// @Router /question/{id}/upload-image [put]
 func (controller QuestionController) UpdateImage(c *fiber.Ctx) error {
 	var request model.UploadFileRequest
 	id := c.Params("id")
@@ -75,7 +111,7 @@ func (controller QuestionController) UpdateImage(c *fiber.Ctx) error {
 		return err
 	}
 
-	// Ambil file dari form
+	// Retrieve the uploaded file from form
 	files := form.File["file"]
 	if len(files) == 0 {
 		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
@@ -83,10 +119,10 @@ func (controller QuestionController) UpdateImage(c *fiber.Ctx) error {
 		})
 	}
 
-	// Ambil file pertama (asumsi hanya satu file yang di-upload)
+	// Retrieve the first file (assuming only one file is uploaded)
 	file := files[0]
 
-	// Buka file yang di-upload
+	// Open the uploaded file
 	fileOpened, err := file.Open()
 	if err != nil {
 		return err
@@ -94,7 +130,7 @@ func (controller QuestionController) UpdateImage(c *fiber.Ctx) error {
 
 	defer fileOpened.Close()
 
-	// Isi struct request dengan informasi file
+	// Fill the request struct with file information
 	request = model.UploadFileRequest{
 		FileHeader:  file,
 		ContentType: file.Header.Get("Content-Type"),
@@ -106,6 +142,7 @@ func (controller QuestionController) UpdateImage(c *fiber.Ctx) error {
 	if err != nil {
 		return err
 	}
+
 	return c.Status(fiber.StatusOK).JSON(model.GeneralResponse{
 		Code:    200,
 		Message: "Success",
@@ -113,6 +150,16 @@ func (controller QuestionController) UpdateImage(c *fiber.Ctx) error {
 	})
 }
 
+// Delete handles deleting a question by ID.
+// @Summary Delete a question by ID
+// @Description Delete an existing question by its unique ID
+// @Tags Questions
+// @Accept json
+// @Produce json
+// @Param id path string true "Question ID"
+// @Security JWT
+// @Success 200 {object} model.GeneralResponse
+// @Router /question/{id} [delete]
 func (controller QuestionController) Delete(c *fiber.Ctx) error {
 	id := c.Params("id")
 
@@ -127,6 +174,16 @@ func (controller QuestionController) Delete(c *fiber.Ctx) error {
 	})
 }
 
+// FindById handles finding a question by ID.
+// @Summary Find a question by ID
+// @Description Retrieve an existing question by its unique ID
+// @Tags Questions
+// @Accept json
+// @Produce json
+// @Param id path string true "Question ID"
+// @Security JWT
+// @Success 200 {object} model.GeneralResponse
+// @Router /question/{id} [get]
 func (controller QuestionController) FindById(c *fiber.Ctx) error {
 	id := c.Params("id")
 
@@ -134,6 +191,7 @@ func (controller QuestionController) FindById(c *fiber.Ctx) error {
 	if err != nil {
 		return err
 	}
+
 	return c.Status(fiber.StatusOK).JSON(model.GeneralResponse{
 		Code:    200,
 		Message: "Success",
@@ -141,6 +199,16 @@ func (controller QuestionController) FindById(c *fiber.Ctx) error {
 	})
 }
 
+// FindAll handles finding all questions.
+// @Summary Find all questions
+// @Description Retrieve a list of all questions, optionally filtered by tryoutId
+// @Tags Questions
+// @Accept json
+// @Produce json
+// @Param tryoutId query string false "Tryout ID"
+// @Security JWT
+// @Success 200 {object} model.GeneralResponse
+// @Router /question [get]
 func (controller QuestionController) FindAll(c *fiber.Ctx) error {
 	var result []model.QuestionResponse
 	var err error

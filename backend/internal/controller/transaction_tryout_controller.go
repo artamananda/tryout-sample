@@ -17,7 +17,11 @@ type TransactionTryoutController struct {
 }
 
 func NewTransactionTryoutController(transactionTryoutService *service.TransactionTryoutService, tryoutService *service.TryoutService, config config.Config) *TransactionTryoutController {
-	return &TransactionTryoutController{TransactionTryoutService: *transactionTryoutService, TryoutService: *tryoutService, Config: config}
+	return &TransactionTryoutController{
+		TransactionTryoutService: *transactionTryoutService,
+		TryoutService:            *tryoutService,
+		Config:                   config,
+	}
 }
 
 func (controller TransactionTryoutController) Route(app *fiber.App) {
@@ -30,6 +34,16 @@ func (controller TransactionTryoutController) Route(app *fiber.App) {
 	app.Get("/v1/api/transaction-tryout", middleware.AuthenticateJWT([]string{"admin", "user"}, controller.Config), controller.FindAll)
 }
 
+// Create handles creation of a transaction tryout.
+// @Summary Create a transaction tryout
+// @Description Create a new transaction tryout with provided details
+// @Tags Transaction Tryouts
+// @Accept json
+// @Produce json
+// @Param request body model.CreateTransactionTryoutRequest true "Request Body"
+// @Security JWT
+// @Success 201 {object} model.GeneralResponse
+// @Router /transaction-tryout [post]
 func (controller TransactionTryoutController) Create(c *fiber.Ctx) error {
 	var request model.CreateTransactionTryoutRequest
 	err := c.BodyParser(&request)
@@ -49,26 +63,16 @@ func (controller TransactionTryoutController) Create(c *fiber.Ctx) error {
 	})
 }
 
-func (controller TransactionTryoutController) Update(c *fiber.Ctx) error {
-	var request model.UpdateTransactionTryoutRequest
-	id := c.Params("id")
-	err := c.BodyParser(&request)
-	if err != nil {
-		return err
-	}
-
-	response, err := controller.TransactionTryoutService.Update(c.Context(), request, id)
-	if err != nil {
-		return err
-	}
-
-	return c.Status(fiber.StatusOK).JSON(model.GeneralResponse{
-		Code:    200,
-		Message: "Success",
-		Data:    response,
-	})
-}
-
+// UpdateToPaid handles updating a transaction tryout to PAID status.
+// @Summary Update transaction tryout status to PAID
+// @Description Update the status of a transaction tryout to PAID upon successful token validation
+// @Tags Transaction Tryouts
+// @Accept json
+// @Produce json
+// @Param request body model.UpdateTransactionTryoutRequest true "Request Body"
+// @Security JWT
+// @Success 200 {object} model.GeneralResponse
+// @Router /transaction-tryout/paid [patch]
 func (controller TransactionTryoutController) UpdateToPaid(c *fiber.Ctx) error {
 	var request model.UpdateTransactionTryoutRequest
 	var requestBody model.UpdateTransactionTryoutRequest
@@ -114,6 +118,16 @@ func (controller TransactionTryoutController) UpdateToPaid(c *fiber.Ctx) error {
 	})
 }
 
+// UpdateToFinish handles updating a transaction tryout to COMPLETED status.
+// @Summary Update transaction tryout status to COMPLETED
+// @Description Update the status of a transaction tryout to COMPLETED upon successful validation
+// @Tags Transaction Tryouts
+// @Accept json
+// @Produce json
+// @Param request body model.UpdateStatusTransactionTryoutRequest true "Request Body"
+// @Security JWT
+// @Success 200 {object} model.GeneralResponse
+// @Router /transaction-tryout/complete [patch]
 func (controller TransactionTryoutController) UpdateToFinish(c *fiber.Ctx) error {
 	var request model.UpdateTransactionTryoutRequest
 	var requestBody model.UpdateStatusTransactionTryoutRequest
@@ -157,6 +171,16 @@ func (controller TransactionTryoutController) UpdateToFinish(c *fiber.Ctx) error
 	})
 }
 
+// Delete handles deleting a transaction tryout by ID.
+// @Summary Delete a transaction tryout by ID
+// @Description Delete a transaction tryout by its unique ID
+// @Tags Transaction Tryouts
+// @Accept json
+// @Produce json
+// @Param id path string true "Transaction Tryout ID"
+// @Security JWT
+// @Success 200 {object} model.GeneralResponse
+// @Router /transaction-tryout/{id} [delete]
 func (controller TransactionTryoutController) Delete(c *fiber.Ctx) error {
 	id := c.Params("id")
 
@@ -171,6 +195,16 @@ func (controller TransactionTryoutController) Delete(c *fiber.Ctx) error {
 	})
 }
 
+// FindById handles finding a transaction tryout by ID.
+// @Summary Find a transaction tryout by ID
+// @Description Retrieve a transaction tryout by its unique ID
+// @Tags Transaction Tryouts
+// @Accept json
+// @Produce json
+// @Param id path string true "Transaction Tryout ID"
+// @Security JWT
+// @Success 200 {object} model.GeneralResponse
+// @Router /transaction-tryout/{id} [get]
 func (controller TransactionTryoutController) FindById(c *fiber.Ctx) error {
 	id := c.Params("id")
 
@@ -186,6 +220,17 @@ func (controller TransactionTryoutController) FindById(c *fiber.Ctx) error {
 	})
 }
 
+// FindAll handles finding all transaction tryouts.
+// @Summary Find all transaction tryouts
+// @Description Retrieve a list of all transaction tryouts, optionally filtered by tryoutId and userId
+// @Tags Transaction Tryouts
+// @Accept json
+// @Produce json
+// @Param tryoutId query string false "Tryout ID"
+// @Param userId query string false "User ID"
+// @Security JWT
+// @Success 200 {object} model.GeneralResponse
+// @Router /transaction-tryout [get]
 func (controller TransactionTryoutController) FindAll(c *fiber.Ctx) error {
 	var results []model.TransactionTryoutResponse
 	tryoutId := c.Query("tryoutId")
@@ -199,7 +244,7 @@ func (controller TransactionTryoutController) FindAll(c *fiber.Ctx) error {
 	} else {
 		results = controller.TransactionTryoutService.FindAll(c.Context())
 	}
-	
+
 	payload := map[string]interface{}{
 		"count":   len(results),
 		"next":    nil,
