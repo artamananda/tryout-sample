@@ -7,6 +7,7 @@ import (
 	"github.com/artamananda/tryout-sample/internal/model"
 	"github.com/artamananda/tryout-sample/internal/repository"
 	"github.com/artamananda/tryout-sample/internal/service"
+	"github.com/aws/aws-sdk-go/service/s3/s3manager"
 	"github.com/gofiber/fiber/v2"
 	"github.com/gofiber/fiber/v2/middleware/cors"
 )
@@ -15,6 +16,8 @@ func main() {
 	initConfig := config.New()
 	db := config.NewDB(initConfig)
 	app := fiber.New()
+	sess, _ := config.NewSession(initConfig)
+	uploader := s3manager.NewUploader(sess)
 
 	app.Use(cors.New(cors.Config{
 		AllowHeaders:     "*",
@@ -31,7 +34,7 @@ func main() {
 
 	userService := service.NewUserService(&userRepository)
 	tryoutService := service.NewTryoutService(&tryoutRepository)
-	questionService := service.NewQuestionService(&questionRepository)
+	questionService := service.NewQuestionService(&questionRepository, uploader)
 	userAnswerService := service.NewUserAnswerService(&userAnswerRepository)
 	transactionTryoutService := service.NewTransactionTryoutService(&transactionRepository)
 
@@ -51,7 +54,7 @@ func main() {
 		return c.Status(fiber.StatusCreated).JSON(model.GeneralResponse{
 			Code:    200,
 			Message: "Success",
-			Data:    "0.0.25",
+			Data:    "0.0.26",
 		})
 	})
 
