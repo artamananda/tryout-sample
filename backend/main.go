@@ -10,8 +10,28 @@ import (
 	"github.com/aws/aws-sdk-go/service/s3/s3manager"
 	"github.com/gofiber/fiber/v2"
 	"github.com/gofiber/fiber/v2/middleware/cors"
+	"github.com/gofiber/swagger"
+
+	_ "github.com/artamananda/tryout-sample/docs"
 )
 
+const APP_VERSION = "0.0.28"
+
+// @title Tryout Sample
+// @version 0.0.28
+// @description API Documentation for Telisik Tryout
+// @termsOfService http://swagger.io/terms/
+// @contact.name Artamananda
+// @contact.email artamananda@gmail.com
+// @license.name Apache 2.0
+// @license.url http://www.apache.org/licenses/LICENSE-2.0.html
+// @host localhost:8080
+// @BasePath /v1/api
+// @securityDefinitions.apiKey JWT
+// @in header
+// @name Authorization
+// @externalDocs.description OpenAPI
+// @externalDocs.url https://swagger.io/resources/open-api/
 func main() {
 	initConfig := config.New()
 	db := config.NewDB(initConfig)
@@ -22,7 +42,7 @@ func main() {
 	app.Use(cors.New(cors.Config{
 		AllowHeaders:     "*",
 		AllowOrigins:     "*",
-		AllowCredentials: true,
+		AllowCredentials: false,
 		AllowMethods:     "GET,POST,HEAD,PUT,DELETE,PATCH,OPTIONS",
 	}))
 
@@ -54,9 +74,11 @@ func main() {
 		return c.Status(fiber.StatusCreated).JSON(model.GeneralResponse{
 			Code:    200,
 			Message: "Success",
-			Data:    "0.0.27",
+			Data:    APP_VERSION,
 		})
 	})
+
+	app.Get("/docs/*", swagger.HandlerDefault) // default
 
 	err := app.Listen(initConfig.Get("SERVER") + ":" + initConfig.Get("PORT"))
 	exception.PanicLogging(err)

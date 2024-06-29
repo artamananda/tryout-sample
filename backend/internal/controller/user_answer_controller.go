@@ -20,13 +20,23 @@ func NewUserAnswerController(userAnswerService *service.UserAnswerService, confi
 
 func (controller UserAnswerController) Route(app *fiber.App) {
 	app.Post("/v1/api/user-answer", middleware.AuthenticateJWT([]string{"admin", "user"}, controller.Config), controller.Create)
-	app.Put("/v1/api/user-answer/:id", middleware.AuthenticateJWT([]string{"admin", "user"}, controller.Config), controller.Update)
+	app.Patch("/v1/api/user-answer/:id", middleware.AuthenticateJWT([]string{"admin", "user"}, controller.Config), controller.Update)
 	app.Delete("/v1/api/user-answer/:id", middleware.AuthenticateJWT([]string{"admin", "user"}, controller.Config), controller.Delete)
 	app.Get("/v1/api/user-answer/:id", controller.FindById)
 	app.Get("/v1/api/user-answer/user/:id", controller.FindByUserId)
 	app.Get("/v1/api/user-answer", controller.FindAll)
 }
 
+// Create handles creation of user answers.
+// @Summary Create a user answer
+// @Description Create a user answer with provided details
+// @Tags User Answers
+// @Accept json
+// @Produce json
+// @Param request body model.CreateUserAnswerRequest true "Request Body"
+// @Security JWT
+// @Success 201 {object} model.GeneralResponse
+// @Router /user-answer [post]
 func (controller UserAnswerController) Create(c *fiber.Ctx) error {
 	var request model.CreateUserAnswerRequest
 	err := c.BodyParser(&request)
@@ -46,6 +56,17 @@ func (controller UserAnswerController) Create(c *fiber.Ctx) error {
 	})
 }
 
+// Update handles updating a user answer.
+// @Summary Update a user answer
+// @Description Update a user answer with provided details
+// @Tags User Answers
+// @Accept json
+// @Produce json
+// @Param id path string true "User Answer ID"
+// @Param request body model.UpdateUserAnswerRequest true "Request Body"
+// @Security JWT
+// @Success 200 {object} model.GeneralResponse
+// @Router /user-answer/{id} [patch]
 func (controller UserAnswerController) Update(c *fiber.Ctx) error {
 	var request model.UpdateUserAnswerRequest
 	id := c.Params("id")
@@ -65,6 +86,16 @@ func (controller UserAnswerController) Update(c *fiber.Ctx) error {
 	})
 }
 
+// Delete handles deleting a user answer.
+// @Summary Delete a user answer
+// @Description Delete a user answer by ID
+// @Tags User Answers
+// @Accept json
+// @Produce json
+// @Param id path string true "User Answer ID"
+// @Security JWT
+// @Success 200 {object} model.GeneralResponse
+// @Router /user-answer/{id} [delete]
 func (controller UserAnswerController) Delete(c *fiber.Ctx) error {
 	id := c.Params("id")
 
@@ -79,6 +110,17 @@ func (controller UserAnswerController) Delete(c *fiber.Ctx) error {
 	})
 }
 
+// FindByUserId handles finding user answers by user ID.
+// @Summary Find user answers by user ID
+// @Description Retrieve user answers by user ID, optionally filtered by question ID
+// @Tags User Answers
+// @Accept json
+// @Produce json
+// @Param id path string true "User ID"
+// @Param question_id query string false "Filter user answers by question ID"
+// @Security JWT
+// @Success 200 {object} model.GeneralResponse
+// @Router /user-answer/user/{id} [get]
 func (controller UserAnswerController) FindByUserId(c *fiber.Ctx) error {
 	id := c.Params("id")
 	questionId := c.Query("question_id")
@@ -114,6 +156,16 @@ func (controller UserAnswerController) FindByUserId(c *fiber.Ctx) error {
 	})
 }
 
+// FindById handles finding a user answer by ID.
+// @Summary Find a user answer by ID
+// @Description Retrieve a user answer by its unique ID
+// @Tags User Answers
+// @Accept json
+// @Produce json
+// @Param id path string true "User Answer ID"
+// @Security JWT
+// @Success 200 {object} model.GeneralResponse
+// @Router /user-answer/{id} [get]
 func (controller UserAnswerController) FindById(c *fiber.Ctx) error {
 	id := c.Params("id")
 
@@ -128,6 +180,15 @@ func (controller UserAnswerController) FindById(c *fiber.Ctx) error {
 	})
 }
 
+// FindAll handles finding all user answers.
+// @Summary Find all user answers
+// @Description Retrieve a list of all user answers
+// @Tags User Answers
+// @Accept json
+// @Produce json
+// @Security JWT
+// @Success 200 {object} model.GeneralResponse
+// @Router /user-answer [get]
 func (controller UserAnswerController) FindAll(c *fiber.Ctx) error {
 	result := controller.UserAnswerService.FindAll(c.Context())
 	payload := map[string]interface{}{
