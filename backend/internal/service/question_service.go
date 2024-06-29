@@ -2,6 +2,7 @@ package service
 
 import (
 	"context"
+	"time"
 
 	"github.com/artamananda/tryout-sample/internal/common"
 	"github.com/artamananda/tryout-sample/internal/entity"
@@ -86,6 +87,7 @@ func (service *QuestionService) Update(ctx context.Context, request model.Update
 	question.Options = request.Options
 	question.CorrectAnswer = request.CorrectAnswer
 	question.Points = request.Points
+	question.UpdatedAt = time.Now()
 
 	question, err = service.QuestionRepository.Update(ctx, question)
 
@@ -129,6 +131,7 @@ func (service *QuestionService) UpdateImage(ctx context.Context, request model.U
 	}
 
 	question.ImageUrl = fileLink
+	question.UpdatedAt = time.Now()
 
 	question, err = service.QuestionRepository.Update(ctx, question)
 
