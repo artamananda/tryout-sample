@@ -30,6 +30,12 @@ jobs:
           echo "GOMAIL_SENDER_NAME=${{ secrets.GOMAIL_SENDER_NAME }}" >> ./backend/.env
           echo "GOMAIL_AUTH_EMAIL=${{ secrets.GOMAIL_AUTH_EMAIL }}" >> ./backend/.env
           echo "GOMAIL_AUTH_PASSWORD=${{ secrets.GOMAIL_AUTH_PASSWORD }}" >> ./backend/.env
+          echo "AWS_ACCESS_KEY_ID=${{ secrets.AWS_ACCESS_KEY_ID }}" >> ./backend/.env
+          echo "AWS_SECRET_ACCESS_KEY=${{ secrets.AWS_SECRET_ACCESS_KEY }}" >> ./backend/.env
+          echo "AWS_REGION=${{ secrets.AWS_REGION }}" >> ./backend/.env
+          echo "AWS_ENDPOINT=${{ secrets.AWS_ENDPOINT }}" >> ./backend/.env
+          echo "AWS_BUCKET_PUBLIC_URL=${{ secrets.AWS_BUCKET_PUBLIC_URL }}" >> ./backend/.env
+          echo "AWS_BUCKET_NAME=${{ secrets.AWS_BUCKET_NAME }}" >> ./backend/.env
           echo "DB_POOL_MAX_CONN=${{ secrets.DB_POOL_MAX_CONN }}" >> ./backend/.env
           echo "DB_POOL_IDLE_CONN=${{ secrets.DB_POOL_IDLE_CONN }}" >> ./backend/.env
           echo "DB_POOL_LIFE_TIME=${{ secrets.DB_POOL_LIFE_TIME }}" >> ./backend/.env
