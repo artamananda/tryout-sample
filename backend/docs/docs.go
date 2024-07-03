@@ -1553,8 +1553,8 @@ const docTemplate = `{
 
 // SwaggerInfo holds exported Swagger Info so clients can modify it
 var SwaggerInfo = &swag.Spec{
-	Version:          "0.0.30",
-	Host:             "tryout-sample.fly.dev",
+	Version:          "0.0.31",
+	Host:             "https://api.telisik-go.my.id",
 	BasePath:         "/v1/api",
 	Schemes:          []string{},
 	Title:            "Tryout Sample",

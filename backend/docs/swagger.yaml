@@ -207,7 +207,7 @@ definitions:
       username:
         type: string
     type: object
-host: tryout-sample.fly.dev
+host: https://api.telisik-go.my.id
 info:
   contact:
     email: artamananda@gmail.com
@@ -218,7 +218,7 @@ info:
     url: http://www.apache.org/licenses/LICENSE-2.0.html
   termsOfService: http://swagger.io/terms/
   title: Tryout Sample
-  version: 0.0.30
+  version: 0.0.31
 paths:
   /email/send-otp:
     post:
