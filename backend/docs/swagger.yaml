@@ -38,6 +38,8 @@ definitions:
         type: integer
       end_time:
         type: string
+      is_published:
+        type: boolean
       start_time:
         type: string
       title:
@@ -45,6 +47,7 @@ definitions:
     required:
     - duration
     - end_time
+    - is_published
     - start_time
     - title
     type: object
@@ -178,6 +181,8 @@ definitions:
         type: integer
       end_time:
         type: string
+      is_published:
+        type: boolean
       start_time:
         type: string
       title:
@@ -207,7 +212,7 @@ definitions:
       username:
         type: string
     type: object
-host: https://api.telisik-go.my.id
+host: api.telisik-go.my.id
 info:
   contact:
     email: artamananda@gmail.com
@@ -218,7 +223,7 @@ info:
     url: http://www.apache.org/licenses/LICENSE-2.0.html
   termsOfService: http://swagger.io/terms/
   title: Tryout Sample
-  version: 0.0.31
+  version: 0.0.32
 paths:
   /email/send-otp:
     post:

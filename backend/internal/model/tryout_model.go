@@ -7,26 +7,29 @@ import (
 )
 
 type CreateTryoutRequest struct {
-	Title     string    `json:"title" validate:"required"`
-	Duration  int       `json:"duration" validate:"required,min=1"`
-	StartTime time.Time `json:"start_time" validate:"required"`
-	EndTime   time.Time `json:"end_time" validate:"required"`
+	Title       string    `json:"title" validate:"required"`
+	Duration    int       `json:"duration" validate:"required,min=1"`
+	StartTime   time.Time `json:"start_time" validate:"required"`
+	EndTime     time.Time `json:"end_time" validate:"required"`
+	IsPublished bool      `json:"is_published" validate:"required"`
 }
 
 type UpdateTryoutRequest struct {
-	Title     string    `json:"title"`
-	Duration  int       `json:"duration"`
-	StartTime time.Time `json:"start_time"`
-	EndTime   time.Time `json:"end_time"`
+	Title       string    `json:"title"`
+	Duration    int       `json:"duration"`
+	StartTime   time.Time `json:"start_time"`
+	EndTime     time.Time `json:"end_time"`
+	IsPublished bool      `json:"is_published"`
 }
 
 type TryoutResponse struct {
-	TryoutID  uuid.UUID `json:"tryout_id"`
-	Title     string    `json:"title"`
-	Duration  int       `json:"duration"`
-	StartTime time.Time `json:"start_time"`
-	EndTime   time.Time `json:"end_time"`
-	Token     string    `json:"token"`
-	CreatedAt time.Time `json:"created_at"`
-	UpdatedAt time.Time `json:"updated_at"`
+	TryoutID    uuid.UUID `json:"tryout_id"`
+	Title       string    `json:"title"`
+	Duration    int       `json:"duration"`
+	StartTime   time.Time `json:"start_time"`
+	EndTime     time.Time `json:"end_time"`
+	Token       string    `json:"token"`
+	IsPublished bool      `json:"is_published"`
+	CreatedAt   time.Time `json:"created_at"`
+	UpdatedAt   time.Time `json:"updated_at"`
 }
