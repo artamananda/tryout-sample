@@ -15,17 +15,17 @@ import (
 	_ "github.com/artamananda/tryout-sample/docs"
 )
 
-const APP_VERSION = "0.0.31"
+const APP_VERSION = "0.0.32"
 
 // @title Tryout Sample
-// @version 0.0.31
+// @version 0.0.32
 // @description API Documentation for Telisik Tryout
 // @termsOfService http://swagger.io/terms/
 // @contact.name Artamananda
 // @contact.email artamananda@gmail.com
 // @license.name Apache 2.0
 // @license.url http://www.apache.org/licenses/LICENSE-2.0.html
-// @host https://api.telisik-go.my.id
+// @host api.telisik-go.my.id
 // @BasePath /v1/api
 // @securityDefinitions.apiKey JWT
 // @in header

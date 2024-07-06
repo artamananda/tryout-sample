@@ -1283,6 +1283,7 @@ const docTemplate = `{
             "required": [
                 "duration",
                 "end_time",
+                "is_published",
                 "start_time",
                 "title"
             ],
@@ -1293,6 +1294,9 @@ const docTemplate = `{
                 },
                 "end_time": {
                     "type": "string"
+                },
+                "is_published": {
+                    "type": "boolean"
                 },
                 "start_time": {
                     "type": "string"
@@ -1496,6 +1500,9 @@ const docTemplate = `{
                 "end_time": {
                     "type": "string"
                 },
+                "is_published": {
+                    "type": "boolean"
+                },
                 "start_time": {
                     "type": "string"
                 },
@@ -1553,8 +1560,8 @@ const docTemplate = `{
 
 // SwaggerInfo holds exported Swagger Info so clients can modify it
 var SwaggerInfo = &swag.Spec{
-	Version:          "0.0.31",
-	Host:             "https://api.telisik-go.my.id",
+	Version:          "0.0.32",
+	Host:             "api.telisik-go.my.id",
 	BasePath:         "/v1/api",
 	Schemes:          []string{},
 	Title:            "Tryout Sample",

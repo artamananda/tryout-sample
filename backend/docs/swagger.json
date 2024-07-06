@@ -12,9 +12,9 @@
             "name": "Apache 2.0",
             "url": "http://www.apache.org/licenses/LICENSE-2.0.html"
         },
-        "version": "0.0.31"
+        "version": "0.0.32"
     },
-    "host": "https://api.telisik-go.my.id",
+    "host": "api.telisik-go.my.id",
     "basePath": "/v1/api",
     "paths": {
         "/email/send-otp": {
@@ -1277,6 +1277,7 @@
             "required": [
                 "duration",
                 "end_time",
+                "is_published",
                 "start_time",
                 "title"
             ],
@@ -1287,6 +1288,9 @@
                 },
                 "end_time": {
                     "type": "string"
+                },
+                "is_published": {
+                    "type": "boolean"
                 },
                 "start_time": {
                     "type": "string"
@@ -1489,6 +1493,9 @@
                 },
                 "end_time": {
                     "type": "string"
+                },
+                "is_published": {
+                    "type": "boolean"
                 },
                 "start_time": {
                     "type": "string"
