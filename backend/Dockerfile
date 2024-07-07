@@ -2,9 +2,8 @@ FROM golang:1.20.2-alpine3.17 as builder
 
 ARG GO_BUILD_COMMAND="go build -tags static_all"
 # Install some build deps + ssh tools for the setup below.
-RUN apk update && apk --no-cache add  build-base  git bash  coreutils openssh  openssl
+RUN apk update && apk --no-cache add build-base git bash coreutils openssh openssl
 
-# this command if you get source from bitbucket repos
 # Create the directory where the application will reside
 RUN mkdir -p /go/src/github.com/artamananda/tryout-sample
 
@@ -13,11 +12,15 @@ WORKDIR /go/src/github.com/artamananda/tryout-sample
 COPY . .
 
 RUN go install -tags 'postgres' github.com/golang-migrate/migrate/v4/cmd/migrate@latest
-
 RUN go install github.com/swaggo/swag/cmd/swag@latest
 
-# application builder step
+# Prepare dependencies
 RUN go mod tidy && go mod download && go mod vendor
+
+# Initialize swag documentation
+RUN swag init
+
+# Build the application
 RUN eval $GO_BUILD_COMMAND
 
 FROM alpine:3.19
@@ -27,20 +30,19 @@ RUN apk --no-cache add ca-certificates bash jq curl tzdata
 ENV BUILDDIR=/go/src/github.com/artamananda/tryout-sample
 ENV PROJECT_DIR=/opt/tryout-sample
 RUN mkdir -p $PROJECT_DIR/database/migration
+
 # Set the working directory
 WORKDIR $PROJECT_DIR
 
 COPY --from=builder /go/bin/migrate /usr/local/bin/migrate
-COPY --from=builder /go/bin/swag /usr/local/bin/swag
 COPY --from=builder $BUILDDIR/tryout-sample tryout-sample
 COPY --from=builder $BUILDDIR/.env $PROJECT_DIR/.env
 COPY --from=builder $BUILDDIR/db/migrations $PROJECT_DIR/db/migrations/
-COPY --from=builder $BUILDDIR/install.sh $PROJECT_DIR/install.sh
+COPY --from=builder $BUILDDIR/migration.sh $PROJECT_DIR/migration.sh
 
 # Give execute permission to migrate binary
 RUN chmod +x /usr/local/bin/migrate
-RUN chmod +x /usr/local/bin/swag
-RUN chmod +x $PROJECT_DIR/install.sh
+RUN chmod +x $PROJECT_DIR/migration.sh
 
 # Define the command to run the application
-CMD ["sh","-c","/opt/tryout-sample/install.sh && /opt/tryout-sample/tryout-sample"]
+CMD ["sh", "-c", "/opt/tryout-sample/migration.sh && /opt/tryout-sample/tryout-sample"]
