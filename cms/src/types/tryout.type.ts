@@ -6,6 +6,7 @@ export interface TryoutProps {
   duration: number;
   token: string;
   start_time: Date | string;
+  is_published: boolean;
   end_time: Date | string;
   created_at: Date | string;
   updated_at: Date | string;

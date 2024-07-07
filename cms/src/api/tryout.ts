@@ -56,6 +56,8 @@ export async function apiUpdateTryout(
       process.env.REACT_APP_BASE_URL + "/tryout/" + tryoutId,
       data
     );
+    console.log(res.data);
+    
     return res;
   } catch (err) {
     const error = getErrorMessage(err);
