@@ -1,15 +1,19 @@
 import React, { useEffect, useState } from 'react';
-import { Table, Tag, Typography, DatePicker, Button, message, Modal, Form, Input, InputNumber } from 'antd';
+import { Table, Tag, Typography, DatePicker, Button, message, Input } from 'antd';
 import type { TableProps } from 'antd';
-import { CopyOutlined, PlusOutlined } from '@ant-design/icons';
+import { CopyOutlined, DeleteOutlined, EditFilled, PlusOutlined } from '@ant-design/icons';
 import { useNavigate } from 'react-router-dom';
 import useFetchList from '../../hooks/useFetchList';
 import { TryoutProps } from '../../types/tryout.type';
 import dayjs from 'dayjs';
-import { apiCreateTryout, apiDeleteTryout } from '../../api/tryout';
 import type { DatePickerProps, GetProps } from 'antd';
 import { getErrorMessage } from '../../helpers/errorHandler';
 import copy from 'copy-to-clipboard';
+import SwitchButton from '../Ui/SwitchButton';
+import ModalCreateTryout from './ModalCreateTryout';
+import ModalUpdateTryout from './ModalUpdateTryout';
+import ModalDeleteTryout from './ModalDeleteTryout';
+import { apiUpdateTryout } from '../../api/tryout';
 type RangePickerProps = GetProps<typeof DatePicker.RangePicker>;
 
 const { Title } = Typography;
@@ -19,6 +23,14 @@ const { Text, Link } = Typography;
 const ListTryout = () => {
   const navigate = useNavigate();
   const [showModal, setShowModal] = useState(false);
+  const [showModalUpdate, setShowModalUpdate] = useState({
+    status: false,
+    data: {} as any,
+  });
+  const [showModalDelete, setShowModalDelete] = useState<any>({
+    status: false,
+    tryoutId: '',
+  });
   const { data: tryoutData, fetchList } = useFetchList<TryoutProps>({
     endpoint: 'tryout',
   });
@@ -27,12 +39,6 @@ const ListTryout = () => {
     fetchList();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
-
-  // const handleDelete = async (tryoutId: string) => {
-  //   await apiDeleteTryout(tryoutId);
-  //   fetchList();
-  //   message.success('Success Delete');
-  // };
 
   const columns: TableProps<TryoutProps>['columns'] = [
     {
@@ -73,6 +79,20 @@ const ListTryout = () => {
       render: (_, { start_time, end_time }) => <Tag color={statusColor(checkStatus(start_time, end_time))}>{checkStatus(start_time, end_time)}</Tag>,
     },
     {
+      title: 'Published',
+      key: 'is_published',
+      dataIndex: 'is_published',
+      render: (_, { tryout_id, is_published }) => (
+        <SwitchButton
+          defaultChecked={is_published}
+          onChange={(checked) => {
+            handlePublished(tryout_id, checked);
+            console.log('Published: ', checked);
+          }}
+        />
+      ),
+    },
+    {
       title: 'Token',
       key: 'token',
       dataIndex: 'token',
@@ -94,17 +114,23 @@ const ListTryout = () => {
         </div>
       ),
     },
-    // {
-    //   title: "Action",
-    //   key: "action",
-    //   dataIndex: "action",
-    //   render: (_, record) => (
-    //     <DeleteOutlined
-    //       onClick={() => handleDelete(record.tryout_id)}
-    //       style={{ color: "red" }}
-    //     />
-    //   ),
-    // },
+    {
+      title: 'Action',
+      key: 'action',
+      dataIndex: 'action',
+      render: (_, record) => (
+        <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+          <EditFilled
+            onClick={() => setShowModalUpdate({ status: true, data: record })}
+            style={{ color: 'blue' }}
+          />
+          <DeleteOutlined
+            onClick={() => setShowModalDelete({ status: true, tryoutId: record.tryout_id })}
+            style={{ color: 'red' }}
+          />
+        </div>
+      ),
+    },
   ];
 
   function formatDateToCustomString(date: any) {
@@ -133,14 +159,20 @@ const ListTryout = () => {
     }
   };
 
-  const handleCreate = async (data: any) => {
-    const res = await apiCreateTryout(data);
-    if (res) {
-      setShowModal(false);
-      fetchList();
-      message.success('Create Tryout Success');
+  const handlePublished = async (tryoutId: string, checked: boolean) => {
+    try {
+      const res = await apiUpdateTryout(tryoutId, { is_published: checked });
+      console.log(res?.data);
+
+      if (res) {
+        fetchList();
+        message.success('Success Update Published Status');
+      }
+    } catch (err) {
+      message.error('Failed Published');
     }
   };
+
   const onFinishFailed = (errorInfo: any) => {
     message.error(getErrorMessage(errorInfo));
   };
@@ -177,73 +209,30 @@ const ListTryout = () => {
         dataSource={tryoutData}
       />
 
-      <Modal
-        open={showModal}
-        onCancel={() => setShowModal(false)}
-        footer={false}
-      >
-        <Title
-          level={3}
-          style={{ fontWeight: 'bold' }}
-        >
-          Create Tryout
-        </Title>
-        <Form
-          name="createTryout"
-          onFinish={handleCreate}
-          onFinishFailed={onFinishFailed}
-          layout="vertical"
-        >
-          <Form.Item
-            label="Tryout Name"
-            name="title"
-            rules={[{ required: true }]}
-          >
-            <Input />
-          </Form.Item>
+      <ModalCreateTryout
+        showModal={showModal}
+        setShowModal={setShowModal}
+        onFinishFailed={onFinishFailed}
+        onChange={onChange}
+        onOk={onOk}
+        fetchList={fetchList}
+      />
 
-          <Form.Item
-            label="Duration (Minutes)"
-            name="duration"
-            rules={[{ required: true }]}
-          >
-            <InputNumber />
-          </Form.Item>
+      <ModalUpdateTryout
+        showModalUpdate={showModalUpdate}
+        setShowModalUpdate={setShowModalUpdate}
+        onFinishFailed={onFinishFailed}
+        onChange={onChange}
+        onOk={onOk}
+        fetchList={fetchList}
+      />
 
-          <Form.Item
-            label="Start Time"
-            name="start_time"
-            rules={[{ required: true }]}
-          >
-            <DatePicker
-              showTime
-              onChange={onChange}
-              onOk={onOk}
-            />
-          </Form.Item>
-
-          <Form.Item
-            label="End Time"
-            name="end_time"
-            rules={[{ required: true }]}
-          >
-            <DatePicker
-              showTime
-              onChange={onChange}
-              onOk={onOk}
-            />
-          </Form.Item>
-
-          <Form.Item wrapperCol={{ offset: 8, span: 16 }}>
-            <Button
-              type="primary"
-              htmlType="submit"
-            >
-              Submit
-            </Button>
-          </Form.Item>
-        </Form>
-      </Modal>
+      <ModalDeleteTryout
+        showModalDelete={showModalDelete}
+        setShowModalDelete={setShowModalDelete}
+        onFinishFailed={onFinishFailed}
+        fetchList={fetchList}
+      />
     </div>
   );
 };

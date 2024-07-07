@@ -5,7 +5,7 @@ import React, { useEffect, useState } from 'react';
 import ReactQuill from 'react-quill';
 import { CopyOutlined, DeleteFilled, UploadOutlined } from '@ant-design/icons';
 import { ApiGetFileUrlById, S3Upload } from '../../../../api/awsSdk';
-import { apiUpdateQuestion, fetchQuestions } from '../../../../api/question';
+import { apiUpdateQuestion, fetchQuestions, imageUpload } from '../../../../api/question';
 import parse from 'html-react-parser';
 import { getErrorMessage } from '../../../../helpers/errorHandler';
 import copy from 'copy-to-clipboard';
@@ -46,14 +46,16 @@ const ModalUpdateQuestion = (props: PropTypes) => {
     multiple: false,
     customRequest: async ({ file }) => {
       try {
-        const url = await S3Upload(file);
-        console.log(url);
-        if (url) {
-          setImage(ApiGetFileUrlById(url));
-          message.success(`file uploaded successfully`);
+        const formData = new FormData();
+        formData.append('file', file);
+        const response = await imageUpload(isModalOpen?.question?.question_id ?? '', formData);
+        if (response && response.data) {
+          setImage(response.data.payload.image_url);
+          message.success(`File uploaded successfully`);
         }
       } catch (error) {
         console.log('File upload failed', error);
+        message.error('File upload failed');
       }
     },
   };

@@ -58,3 +58,18 @@ export async function fetchQuestions(tryoutId: string, questionType: string) {
     throw error;
   }
 }
+
+export async function imageUpload(questionId: string, data: FormData) {
+  try {
+    const res = await httpRequest.put(process.env.REACT_APP_BASE_URL + '/question/' + questionId + '/upload-image', data, {
+      headers: {
+        'Content-Type': 'multipart/form-data',
+      },
+    });
+    return res;
+  } catch (err) {
+    const error = getErrorMessage(err);
+    console.error(error);
+    message.error(error);
+  }
+}
