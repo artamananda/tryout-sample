@@ -14,6 +14,8 @@ COPY . .
 
 RUN go install -tags 'postgres' github.com/golang-migrate/migrate/v4/cmd/migrate@latest
 
+RUN go install github.com/swaggo/swag/cmd/swag@latest
+
 # application builder step
 RUN go mod tidy && go mod download && go mod vendor
 RUN eval $GO_BUILD_COMMAND
@@ -29,13 +31,15 @@ RUN mkdir -p $PROJECT_DIR/database/migration
 WORKDIR $PROJECT_DIR
 
 COPY --from=builder /go/bin/migrate /usr/local/bin/migrate
+COPY --from=builder /go/bin/swag /usr/local/bin/swag
 COPY --from=builder $BUILDDIR/tryout-sample tryout-sample
 COPY --from=builder $BUILDDIR/.env $PROJECT_DIR/.env
 COPY --from=builder $BUILDDIR/db/migrations $PROJECT_DIR/db/migrations/
-COPY --from=builder $BUILDDIR/migration.sh $PROJECT_DIR/migration.sh
+COPY --from=builder $BUILDDIR/install.sh $PROJECT_DIR/install.sh
 
 # Give execute permission to migrate binary
 RUN chmod +x /usr/local/bin/migrate
+RUN chmod +x /usr/local/bin/swag
 
 # Define the command to run the application
-CMD ["sh","-c","/opt/tryout-sample/migration.sh && /opt/tryout-sample/tryout-sample"]
+CMD ["sh","-c","/opt/tryout-sample/install.sh && /opt/tryout-sample/tryout-sample"]
