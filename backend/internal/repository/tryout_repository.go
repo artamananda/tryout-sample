@@ -26,8 +26,17 @@ func (repository *TryoutRepository) Create(ctx context.Context, tryout entity.Tr
 }
 
 func (repository *TryoutRepository) Update(ctx context.Context, tryout entity.Tryout) entity.Tryout {
+	query := `
+        UPDATE tryouts
+        SET is_published = $1
+        WHERE tryout_id = $2
+    `
 	err := repository.DB.WithContext(ctx).Where("tryout_id = ?", tryout.TryoutID).Updates(&tryout).Error
 	exception.PanicLogging(err)
+
+	if !tryout.IsPublished {
+		repository.DB.WithContext(ctx).Where("tryout_id = ?", tryout.TryoutID).Exec(query, tryout.IsPublished, tryout.TryoutID)
+	}
 
 	return tryout
 }

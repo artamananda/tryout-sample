@@ -212,7 +212,7 @@ definitions:
       username:
         type: string
     type: object
-host: api.telisik-go.my.id
+host: localhost:8080
 info:
   contact:
     email: artamananda@gmail.com

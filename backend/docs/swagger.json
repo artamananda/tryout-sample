@@ -14,7 +14,7 @@
         },
         "version": "0.0.32"
     },
-    "host": "api.telisik-go.my.id",
+    "host": "localhost:8080",
     "basePath": "/v1/api",
     "paths": {
         "/email/send-otp": {
