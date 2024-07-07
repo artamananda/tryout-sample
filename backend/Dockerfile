@@ -40,6 +40,7 @@ COPY --from=builder $BUILDDIR/install.sh $PROJECT_DIR/install.sh
 # Give execute permission to migrate binary
 RUN chmod +x /usr/local/bin/migrate
 RUN chmod +x /usr/local/bin/swag
+RUN chmod +x $PROJECT_DIR/install.sh
 
 # Define the command to run the application
 CMD ["sh","-c","/opt/tryout-sample/install.sh && /opt/tryout-sample/tryout-sample"]
