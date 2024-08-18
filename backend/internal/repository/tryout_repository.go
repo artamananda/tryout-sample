@@ -6,6 +6,7 @@ import (
 
 	"github.com/artamananda/tryout-sample/internal/entity"
 	"github.com/artamananda/tryout-sample/internal/exception"
+	"github.com/artamananda/tryout-sample/internal/model"
 	"github.com/google/uuid"
 	"gorm.io/gorm"
 )
@@ -55,8 +56,18 @@ func (repository *TryoutRepository) FindById(ctx context.Context, tryoutId strin
 	return tryout, nil
 }
 
-func (repository *TryoutRepository) FindAll(ctx context.Context) []entity.Tryout {
+func (repository *TryoutRepository) FindAll(ctx context.Context, params model.FindAllTryoutRequest) []entity.Tryout {
 	var tryouts []entity.Tryout
-	repository.DB.WithContext(ctx).Find(&tryouts)
+	query := repository.DB.WithContext(ctx)
+
+	if params.Search != "" {
+		query = query.Where("title LIKE ?", "%"+params.Search+"%")
+	}
+
+	if params.IsPublished != nil {
+		query = query.Where("is_published = ?", params.IsPublished)
+	}
+
+	query.Find(&tryouts)
 	return tryouts
 }

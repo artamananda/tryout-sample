@@ -63,3 +63,8 @@ type GetUserResponse struct {
 	Role      string    `json:"role"`
 	CreatedAt time.Time `json:"created_at"`
 }
+
+type FindAllUserRequest struct {
+	Search string `json:"search"`
+	Role   string `json:"role"`
+}

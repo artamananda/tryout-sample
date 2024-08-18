@@ -115,8 +115,8 @@ func (service *TryoutService) FindByID(ctx context.Context, tryoutID string) (mo
 	}, nil
 }
 
-func (service *TryoutService) FindAll(ctx context.Context) []model.TryoutResponse {
-	tryouts := service.TryoutRepository.FindAll(ctx)
+func (service *TryoutService) FindAll(ctx context.Context, params model.FindAllTryoutRequest) []model.TryoutResponse {
+	tryouts := service.TryoutRepository.FindAll(ctx, params)
 
 	tryoutResponses := []model.TryoutResponse{}
 	for _, tryout := range tryouts {
@@ -137,8 +137,8 @@ func (service *TryoutService) FindAll(ctx context.Context) []model.TryoutRespons
 	return tryoutResponses
 }
 
-func (service *TryoutService) FindAllAsAdmin(ctx context.Context) []model.TryoutResponse {
-	tryouts := service.TryoutRepository.FindAll(ctx)
+func (service *TryoutService) FindAllAsAdmin(ctx context.Context, params model.FindAllTryoutRequest) []model.TryoutResponse {
+	tryouts := service.TryoutRepository.FindAll(ctx, params)
 
 	tryoutResponses := []model.TryoutResponse{}
 	for _, tryout := range tryouts {

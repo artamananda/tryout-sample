@@ -14,6 +14,11 @@ type CreateTryoutRequest struct {
 	IsPublished bool      `json:"is_published" validate:"required"`
 }
 
+type FindAllTryoutRequest struct {
+	Search      string `json:"search"`
+	IsPublished *bool  `json:"is_published"`
+}
+
 type UpdateTryoutRequest struct {
 	Title       string    `json:"title"`
 	Duration    int       `json:"duration"`

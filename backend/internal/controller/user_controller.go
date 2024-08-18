@@ -194,13 +194,18 @@ func (controller UserController) FindById(c *fiber.Ctx) error {
 // @Tags Users
 // @Accept json
 // @Produce json
+// @Param search query string false "search users by name"
 // @Param role query string false "Filter users by role"
 // @Security JWT
 // @Success 200 {object} model.GeneralResponse
 // @Router /user [get]
 func (controller UserController) FindAll(c *fiber.Ctx) error {
-	role := c.Query("role")
-	result := controller.UserService.FindAll(c.Context(), role)
+	params := model.FindAllUserRequest{}
+	err := c.QueryParser(params)
+	if err != nil {
+		return exception.ErrorHandler(c, exception.ValidationError{Message: err.Error()})
+	}
+	result := controller.UserService.FindAll(c.Context(), params)
 
 	payload := map[string]interface{}{
 		"count":   len(result),

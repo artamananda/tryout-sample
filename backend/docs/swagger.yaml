@@ -212,7 +212,7 @@ definitions:
       username:
         type: string
     type: object
-host: localhost:8080
+host: api.telisik-go.my.id
 info:
   contact:
     email: artamananda@gmail.com
@@ -223,7 +223,7 @@ info:
     url: http://www.apache.org/licenses/LICENSE-2.0.html
   termsOfService: http://swagger.io/terms/
   title: Tryout Sample
-  version: 0.0.32
+  version: 0.0.37
 paths:
   /email/send-otp:
     post:
@@ -593,6 +593,15 @@ paths:
       consumes:
       - application/json
       description: Retrieve a list of all tryouts, accessible based on user role
+      parameters:
+      - description: search
+        in: query
+        name: search
+        type: string
+      - description: is_published
+        in: query
+        name: is_published
+        type: boolean
       produces:
       - application/json
       responses:
@@ -707,6 +716,10 @@ paths:
       - application/json
       description: Retrieve a list of all users, optionally filtered by role
       parameters:
+      - description: search users by name
+        in: query
+        name: search
+        type: string
       - description: Filter users by role
         in: query
         name: role

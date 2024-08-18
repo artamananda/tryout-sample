@@ -139,8 +139,8 @@ func (service *UserService) FindById(ctx context.Context, userId string) (model.
 	}, nil
 }
 
-func (service *UserService) FindAll(ctx context.Context, role string) []model.GetUserResponse {
-	users := service.UserRepository.FindAll(ctx, role)
+func (service *UserService) FindAll(ctx context.Context, params model.FindAllUserRequest) []model.GetUserResponse {
+	users := service.UserRepository.FindAll(ctx, params)
 
 	userResponses := []model.GetUserResponse{}
 	for _, user := range users {

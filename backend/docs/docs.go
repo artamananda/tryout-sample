@@ -616,6 +616,20 @@ const docTemplate = `{
                     "Tryouts"
                 ],
                 "summary": "Find all tryouts",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "search",
+                        "name": "search",
+                        "in": "query"
+                    },
+                    {
+                        "type": "boolean",
+                        "description": "is_published",
+                        "name": "is_published",
+                        "in": "query"
+                    }
+                ],
                 "responses": {
                     "200": {
                         "description": "OK",
@@ -798,6 +812,12 @@ const docTemplate = `{
                 ],
                 "summary": "Find all users",
                 "parameters": [
+                    {
+                        "type": "string",
+                        "description": "search users by name",
+                        "name": "search",
+                        "in": "query"
+                    },
                     {
                         "type": "string",
                         "description": "Filter users by role",
@@ -1560,8 +1580,8 @@ const docTemplate = `{
 
 // SwaggerInfo holds exported Swagger Info so clients can modify it
 var SwaggerInfo = &swag.Spec{
-	Version:          "0.0.32",
-	Host:             "localhost:8080",
+	Version:          "0.0.37",
+	Host:             "api.telisik-go.my.id",
 	BasePath:         "/v1/api",
 	Schemes:          []string{},
 	Title:            "Tryout Sample",

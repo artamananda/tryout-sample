@@ -12,9 +12,9 @@
             "name": "Apache 2.0",
             "url": "http://www.apache.org/licenses/LICENSE-2.0.html"
         },
-        "version": "0.0.32"
+        "version": "0.0.37"
     },
-    "host": "localhost:8080",
+    "host": "api.telisik-go.my.id",
     "basePath": "/v1/api",
     "paths": {
         "/email/send-otp": {
@@ -610,6 +610,20 @@
                     "Tryouts"
                 ],
                 "summary": "Find all tryouts",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "search",
+                        "name": "search",
+                        "in": "query"
+                    },
+                    {
+                        "type": "boolean",
+                        "description": "is_published",
+                        "name": "is_published",
+                        "in": "query"
+                    }
+                ],
                 "responses": {
                     "200": {
                         "description": "OK",
@@ -792,6 +806,12 @@
                 ],
                 "summary": "Find all users",
                 "parameters": [
+                    {
+                        "type": "string",
+                        "description": "search users by name",
+                        "name": "search",
+                        "in": "query"
+                    },
                     {
                         "type": "string",
                         "description": "Filter users by role",

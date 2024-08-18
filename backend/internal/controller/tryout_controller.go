@@ -2,6 +2,7 @@ package controller
 
 import (
 	"github.com/artamananda/tryout-sample/internal/config"
+	"github.com/artamananda/tryout-sample/internal/exception"
 	"github.com/artamananda/tryout-sample/internal/middleware"
 	"github.com/artamananda/tryout-sample/internal/model"
 	"github.com/artamananda/tryout-sample/internal/service"
@@ -139,16 +140,24 @@ func (controller TryoutController) FindById(c *fiber.Ctx) error {
 // @Tags Tryouts
 // @Accept json
 // @Produce json
+// @Param search query string false "search"
+// @Param is_published query boolean false "is_published"
 // @Security JWT
 // @Success 200 {object} model.GeneralResponse
 // @Router /tryout [get]
 func (controller TryoutController) FindAll(c *fiber.Ctx) error {
+	params := model.FindAllTryoutRequest{}
+	err := c.QueryParser(params)
+	if err != nil {
+		return exception.ErrorHandler(c, exception.ValidationError{Message: err.Error()})
+	}
+
 	user := c.Locals("user").(*jwt.Token)
 	claims := user.Claims.(jwt.MapClaims)
 	role := claims["roles"].(string)
 
 	if role == "admin" {
-		result := controller.TryoutService.FindAllAsAdmin(c.Context())
+		result := controller.TryoutService.FindAllAsAdmin(c.Context(), params)
 		payload := map[string]interface{}{
 			"count":   len(result),
 			"next":    nil,
@@ -162,7 +171,7 @@ func (controller TryoutController) FindAll(c *fiber.Ctx) error {
 		})
 	}
 
-	result := controller.TryoutService.FindAll(c.Context())
+	result := controller.TryoutService.FindAll(c.Context(), params)
 	payload := map[string]interface{}{
 		"count":   len(result),
 		"next":    nil,
