@@ -112,15 +112,16 @@ const ResultTable = () => {
         <div
           style={{
             backgroundColor:
-              value === "X" ? "red" : value === "V" ? "green" : undefined,
-            color: value ? "white" : "grey",
+              value === "X" ? "red" : value === "V" ? "green" : "gray",
+            color: "white",
             textAlign: "center",
-            fontStyle: !value ? "italic" : undefined,
-            borderRadius: "100px",
+            borderRadius: "200px",
+            fontWeight: "bold",
             width: 25,
+            height: 25,
           }}
         >
-          {value || "Not Set"}
+          {value || "-"}
         </div>
       ),
     })),
