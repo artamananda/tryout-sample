@@ -1,5 +1,5 @@
 import { useEffect } from "react";
-import { Table, Tag, Typography } from "antd";
+import { Input, Table, Tag, Typography } from "antd";
 import type { TableProps } from "antd";
 import useFetchList from "../../hooks/useFetchList";
 import dayjs from "dayjs";
@@ -8,7 +8,12 @@ import { UserProps } from "../../types/user.type";
 const { Text, Link } = Typography;
 
 const TableUser = (props: { role?: string }) => {
-  const { data: tryoutData, fetchList } = useFetchList<UserProps>({
+  const {
+    data: tryoutData,
+    fetchList,
+    search,
+    setSearch,
+  } = useFetchList<UserProps>({
     endpoint: "user",
     initialQuery: { role: props.role },
   });
@@ -17,6 +22,11 @@ const TableUser = (props: { role?: string }) => {
     fetchList();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+
+  useEffect(() => {
+    fetchList();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [search]);
 
   const columns: TableProps<UserProps>["columns"] = [
     {
@@ -66,6 +76,7 @@ const TableUser = (props: { role?: string }) => {
 
   return (
     <div>
+      <Input.Search onSearch={(e) => setSearch(e)} allowClear />
       <Table columns={columns} dataSource={tryoutData} />
     </div>
   );

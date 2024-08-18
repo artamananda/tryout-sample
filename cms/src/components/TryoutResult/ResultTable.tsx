@@ -15,7 +15,7 @@ interface TableRowData {
 type FixedType = "left" | "right" | boolean;
 
 const ResultTable = () => {
-  const tryoutId = "f9d32639-9bbd-4c06-acb5-a2f181d5a310";
+  const tryoutId = window.location.href.split("/").pop();
   const [userAnswers, setUserAnswers] = useState<UserAnswerProps[]>([]);
   const [users, setUsers] = useState<{ user_id: string; name: string }[]>([]);
   const [uniqueUserIds, setUniqueUserIds] = useState<string[]>([]);
@@ -26,7 +26,10 @@ const ResultTable = () => {
   );
 
   const { data: questionData } = useFetchList<QuestionProps>({
-    endpoint: "tryout/question/" + tryoutId,
+    endpoint: "question",
+    initialQuery: {
+      tryoutId: tryoutId,
+    },
   });
 
   useEffect(() => {
