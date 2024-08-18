@@ -44,7 +44,10 @@ type FieldType = {
 
 const ListTryout = () => {
   const { data: tryoutData, fetchList } = useFetchList<TryoutProps>({
-    endpoint: 'tryout'
+    endpoint: 'tryout',
+    initialQuery: {
+      is_published: "true"
+    }
   });
 
   const [id, setId] = useState('');
