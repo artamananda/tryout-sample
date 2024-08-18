@@ -57,7 +57,7 @@ func (repository *UserRepository) FindAll(ctx context.Context, params model.Find
 	query := repository.DB.WithContext(ctx)
 
 	if params.Search != "" {
-		query = query.Where("name LIKE ?", "%"+params.Search+"%")
+		query = query.Where("name ILIKE ?", "%"+params.Search+"%")
 	}
 
 	if params.Role != "" {

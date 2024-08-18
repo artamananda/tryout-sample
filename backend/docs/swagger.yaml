@@ -223,7 +223,7 @@ info:
     url: http://www.apache.org/licenses/LICENSE-2.0.html
   termsOfService: http://swagger.io/terms/
   title: Tryout Sample
-  version: 0.0.37
+  version: 0.0.38
 paths:
   /email/send-otp:
     post:
