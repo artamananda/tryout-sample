@@ -7,6 +7,7 @@ import (
 
 	"github.com/artamananda/tryout-sample/internal/entity"
 	"github.com/artamananda/tryout-sample/internal/exception"
+	"github.com/artamananda/tryout-sample/internal/model"
 	"github.com/google/uuid"
 	"gorm.io/gorm"
 )
@@ -51,11 +52,16 @@ func (repository *UserRepository) FindById(ctx context.Context, userId string) (
 	return user, nil
 }
 
-func (repository *UserRepository) FindAll(ctx context.Context, role string) []entity.User {
+func (repository *UserRepository) FindAll(ctx context.Context, params model.FindAllUserRequest) []entity.User {
 	var users []entity.User
 	query := repository.DB.WithContext(ctx)
-	if role != "" {
-		query = query.Where("role = ?", role)
+
+	if params.Search != "" {
+		query = query.Where("name LIKE ?", "%"+params.Search+"%")
+	}
+
+	if params.Role != "" {
+		query = query.Where("role = ?", params.Role)
 	}
 	query = query.Order("created_at DESC")
 	query.Find(&users)
