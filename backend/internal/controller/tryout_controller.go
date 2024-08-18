@@ -2,7 +2,7 @@ package controller
 
 import (
 	"github.com/artamananda/tryout-sample/internal/config"
-	"github.com/artamananda/tryout-sample/internal/exception"
+	"github.com/artamananda/tryout-sample/internal/helper"
 	"github.com/artamananda/tryout-sample/internal/middleware"
 	"github.com/artamananda/tryout-sample/internal/model"
 	"github.com/artamananda/tryout-sample/internal/service"
@@ -147,10 +147,8 @@ func (controller TryoutController) FindById(c *fiber.Ctx) error {
 // @Router /tryout [get]
 func (controller TryoutController) FindAll(c *fiber.Ctx) error {
 	params := model.FindAllTryoutRequest{}
-	err := c.QueryParser(params)
-	if err != nil {
-		return exception.ErrorHandler(c, exception.ValidationError{Message: err.Error()})
-	}
+	params.Search = c.Query("search")
+	params.IsPublished, _ = helper.StrToBoolPtr(c.Query("is_published"))
 
 	user := c.Locals("user").(*jwt.Token)
 	claims := user.Claims.(jwt.MapClaims)

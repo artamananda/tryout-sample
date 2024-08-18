@@ -61,7 +61,7 @@ func (repository *TryoutRepository) FindAll(ctx context.Context, params model.Fi
 	query := repository.DB.WithContext(ctx)
 
 	if params.Search != "" {
-		query = query.Where("title LIKE ?", "%"+params.Search+"%")
+		query = query.Where("title ILIKE ?", "%"+params.Search+"%")
 	}
 
 	if params.IsPublished != nil {

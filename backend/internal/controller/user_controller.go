@@ -201,10 +201,9 @@ func (controller UserController) FindById(c *fiber.Ctx) error {
 // @Router /user [get]
 func (controller UserController) FindAll(c *fiber.Ctx) error {
 	params := model.FindAllUserRequest{}
-	err := c.QueryParser(params)
-	if err != nil {
-		return exception.ErrorHandler(c, exception.ValidationError{Message: err.Error()})
-	}
+	params.Search = c.Query("search")
+	params.Role = c.Query("role")
+
 	result := controller.UserService.FindAll(c.Context(), params)
 
 	payload := map[string]interface{}{
