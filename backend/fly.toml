@@ -4,7 +4,7 @@
 #
 
 app = 'tryout-sample'
-primary_region = 'sin'
+primary_region = 'ewr'
 
 [build]
   dockerfile = "Dockerfile"
