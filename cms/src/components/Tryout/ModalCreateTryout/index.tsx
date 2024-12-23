@@ -1,21 +1,34 @@
-import { Button, DatePicker, DatePickerProps, Form, Input, InputNumber, message, Modal } from 'antd';
-import Title from 'antd/es/typography/Title';
-import SwitchButton from '../../Ui/SwitchButton';
-import { RangePickerProps } from 'antd/es/date-picker';
-import { useState } from 'react';
-import { apiCreateTryout } from '../../../api/tryout';
+import {
+  Button,
+  DatePicker,
+  DatePickerProps,
+  Form,
+  Input,
+  InputNumber,
+  message,
+  Modal,
+} from "antd";
+import Title from "antd/es/typography/Title";
+import SwitchButton from "../../Ui/SwitchButton";
+import { RangePickerProps } from "antd/es/date-picker";
+import { useState } from "react";
+import { apiCreateTryout } from "../../../api/tryout";
 
 type PropTypes = {
   showModal: boolean;
   setShowModal: any;
   onFinishFailed: (errorInfo: any) => void;
-  onChange: (value: DatePickerProps['value'] | RangePickerProps['value'], dateString: [string, string] | string) => void;
-  onOk: (value: DatePickerProps['value'] | RangePickerProps['value']) => void;
+  onChange: (
+    value: DatePickerProps["value"] | RangePickerProps["value"],
+    dateString: [string, string] | string
+  ) => void;
+  onOk: (value: DatePickerProps["value"] | RangePickerProps["value"]) => void;
   fetchList: () => void;
 };
 
 const ModalCreateTryout = (props: PropTypes) => {
-  const { showModal, setShowModal, onFinishFailed, onChange, onOk, fetchList } = props;
+  const { showModal, setShowModal, onFinishFailed, onChange, onOk, fetchList } =
+    props;
   const [isPublished, setIsPublished] = useState(false);
   const [form] = Form.useForm();
 
@@ -29,19 +42,12 @@ const ModalCreateTryout = (props: PropTypes) => {
     if (res) {
       setShowModal(false);
       fetchList();
-      message.success('Create Tryout Success');
+      message.success("Create Tryout Success");
     }
   };
   return (
-    <Modal
-      open={showModal}
-      onCancel={() => setShowModal(false)}
-      footer={false}
-    >
-      <Title
-        level={3}
-        style={{ fontWeight: 'bold' }}
-      >
+    <Modal open={showModal} onCancel={() => setShowModal(false)} footer={false}>
+      <Title level={3} style={{ fontWeight: "bold" }}>
         Create Tryout
       </Title>
       <Form
@@ -73,11 +79,7 @@ const ModalCreateTryout = (props: PropTypes) => {
           name="start_time"
           rules={[{ required: true }]}
         >
-          <DatePicker
-            showTime
-            onChange={onChange}
-            onOk={onOk}
-          />
+          <DatePicker showTime onChange={onChange} onOk={onOk} />
         </Form.Item>
 
         <Form.Item
@@ -85,11 +87,7 @@ const ModalCreateTryout = (props: PropTypes) => {
           name="end_time"
           rules={[{ required: true }]}
         >
-          <DatePicker
-            showTime
-            onChange={onChange}
-            onOk={onOk}
-          />
+          <DatePicker showTime onChange={onChange} onOk={onOk} />
         </Form.Item>
 
         <Form.Item
@@ -101,16 +99,13 @@ const ModalCreateTryout = (props: PropTypes) => {
             defaultChecked={isPublished}
             onChange={(checked) => {
               setIsPublished(checked);
-              console.log('Published: ', checked);
+              console.log("Published: ", checked);
             }}
           />
         </Form.Item>
 
-        <Form.Item wrapperCol={{ offset: 8, span: 16 }}>
-          <Button
-            type="primary"
-            htmlType="submit"
-          >
+        <Form.Item>
+          <Button type="primary" htmlType="submit" style={{ width: "100%" }}>
             Submit
           </Button>
         </Form.Item>

@@ -1,22 +1,41 @@
-import { Button, DatePicker, DatePickerProps, Form, Input, InputNumber, message, Modal } from 'antd';
-import Title from 'antd/es/typography/Title';
-import { RangePickerProps } from 'antd/es/date-picker';
-import dayjs from 'dayjs';
-import { useEffect } from 'react';
-import { apiUpdateTryout } from '../../../api/tryout';
-import { UpdateTryoutRequest } from '../../../types/tryout.type';
+import {
+  Button,
+  DatePicker,
+  DatePickerProps,
+  Form,
+  Input,
+  InputNumber,
+  message,
+  Modal,
+} from "antd";
+import Title from "antd/es/typography/Title";
+import { RangePickerProps } from "antd/es/date-picker";
+import dayjs from "dayjs";
+import { useEffect } from "react";
+import { apiUpdateTryout } from "../../../api/tryout";
+import { UpdateTryoutRequest } from "../../../types/tryout.type";
 
 type PropTypes = {
   showModalUpdate: any;
   setShowModalUpdate: any;
   onFinishFailed: (errorInfo: any) => void;
-  onChange: (value: DatePickerProps['value'] | RangePickerProps['value'], dateString: [string, string] | string) => void;
-  onOk: (value: DatePickerProps['value'] | RangePickerProps['value']) => void;
+  onChange: (
+    value: DatePickerProps["value"] | RangePickerProps["value"],
+    dateString: [string, string] | string
+  ) => void;
+  onOk: (value: DatePickerProps["value"] | RangePickerProps["value"]) => void;
   fetchList: () => void;
 };
 
 const ModalUpdateTryout = (props: PropTypes) => {
-  const { showModalUpdate, setShowModalUpdate, onFinishFailed, onChange, onOk, fetchList } = props;
+  const {
+    showModalUpdate,
+    setShowModalUpdate,
+    onFinishFailed,
+    onChange,
+    onOk,
+    fetchList,
+  } = props;
   const [updateForm] = Form.useForm();
 
   useEffect(() => {
@@ -45,14 +64,14 @@ const ModalUpdateTryout = (props: PropTypes) => {
 
       if (res) {
         fetchList();
-        message.success('Success Update');
+        message.success("Success Update");
         setShowModalUpdate({
           status: false,
           data: {},
         });
       }
     } catch (err) {
-      message.error('Failed Update');
+      message.error("Failed Update");
     }
   };
 
@@ -62,10 +81,7 @@ const ModalUpdateTryout = (props: PropTypes) => {
       onCancel={() => setShowModalUpdate({ data: {}, status: false })}
       footer={false}
     >
-      <Title
-        level={3}
-        style={{ fontWeight: 'bold' }}
-      >
+      <Title level={3} style={{ fontWeight: "bold" }}>
         Update Tryout
       </Title>
       <Form
@@ -117,11 +133,8 @@ const ModalUpdateTryout = (props: PropTypes) => {
           />
         </Form.Item>
 
-        <Form.Item wrapperCol={{ offset: 8, span: 16 }}>
-          <Button
-            type="primary"
-            htmlType="submit"
-          >
+        <Form.Item>
+          <Button type="primary" htmlType="submit" style={{ width: "100%" }}>
             Submit
           </Button>
         </Form.Item>

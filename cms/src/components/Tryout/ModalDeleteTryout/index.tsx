@@ -1,6 +1,6 @@
-import { Button, Form, message, Modal } from 'antd';
-import Title from 'antd/es/typography/Title';
-import { apiDeleteTryout } from '../../../api/tryout';
+import { Button, Form, message, Modal } from "antd";
+import Title from "antd/es/typography/Title";
+import { apiDeleteTryout } from "../../../api/tryout";
 
 type PropTypes = {
   showModalDelete: any;
@@ -10,23 +10,21 @@ type PropTypes = {
 };
 
 const ModalDeleteTryout = (props: PropTypes) => {
-  const { showModalDelete, setShowModalDelete, onFinishFailed, fetchList } = props;
+  const { showModalDelete, setShowModalDelete, onFinishFailed, fetchList } =
+    props;
   const handleDelete = async () => {
     await apiDeleteTryout(showModalDelete.tryoutId);
     fetchList();
-    setShowModalDelete({ status: false, tryoutId: '' });
-    message.success('Success Delete');
+    setShowModalDelete({ status: false, tryoutId: "" });
+    message.success("Success Delete");
   };
   return (
     <Modal
       open={showModalDelete.status}
-      onCancel={() => setShowModalDelete({ status: false, tryoutId: '' })}
+      onCancel={() => setShowModalDelete({ status: false, tryoutId: "" })}
       footer={false}
     >
-      <Title
-        level={4}
-        style={{ fontWeight: 'semibold' }}
-      >
+      <Title level={4} style={{ fontWeight: "semibold" }}>
         Are you sure to delete this tryout?
       </Title>
       <Form
@@ -36,19 +34,20 @@ const ModalDeleteTryout = (props: PropTypes) => {
         // initialValues={{ is_published: false }}
         layout="vertical"
       >
-        <Form.Item style={{ display: 'flex', alignItems: 'center', gap: '20px', width: '100%', justifyContent: 'end' }}>
+        <Form.Item>
           <Button
-            danger
             type="default"
             htmlType="button"
-            onClick={() => setShowModalDelete({ status: false, tryoutId: '' })}
+            onClick={() => setShowModalDelete({ status: false, tryoutId: "" })}
+            style={{ width: "45%" }}
           >
             Cancel
           </Button>
           <Button
             type="primary"
             htmlType="submit"
-            style={{ marginLeft: '10px' }}
+            danger
+            style={{ width: "45%", marginLeft: 10 }}
           >
             Delete
           </Button>

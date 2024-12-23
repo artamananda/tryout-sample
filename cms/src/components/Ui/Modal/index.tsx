@@ -1,5 +1,5 @@
-import React from 'react';
-import { Modal } from 'antd';
+import React from "react";
+import { Modal } from "antd";
 
 type PropTypes = {
   children?: any;
@@ -18,7 +18,8 @@ const ModalUi = (props: PropTypes) => {
       open={isModalOpen}
       onOk={handleOk}
       onCancel={handleCancel}
-      width={'50%'}
+      width={"50%"}
+      footer={null}
     >
       {children}
     </Modal>
