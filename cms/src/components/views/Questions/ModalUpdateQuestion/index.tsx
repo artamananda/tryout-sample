@@ -200,10 +200,7 @@ const ModalUpdateQuestion = (props: PropTypes) => {
       title={`Update Question ${isModalOpen?.question?.local_id}`}
     >
       <Form layout="vertical" onFinish={handleUpdateQuestion}>
-        <Form.Item
-          name="question"
-          // label="Question"
-        >
+        <Form.Item name="question" label="Question">
           <ReactQuill
             key="question"
             style={{ backgroundColor: "white" }}
@@ -212,6 +209,7 @@ const ModalUpdateQuestion = (props: PropTypes) => {
             formats={quillFormats}
             onChange={(value) => handleQuestionChange(value)}
             value={question}
+            defaultValue={question}
             placeholder="Enter New question"
           />
         </Form.Item>
