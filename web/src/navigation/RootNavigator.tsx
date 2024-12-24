@@ -9,6 +9,7 @@ import PrivateRoute from './PrivateRoute';
 import AppLayout from '../screens/Layout/AppLayout';
 import TryoutScreen from '../screens/Tryout';
 import RegisterScreen from '../screens/Auth/Register';
+import Batch5 from '../screens/Program/Batch5';
 
 const RootNavigator = () => {
   return (
@@ -40,6 +41,16 @@ const RootNavigator = () => {
             <PublicRoute>
               <Suspense fallback={<Spin spinning={true} />}>
                 <RegisterScreen />
+              </Suspense>
+            </PublicRoute>
+          }
+        />
+        <Route
+          path="/batch5"
+          element={
+            <PublicRoute>
+              <Suspense fallback={<Spin spinning={true} />}>
+                <Batch5 />
               </Suspense>
             </PublicRoute>
           }
