@@ -289,3 +289,14 @@ func (service *UserService) SelfRegister(ctx context.Context, request model.Self
 		Role:     user.Role,
 	}, nil
 }
+
+func (service *UserService) CheckByEmail(ctx context.Context, request model.CheckByEmailRequest) (bool, error) {
+	err := common.Validate(request)
+	if err != nil {
+		return false, err
+	}
+
+	isEmailExist := service.UserRepository.FindAccountIsExist(ctx, request.Email, "")
+
+	return isEmailExist, nil
+}

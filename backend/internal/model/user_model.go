@@ -68,3 +68,7 @@ type FindAllUserRequest struct {
 	Search string `json:"search"`
 	Role   string `json:"role"`
 }
+
+type CheckByEmailRequest struct {
+	Email string `json:"email" validate:"required"`
+}

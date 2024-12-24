@@ -1096,6 +1096,40 @@ const docTemplate = `{
                 }
             }
         },
+        "/user/check-by-email": {
+            "post": {
+                "description": "Check if an email is already registered in the system",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Users"
+                ],
+                "summary": "Check if email is already registered",
+                "parameters": [
+                    {
+                        "description": "Request Body",
+                        "name": "request",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/model.CheckByEmailRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/model.GeneralResponse"
+                        }
+                    }
+                }
+            }
+        },
         "/user/{id}": {
             "get": {
                 "description": "Find a user by their unique ID",
@@ -1251,6 +1285,17 @@ const docTemplate = `{
         }
     },
     "definitions": {
+        "model.CheckByEmailRequest": {
+            "type": "object",
+            "required": [
+                "email"
+            ],
+            "properties": {
+                "email": {
+                    "type": "string"
+                }
+            }
+        },
         "model.CreateQuestionRequest": {
             "type": "object",
             "required": [

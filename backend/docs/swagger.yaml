@@ -1,5 +1,12 @@
 basePath: /v1/api
 definitions:
+  model.CheckByEmailRequest:
+    properties:
+      email:
+        type: string
+    required:
+    - email
+    type: object
   model.CreateQuestionRequest:
     properties:
       correct_answer:
@@ -969,6 +976,28 @@ paths:
       security:
       - JWT: []
       summary: Update an existing user
+      tags:
+      - Users
+  /user/check-by-email:
+    post:
+      consumes:
+      - application/json
+      description: Check if an email is already registered in the system
+      parameters:
+      - description: Request Body
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/model.CheckByEmailRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/model.GeneralResponse'
+      summary: Check if email is already registered
       tags:
       - Users
   /users:
