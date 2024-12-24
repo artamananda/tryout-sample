@@ -100,6 +100,13 @@ const Batch5 = () => {
         >
           <Input.TextArea required style={{ height: 100 }} />
         </Form.Item>
+        <Form.Item
+          required
+          name={'profilePicture'}
+          label="Foto Formal Berpakaian Sekolah"
+        >
+          <Input required type="file" />
+        </Form.Item>
         <Form.Item required name={'agreement'}>
           <Checkbox required>
             <Text style={{ fontStyle: 'italic' }}>
