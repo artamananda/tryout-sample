@@ -68,7 +68,7 @@ func TemplateEmailOtp(name string, otp string) string {
 	return htmlBody
 }
 
-func TemplateEmailRegisterGenerate(name string, password string, email string) string {
+func TemplateEmailRegisterGenerate(name string, email string, password string) string {
 	htmlBody := fmt.Sprintf(`
     <html>
     <head>
