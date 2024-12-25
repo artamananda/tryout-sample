@@ -1,6 +1,19 @@
-import { Button, Card, Checkbox, Form, Input, Select, Typography } from 'antd';
+import {
+  Button,
+  Card,
+  Checkbox,
+  Form,
+  Input,
+  message,
+  Select,
+  Typography,
+  Upload,
+  UploadProps
+} from 'antd';
 import './style.css';
 import { useEffect, useState } from 'react';
+import { httpRequest } from '../../helpers/api';
+import axios from 'axios';
 
 const { Text } = Typography;
 
@@ -16,16 +29,76 @@ type RegencyProps = {
 };
 
 const Batch5 = () => {
+  const [programId, setProgramId] = useState<string>('');
   const [selectedProvince, setSelectedProvince] = useState<string>();
-  const [selectedRegency, setSelectedRegency] = useState<string>();
   const [provinceList, setProvinceList] = useState<ProvinceProps[]>([]);
   const [regencyList, setRegencyList] = useState<RegencyProps[]>([]);
+  const [profilePicture, setProfilePicture] = useState<any | null>(null);
 
-  const handleSubmit = (values: any) => {
-    console.log(JSON.stringify(values));
+  const getProgramId = async () => {
+    try {
+      const res = await httpRequest.get('/program');
+      console.log(res.data.payload[0].program_id);
+      return res.data.payload[0].program_id;
+    } catch (err: any) {
+      console.error('Failed to get program id');
+    }
+  };
+
+  const imageUploadProps: UploadProps = {
+    multiple: false,
+    customRequest: async ({ file, onSuccess }) => {
+      try {
+        setProfilePicture(file);
+        onSuccess?.(file);
+      } catch (error) {
+        console.log('File upload failed', error);
+      }
+    }
+  };
+
+  const handleSubmit = async (values: any) => {
+    if (!values.grade) {
+      return message.error('Mohon pilih asal kelas');
+    }
+    if (!values.province) {
+      return message.error('Mohon pilih asal provinsi');
+    }
+    if (!values.regency) {
+      return message.error('Mohon pilih asal kabupaten');
+    }
+    if (!profilePicture) {
+      return message.error('Mohon upload foto formal');
+    }
+    try {
+      const formData = new FormData();
+      formData.append('email', values.email);
+      formData.append('name', values.name);
+      formData.append('grade', values.grade);
+      formData.append('school', values.school);
+      formData.append('nisn', values.nisn);
+      formData.append('province', values.province);
+      formData.append('regency', values.regency);
+      formData.append('motivation', values.motivation);
+      formData.append('file', profilePicture);
+      formData.append('program_id', programId);
+      const res = await axios.post('/custom/batch5', formData, {
+        headers: {
+          'Content-Type': 'multipart/form-data'
+        }
+      });
+      if (res.data.success) {
+        message.success('Pendaftaran berhasil, silahkan cek email anda');
+      }
+    } catch (err: any) {
+      message.error(err?.response?.data);
+    }
   };
 
   useEffect(() => {
+    getProgramId().then((res) => {
+      setProgramId(res);
+    });
     fetch(`https://www.emsifa.com/api-wilayah-indonesia/api/provinces.json`)
       .then((response) => response.json())
       .then((provinces: ProvinceProps[]) => setProvinceList(provinces));
@@ -85,7 +158,7 @@ const Batch5 = () => {
           </Select>
         </Form.Item>
         <Form.Item required name={'regency'} label="Asal Kabupaten">
-          <Select onSelect={(value) => setSelectedRegency(value)}>
+          <Select>
             {regencyList.map((regency) => (
               <Select.Option key={regency.id} value={regency.name}>
                 {regency.name}
@@ -105,7 +178,9 @@ const Batch5 = () => {
           name={'profilePicture'}
           label="Foto Formal Berpakaian Sekolah"
         >
-          <Input required type="file" />
+          <Upload {...imageUploadProps}>
+            <Button type="primary">Click to Upload</Button>
+          </Upload>
         </Form.Item>
         <Form.Item required name={'agreement'}>
           <Checkbox required>
