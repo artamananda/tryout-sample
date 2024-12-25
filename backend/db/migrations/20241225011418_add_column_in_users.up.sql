@@ -1,7 +1,6 @@
-ALTER TABLE users ADD COLUMN (
-    grade VARCHAR(10),
-    school VARCHAR(255),
-    regency VARCHAR(255),
-    province VARCHAR(255),
-    picture_url VARCHAR(255)
-);
+ALTER TABLE users
+    ADD COLUMN grade VARCHAR(10),
+    ADD COLUMN school VARCHAR(255),
+    ADD COLUMN regency VARCHAR(255),
+    ADD COLUMN province VARCHAR(255),
+    ADD COLUMN picture_url VARCHAR(255);
