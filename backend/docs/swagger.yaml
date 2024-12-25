@@ -1,5 +1,33 @@
 basePath: /v1/api
 definitions:
+  model.CheckByEmailRequest:
+    properties:
+      email:
+        type: string
+    required:
+    - email
+    type: object
+  model.CreateProgramRequest:
+    properties:
+      close_registration:
+        type: string
+      description:
+        type: string
+      end_time:
+        type: string
+      is_published:
+        type: boolean
+      max_participants:
+        type: integer
+      name:
+        type: string
+      open_registration:
+        type: string
+      picture_url:
+        type: string
+      start_time:
+        type: string
+    type: object
   model.CreateQuestionRequest:
     properties:
       correct_answer:
@@ -23,6 +51,17 @@ definitions:
     required:
     - correct_answer
     - text
+    type: object
+  model.CreateTransactionProgramRequest:
+    properties:
+      motivation:
+        type: string
+      program_id:
+        type: string
+      status:
+        type: string
+      user_id:
+        type: string
     type: object
   model.CreateTransactionTryoutRequest:
     properties:
@@ -93,11 +132,23 @@ definitions:
     properties:
       email:
         type: string
+      grade:
+        type: string
       name:
+        type: string
+      nisn:
         type: string
       password:
         type: string
+      picture_url:
+        type: string
+      province:
+        type: string
+      regency:
+        type: string
       role:
+        type: string
+      school:
         type: string
       username:
         type: string
@@ -112,11 +163,23 @@ definitions:
     properties:
       email:
         type: string
+      grade:
+        type: string
       name:
+        type: string
+      nisn:
         type: string
       otp:
         type: string
       password:
+        type: string
+      picture_url:
+        type: string
+      province:
+        type: string
+      regency:
+        type: string
+      school:
         type: string
       username:
         type: string
@@ -126,6 +189,29 @@ definitions:
     - otp
     - password
     - username
+    type: object
+  model.UpdateProgramRequest:
+    properties:
+      close_registration:
+        type: string
+      description:
+        type: string
+      end_time:
+        type: string
+      is_published:
+        type: boolean
+      max_participants:
+        type: integer
+      name:
+        type: string
+      open_registration:
+        type: string
+      picture_url:
+        type: string
+      program_id:
+        type: string
+      start_time:
+        type: string
     type: object
   model.UpdateQuestionRequest:
     properties:
@@ -156,6 +242,19 @@ definitions:
       tryout_id:
         type: string
       user_id:
+        type: string
+    type: object
+  model.UpdateTransactionProgramRequest:
+    properties:
+      motivation:
+        type: string
+      program_id:
+        type: string
+      status:
+        type: string
+      user_id:
+        type: string
+      user_program_id:
         type: string
     type: object
   model.UpdateTransactionTryoutRequest:
@@ -203,16 +302,28 @@ definitions:
     properties:
       email:
         type: string
+      grade:
+        type: string
       name:
+        type: string
+      nisn:
         type: string
       password:
         type: string
+      picture_url:
+        type: string
+      province:
+        type: string
+      regency:
+        type: string
       role:
+        type: string
+      school:
         type: string
       username:
         type: string
     type: object
-host: api.telisik-go.my.id
+host: tryout-sample.fly.dev
 info:
   contact:
     email: artamananda@gmail.com
@@ -223,8 +334,74 @@ info:
     url: http://www.apache.org/licenses/LICENSE-2.0.html
   termsOfService: http://swagger.io/terms/
   title: Tryout Sample
-  version: 0.0.38
+  version: 0.1.1
 paths:
+  /custom/batch5:
+    post:
+      consumes:
+      - multipart/form-data
+      description: Register a new batch 5
+      parameters:
+      - description: Name
+        in: formData
+        name: name
+        required: true
+        type: string
+      - description: Email
+        in: formData
+        name: email
+        required: true
+        type: string
+      - description: Grade
+        in: formData
+        name: grade
+        required: true
+        type: string
+      - description: NISN
+        in: formData
+        name: nisn
+        required: true
+        type: string
+      - description: School
+        in: formData
+        name: school
+        required: true
+        type: string
+      - description: Regency
+        in: formData
+        name: regency
+        required: true
+        type: string
+      - description: Province
+        in: formData
+        name: province
+        required: true
+        type: string
+      - description: Motivation
+        in: formData
+        name: motivation
+        required: true
+        type: string
+      - description: Program ID
+        in: formData
+        name: program_id
+        required: true
+        type: string
+      - description: Profile Picture
+        in: formData
+        name: file
+        required: true
+        type: file
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/model.GeneralResponse'
+      summary: Register a batch 5
+      tags:
+      - Custom
   /email/send-otp:
     post:
       consumes:
@@ -271,6 +448,158 @@ paths:
       summary: Authenticate user
       tags:
       - Users
+  /program:
+    get:
+      consumes:
+      - application/json
+      description: Retrieve all existing programs
+      parameters:
+      - description: Search query
+        in: query
+        name: search
+        type: string
+      - description: Is published
+        in: query
+        name: is_published
+        type: boolean
+      - description: User ID
+        in: query
+        name: user_id
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/model.GeneralResponse'
+      security:
+      - JWT: []
+      summary: Find all programs
+      tags:
+      - Programs
+    post:
+      consumes:
+      - application/json
+      description: Create a new program
+      parameters:
+      - description: Request Body
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/model.CreateProgramRequest'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            $ref: '#/definitions/model.GeneralResponse'
+      security:
+      - JWT: []
+      summary: Create a program
+      tags:
+      - Programs
+  /program/{id}:
+    delete:
+      consumes:
+      - application/json
+      description: Delete an existing program by its unique ID
+      parameters:
+      - description: Program ID
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/model.GeneralResponse'
+      security:
+      - JWT: []
+      summary: Delete a program by ID
+      tags:
+      - Programs
+    get:
+      consumes:
+      - application/json
+      description: Retrieve an existing program by its unique ID
+      parameters:
+      - description: Program ID
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/model.GeneralResponse'
+      security:
+      - JWT: []
+      summary: Find a program by ID
+      tags:
+      - Programs
+    patch:
+      consumes:
+      - application/json
+      description: Update an existing program by its unique ID
+      parameters:
+      - description: Program ID
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: Request Body
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/model.UpdateProgramRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/model.GeneralResponse'
+      security:
+      - JWT: []
+      summary: Update a program by ID
+      tags:
+      - Programs
+  /program/{id}/upload-image:
+    put:
+      consumes:
+      - multipart/form-data
+      description: Update the image of an existing program by its unique ID
+      parameters:
+      - description: Program ID
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: Image file
+        in: formData
+        name: file
+        required: true
+        type: file
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/model.GeneralResponse'
+      security:
+      - JWT: []
+      summary: Update the image of a program by ID
+      tags:
+      - Programs
   /question:
     get:
       consumes:
@@ -443,6 +772,128 @@ paths:
       summary: Self-register a new user
       tags:
       - Users
+  /transaction-program:
+    get:
+      consumes:
+      - application/json
+      description: Find all transaction programs
+      parameters:
+      - description: User ID
+        in: query
+        name: user_id
+        type: string
+      - description: Program ID
+        in: query
+        name: program_id
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/model.GeneralResponse'
+      security:
+      - JWT: []
+      summary: Find all transaction programs
+      tags:
+      - Transaction Programs
+    post:
+      consumes:
+      - application/json
+      description: Create a new transaction program
+      parameters:
+      - description: Request Body
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/model.CreateTransactionProgramRequest'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            $ref: '#/definitions/model.GeneralResponse'
+      security:
+      - JWT: []
+      summary: Create a transaction program
+      tags:
+      - Transaction Programs
+  /transaction-program/{id}:
+    delete:
+      consumes:
+      - application/json
+      description: Delete an existing transaction program by its unique ID
+      parameters:
+      - description: Transaction Program ID
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/model.GeneralResponse'
+      security:
+      - JWT: []
+      summary: Delete a transaction program by ID
+      tags:
+      - Transaction Programs
+    get:
+      consumes:
+      - application/json
+      description: Find a transaction program by its unique ID
+      parameters:
+      - description: Transaction Program ID
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/model.GeneralResponse'
+      security:
+      - JWT: []
+      summary: Find a transaction program by ID
+      tags:
+      - Transaction Programs
+    patch:
+      consumes:
+      - application/json
+      description: Update a transaction program
+      parameters:
+      - description: Transaction Program ID
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: Request Body
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/model.UpdateTransactionProgramRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/model.GeneralResponse'
+      security:
+      - JWT: []
+      summary: Update a transaction program
+      tags:
+      - Transaction Programs
   /transaction-tryout:
     get:
       consumes:
@@ -969,6 +1420,28 @@ paths:
       security:
       - JWT: []
       summary: Update an existing user
+      tags:
+      - Users
+  /user/check-by-email:
+    post:
+      consumes:
+      - application/json
+      description: Check if an email is already registered in the system
+      parameters:
+      - description: Request Body
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/model.CheckByEmailRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/model.GeneralResponse'
+      summary: Check if email is already registered
       tags:
       - Users
   /users:

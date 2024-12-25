@@ -1,0 +1,7 @@
+ALTER TABLE users
+    ADD COLUMN grade VARCHAR(10),
+    ADD COLUMN school VARCHAR(255),
+    ADD COLUMN regency VARCHAR(255),
+    ADD COLUMN province VARCHAR(255),
+    ADD COLUMN nisn VARCHAR(10),
+    ADD COLUMN picture_url VARCHAR(255);

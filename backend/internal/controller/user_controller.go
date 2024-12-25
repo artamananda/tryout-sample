@@ -24,6 +24,7 @@ func (controller UserController) Route(app *fiber.App) {
 	app.Post("/v1/api/email/send-otp", controller.SendOtp)
 	app.Post("/v1/api/register", controller.SelfRegister)
 	app.Post("/v1/api/user", middleware.AuthenticateJWT([]string{"admin"}, controller.Config), controller.Create)
+	app.Post("/v1/api/user/check-by-email", controller.CheckByEmail)
 	app.Post("/v1/api/users", middleware.AuthenticateJWT([]string{"admin"}, controller.Config), controller.CreateBulk)
 	app.Patch("/v1/api/user/:id", middleware.AuthenticateJWT([]string{"admin"}, controller.Config), controller.Update)
 	app.Delete("/v1/api/user/:id", middleware.AuthenticateJWT([]string{"admin"}, controller.Config), controller.Delete)
@@ -276,6 +277,32 @@ func (controller UserController) SendOtp(c *fiber.Ctx) error {
 	}
 
 	result, err := controller.UserService.SendOtp(c.Context(), otpCfg, request)
+	if err != nil {
+		return exception.ErrorHandler(c, err)
+	}
+
+	return c.Status(fiber.StatusOK).JSON(model.GeneralResponse{
+		Code:    200,
+		Message: "Success",
+		Data:    result,
+	})
+}
+
+// CheckByEmail handles checking if an email is already registered.
+// @Summary Check if email is already registered
+// @Description Check if an email is already registered in the system
+// @Tags Users
+// @Accept json
+// @Produce json
+// @Param request body model.CheckByEmailRequest true "Request Body"
+// @Success 200 {object} model.GeneralResponse
+// @Router /user/check-by-email [post]
+func (controller UserController) CheckByEmail(c *fiber.Ctx) error {
+	var request model.CheckByEmailRequest
+	err := c.BodyParser(&request)
+	exception.PanicLogging(err)
+
+	result, err := controller.UserService.CheckByEmail(c.Context(), request)
 	if err != nil {
 		return exception.ErrorHandler(c, err)
 	}
