@@ -14,6 +14,7 @@ import './style.css';
 import { useEffect, useState } from 'react';
 import { httpRequest } from '../../helpers/api';
 import axios from 'axios';
+import { useNavigate } from 'react-router-dom';
 
 const { Text } = Typography;
 
@@ -29,6 +30,7 @@ type RegencyProps = {
 };
 
 const Batch5 = () => {
+  const navigate = useNavigate()
   const [programId, setProgramId] = useState<string>('');
   const [selectedProvince, setSelectedProvince] = useState<string>();
   const [provinceList, setProvinceList] = useState<ProvinceProps[]>([]);
@@ -88,6 +90,7 @@ const Batch5 = () => {
         }
       });
       if (res.data.success) {
+        navigate('/login');
         message.success('Pendaftaran berhasil, silahkan cek email anda');
       }
     } catch (err: any) {

@@ -11,6 +11,7 @@ import (
 	"github.com/artamananda/tryout-sample/internal/helper"
 	"github.com/artamananda/tryout-sample/internal/model"
 	"github.com/aws/aws-sdk-go/service/s3/s3manager"
+	"golang.org/x/crypto/bcrypt"
 	"gopkg.in/gomail.v2"
 )
 
@@ -50,10 +51,12 @@ func (service *CustomService) RegisterBatch5(ctx context.Context, request model.
 
 	isEmailExist, _ := service.UserService.CheckByEmail(ctx, emailRequest)
 
+	hashedPassword, _ := bcrypt.GenerateFromPassword([]byte(generatePassword), bcrypt.DefaultCost)
+
 	if !isEmailExist {
 		resCreateUser, err := service.UserService.Create(ctx, model.RegisterRequest{
 			Email:    request.Email,
-			Password: generatePassword,
+			Password: string(hashedPassword),
 			Username: helper.GenerateUsernameByEmail(request.Email),
 			Name:     request.Name,
 			Role:     "user",
