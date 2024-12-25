@@ -14,17 +14,20 @@ import (
 	"github.com/artamananda/tryout-sample/internal/helper"
 	"github.com/artamananda/tryout-sample/internal/model"
 	"github.com/artamananda/tryout-sample/internal/repository"
+	"github.com/aws/aws-sdk-go/service/s3/s3manager"
 	"golang.org/x/crypto/bcrypt"
 	"gopkg.in/gomail.v2"
 )
 
 type UserService struct {
 	UserRepository *repository.UserRepository
+	Uploader       *s3manager.Uploader
 }
 
-func NewUserService(userRepository *repository.UserRepository) UserService {
+func NewUserService(userRepository *repository.UserRepository, uploader *s3manager.Uploader) UserService {
 	return UserService{
 		UserRepository: userRepository,
+		Uploader:       uploader,
 	}
 }
 
@@ -37,21 +40,31 @@ func (service *UserService) Create(ctx context.Context, request model.RegisterRe
 	hashedPassword, _ := bcrypt.GenerateFromPassword([]byte(request.Password), bcrypt.DefaultCost)
 
 	user := entity.User{
-		Username: request.Username,
-		Name:     request.Name,
-		Email:    request.Email,
-		Password: string(hashedPassword),
-		Role:     request.Role,
+		Username:   request.Username,
+		Name:       request.Name,
+		Email:      request.Email,
+		Password:   string(hashedPassword),
+		Role:       request.Role,
+		Grade:      request.Grade,
+		School:     request.School,
+		Regency:    request.Regency,
+		Province:   request.Province,
+		PictureURL: request.PictureURL,
 	}
 
 	user = service.UserRepository.Create(ctx, user)
 
 	return model.RegisterResponse{
-		UserID:   user.UserID,
-		Username: user.Username,
-		Name:     user.Name,
-		Email:    user.Email,
-		Role:     user.Role,
+		UserID:     user.UserID,
+		Username:   user.Username,
+		Name:       user.Name,
+		Email:      user.Email,
+		Role:       user.Role,
+		Grade:      user.Grade,
+		School:     user.School,
+		Regency:    user.Regency,
+		Province:   user.Province,
+		PictureURL: user.PictureURL,
 	}, nil
 }
 
@@ -96,15 +109,63 @@ func (service *UserService) Update(ctx context.Context, request model.UpdateUser
 	user.Email = request.Email
 	user.Password = request.Password
 	user.Role = request.Role
+	user.Grade = request.Grade
+	user.School = request.School
+	user.Regency = request.Regency
+	user.Province = request.Province
 
 	user = service.UserRepository.Update(ctx, user)
 
 	return model.UpdateUserResponse{
-		UserID:   user.UserID,
-		Username: user.Username,
-		Name:     user.Name,
-		Email:    user.Email,
-		Role:     user.Role,
+		UserID:     user.UserID,
+		Username:   user.Username,
+		Name:       user.Name,
+		Email:      user.Email,
+		Role:       user.Role,
+		Grade:      user.Grade,
+		School:     user.School,
+		Regency:    user.Regency,
+		Province:   user.Province,
+		PictureURL: user.PictureURL,
+	}, nil
+}
+
+func (service *UserService) UpdateImage(ctx context.Context, request model.UploadFileRequest, userId string) (model.UpdateUserResponse, error) {
+	err := common.Validate(request)
+	if err != nil {
+		return model.UpdateUserResponse{}, exception.ValidationError{
+			Message: err.Error(),
+		}
+	}
+
+	user, err := service.UserRepository.FindById(ctx, userId)
+	if err != nil {
+		return model.UpdateUserResponse{}, exception.NotFoundError{
+			Message: err.Error(),
+		}
+	}
+
+	fileLink, err := helper.UploadFile(service.Uploader, request)
+	if err != nil {
+		return model.UpdateUserResponse{}, err
+	}
+
+	user.PictureURL = fileLink
+	user.UpdatedAt = time.Now()
+
+	user = service.UserRepository.Update(ctx, user)
+
+	return model.UpdateUserResponse{
+		UserID:     user.UserID,
+		Username:   user.Username,
+		Name:       user.Name,
+		Email:      user.Email,
+		Role:       user.Role,
+		Grade:      user.Grade,
+		School:     user.School,
+		Regency:    user.Regency,
+		Province:   user.Province,
+		PictureURL: user.PictureURL,
 	}, nil
 }
 
@@ -130,12 +191,17 @@ func (service *UserService) FindById(ctx context.Context, userId string) (model.
 	}
 
 	return model.GetUserResponse{
-		UserID:    user.UserID,
-		Username:  user.Username,
-		Name:      user.Name,
-		Email:     user.Email,
-		Role:      user.Role,
-		CreatedAt: user.CreatedAt,
+		UserID:     user.UserID,
+		Username:   user.Username,
+		Name:       user.Name,
+		Email:      user.Email,
+		Role:       user.Role,
+		Grade:      user.Grade,
+		School:     user.School,
+		Regency:    user.Regency,
+		Province:   user.Province,
+		PictureURL: user.PictureURL,
+		CreatedAt:  user.CreatedAt,
 	}, nil
 }
 
@@ -272,21 +338,31 @@ func (service *UserService) SelfRegister(ctx context.Context, request model.Self
 	hashedPassword, _ := bcrypt.GenerateFromPassword([]byte(request.Password), bcrypt.DefaultCost)
 
 	user := entity.User{
-		Username: request.Username,
-		Name:     request.Name,
-		Email:    request.Email,
-		Password: string(hashedPassword),
-		Role:     "user",
+		Username:   request.Username,
+		Name:       request.Name,
+		Email:      request.Email,
+		Password:   string(hashedPassword),
+		Role:       "user",
+		Grade:      request.Grade,
+		School:     request.School,
+		Regency:    request.Regency,
+		Province:   request.Province,
+		PictureURL: request.PictureURL,
 	}
 
 	user = service.UserRepository.Create(ctx, user)
 
 	return model.RegisterResponse{
-		UserID:   user.UserID,
-		Username: user.Username,
-		Name:     user.Name,
-		Email:    user.Email,
-		Role:     user.Role,
+		UserID:     user.UserID,
+		Username:   user.Username,
+		Name:       user.Name,
+		Email:      user.Email,
+		Role:       user.Role,
+		Grade:      user.Grade,
+		School:     user.School,
+		Regency:    user.Regency,
+		Province:   user.Province,
+		PictureURL: user.PictureURL,
 	}, nil
 }
 

@@ -15,17 +15,17 @@ import (
 	_ "github.com/artamananda/tryout-sample/docs"
 )
 
-const APP_VERSION = "0.0.38"
+const APP_VERSION = "0.1.1"
 
 // @title Tryout Sample
-// @version 0.0.38
+// @version 0.1.1
 // @description API Documentation for Telisik Tryout
 // @termsOfService http://swagger.io/terms/
 // @contact.name Artamananda
 // @contact.email artamananda@gmail.com
 // @license.name Apache 2.0
 // @license.url http://www.apache.org/licenses/LICENSE-2.0.html
-// @host api.telisik-go.my.id
+// @host localhost:8080
 // @BasePath /v1/api
 // @securityDefinitions.apiKey JWT
 // @in header
@@ -51,24 +51,32 @@ func main() {
 	questionRepository := repository.NewQuestionRepository(db)
 	userAnswerRepository := repository.NewUserAnswerRepository(db)
 	transactionRepository := repository.NewTransactionTryoutRepository(db)
+	programRepository := repository.NewProgramRepository(db)
+	transactionProgramRepository := repository.NewTransactionProgramRepository(db)
 
-	userService := service.NewUserService(&userRepository)
+	userService := service.NewUserService(&userRepository, uploader)
 	tryoutService := service.NewTryoutService(&tryoutRepository)
 	questionService := service.NewQuestionService(&questionRepository, uploader)
 	userAnswerService := service.NewUserAnswerService(&userAnswerRepository)
 	transactionTryoutService := service.NewTransactionTryoutService(&transactionRepository)
+	programService := service.NewProgramService(&programRepository, uploader)
+	transactionProgramService := service.NewTransactionProgramService(&transactionProgramRepository)
 
 	userController := controller.NewUserController(&userService, initConfig)
 	tryoutController := controller.NewTryoutController(&tryoutService, initConfig)
 	questionController := controller.NewQuestionController(&questionService, initConfig)
 	userAnswerController := controller.NewUserAnswerController(&userAnswerService, initConfig)
 	transactionTryoutController := controller.NewTransactionTryoutController(&transactionTryoutService, &tryoutService, initConfig)
+	programController := controller.NewProgramController(&programService, initConfig)
+	transactionProgramController := controller.NewTransactionProgramController(&transactionProgramService, initConfig)
 
 	userController.Route(app)
 	tryoutController.Route(app)
 	questionController.Route(app)
 	userAnswerController.Route(app)
 	transactionTryoutController.Route(app)
+	programController.Route(app)
+	transactionProgramController.Route(app)
 
 	app.Get("/", func(c *fiber.Ctx) error {
 		return c.Status(fiber.StatusCreated).JSON(model.GeneralResponse{
