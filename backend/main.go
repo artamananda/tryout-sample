@@ -25,7 +25,7 @@ const APP_VERSION = "0.1.1"
 // @contact.email artamananda@gmail.com
 // @license.name Apache 2.0
 // @license.url http://www.apache.org/licenses/LICENSE-2.0.html
-// @host localhost:8080
+// @host tryout-sample.fly.dev
 // @BasePath /v1/api
 // @securityDefinitions.apiKey JWT
 // @in header

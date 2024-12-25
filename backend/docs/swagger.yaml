@@ -323,7 +323,7 @@ definitions:
       username:
         type: string
     type: object
-host: localhost:8080
+host: tryout-sample.fly.dev
 info:
   contact:
     email: artamananda@gmail.com

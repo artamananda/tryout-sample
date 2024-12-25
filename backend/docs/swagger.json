@@ -14,7 +14,7 @@
         },
         "version": "0.1.1"
     },
-    "host": "localhost:8080",
+    "host": "tryout-sample.fly.dev",
     "basePath": "/v1/api",
     "paths": {
         "/custom/batch5": {
