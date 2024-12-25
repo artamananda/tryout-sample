@@ -60,7 +60,7 @@ func main() {
 	userAnswerService := service.NewUserAnswerService(&userAnswerRepository)
 	transactionTryoutService := service.NewTransactionTryoutService(&transactionRepository)
 	programService := service.NewProgramService(&programRepository, uploader)
-	transactionProgramService := service.NewTransactionProgramService(&transactionProgramRepository)
+	transactionProgramService := service.NewTransactionProgramService(&transactionProgramRepository, &programRepository)
 	customService := service.NewCustomService(&userService, &programService, &transactionProgramService, uploader)
 
 	userController := controller.NewUserController(&userService, initConfig)

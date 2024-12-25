@@ -13,11 +13,13 @@ import (
 
 type TransactionProgramService struct {
 	TransactionProgramRepository *repository.TransactionProgramRepository
+	ProgramRepository *repository.ProgramRepository
 }
 
-func NewTransactionProgramService(transactionProgramRepository *repository.TransactionProgramRepository) TransactionProgramService {
+func NewTransactionProgramService(transactionProgramRepository *repository.TransactionProgramRepository, programRepository *repository.ProgramRepository) TransactionProgramService {
 	return TransactionProgramService{
 		TransactionProgramRepository: transactionProgramRepository,
+		ProgramRepository: programRepository,
 	}
 }
 
@@ -29,12 +31,26 @@ func (service *TransactionProgramService) Create(ctx context.Context, request mo
 		}
 	}
 
+	resProgram, err := service.ProgramRepository.FindByID(ctx, uuid.MustParse(request.ProgramID))
+	if err != nil {
+		return model.TransactionProgramResponse{}, exception.NotFoundError{
+			Message: "Program not found",
+		}
+	}
+
 	resTransactionProgram := service.TransactionProgramRepository.FindAll(ctx, model.FindAllTransactionProgramsRequest{
-		UserID:    request.UserID,
 		ProgramID: request.ProgramID,
 	})
 
-	if len(resTransactionProgram) > 0 {
+	for _, transactionProgram := range resTransactionProgram {
+		if transactionProgram.UserID.String() == request.UserID {
+			return model.TransactionProgramResponse{}, exception.ValidationError{
+				Message: "User already registered to this program",
+			}
+		}
+	}
+
+	if len(resTransactionProgram) >= resProgram.MaxParticipants {
 		return model.TransactionProgramResponse{}, exception.ValidationError{
 			Message: "User already registered to this program",
 		}

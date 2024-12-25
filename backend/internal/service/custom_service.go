@@ -2,13 +2,16 @@ package service
 
 import (
 	"context"
+	"log"
 	"path/filepath"
+	"strconv"
 
 	"github.com/artamananda/tryout-sample/internal/common"
 	"github.com/artamananda/tryout-sample/internal/exception"
 	"github.com/artamananda/tryout-sample/internal/helper"
 	"github.com/artamananda/tryout-sample/internal/model"
 	"github.com/aws/aws-sdk-go/service/s3/s3manager"
+	"gopkg.in/gomail.v2"
 )
 
 type CustomService struct {
@@ -27,7 +30,7 @@ func NewCustomService(userService *UserService, programService *ProgramService, 
 	}
 }
 
-func (service *CustomService) RegisterBatch5(ctx context.Context, request model.Batch5Model) error {
+func (service *CustomService) RegisterBatch5(ctx context.Context, request model.Batch5Model, otpConfig model.SendOtpConfig) error {
 	err := common.Validate(request)
 	if err != nil {
 		return exception.ValidationError{
@@ -51,9 +54,10 @@ func (service *CustomService) RegisterBatch5(ctx context.Context, request model.
 		resCreateUser, err := service.UserService.Create(ctx, model.RegisterRequest{
 			Email:    request.Email,
 			Password: generatePassword,
-			Username: request.Name,
+			Username: helper.GenerateUsernameByEmail(request.Email),
 			Name:     request.Name,
 			Role:     "user",
+			NISN:     request.NISN,
 			Grade:    request.Grade,
 			School:   request.School,
 			Regency:  request.Regency,
@@ -74,7 +78,9 @@ func (service *CustomService) RegisterBatch5(ctx context.Context, request model.
 		userId = user.UserID.String()
 
 		service.UserService.Update(ctx, model.UpdateUserRequest{
+			Password: generatePassword,
 			Grade:    request.Grade,
+			NISN:     request.NISN,
 			School:   request.School,
 			Regency:  request.Regency,
 			Province: request.Province,
@@ -102,6 +108,28 @@ func (service *CustomService) RegisterBatch5(ctx context.Context, request model.
 	if err != nil {
 		return err
 	}
+
+	mailer := gomail.NewMessage()
+	mailer.SetHeader("From", otpConfig.SenderName)
+	mailer.SetHeader("To", request.Email)
+	mailer.SetHeader("Subject", "Selamat Datang di Telisik!")
+	mailer.SetBody("text/html", helper.TemplateEmailRegisterGenerate(request.Name, request.Email, generatePassword))
+
+	smptPort, _ := strconv.Atoi(otpConfig.SmtpPort)
+
+	dialer := gomail.NewDialer(
+		otpConfig.SmtpHost,
+		smptPort,
+		otpConfig.AuthEmail,
+		otpConfig.AuthPassword,
+	)
+
+	err = dialer.DialAndSend(mailer)
+	if err != nil {
+		log.Fatal(err.Error())
+	}
+
+	log.Println("Mail sent!")
 
 	return nil
 }

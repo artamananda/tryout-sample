@@ -39,7 +39,15 @@ func (controller CustomController) RegisterBatch5(c *fiber.Ctx) error {
 		return err
 	}
 
-	err = controller.CustomService.RegisterBatch5(c.Context(), request)
+	otpCfg := model.SendOtpConfig{
+		SmtpHost:     controller.Config.Get("GOMAIL_SMTP_HOST"),
+		SmtpPort:     controller.Config.Get("GOMAIL_SMTP_PORT"),
+		SenderName:   controller.Config.Get("GOMAIL_SENDER_NAME"),
+		AuthEmail:    controller.Config.Get("GOMAIL_AUTH_EMAIL"),
+		AuthPassword: controller.Config.Get("GOMAIL_AUTH_PASSWORD"),
+	}
+
+	err = controller.CustomService.RegisterBatch5(c.Context(), request, otpCfg)
 	if err != nil {
 		return err
 	}

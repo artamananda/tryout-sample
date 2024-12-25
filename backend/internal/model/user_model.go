@@ -21,6 +21,7 @@ type SelfRegisterRequest struct {
 	Email      string `json:"email" validate:"required"`
 	Password   string `json:"password" validate:"required"`
 	Otp        string `json:"otp" validate:"required"`
+	NISN       string `json:"nisn"`
 	Grade      string `json:"grade"`
 	School     string `json:"school"`
 	Regency    string `json:"regency"`
@@ -34,6 +35,7 @@ type RegisterRequest struct {
 	Email      string `json:"email" validate:"required"`
 	Password   string `json:"password" validate:"required"`
 	Role       string `json:"role" validate:"required"`
+	NISN       string `json:"nisn"`
 	Grade      string `json:"grade"`
 	School     string `json:"school"`
 	Regency    string `json:"regency"`
@@ -47,6 +49,7 @@ type RegisterResponse struct {
 	Name       string    `json:"name"`
 	Email      string    `json:"email"`
 	Role       string    `json:"role"`
+	NISN       string    `json:"nisn"`
 	Grade      string    `json:"grade"`
 	School     string    `json:"school"`
 	Regency    string    `json:"regency"`
@@ -60,6 +63,7 @@ type UpdateUserRequest struct {
 	Email      string `json:"email"`
 	Password   string `json:"password"`
 	Role       string `json:"role"`
+	NISN       string `json:"nisn"`
 	Grade      string `json:"grade"`
 	School     string `json:"school"`
 	Regency    string `json:"regency"`
@@ -73,6 +77,7 @@ type UpdateUserResponse struct {
 	Name       string    `json:"name"`
 	Email      string    `json:"email"`
 	Role       string    `json:"role"`
+	NISN       string    `json:"nisn"`
 	Grade      string    `json:"grade"`
 	School     string    `json:"school"`
 	Regency    string    `json:"regency"`
@@ -86,6 +91,7 @@ type GetUserResponse struct {
 	Name       string    `json:"name"`
 	Email      string    `json:"email"`
 	Role       string    `json:"role"`
+	NISN       string    `json:"nisn"`
 	Grade      string    `json:"grade"`
 	School     string    `json:"school"`
 	Regency    string    `json:"regency"`

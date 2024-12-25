@@ -45,6 +45,7 @@ func (service *UserService) Create(ctx context.Context, request model.RegisterRe
 		Email:      request.Email,
 		Password:   string(hashedPassword),
 		Role:       request.Role,
+		NISN:       request.NISN,
 		Grade:      request.Grade,
 		School:     request.School,
 		Regency:    request.Regency,
@@ -60,6 +61,7 @@ func (service *UserService) Create(ctx context.Context, request model.RegisterRe
 		Name:       user.Name,
 		Email:      user.Email,
 		Role:       user.Role,
+		NISN:       user.NISN,
 		Grade:      user.Grade,
 		School:     user.School,
 		Regency:    user.Regency,
@@ -109,6 +111,7 @@ func (service *UserService) Update(ctx context.Context, request model.UpdateUser
 	user.Email = request.Email
 	user.Password = request.Password
 	user.Role = request.Role
+	user.NISN = request.NISN
 	user.Grade = request.Grade
 	user.School = request.School
 	user.Regency = request.Regency
@@ -122,6 +125,7 @@ func (service *UserService) Update(ctx context.Context, request model.UpdateUser
 		Name:       user.Name,
 		Email:      user.Email,
 		Role:       user.Role,
+		NISN:       user.NISN,
 		Grade:      user.Grade,
 		School:     user.School,
 		Regency:    user.Regency,
@@ -161,6 +165,7 @@ func (service *UserService) UpdateImage(ctx context.Context, request model.Uploa
 		Name:       user.Name,
 		Email:      user.Email,
 		Role:       user.Role,
+		NISN:       user.NISN,
 		Grade:      user.Grade,
 		School:     user.School,
 		Regency:    user.Regency,
@@ -196,6 +201,7 @@ func (service *UserService) FindById(ctx context.Context, userId string) (model.
 		Name:       user.Name,
 		Email:      user.Email,
 		Role:       user.Role,
+		NISN:       user.NISN,
 		Grade:      user.Grade,
 		School:     user.School,
 		Regency:    user.Regency,
@@ -212,12 +218,18 @@ func (service *UserService) FindAll(ctx context.Context, params model.FindAllUse
 	for _, user := range users {
 		userResponses = append(userResponses,
 			model.GetUserResponse{
-				UserID:    user.UserID,
-				Username:  user.Username,
-				Name:      user.Name,
-				Email:     user.Email,
-				Role:      user.Role,
-				CreatedAt: user.CreatedAt,
+				UserID:     user.UserID,
+				Username:   user.Username,
+				Name:       user.Name,
+				Email:      user.Email,
+				Role:       user.Role,
+				NISN:       user.NISN,
+				Grade:      user.Grade,
+				School:     user.School,
+				Regency:    user.Regency,
+				Province:   user.Province,
+				PictureURL: user.PictureURL,
+				CreatedAt:  user.CreatedAt,
 			},
 		)
 	}
@@ -343,6 +355,7 @@ func (service *UserService) SelfRegister(ctx context.Context, request model.Self
 		Email:      request.Email,
 		Password:   string(hashedPassword),
 		Role:       "user",
+		NISN:       request.NISN,
 		Grade:      request.Grade,
 		School:     request.School,
 		Regency:    request.Regency,
@@ -358,6 +371,7 @@ func (service *UserService) SelfRegister(ctx context.Context, request model.Self
 		Name:       user.Name,
 		Email:      user.Email,
 		Role:       user.Role,
+		NISN:       user.NISN,
 		Grade:      user.Grade,
 		School:     user.School,
 		Regency:    user.Regency,
