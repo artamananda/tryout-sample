@@ -114,3 +114,12 @@ func (repository *UserRepository) FindAccountIsExist(ctx context.Context, email 
 
 	return count > 0
 }
+
+func (repository *UserRepository) FindByEmail(ctx context.Context, email string) (entity.User, error) {
+	var user entity.User
+	result := repository.DB.WithContext(ctx).Where("email = ?", email).First(&user)
+	if result.RowsAffected == 0 {
+		return entity.User{}, errors.New("user Not Found")
+	}
+	return user, nil
+}

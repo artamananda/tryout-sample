@@ -376,3 +376,14 @@ func (service *UserService) CheckByEmail(ctx context.Context, request model.Chec
 
 	return isEmailExist, nil
 }
+
+func (service *UserService) FindByEmail(ctx context.Context, email string) (entity.User, error) {
+	user, err := service.UserRepository.FindByEmail(ctx, email)
+	if err != nil {
+		return entity.User{}, exception.NotFoundError{
+			Message: err.Error(),
+		}
+	}
+
+	return user, nil
+}

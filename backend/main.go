@@ -61,6 +61,7 @@ func main() {
 	transactionTryoutService := service.NewTransactionTryoutService(&transactionRepository)
 	programService := service.NewProgramService(&programRepository, uploader)
 	transactionProgramService := service.NewTransactionProgramService(&transactionProgramRepository)
+	customService := service.NewCustomService(&userService, &programService, &transactionProgramService, uploader)
 
 	userController := controller.NewUserController(&userService, initConfig)
 	tryoutController := controller.NewTryoutController(&tryoutService, initConfig)
@@ -69,6 +70,7 @@ func main() {
 	transactionTryoutController := controller.NewTransactionTryoutController(&transactionTryoutService, &tryoutService, initConfig)
 	programController := controller.NewProgramController(&programService, initConfig)
 	transactionProgramController := controller.NewTransactionProgramController(&transactionProgramService, initConfig)
+	customController := controller.NewCustomController(&customService, initConfig)
 
 	userController.Route(app)
 	tryoutController.Route(app)
@@ -77,6 +79,7 @@ func main() {
 	transactionTryoutController.Route(app)
 	programController.Route(app)
 	transactionProgramController.Route(app)
+	customController.Route(app)
 
 	app.Get("/", func(c *fiber.Ctx) error {
 		return c.Status(fiber.StatusCreated).JSON(model.GeneralResponse{

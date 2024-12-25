@@ -23,6 +23,40 @@ const docTemplate = `{
     "host": "{{.Host}}",
     "basePath": "{{.BasePath}}",
     "paths": {
+        "/custom/batch5": {
+            "post": {
+                "description": "Register a new batch 5",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Custom"
+                ],
+                "summary": "Register a batch 5",
+                "parameters": [
+                    {
+                        "description": "Request Body",
+                        "name": "request",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/model.Batch5Model"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/model.GeneralResponse"
+                        }
+                    }
+                }
+            }
+        },
         "/email/send-otp": {
             "post": {
                 "security": [
@@ -1708,6 +1742,46 @@ const docTemplate = `{
         }
     },
     "definitions": {
+        "model.Batch5Model": {
+            "type": "object",
+            "required": [
+                "email",
+                "grade",
+                "motivation",
+                "name",
+                "program_id",
+                "province",
+                "regency",
+                "school"
+            ],
+            "properties": {
+                "email": {
+                    "type": "string"
+                },
+                "grade": {
+                    "type": "string"
+                },
+                "motivation": {
+                    "description": "File       *multipart.FileHeader ` + "`" + `json:\"file\" validate:\"required\"` + "`" + `",
+                    "type": "string"
+                },
+                "name": {
+                    "type": "string"
+                },
+                "program_id": {
+                    "type": "string"
+                },
+                "province": {
+                    "type": "string"
+                },
+                "regency": {
+                    "type": "string"
+                },
+                "school": {
+                    "type": "string"
+                }
+            }
+        },
         "model.CheckByEmailRequest": {
             "type": "object",
             "required": [

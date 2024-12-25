@@ -1,5 +1,34 @@
 basePath: /v1/api
 definitions:
+  model.Batch5Model:
+    properties:
+      email:
+        type: string
+      grade:
+        type: string
+      motivation:
+        description: File       *multipart.FileHeader `json:"file" validate:"required"`
+        type: string
+      name:
+        type: string
+      program_id:
+        type: string
+      province:
+        type: string
+      regency:
+        type: string
+      school:
+        type: string
+    required:
+    - email
+    - grade
+    - motivation
+    - name
+    - program_id
+    - province
+    - regency
+    - school
+    type: object
   model.CheckByEmailRequest:
     properties:
       email:
@@ -330,6 +359,28 @@ info:
   title: Tryout Sample
   version: 0.1.1
 paths:
+  /custom/batch5:
+    post:
+      consumes:
+      - application/json
+      description: Register a new batch 5
+      parameters:
+      - description: Request Body
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/model.Batch5Model'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/model.GeneralResponse'
+      summary: Register a batch 5
+      tags:
+      - Custom
   /email/send-otp:
     post:
       consumes:

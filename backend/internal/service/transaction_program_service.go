@@ -29,6 +29,17 @@ func (service *TransactionProgramService) Create(ctx context.Context, request mo
 		}
 	}
 
+	resTransactionProgram := service.TransactionProgramRepository.FindAll(ctx, model.FindAllTransactionProgramsRequest{
+		UserID:    request.UserID,
+		ProgramID: request.ProgramID,
+	})
+
+	if len(resTransactionProgram) > 0 {
+		return model.TransactionProgramResponse{}, exception.ValidationError{
+			Message: "User already registered to this program",
+		}
+	}
+
 	transactionProgram := entity.TransactionProgram{
 		UserID:     uuid.MustParse(request.UserID),
 		ProgramID:  uuid.MustParse(request.ProgramID),
