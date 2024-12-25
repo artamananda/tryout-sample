@@ -119,11 +119,13 @@ func (controller TransactionProgramController) FindById(c *fiber.Ctx) error {
 // @Accept json
 // @Produce json
 // @Security JWT
+// @Param user_id query string false "User ID"
+// @Param program_id query string false "Program ID"
 // @Success 200 {object} model.GeneralResponse
 // @Router /transaction-program [get]
 func (controller TransactionProgramController) FindAll(c *fiber.Ctx) error {
 	var request model.FindAllTransactionProgramsRequest
-	err := c.BodyParser(&request)
+	err := c.QueryParser(&request)
 	if err != nil {
 		return err
 	}

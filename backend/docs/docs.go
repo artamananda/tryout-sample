@@ -27,7 +27,7 @@ const docTemplate = `{
             "post": {
                 "description": "Register a new batch 5",
                 "consumes": [
-                    "application/json"
+                    "multipart/form-data"
                 ],
                 "produces": [
                     "application/json"
@@ -38,13 +38,74 @@ const docTemplate = `{
                 "summary": "Register a batch 5",
                 "parameters": [
                     {
-                        "description": "Request Body",
-                        "name": "request",
-                        "in": "body",
-                        "required": true,
-                        "schema": {
-                            "$ref": "#/definitions/model.Batch5Model"
-                        }
+                        "type": "string",
+                        "description": "Name",
+                        "name": "name",
+                        "in": "formData",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "Email",
+                        "name": "email",
+                        "in": "formData",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "Grade",
+                        "name": "grade",
+                        "in": "formData",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "NISN",
+                        "name": "nisn",
+                        "in": "formData",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "School",
+                        "name": "school",
+                        "in": "formData",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "Regency",
+                        "name": "regency",
+                        "in": "formData",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "Province",
+                        "name": "province",
+                        "in": "formData",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "Motivation",
+                        "name": "motivation",
+                        "in": "formData",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "Program ID",
+                        "name": "program_id",
+                        "in": "formData",
+                        "required": true
+                    },
+                    {
+                        "type": "file",
+                        "description": "Profile Picture",
+                        "name": "file",
+                        "in": "formData",
+                        "required": true
                     }
                 ],
                 "responses": {
@@ -663,6 +724,20 @@ const docTemplate = `{
                     "Transaction Programs"
                 ],
                 "summary": "Find all transaction programs",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "User ID",
+                        "name": "user_id",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "description": "Program ID",
+                        "name": "program_id",
+                        "in": "query"
+                    }
+                ],
                 "responses": {
                     "200": {
                         "description": "OK",
@@ -1742,46 +1817,6 @@ const docTemplate = `{
         }
     },
     "definitions": {
-        "model.Batch5Model": {
-            "type": "object",
-            "required": [
-                "email",
-                "grade",
-                "motivation",
-                "name",
-                "program_id",
-                "province",
-                "regency",
-                "school"
-            ],
-            "properties": {
-                "email": {
-                    "type": "string"
-                },
-                "grade": {
-                    "type": "string"
-                },
-                "motivation": {
-                    "description": "File       *multipart.FileHeader ` + "`" + `json:\"file\" validate:\"required\"` + "`" + `",
-                    "type": "string"
-                },
-                "name": {
-                    "type": "string"
-                },
-                "program_id": {
-                    "type": "string"
-                },
-                "province": {
-                    "type": "string"
-                },
-                "regency": {
-                    "type": "string"
-                },
-                "school": {
-                    "type": "string"
-                }
-            }
-        },
         "model.CheckByEmailRequest": {
             "type": "object",
             "required": [
@@ -1994,6 +2029,9 @@ const docTemplate = `{
                 "name": {
                     "type": "string"
                 },
+                "nisn": {
+                    "type": "string"
+                },
                 "password": {
                     "type": "string"
                 },
@@ -2034,6 +2072,9 @@ const docTemplate = `{
                     "type": "string"
                 },
                 "name": {
+                    "type": "string"
+                },
+                "nisn": {
                     "type": "string"
                 },
                 "otp": {
@@ -2234,6 +2275,9 @@ const docTemplate = `{
                     "type": "string"
                 },
                 "name": {
+                    "type": "string"
+                },
+                "nisn": {
                     "type": "string"
                 },
                 "password": {

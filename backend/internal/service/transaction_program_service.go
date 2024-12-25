@@ -2,6 +2,7 @@ package service
 
 import (
 	"context"
+	"time"
 
 	"github.com/artamananda/tryout-sample/internal/common"
 	"github.com/artamananda/tryout-sample/internal/entity"
@@ -13,13 +14,13 @@ import (
 
 type TransactionProgramService struct {
 	TransactionProgramRepository *repository.TransactionProgramRepository
-	ProgramRepository *repository.ProgramRepository
+	ProgramRepository            *repository.ProgramRepository
 }
 
 func NewTransactionProgramService(transactionProgramRepository *repository.TransactionProgramRepository, programRepository *repository.ProgramRepository) TransactionProgramService {
 	return TransactionProgramService{
 		TransactionProgramRepository: transactionProgramRepository,
-		ProgramRepository: programRepository,
+		ProgramRepository:            programRepository,
 	}
 }
 
@@ -35,6 +36,18 @@ func (service *TransactionProgramService) Create(ctx context.Context, request mo
 	if err != nil {
 		return model.TransactionProgramResponse{}, exception.NotFoundError{
 			Message: "Program not found",
+		}
+	}
+
+	if time.Now().Before(resProgram.OpenRegistration) {
+		return model.TransactionProgramResponse{}, exception.ValidationError{
+			Message: "Registration is not open yet",
+		}
+	}
+
+	if time.Now().After(resProgram.CloseRegistration) {
+		return model.TransactionProgramResponse{}, exception.ValidationError{
+			Message: "Registration is closed",
 		}
 	}
 

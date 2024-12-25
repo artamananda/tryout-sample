@@ -1,34 +1,5 @@
 basePath: /v1/api
 definitions:
-  model.Batch5Model:
-    properties:
-      email:
-        type: string
-      grade:
-        type: string
-      motivation:
-        description: File       *multipart.FileHeader `json:"file" validate:"required"`
-        type: string
-      name:
-        type: string
-      program_id:
-        type: string
-      province:
-        type: string
-      regency:
-        type: string
-      school:
-        type: string
-    required:
-    - email
-    - grade
-    - motivation
-    - name
-    - program_id
-    - province
-    - regency
-    - school
-    type: object
   model.CheckByEmailRequest:
     properties:
       email:
@@ -165,6 +136,8 @@ definitions:
         type: string
       name:
         type: string
+      nisn:
+        type: string
       password:
         type: string
       picture_url:
@@ -193,6 +166,8 @@ definitions:
       grade:
         type: string
       name:
+        type: string
+      nisn:
         type: string
       otp:
         type: string
@@ -331,6 +306,8 @@ definitions:
         type: string
       name:
         type: string
+      nisn:
+        type: string
       password:
         type: string
       picture_url:
@@ -362,15 +339,59 @@ paths:
   /custom/batch5:
     post:
       consumes:
-      - application/json
+      - multipart/form-data
       description: Register a new batch 5
       parameters:
-      - description: Request Body
-        in: body
-        name: request
+      - description: Name
+        in: formData
+        name: name
         required: true
-        schema:
-          $ref: '#/definitions/model.Batch5Model'
+        type: string
+      - description: Email
+        in: formData
+        name: email
+        required: true
+        type: string
+      - description: Grade
+        in: formData
+        name: grade
+        required: true
+        type: string
+      - description: NISN
+        in: formData
+        name: nisn
+        required: true
+        type: string
+      - description: School
+        in: formData
+        name: school
+        required: true
+        type: string
+      - description: Regency
+        in: formData
+        name: regency
+        required: true
+        type: string
+      - description: Province
+        in: formData
+        name: province
+        required: true
+        type: string
+      - description: Motivation
+        in: formData
+        name: motivation
+        required: true
+        type: string
+      - description: Program ID
+        in: formData
+        name: program_id
+        required: true
+        type: string
+      - description: Profile Picture
+        in: formData
+        name: file
+        required: true
+        type: file
       produces:
       - application/json
       responses:
@@ -756,6 +777,15 @@ paths:
       consumes:
       - application/json
       description: Find all transaction programs
+      parameters:
+      - description: User ID
+        in: query
+        name: user_id
+        type: string
+      - description: Program ID
+        in: query
+        name: program_id
+        type: string
       produces:
       - application/json
       responses:

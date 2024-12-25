@@ -1,6 +1,10 @@
 package model
 
-import "github.com/google/uuid"
+import (
+	"time"
+
+	"github.com/google/uuid"
+)
 
 type CreateTransactionProgramRequest struct {
 	UserID     string `json:"user_id"`
@@ -15,8 +19,8 @@ type TransactionProgramResponse struct {
 	ProgramID            uuid.UUID `json:"program_id"`
 	Status               string    `json:"status"`
 	Motivation           string    `json:"motivation"`
-	CreatedAt            string    `json:"created_at"`
-	UpdatedAt            string    `json:"updated_at"`
+	CreatedAt            time.Time `json:"created_at"`
+	UpdatedAt            time.Time `json:"updated_at"`
 }
 
 type FindAllTransactionProgramsRequest struct {
