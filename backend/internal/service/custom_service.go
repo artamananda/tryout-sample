@@ -81,7 +81,7 @@ func (service *CustomService) RegisterBatch5(ctx context.Context, request model.
 		userId = user.UserID.String()
 
 		service.UserService.Update(ctx, model.UpdateUserRequest{
-			Password: generatePassword,
+			Password: string(hashedPassword),
 			Grade:    request.Grade,
 			NISN:     request.NISN,
 			School:   request.School,

@@ -36,6 +36,7 @@ const Batch5 = () => {
   const [provinceList, setProvinceList] = useState<ProvinceProps[]>([]);
   const [regencyList, setRegencyList] = useState<RegencyProps[]>([]);
   const [profilePicture, setProfilePicture] = useState<any | null>(null);
+  const [isLoading, setIsLoading] = useState<boolean>(false);
 
   const getProgramId = async () => {
     try {
@@ -73,6 +74,7 @@ const Batch5 = () => {
       return message.error('Mohon upload foto formal');
     }
     try {
+      setIsLoading(true);
       const formData = new FormData();
       formData.append('email', values.email);
       formData.append('name', values.name);
@@ -89,11 +91,11 @@ const Batch5 = () => {
           'Content-Type': 'multipart/form-data'
         }
       });
-      if (res.data.success) {
-        navigate('/login');
-        message.success('Pendaftaran berhasil, silahkan cek email anda');
-      }
+      setIsLoading(false);
+      navigate('/login');
+      message.success('Pendaftaran berhasil, silahkan cek email anda');
     } catch (err: any) {
+      setIsLoading(false);
       message.error(
         err?.response?.data || 'Gagal mendaftar, silahkan hubungi admin'
       );
@@ -201,6 +203,7 @@ const Batch5 = () => {
             style={{ width: '100%', marginTop: 20 }}
             type="primary"
             htmlType="submit"
+            loading={isLoading}
           >
             Daftar
           </Button>
