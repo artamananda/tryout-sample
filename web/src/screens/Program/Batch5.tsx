@@ -30,7 +30,7 @@ type RegencyProps = {
 };
 
 const Batch5 = () => {
-  const navigate = useNavigate()
+  const navigate = useNavigate();
   const [programId, setProgramId] = useState<string>('');
   const [selectedProvince, setSelectedProvince] = useState<string>();
   const [provinceList, setProvinceList] = useState<ProvinceProps[]>([]);
@@ -94,7 +94,9 @@ const Batch5 = () => {
         message.success('Pendaftaran berhasil, silahkan cek email anda');
       }
     } catch (err: any) {
-      message.error(err?.response?.data);
+      message.error(
+        err?.response?.data || 'Gagal mendaftar, silahkan hubungi admin'
+      );
     }
   };
 
