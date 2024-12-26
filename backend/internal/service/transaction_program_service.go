@@ -65,7 +65,7 @@ func (service *TransactionProgramService) Create(ctx context.Context, request mo
 
 	if len(resTransactionProgram) >= resProgram.MaxParticipants {
 		return model.TransactionProgramResponse{}, exception.ValidationError{
-			Message: "User already registered to this program",
+			Message: "The program has reached the maximum number of participants",
 		}
 	}
 

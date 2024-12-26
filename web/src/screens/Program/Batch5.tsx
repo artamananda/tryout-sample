@@ -153,7 +153,7 @@ const Batch5 = () => {
           <Input required />
         </Form.Item>
         <Form.Item required name={'nisn'} label="NISN">
-          <Input required />
+          <Input required maxLength={10} />
         </Form.Item>
         <Form.Item required name={'province'} label="Asal Provinsi">
           <Select onSelect={(value) => setSelectedProvince(value)}>
