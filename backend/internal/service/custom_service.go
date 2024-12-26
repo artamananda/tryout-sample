@@ -53,7 +53,7 @@ func (service *CustomService) RegisterBatch5(ctx context.Context, request model.
 	if !isEmailExist {
 		resCreateUser, err := service.UserService.Create(ctx, model.RegisterRequest{
 			Email:    request.Email,
-			Password: generatePassword,
+			Password: string(generatePassword),
 			Username: helper.GenerateUsernameByEmail(request.Email),
 			Name:     request.Name,
 			Role:     "user",
@@ -78,7 +78,7 @@ func (service *CustomService) RegisterBatch5(ctx context.Context, request model.
 		userId = user.UserID.String()
 
 		service.UserService.Update(ctx, model.UpdateUserRequest{
-			Password: generatePassword,
+			Password: string(generatePassword),
 			Grade:    request.Grade,
 			NISN:     request.NISN,
 			School:   request.School,
