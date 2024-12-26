@@ -2,6 +2,7 @@ package service
 
 import (
 	"context"
+	"fmt"
 	"log"
 	"path/filepath"
 	"strconv"
@@ -77,7 +78,7 @@ func (service *CustomService) RegisterBatch5(ctx context.Context, request model.
 
 		userId = user.UserID.String()
 
-		service.UserService.Update(ctx, model.UpdateUserRequest{
+		resUpdateUser, err := service.UserService.Update(ctx, model.UpdateUserRequest{
 			Password: string(generatePassword),
 			Grade:    request.Grade,
 			NISN:     request.NISN,
@@ -85,7 +86,12 @@ func (service *CustomService) RegisterBatch5(ctx context.Context, request model.
 			Regency:  request.Regency,
 			Province: request.Province,
 		}, userId)
+		
+		if err != nil {
+			return err
+		}
 
+		fmt.Println(resUpdateUser)
 	}
 
 	requestFile := model.UploadFileRequest{
