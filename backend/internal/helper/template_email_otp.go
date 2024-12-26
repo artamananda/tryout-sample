@@ -71,90 +71,138 @@ func TemplateEmailOtp(name string, otp string) string {
 func TemplateEmailRegisterGenerate(name string, email string, password string) string {
 	htmlBody := fmt.Sprintf(`
     <html>
-    <head>
-        <style>
-            body {
-                font-family: Arial, sans-serif;
-                background-color: #f4f4f4;
-                margin: 0;
-                padding: 0;
-            }
-            .container {
-                max-width: 600px;
-                margin: 20px auto;
-                background-color: #ffffff;
-                padding: 30px;
-                border-radius: 8px;
-                box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
-            }
-            .header {
-                background-color: #04073B;
-                color: #ffffff;
-                padding: 10px;
-                text-align: center;
-                border-top-left-radius: 8px;
-                border-top-right-radius: 8px;
-            }
-            .content {
-                padding: 20px 0;
-                text-align: justify;
-            }
-            .highlight-card {
-                background-color: #F0F0F0;
-                padding: 20px;
-                margin: 20px 0;
-                border-radius: 8px;
-                box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
-            }
-            .highlight-card p {
-                font-size: 18px;
-                margin: 10px 0;
-            }
-            .highlight-card span {
-                font-weight: bold;
-                color: #04073B;
-            }
-            .highlight-card .label {
-                display: inline-block;
-                width: 100px; /* Adjust the width for alignment */
-            }
-            .footer {
-                text-align: center;
-                margin-top: 20px;
-                color: #666666;
-            }
-            .footer a {
-                color: #007bff;
-                text-decoration: none;
-            }
-        </style>
-    </head>
-    <body>
-        <div class="container">
-            <div class="header">
-                <h2 style="color: #F9C92D;">TELISIK SYSTEM</h2>
-            </div>
-            <div class="content">
-                <p>Halo %s,</p>
-                <p>Selamat datang di Telisik! Kami dengan senang hati mengonfirmasi bahwa Anda telah menjadi bagian dari komunitas Telisik.</p>
-                <p>Untuk memulai, Anda dapat login menggunakan email dan password berikut:</p>
-                
-                <div class="highlight-card">
-                    <p><span class="label">Email:</span> <span>%s</span></p>
-                    <p><span class="label">Password:</span> <span>%s</span></p>
-                </div>
-                
-                <p><strong>Catatan:</strong> Harap simpan informasi ini dengan baik dan rahasiakan, karena Anda akan membutuhkannya untuk login ke akun Anda.</p>
-                <p>Jika Anda membutuhkan bantuan lebih lanjut, atau mengalami kesulitan saat login, silakan hubungi tim dukungan kami.</p>
-                <p>Salam Hangat,</p>
-                <p>Tim Telisik</p>
-            </div>
-            <div class="footer">
-                <p>Email ini adalah pesan otomatis. Mohon untuk tidak membalas email ini.</p>
-                <p>Jika Anda membutuhkan bantuan lebih lanjut, <a href="https://wa.me/6283193592551">Hubungi Kami</a>.</p>
-            </div>
+  <head>
+    <style>
+      body {
+        font-family: Arial, sans-serif;
+        background-color: #f4f4f4;
+        margin: 0;
+        padding: 0;
+      }
+      .container {
+        max-width: 600px;
+        margin: 20px auto;
+        background-color: #ffffff;
+        padding: 30px;
+        border-radius: 8px;
+        box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+      }
+      .header {
+        background-color: #04073b;
+        color: #ffffff;
+        padding: 10px;
+        text-align: center;
+        border-top-left-radius: 8px;
+        border-top-right-radius: 8px;
+      }
+      .content {
+        padding: 20px 0;
+        text-align: justify;
+      }
+      .highlight-card {
+        background-color: #f0f0f0;
+        padding: 20px;
+        margin: 20px 0;
+        border-radius: 8px;
+        box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+      }
+      .highlight-card p {
+        font-size: 18px;
+        margin: 10px 0;
+      }
+      .highlight-card span {
+        font-weight: bold;
+        color: #04073b;
+      }
+      .highlight-card .label {
+        display: inline-block;
+        width: 100px; /* Adjust the width for alignment */
+      }
+      .footer {
+        text-align: center;
+        margin-top: 20px;
+        color: #666666;
+      }
+      .footer a {
+        color: #007bff;
+        text-decoration: none;
+      }
+      .button-container {
+        text-align: center;
+        margin: 20px 0;
+      }
+      .button {
+        display: inline-block;
+        padding: 12px 30px;
+        background-color: #25d366;
+        color: #ffffff;
+        font-size: 16px;
+        font-weight: bold;
+        text-align: center;
+        text-decoration: none;
+        border-radius: 5px;
+        transition: background-color 0.3s;
+      }
+      .button:hover {
+        background-color: #128c7e;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="container">
+      <div class="header">
+        <h2 style="color: #f9c92d">TELISIK SYSTEM</h2>
+      </div>
+      <div class="content">
+        <p>Halo %s,</p>
+        <p>
+          Selamat datang di Telisik! Kami dengan senang hati mengonfirmasi bahwa
+          Anda telah menjadi bagian dari komunitas Telisik.
+        </p>
+        <p>
+          Untuk memulai, Anda dapat login menggunakan email dan password
+          berikut:
+        </p>
+
+        <div class="highlight-card">
+          <p><span class="label">Email:</span> <span>%s</span></p>
+          <p><span class="label">Password:</span> <span>%s</span></p>
         </div>
-    </body>
+
+        <p>
+          <strong>Catatan:</strong> Harap simpan informasi ini dengan baik dan
+          rahasiakan, karena Anda akan membutuhkannya untuk login ke akun Anda.
+        </p>
+        <p>
+          Jika Anda membutuhkan bantuan lebih lanjut, atau mengalami kesulitan
+          saat login, silakan hubungi tim dukungan kami.
+        </p>
+
+        <p>Juga, silahkan bergabung grup WhatsApp berikut:</p>
+
+        <div class="button-container">
+          <a
+            href="https://chat.whatsapp.com/Gk8SNcsHmk49ixHrnbjUNx"
+            target="_blank"
+            class="button"
+            >Masuk Grup WhatsApp</a
+          >
+        </div>
+
+        <p>Salam Hangat,</p>
+        <p>Tim Telisik</p>
+      </div>
+      <div class="footer">
+        <p>
+          Email ini adalah pesan otomatis. Mohon untuk tidak membalas email ini.
+        </p>
+        <p>
+          Jika Anda membutuhkan bantuan lebih lanjut,
+          <a href="https://wa.me/6283193592551">Hubungi Kami</a>.
+        </p>
+      </div>
+    </div>
+  </body>
 </html>`, name, email, password)
 	return htmlBody
 }

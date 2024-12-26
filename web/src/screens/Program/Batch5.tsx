@@ -15,6 +15,7 @@ import { useEffect, useState } from 'react';
 import { httpRequest } from '../../helpers/api';
 import axios from 'axios';
 import { useNavigate } from 'react-router-dom';
+import SuccessRegisterBatch5 from './Success';
 
 const { Text } = Typography;
 
@@ -37,6 +38,7 @@ const Batch5 = () => {
   const [regencyList, setRegencyList] = useState<RegencyProps[]>([]);
   const [profilePicture, setProfilePicture] = useState<any | null>(null);
   const [isLoading, setIsLoading] = useState<boolean>(false);
+  const [isSuccess, setIsSuccess] = useState<boolean>(false);
 
   const getProgramId = async () => {
     try {
@@ -92,7 +94,7 @@ const Batch5 = () => {
         }
       });
       setIsLoading(false);
-      navigate('/login');
+      setIsSuccess(true);
       message.success('Pendaftaran berhasil, silahkan cek email anda');
     } catch (err: any) {
       setIsLoading(false);
@@ -123,7 +125,9 @@ const Batch5 = () => {
         .then((regencies) => setRegencyList(regencies));
     }
   }, [selectedProvince]);
-  return (
+  return isSuccess ? (
+    <SuccessRegisterBatch5 />
+  ) : (
     <Card className="card">
       <div
         style={{
