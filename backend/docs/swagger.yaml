@@ -334,7 +334,7 @@ info:
     url: http://www.apache.org/licenses/LICENSE-2.0.html
   termsOfService: http://swagger.io/terms/
   title: Tryout Sample
-  version: 0.1.1
+  version: 0.1.2
 paths:
   /custom/batch5:
     post:

@@ -136,10 +136,41 @@ func (service *TransactionProgramService) FindById(ctx context.Context, transact
 		return model.TransactionProgramResponse{}, err
 	}
 
+	userDataRespone := model.GetUserResponse{
+		UserID:     transactionProgram.User.UserID,
+		Name:       transactionProgram.User.Name,
+		Username:   transactionProgram.User.Username,
+		Email:      transactionProgram.User.Email,
+		PictureURL: transactionProgram.User.PictureURL,
+		Role:       transactionProgram.User.Role,
+		NISN:       transactionProgram.User.NISN,
+		Grade:      transactionProgram.User.Grade,
+		School:     transactionProgram.User.School,
+		Regency:    transactionProgram.User.Regency,
+		Province:   transactionProgram.User.Province,
+		CreatedAt:  transactionProgram.User.CreatedAt,
+	}
+	programDataRespone := model.ProgramResponse{
+		ProgramID:         transactionProgram.Program.ProgramID,
+		Name:              transactionProgram.Program.Name,
+		Description:       transactionProgram.Program.Description,
+		MaxParticipants:   transactionProgram.Program.MaxParticipants,
+		IsPublished:       transactionProgram.Program.IsPublished,
+		PictureURL:        transactionProgram.Program.PictureURL,
+		StartTime:         transactionProgram.Program.StartTime,
+		EndTime:           transactionProgram.Program.EndTime,
+		OpenRegistration:  transactionProgram.Program.OpenRegistration,
+		CloseRegistration: transactionProgram.Program.CloseRegistration,
+		CreatedAt:         transactionProgram.Program.CreatedAt,
+		UpdatedAt:         transactionProgram.Program.UpdatedAt,
+	}
+
 	return model.TransactionProgramResponse{
 		TransactionProgramID: transactionProgram.TransactionProgramID,
 		UserID:               transactionProgram.UserID,
+		User:                 userDataRespone,
 		ProgramID:            transactionProgram.ProgramID,
+		Program:              programDataRespone,
 		Status:               transactionProgram.Status,
 		Motivation:           transactionProgram.Motivation,
 		CreatedAt:            transactionProgram.CreatedAt,
@@ -152,10 +183,41 @@ func (service *TransactionProgramService) FindAll(ctx context.Context, params mo
 
 	var response []model.TransactionProgramResponse
 	for _, transactionProgram := range transactionPrograms {
+		userDataRespone := model.GetUserResponse{
+			UserID:     transactionProgram.User.UserID,
+			Name:       transactionProgram.User.Name,
+			Username:   transactionProgram.User.Username,
+			Email:      transactionProgram.User.Email,
+			PictureURL: transactionProgram.User.PictureURL,
+			Role:       transactionProgram.User.Role,
+			NISN:       transactionProgram.User.NISN,
+			Grade:      transactionProgram.User.Grade,
+			School:     transactionProgram.User.School,
+			Regency:    transactionProgram.User.Regency,
+			Province:   transactionProgram.User.Province,
+			CreatedAt:  transactionProgram.User.CreatedAt,
+		}
+		programDataRespone := model.ProgramResponse{
+			ProgramID:         transactionProgram.Program.ProgramID,
+			Name:              transactionProgram.Program.Name,
+			Description:       transactionProgram.Program.Description,
+			MaxParticipants:   transactionProgram.Program.MaxParticipants,
+			IsPublished:       transactionProgram.Program.IsPublished,
+			PictureURL:        transactionProgram.Program.PictureURL,
+			StartTime:         transactionProgram.Program.StartTime,
+			EndTime:           transactionProgram.Program.EndTime,
+			OpenRegistration:  transactionProgram.Program.OpenRegistration,
+			CloseRegistration: transactionProgram.Program.CloseRegistration,
+			CreatedAt:         transactionProgram.Program.CreatedAt,
+			UpdatedAt:         transactionProgram.Program.UpdatedAt,
+		}
+
 		response = append(response, model.TransactionProgramResponse{
 			TransactionProgramID: transactionProgram.TransactionProgramID,
 			UserID:               transactionProgram.UserID,
+			User:                 userDataRespone,
 			ProgramID:            transactionProgram.ProgramID,
+			Program:              programDataRespone,
 			Status:               transactionProgram.Status,
 			Motivation:           transactionProgram.Motivation,
 			CreatedAt:            transactionProgram.CreatedAt,

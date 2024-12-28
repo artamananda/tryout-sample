@@ -45,7 +45,7 @@ func (repository *TransactionProgramRepository) Delete(ctx context.Context, tran
 
 func (repository *TransactionProgramRepository) FindById(ctx context.Context, transactionProgramId string) (entity.TransactionProgram, error) {
 	var transactionProgram entity.TransactionProgram
-	result := repository.DB.WithContext(ctx).Unscoped().Where("transaction_program_id = ?", transactionProgramId).First(&transactionProgram)
+	result := repository.DB.WithContext(ctx).Unscoped().Where("transaction_program_id = ?", transactionProgramId).Preload("User").Preload("Program").First(&transactionProgram)
 	if result.RowsAffected == 0 {
 		return entity.TransactionProgram{}, errors.New("transaction program Not Found")
 	}
@@ -64,6 +64,6 @@ func (repository *TransactionProgramRepository) FindAll(ctx context.Context, par
 		query = query.Where("program_id = ?", params.ProgramID)
 	}
 
-	query.Find(&transactionPrograms)
+	query.Preload("User").Preload("Program").Find(&transactionPrograms)
 	return transactionPrograms
 }

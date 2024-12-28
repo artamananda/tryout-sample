@@ -130,11 +130,18 @@ func (controller TransactionProgramController) FindAll(c *fiber.Ctx) error {
 		return err
 	}
 
-	response := controller.TransactionProgramService.FindAll(c.Context(), request)
+	result := controller.TransactionProgramService.FindAll(c.Context(), request)
+
+	payload := map[string]interface{}{
+		"count":   len(result),
+		"next":    nil,
+		"prev":    nil,
+		"results": result,
+	}
 	return c.Status(fiber.StatusOK).JSON(model.GeneralResponse{
 		Code:    200,
 		Message: "Success",
-		Data:    response,
+		Data:    payload,
 	})
 }
 
