@@ -5,6 +5,7 @@ import {
   PoweroffOutlined,
   UsergroupAddOutlined,
   BarChartOutlined,
+  Html5Outlined,
 } from "@ant-design/icons";
 import type { MenuProps } from "antd";
 import { Layout, Menu, Image, Spin } from "antd";
@@ -44,6 +45,7 @@ const AppLayout = () => {
     ]),
     getItem("Tryout", "/tryout", <CalendarOutlined />),
     getItem("Tryout Result", "/tryout-result", <BarChartOutlined />),
+    getItem("Batch 5", "/program/batch5", <Html5Outlined />),
     getItem("Role", "/role", <UsergroupAddOutlined />, [
       getItem("Admin", "/role/admins"),
       getItem("User", "/role/users"),

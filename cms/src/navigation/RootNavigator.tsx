@@ -22,6 +22,7 @@ import QuestionPage from "../screens/Question";
 import EditTryoutScreen from "../screens/Tryout/Edit";
 import ListAdminScreen from "../screens/ListAdmin";
 import ListUserScreen from "../screens/ListUser";
+import ListProgramScreen from "../screens/ListProgram";
 
 const RootNavigator = () => {
   return (
@@ -187,6 +188,14 @@ const RootNavigator = () => {
             element={
               <PrivateRoute loginPath="/login">
                 <ListUserScreen />
+              </PrivateRoute>
+            }
+          />
+          <Route
+            path="/program/batch5"
+            element={
+              <PrivateRoute loginPath="/login">
+                <ListProgramScreen />
               </PrivateRoute>
             }
           />
