@@ -64,6 +64,6 @@ func (repository *TransactionProgramRepository) FindAll(ctx context.Context, par
 		query = query.Where("program_id = ?", params.ProgramID)
 	}
 
-	query.Preload("User").Preload("Program").Find(&transactionPrograms)
+	query.Order("created_at DESC").Preload("User").Preload("Program").Find(&transactionPrograms)
 	return transactionPrograms
 }
