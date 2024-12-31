@@ -2,11 +2,16 @@ import { Avatar, Badge, Image, Table, Typography } from "antd";
 import useFetchList from "../../hooks/useFetchList";
 import { useEffect } from "react";
 import { BellOutlined } from "@ant-design/icons";
+import dayjs from "dayjs";
 
 const { Text, Link } = Typography;
 
 const ListProgramScreen = () => {
-  const { data: programData, fetchList } = useFetchList<any>({
+  const {
+    data: programData,
+    fetchList,
+    isLoading,
+  } = useFetchList<any>({
     endpoint: "transaction-program",
   });
 
@@ -18,7 +23,7 @@ const ListProgramScreen = () => {
       render: (_: any, __: any, index: number) => index + 1,
     },
     {
-      title: "Photo",
+      title: "Foto",
       dataIndex: "picture_url",
       key: "picture_url",
       render: (_: any, record: any) => (
@@ -33,7 +38,7 @@ const ListProgramScreen = () => {
       width: 100,
     },
     {
-      title: "Name",
+      title: "Nama",
       dataIndex: "name",
       key: "name",
       render: (_: any, record: any) => (
@@ -49,9 +54,29 @@ const ListProgramScreen = () => {
       width: 300,
     },
     {
-      title: "Motivation",
+      title: "Asal",
+      dataIndex: "asal",
+      key: "asal",
+      render: (_: any, record: any) => (
+        <Text>{`${record.user.school} - ${record.user.regency}, ${record.user.province}`}</Text>
+      ),
+      width: 150,
+    },
+    {
+      title: "Motivasi",
       dataIndex: "motivation",
       key: "motivation",
+    },
+    {
+      title: "Tanggal Terdaftar",
+      dataIndex: "created_at",
+      key: "created_at",
+      width: 150,
+      render: (_: any, record: any) => (
+        <Text>
+          {dayjs(record.created_at).locale("id").format("D MMM YYYY HH:mm")}
+        </Text>
+      ),
     },
   ];
 
@@ -72,7 +97,12 @@ const ListProgramScreen = () => {
         </div>
         <Badge count={programData.length} />
       </div>
-      <Table dataSource={programData} columns={columns} pagination={false} />
+      <Table
+        dataSource={programData}
+        columns={columns}
+        pagination={false}
+        loading={isLoading}
+      />
     </div>
   );
 };
