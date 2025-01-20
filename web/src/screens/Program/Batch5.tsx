@@ -16,6 +16,7 @@ import { httpRequest } from '../../helpers/api';
 import axios from 'axios';
 import { useNavigate } from 'react-router-dom';
 import SuccessRegisterBatch5 from './Success';
+import Outdated from './Outdated';
 
 const { Text } = Typography;
 
@@ -39,6 +40,7 @@ const Batch5 = () => {
   const [profilePicture, setProfilePicture] = useState<any | null>(null);
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const [isSuccess, setIsSuccess] = useState<boolean>(false);
+  const isOutdated = true;
 
   const getProgramId = async () => {
     try {
@@ -125,7 +127,9 @@ const Batch5 = () => {
         .then((regencies) => setRegencyList(regencies));
     }
   }, [selectedProvince]);
-  return isSuccess ? (
+  return isOutdated ? (
+    <Outdated />
+  ) : isSuccess ? (
     <SuccessRegisterBatch5 />
   ) : (
     <Card className="card">
