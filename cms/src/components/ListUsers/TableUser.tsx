@@ -13,6 +13,7 @@ const TableUser = (props: { role?: string }) => {
     fetchList,
     search,
     setSearch,
+    isLoading,
   } = useFetchList<UserProps>({
     endpoint: "user",
     initialQuery: { role: props.role },
@@ -77,7 +78,7 @@ const TableUser = (props: { role?: string }) => {
   return (
     <div>
       <Input.Search onSearch={(e) => setSearch(e)} allowClear />
-      <Table columns={columns} dataSource={tryoutData} />
+      <Table columns={columns} dataSource={tryoutData} loading={isLoading} />
     </div>
   );
 };

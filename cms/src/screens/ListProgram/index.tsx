@@ -110,7 +110,11 @@ const ListProgramScreen = () => {
           {programData?.length || 0}
         </div>
       </div>
-      <Input.Search style={{ marginBlock: 30 }} onSearch={setSearch} />
+      <Input.Search
+        style={{ marginBlock: 30 }}
+        onSearch={setSearch}
+        allowClear
+      />
       <Table
         dataSource={programData}
         columns={columns}

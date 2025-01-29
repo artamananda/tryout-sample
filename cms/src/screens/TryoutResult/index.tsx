@@ -10,7 +10,11 @@ const { Text, Link } = Typography;
 
 const TryOutResultScreen = () => {
   const navigate = useNavigate();
-  const { data: tryoutData, fetchList } = useFetchList<TryoutProps>({
+  const {
+    data: tryoutData,
+    fetchList,
+    isLoading,
+  } = useFetchList<TryoutProps>({
     endpoint: "tryout",
   });
 
@@ -108,7 +112,7 @@ const TryOutResultScreen = () => {
 
   return (
     <div>
-      <Table columns={columns} dataSource={tryoutData} />
+      <Table columns={columns} dataSource={tryoutData} loading={isLoading} />
     </div>
   );
 };
