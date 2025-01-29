@@ -56,6 +56,10 @@ func (repository *TransactionProgramRepository) FindAll(ctx context.Context, par
 	var transactionPrograms []entity.TransactionProgram
 	query := repository.DB.WithContext(ctx)
 
+	if(params.Search != "") {
+		query = query.Where("user.name ILIKE ?", "%" + params.Search + "%")
+	}
+
 	if params.UserID != "" {
 		query = query.Where("user_id = ?", params.UserID)
 	}
