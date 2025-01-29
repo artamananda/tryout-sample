@@ -131,7 +131,7 @@ const FormQuestion = (props: PropTypes) => {
   const handleUpdateQuestion = async (data: any) => {
     try {
       let newData: CreateQuestionRequest[] = [];
-      for (let i = 0; i < questionLength; i++) {
+      for (let i = 0; i <= questionLength; i++) {
         const createQuestion: CreateQuestionRequest = {
           tryout_id: tryoutId,
           local_id: i,
@@ -144,6 +144,8 @@ const FormQuestion = (props: PropTypes) => {
         };
         newData.push(createQuestion);
       }
+
+      console.log("newData", newData);
 
       await doCreateQuestions(newData);
       navigate("/tryout/" + tryoutId + "/question/" + questionType);
