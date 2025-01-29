@@ -1,4 +1,4 @@
-import { Avatar, Badge, Image, Table, Typography } from "antd";
+import { Avatar, Badge, Image, Input, Table, Typography } from "antd";
 import useFetchList from "../../hooks/useFetchList";
 import { useEffect } from "react";
 import { BellOutlined } from "@ant-design/icons";
@@ -11,17 +11,18 @@ const ListProgramScreen = () => {
     data: programData,
     fetchList,
     isLoading,
+    setSearch,
   } = useFetchList<any>({
     endpoint: "transaction-program",
   });
 
   const columns = [
-    {
-      title: "No",
-      dataIndex: "no",
-      key: "no",
-      render: (_: any, __: any, index: number) => index + 1,
-    },
+    // {
+    //   title: "No",
+    //   dataIndex: "no",
+    //   key: "no",
+    //   render: (_: any, __: any, index: number) => index + 1,
+    // },
     {
       title: "Foto",
       dataIndex: "picture_url",
@@ -89,18 +90,31 @@ const ListProgramScreen = () => {
         style={{
           flexDirection: "row",
           display: "flex",
-          marginBlock: 30,
+
+          alignItems: "center",
         }}
       >
         <div style={{ fontSize: 28, fontWeight: "bold" }}>
           Calon Siswa Telisik
         </div>
-        <Badge count={programData.length} />
+        <div
+          style={{
+            backgroundColor: "red",
+            borderRadius: "50%",
+            color: "white",
+            margin: 10,
+            padding: 10,
+            fontWeight: "bold",
+          }}
+        >
+          {programData.length || 0}
+        </div>
       </div>
+      <Input.Search style={{ marginBlock: 30 }} onSearch={setSearch} />
       <Table
         dataSource={programData}
         columns={columns}
-        pagination={false}
+        // pagination={false}
         loading={isLoading}
       />
     </div>
