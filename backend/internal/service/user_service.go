@@ -231,6 +231,7 @@ func (service *UserService) FindAll(ctx context.Context, params model.FindAllUse
 				Regency:    user.Regency,
 				Province:   user.Province,
 				PictureURL: user.PictureURL,
+				LastLogin:  user.LastLogin,
 				CreatedAt:  user.CreatedAt,
 			},
 		)
@@ -256,6 +257,13 @@ func (service *UserService) Authentication(ctx context.Context, model model.Logi
 		})
 		return entity.User{}, err
 	}
+	service.UserRepository.Update(
+		ctx,
+		entity.User{
+			UserID:    userResult.UserID,
+			LastLogin: time.Now(),
+		},
+	)
 	return userResult, nil
 }
 

@@ -19,6 +19,7 @@ type User struct {
 	Regency    string    `json:"regency"`
 	Province   string    `json:"province"`
 	PictureURL string    `json:"picture_url"`
+	LastLogin  time.Time `json:"last_login"`
 	CreatedAt  time.Time `json:"created_at"`
 	UpdatedAt  time.Time `json:"deleted_at"`
 }

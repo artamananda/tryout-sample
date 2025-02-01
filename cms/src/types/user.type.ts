@@ -6,6 +6,7 @@ export interface UserProps {
   name: string;
   email: string;
   role: string;
+  last_login?: Date | string;
   created_at?: Date | string;
 }
 

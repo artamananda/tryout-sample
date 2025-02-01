@@ -69,9 +69,20 @@ const TableUser = (props: { role?: string }) => {
         <Text>{formatDateToCustomString(created_at)}</Text>
       ),
     },
+    {
+      title: "Last Login At",
+      dataIndex: "lastLoginAt",
+      key: "lastLoginAt",
+      render: (_, { last_login }) => (
+        <Text>{formatDateToCustomString(last_login)}</Text>
+      ),
+    },
   ];
 
   function formatDateToCustomString(date: any) {
+    if(date === "0001-01-01T00:00:00Z"){
+      return "-"
+    }
     return dayjs(date).locale("id").format("DD MMMM YYYY HH:mm");
   }
 
