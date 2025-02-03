@@ -58,7 +58,7 @@ func (repository *TransactionProgramRepository) FindAll(ctx context.Context, par
 
 	if(params.Search != "") {
 		query = query.Joins("JOIN users AS u ON u.user_id = transaction_programs.user_id").
-			Where("u.name ILIKE ?", "%" + params.Search + "%")
+			Where("u.name ILIKE ? OR u.school ILIKE ?", "%"+params.Search+"%", "%"+params.Search+"%")
 	}
 
 	if params.UserID != "" {
