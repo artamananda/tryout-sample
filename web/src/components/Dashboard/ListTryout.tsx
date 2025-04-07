@@ -46,7 +46,7 @@ const ListTryout = () => {
   const { data: tryoutData, fetchList } = useFetchList<TryoutProps>({
     endpoint: 'tryout',
     initialQuery: {
-      is_published: "true"
+      is_published: 'true'
     }
   });
 
@@ -67,7 +67,6 @@ const ListTryout = () => {
     try {
       const res = await redeemToken(data);
       if (res) {
-        message.success('Validation success');
         navigate('/tryout/' + id + '/kpu/1');
       } else {
         message.error('Token Wrong');

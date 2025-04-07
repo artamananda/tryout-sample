@@ -6,6 +6,7 @@ export interface TransactionTryoutProps {
   start_time: Date | string;
   end_time?: Date | string;
   token?: string;
+  is_done?: boolean;
   created_at?: Date | string;
   updated_at?: Date | string;
 }
