@@ -34,6 +34,7 @@ type TransactionTryoutResponse struct {
 	Status              string    `json:"status"`
 	StartTime           time.Time `json:"start_time"`
 	EndTime             time.Time `json:"end_time"`
+	IsDone              bool      `json:"is_done"`
 	CreatedAt           time.Time `json:"created_at"`
 	UpdatedAt           time.Time `json:"updated_at"`
 }

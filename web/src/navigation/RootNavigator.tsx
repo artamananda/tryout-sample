@@ -10,6 +10,7 @@ import AppLayout from '../screens/Layout/AppLayout';
 import TryoutScreen from '../screens/Tryout';
 import RegisterScreen from '../screens/Auth/Register';
 import Batch5 from '../screens/Program/Batch5';
+import TryoutRoute from './TryoutRoute';
 
 const RootNavigator = () => {
   return (
@@ -80,9 +81,9 @@ const RootNavigator = () => {
         <Route
           path="/tryout/:id/:type/:qNumber"
           element={
-            <PrivateRoute loginPath="/login">
+            <TryoutRoute loginPath="/tryout">
               <TryoutScreen />
-            </PrivateRoute>
+            </TryoutRoute>
           }
         />
       </Routes>

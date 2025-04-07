@@ -53,10 +53,21 @@ func (repository *TransactionTryoutRepository) FindById(ctx context.Context, tra
 
 func (repository *TransactionTryoutRepository) FindByTryoutIdAndUserId(ctx context.Context, tryoutId string, userId string) (entity.TransactionTryout, error) {
 	var transactionTryoutResult entity.TransactionTryout
-	result := repository.DB.WithContext(ctx).Unscoped().Where("tryout_id = ? AND user_id = ?", tryoutId, userId).First(&transactionTryoutResult)
-	if result.RowsAffected == 0 {
+	// result := repository.DB.WithContext(ctx).Unscoped().Where("tryout_id = ? AND user_id = ?", tryoutId, userId).First(&transactionTryoutResult)
+	// if result.RowsAffected == 0 {
+	// 	return entity.TransactionTryout{}, errors.New("transaction tryout Not Found")
+	// }
+	query := repository.DB.WithContext(ctx)
+
+	query = query.Joins("JOIN tryouts AS t ON t.tryout_id = transaction_tryouts.tryout_id").
+		Where("tryout_id = ? AND user_id = ?", tryoutId, userId)
+
+	res := query.Order("created_at DESC").Preload("Tryout").Find(&transactionTryoutResult)
+
+	if res.RowsAffected == 0 {
 		return entity.TransactionTryout{}, errors.New("transaction tryout Not Found")
 	}
+
 	return transactionTryoutResult, nil
 }
 

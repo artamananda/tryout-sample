@@ -9,6 +9,7 @@ import (
 type TransactionTryout struct {
 	TransactionTryoutID uuid.UUID `gorm:"primaryKey" json:"transaction_tryout_id"`
 	TryoutID            uuid.UUID `json:"tryout_id"`
+	Tryout              Tryout    `json:"tryout" gorm:"foreignKey:TryoutID;references:TryoutID"`
 	UserID              uuid.UUID `json:"user_id"`
 	Status              string    `json:"status"`
 	StartTime           time.Time `json:"start_time"`

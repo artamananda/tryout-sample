@@ -2,6 +2,7 @@ package service
 
 import (
 	"context"
+	"time"
 
 	"github.com/artamananda/tryout-sample/internal/common"
 	"github.com/artamananda/tryout-sample/internal/entity"
@@ -101,8 +102,17 @@ func (service *TransactionTryoutService) FindByID(ctx context.Context, transacti
 
 func (service *TransactionTryoutService) FindByTryoutIDAndUserID(ctx context.Context, tryoutId string, userId string) (model.TransactionTryoutResponse, error) {
 	transactionTryout, err := service.TransactionTryoutRepository.FindByTryoutIdAndUserId(ctx, tryoutId, userId)
+	isDone := false
 	if err != nil {
 		return model.TransactionTryoutResponse{}, exception.NotFoundError{Message: err.Error()}
+	}
+
+	currentTime := time.Now()
+	duration := time.Duration(transactionTryout.Tryout.Duration) * time.Second
+	elapsedTime := currentTime.Sub(transactionTryout.StartTime)
+
+	if elapsedTime >= duration || !transactionTryout.EndTime.IsZero() {
+		isDone = true
 	}
 
 	return model.TransactionTryoutResponse{
@@ -112,6 +122,7 @@ func (service *TransactionTryoutService) FindByTryoutIDAndUserID(ctx context.Con
 		Status:              transactionTryout.Status,
 		StartTime:           transactionTryout.StartTime,
 		EndTime:             transactionTryout.EndTime,
+		IsDone:              isDone,
 	}, nil
 }
 
