@@ -27,11 +27,14 @@ func (repository *TransactionTryoutRepository) Create(ctx context.Context, trans
 		exception.PanicLogging(err)
 	}
 
-	return transactionTryout
+	return transactionTryoutResult
 }
 
 func (repository *TransactionTryoutRepository) Update(ctx context.Context, transactionTryout entity.TransactionTryout) entity.TransactionTryout {
 	err := repository.DB.WithContext(ctx).Where("transaction_tryout_id = ?", transactionTryout.TransactionTryoutID).Updates(&transactionTryout).Error
+	exception.PanicLogging(err)
+
+	err = repository.DB.WithContext(ctx).Where("transaction_tryout_id = ?", transactionTryout.TransactionTryoutID).First(&transactionTryout).Error
 	exception.PanicLogging(err)
 
 	return transactionTryout
@@ -60,9 +63,9 @@ func (repository *TransactionTryoutRepository) FindByTryoutIdAndUserId(ctx conte
 	query := repository.DB.WithContext(ctx)
 
 	query = query.Joins("JOIN tryouts AS t ON t.tryout_id = transaction_tryouts.tryout_id").
-		Where("tryout_id = ? AND user_id = ?", tryoutId, userId)
+		Where("transaction_tryouts.tryout_id = ? AND transaction_tryouts.user_id = ?", tryoutId, userId)
 
-	res := query.Order("created_at DESC").Preload("Tryout").Find(&transactionTryoutResult)
+	res := query.Order("created_at DESC").Preload("Tryout").First(&transactionTryoutResult)
 
 	if res.RowsAffected == 0 {
 		return entity.TransactionTryout{}, errors.New("transaction tryout Not Found")

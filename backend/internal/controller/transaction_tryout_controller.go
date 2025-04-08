@@ -106,10 +106,16 @@ func (controller TransactionTryoutController) UpdateToPaid(c *fiber.Ctx) error {
 		request.StartTime = time.Now()
 	}
 
+	if transactionTryout.EndTime.IsZero() && transactionTryout.IsDone == true {
+		request.EndTime = time.Now()
+	}
+
 	response, err := controller.TransactionTryoutService.Update(c.Context(), request, transactionTryout.TransactionTryoutID.String())
 	if err != nil {
 		return err
 	}
+
+	response, err = controller.TransactionTryoutService.FindByTryoutIDAndUserID(c.Context(), requestBody.TryoutID.String(), requestBody.UserID.String())
 
 	return c.Status(fiber.StatusOK).JSON(model.GeneralResponse{
 		Code:    200,
