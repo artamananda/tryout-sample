@@ -2274,6 +2274,9 @@ const docTemplate = `{
                 "grade": {
                     "type": "string"
                 },
+                "last_login": {
+                    "type": "string"
+                },
                 "name": {
                     "type": "string"
                 },
@@ -2315,7 +2318,7 @@ const docTemplate = `{
 
 // SwaggerInfo holds exported Swagger Info so clients can modify it
 var SwaggerInfo = &swag.Spec{
-	Version:          "0.1.2",
+	Version:          "0.1.3",
 	Host:             "tryout-sample.fly.dev",
 	BasePath:         "/v1/api",
 	Schemes:          []string{},
