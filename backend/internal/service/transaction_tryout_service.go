@@ -108,8 +108,8 @@ func (service *TransactionTryoutService) FindByTryoutIDAndUserID(ctx context.Con
 	}
 
 	currentTime := time.Now()
-	duration := time.Duration(transactionTryout.Tryout.Duration) * time.Second
-	elapsedTime := currentTime.Sub(transactionTryout.StartTime)
+	duration := transactionTryout.Tryout.Duration
+	elapsedTime := int(currentTime.Sub(transactionTryout.StartTime).Seconds())
 
 	if elapsedTime >= duration || !transactionTryout.EndTime.IsZero() {
 		isDone = true
@@ -123,6 +123,8 @@ func (service *TransactionTryoutService) FindByTryoutIDAndUserID(ctx context.Con
 		StartTime:           transactionTryout.StartTime,
 		EndTime:             transactionTryout.EndTime,
 		IsDone:              isDone,
+		CreatedAt:           transactionTryout.CreatedAt,
+		UpdatedAt:           transactionTryout.UpdatedAt,
 	}, nil
 }
 
