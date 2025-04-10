@@ -37,6 +37,7 @@ const Tryout = () => {
   const questionNumber = splitLink.pop();
   const [questionData, setQuestionData] = useState<QuestionProps[]>([]);
   const [initialTime, setInitialTime] = useState<Date | string>();
+  const [duration, setDuration] = useState<number>(300);
   const { data: transactionData } = useFetchList<TransactionTryoutProps>({
     endpoint: `transaction-tryout`,
     initialQuery: {
@@ -180,6 +181,9 @@ const Tryout = () => {
   useEffect(() => {
     if (transactionData?.[0]?.start_time) {
       setInitialTime(transactionData[0].start_time);
+      if (transactionData[0].duration) {
+        setDuration(transactionData[0].duration);
+      }
     }
   }, [transactionData]);
   return (
@@ -211,7 +215,7 @@ const Tryout = () => {
               : 'Literasi'}
           </div>
           {initialTime ? (
-            <Timer startTime={initialTime} duration={300} />
+            <Timer startTime={initialTime} duration={duration} />
           ) : (
             <div></div>
           )}
