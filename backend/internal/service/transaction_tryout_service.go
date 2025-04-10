@@ -108,7 +108,7 @@ func (service *TransactionTryoutService) FindByTryoutIDAndUserID(ctx context.Con
 	}
 
 	currentTime := time.Now()
-	duration := transactionTryout.Tryout.Duration
+	duration := transactionTryout.Tryout.Duration * 60
 	elapsedTime := int(currentTime.Sub(transactionTryout.StartTime).Seconds())
 
 	if elapsedTime >= duration || !transactionTryout.EndTime.IsZero() {
