@@ -107,12 +107,13 @@ func (service *TransactionTryoutService) FindByTryoutIDAndUserID(ctx context.Con
 		return model.TransactionTryoutResponse{}, exception.NotFoundError{Message: err.Error()}
 	}
 
-	currentTime := time.Now()
 	duration := transactionTryout.Tryout.Duration * 60
-	elapsedTime := int(currentTime.Sub(transactionTryout.StartTime).Seconds())
+	elapsedTime := int(time.Since(transactionTryout.StartTime).Seconds())
 
-	if elapsedTime >= duration || !transactionTryout.EndTime.IsZero() {
-		isDone = true
+	if !transactionTryout.StartTime.IsZero() {
+		if elapsedTime >= duration || !transactionTryout.EndTime.IsZero() {
+			isDone = true
+		}
 	}
 
 	return model.TransactionTryoutResponse{
