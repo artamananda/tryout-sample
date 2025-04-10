@@ -110,7 +110,7 @@ func (service *TransactionTryoutService) FindByTryoutIDAndUserID(ctx context.Con
 	endTime := transactionTryout.StartTime.Add(time.Duration(transactionTryout.Tryout.Duration) * time.Minute)
 
 	if !transactionTryout.StartTime.IsZero() {
-		if endTime.Before(time.Now().UTC().Add(time.Hour*7)) || !transactionTryout.EndTime.IsZero() {
+		if endTime.Before(time.Now().Add(time.Hour*7)) || !transactionTryout.EndTime.IsZero() {
 			isDone = true
 		}
 	}
