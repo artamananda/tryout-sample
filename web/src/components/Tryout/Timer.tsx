@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import dayjs from 'dayjs';
 
 type Props = {
@@ -7,6 +8,7 @@ type Props = {
 };
 
 const Timer = (props: Props) => {
+  const navigate = useNavigate();
   const startTime = dayjs(props.startTime);
   const initialTime = startTime
     .add(props.duration, 'minute')
@@ -25,6 +27,7 @@ const Timer = (props: Props) => {
   useEffect(() => {
     if (remainingTime < 0) {
       setRemainingTime(0);
+      navigate('/tryout');
     }
   }, [remainingTime]);
 
