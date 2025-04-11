@@ -28,14 +28,14 @@ const TryoutRoute = ({ children, loginPath }: any) => {
     if (!startTime) return false;
     const startDate = dayjs(startTime);
     const currentDate = new Date();
-    return startDate.isBefore(currentDate);
+    return startDate.isAfter(currentDate);
   };
 
   const isAfterEnd = (endTime?: string | Date) => {
     if (!endTime) return false;
     const endDate = dayjs(endTime);
     const currentDate = new Date();
-    return endDate.isAfter(currentDate);
+    return endDate.isBefore(currentDate);
   };
 
   React.useEffect(() => {
