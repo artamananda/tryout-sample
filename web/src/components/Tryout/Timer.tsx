@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import dayjs from 'dayjs';
+import { message } from 'antd';
 
 type Props = {
   startTime: Date | string;
@@ -26,8 +27,11 @@ const Timer = (props: Props) => {
 
   useEffect(() => {
     if (remainingTime < 0) {
-      setRemainingTime(0);
+      message.info(
+        'Waktu ujian sudah habis, terima kasih telah mengikuti ujian ini.'
+      );
       navigate('/tryout');
+      setRemainingTime(0);
     }
   }, [remainingTime]);
 
