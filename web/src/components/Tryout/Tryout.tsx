@@ -1,4 +1,4 @@
-import { Flex, Layout, Image, Button } from 'antd';
+import { Flex, Layout, Image, Button, Spin } from 'antd';
 import Option from './Option';
 import Question from './Question';
 import { Content, Footer, Header } from 'antd/es/layout/layout';
@@ -37,14 +37,15 @@ const Tryout = () => {
   const questionNumber = splitLink.pop();
   const [questionData, setQuestionData] = useState<QuestionProps[]>([]);
   const [initialTime, setInitialTime] = useState<Date | string>();
-  const [duration, setDuration] = useState<number>(300);
-  const { data: transactionData } = useFetchList<TransactionTryoutProps>({
-    endpoint: `transaction-tryout`,
-    initialQuery: {
-      tryoutId: tryoutId,
-      userId: auth()?.user_id
-    }
-  });
+  const [duration, setDuration] = useState<number>(195);
+  const { data: transactionData, isLoading } =
+    useFetchList<TransactionTryoutProps>({
+      endpoint: `transaction-tryout`,
+      initialQuery: {
+        tryoutId: tryoutId,
+        userId: auth()?.user_id
+      }
+    });
 
   const { data: questionDataFetch } = useFetchList<QuestionProps>({
     endpoint: 'question',
@@ -186,7 +187,11 @@ const Tryout = () => {
       }
     }
   }, [transactionData]);
-  return (
+  return isLoading ? (
+    <div style={{ textAlign: 'center', marginTop: '20%' }}>
+      <Spin />
+    </div>
+  ) : (
     <Flex gap="middle" wrap="wrap">
       <Layout
         style={{

@@ -10,7 +10,7 @@ const Timer = (props: Props) => {
   const startTime = dayjs(props.startTime);
   const initialTime = startTime
     .add(props.duration, 'minute')
-    .diff(dayjs().add(7, 'hour'), 'second');
+    .diff(dayjs(), 'second');
 
   const [remainingTime, setRemainingTime] = useState(initialTime);
 
