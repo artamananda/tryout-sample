@@ -1,3 +1,5 @@
+import { TryoutProps } from "./tryout.type";
+
 export interface TransactionTryoutProps {
   transaction_tryout_id: string;
   tryout_id: string;
@@ -7,7 +9,7 @@ export interface TransactionTryoutProps {
   end_time?: Date | string;
   token?: string;
   is_done?: boolean;
-  duration?: number;
+  tryout?: TryoutProps
   created_at?: Date | string;
   updated_at?: Date | string;
 }

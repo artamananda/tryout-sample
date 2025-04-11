@@ -28,14 +28,14 @@ type UpdateStatusTransactionTryoutRequest struct {
 }
 
 type TransactionTryoutResponse struct {
-	TransactionTryoutID uuid.UUID `json:"transaction_tryout_id"`
-	TryoutID            uuid.UUID `json:"tryout_id"`
-	UserID              uuid.UUID `json:"user_id"`
-	Status              string    `json:"status"`
-	StartTime           time.Time `json:"start_time"`
-	EndTime             time.Time `json:"end_time"`
-	IsDone              bool      `json:"is_done"`
-	Duration            int       `json:"duration"`
-	CreatedAt           time.Time `json:"created_at"`
-	UpdatedAt           time.Time `json:"updated_at"`
+	TransactionTryoutID uuid.UUID      `json:"transaction_tryout_id"`
+	TryoutID            uuid.UUID      `json:"tryout_id"`
+	Tryout              TryoutResponse `json:"tryout"`
+	UserID              uuid.UUID      `json:"user_id"`
+	Status              string         `json:"status"`
+	StartTime           time.Time      `json:"start_time"`
+	EndTime             time.Time      `json:"end_time"`
+	IsDone              bool           `json:"is_done"`
+	CreatedAt           time.Time      `json:"created_at"`
+	UpdatedAt           time.Time      `json:"updated_at"`
 }

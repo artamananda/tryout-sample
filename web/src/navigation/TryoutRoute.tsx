@@ -21,8 +21,26 @@ const TryoutRoute = ({ children, loginPath }: any) => {
       }
     });
 
+  const isBeforeStart = (startTime?: string | Date) => {
+    if (!startTime) return false;
+    const startDate = new Date(startTime);
+    const currentDate = new Date();
+    return startDate > currentDate;
+  };
+
+  const isExpired = (endTime?: string | Date) => {
+    if (!endTime) return false;
+    const endDate = new Date(endTime);
+    const currentDate = new Date();
+    return endDate < currentDate;
+  };
+
   React.useEffect(() => {
-    if (transactionData?.[0]?.is_done) {
+    if (
+      transactionData?.[0]?.is_done ||
+      isBeforeStart(transactionData?.[0]?.tryout?.start_time) ||
+      isExpired(transactionData?.[0]?.tryout?.end_time)
+    ) {
       setIsAuthenticated(false);
     }
   }, [transactionData]);

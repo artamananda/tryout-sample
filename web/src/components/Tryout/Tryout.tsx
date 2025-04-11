@@ -181,8 +181,8 @@ const Tryout = () => {
   useEffect(() => {
     if (transactionData?.[0]?.start_time) {
       setInitialTime(transactionData[0].start_time);
-      if (transactionData[0].duration) {
-        setDuration(transactionData[0].duration);
+      if (transactionData[0]?.tryout?.duration) {
+        setDuration(transactionData[0]?.tryout?.duration);
       }
     }
   }, [transactionData]);
@@ -214,7 +214,7 @@ const Tryout = () => {
               ? 'Penalaran Matematika'
               : 'Literasi'}
           </div>
-          {initialTime ? (
+          {initialTime && duration ? (
             <Timer startTime={initialTime} duration={duration} />
           ) : (
             <div></div>

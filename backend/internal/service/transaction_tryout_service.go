@@ -115,6 +115,17 @@ func (service *TransactionTryoutService) FindByTryoutIDAndUserID(ctx context.Con
 		}
 	}
 
+	tryoutRes := model.TryoutResponse{
+		TryoutID:    transactionTryout.Tryout.TryoutID,
+		Title:       transactionTryout.Tryout.Title,
+		Duration:    transactionTryout.Tryout.Duration,
+		StartTime:   transactionTryout.Tryout.StartTime,
+		EndTime:     transactionTryout.Tryout.EndTime,
+		IsPublished: transactionTryout.Tryout.IsPublished,
+		CreatedAt:   transactionTryout.Tryout.CreatedAt,
+		UpdatedAt:   transactionTryout.Tryout.UpdatedAt,
+	}
+
 	return model.TransactionTryoutResponse{
 		TransactionTryoutID: transactionTryout.TransactionTryoutID,
 		TryoutID:            transactionTryout.TryoutID,
@@ -123,7 +134,7 @@ func (service *TransactionTryoutService) FindByTryoutIDAndUserID(ctx context.Con
 		StartTime:           transactionTryout.StartTime,
 		EndTime:             transactionTryout.EndTime,
 		IsDone:              isDone,
-		Duration:            transactionTryout.Tryout.Duration,
+		Tryout:              tryoutRes,
 		CreatedAt:           transactionTryout.CreatedAt,
 		UpdatedAt:           transactionTryout.UpdatedAt,
 	}, nil
