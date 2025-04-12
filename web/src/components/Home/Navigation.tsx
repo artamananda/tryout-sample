@@ -1,6 +1,49 @@
+import { Dropdown, Button, MenuProps, message } from 'antd';
 import React from 'react';
+import { useSignOut, useAuthUser } from 'react-auth-kit';
+import { useNavigate } from 'react-router-dom';
+import {
+  DownOutlined,
+  PoweroffOutlined,
+  UserOutlined
+} from '@ant-design/icons';
 
 export const Navigation = (props: any) => {
+  const signOut = useSignOut();
+  const userAuth = useAuthUser();
+  const authName = userAuth() ? userAuth()?.name : null;
+  const navigate = useNavigate();
+
+  const items: MenuProps['items'] = [
+    {
+      key: '1',
+      label: (
+        <text
+          onClick={() => {
+            navigate('/dashboard');
+          }}
+        >
+          Dashboard
+        </text>
+      )
+    },
+    {
+      key: '2',
+      icon: <PoweroffOutlined style={{ color: 'red' }} />,
+      label: (
+        <text
+          onClick={() => {
+            signOut();
+            navigate('/');
+            message.success("You've been signed out");
+          }}
+          style={{ color: 'red' }}
+        >
+          Logout
+        </text>
+      )
+    }
+  ];
   return (
     <nav id="menu" className="navbar navbar-default navbar-fixed-top">
       <div className="container">
@@ -68,6 +111,26 @@ export const Navigation = (props: any) => {
               <a href="#contact" className="page-scroll">
                 Kontak
               </a>
+            </li>
+            <li>
+              {authName ? (
+                <a className="page-scroll">
+                  <Dropdown menu={{ items }} placement="bottomLeft">
+                    <div>
+                      <UserOutlined style={{ marginRight: 5 }} />
+                      {authName} <DownOutlined style={{ marginLeft: 10 }} />
+                    </div>
+                  </Dropdown>
+                </a>
+              ) : (
+                <a
+                  href="/login"
+                  className="page-scroll"
+                  style={{ color: 'black', fontWeight: 800 }}
+                >
+                  Login
+                </a>
+              )}
             </li>
           </ul>
         </div>
