@@ -84,18 +84,19 @@ const QuestionCard = ({ question, showModal }: PropTypes) => {
                 gap: "10px",
                 alignItems: "center",
                 fontStyle: "italic",
-                opacity: question.options.find(
-                  (quest) => quest === question.correct_answer
-                )
-                  ? 1
-                  : 0.2,
+                opacity:
+                  question.options.find(
+                    (quest) => quest === question.correct_answer
+                  ) || !question.is_options
+                    ? 1
+                    : 0.2,
               }}
             >
               <h3>Answer : </h3>
               <p>{`${question?.correct_answer} ${
                 question.options.findIndex(
                   (quest) => quest === question.correct_answer
-                ) < 0
+                ) < 0 && question.is_options
                   ? "(not found in options, need action)"
                   : ""
               }`}</p>
