@@ -11,21 +11,12 @@ import TryoutScreen from '../screens/Tryout';
 import RegisterScreen from '../screens/Auth/Register';
 import Batch5 from '../screens/Program/Batch5';
 import TryoutRoute from './TryoutRoute';
+import HomeScreen from '../screens/Home';
 
 const RootNavigator = () => {
   return (
     <Router>
       <Routes>
-        <Route
-          path="/"
-          element={
-            <PublicRoute>
-              <Suspense fallback={<Spin spinning={true} />}>
-                <LoginScreen />
-              </Suspense>
-            </PublicRoute>
-          }
-        />
         <Route
           path="/login"
           element={
@@ -57,6 +48,8 @@ const RootNavigator = () => {
           }
         />
         <Route path="*" element={<NotFoundScreen />} />
+
+        <Route path="/" element={<HomeScreen />} />
 
         <Route element={<AppLayout />}>
           <Route

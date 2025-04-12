@@ -15,6 +15,7 @@ import { UserAnswerProps } from '../../types/userAnswer';
 import { TransactionTryoutProps } from '../../types/transactionTryout';
 import FooterCopyright from '../Footer';
 import { finishTryout } from '../../api/tryout';
+import { EColor } from '../../constants/color';
 
 const { Text } = Typography;
 
@@ -26,7 +27,7 @@ const headerStyle: React.CSSProperties = {
   fontWeight: 'bold',
   fontSize: '1.4rem',
   padding: 25,
-  backgroundColor: '#04073B'
+  backgroundColor: EColor.PRIMARY
 };
 
 const Tryout = () => {
