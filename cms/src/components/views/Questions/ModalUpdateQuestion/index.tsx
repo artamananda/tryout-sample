@@ -86,8 +86,12 @@ const ModalUpdateQuestion = (props: PropTypes) => {
     "formula",
   ];
 
+  const opt = ["A", "B", "C", "D", "E"];
+
   const items: MenuProps["items"] = options.map((option, index) => ({
-    label: option,
+    label: `${opt[index]}. ${
+      option.length > 100 ? option.slice(0, 100) + "..." : option
+    }`,
     key: option,
   }));
 
@@ -469,8 +473,14 @@ const ModalUpdateQuestion = (props: PropTypes) => {
             </Form.Item>
             <Form.Item name="correct_answer" label={"Answer"} required>
               <Dropdown menu={menuProps}>
-                <Button>
-                  <Space>
+                <Button style={{ width: "100%" }}>
+                  <Space
+                    style={{
+                      width: "100%",
+                      flexDirection: "row",
+                      justifyContent: "space-between",
+                    }}
+                  >
                     <div
                       style={
                         options?.find((option) => option === answer)
