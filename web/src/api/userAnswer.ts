@@ -13,12 +13,9 @@ export const sendAnswer = async (data: {
       data
     );
     if (res) {
-      console.log('Saved');
     }
     return false;
-  } catch (err) {
-    console.log(err);
-  }
+  } catch (err) {}
 };
 
 export const putAnswer = async (
@@ -36,10 +33,7 @@ export const putAnswer = async (
       data
     );
     if (res) {
-      console.log('Updated');
     }
     return false;
-  } catch (err) {
-    console.log(err);
-  }
+  } catch (err) {}
 };

@@ -31,7 +31,6 @@ class QuillEditorImageUpload extends React.Component {
         // optional
         // add callback when a image have been chosen
         checkBeforeSend: (file, next) => {
-          console.log(file);
           next(file); // go back to component and send to the server
         },
       },

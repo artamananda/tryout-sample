@@ -53,7 +53,6 @@ const ModalConfirmDeleteQuestion = (props: PropTypes) => {
       }
     } catch (err) {
       message.error(getErrorMessage(err));
-      console.log(err);
     }
   };
 

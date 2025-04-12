@@ -45,11 +45,8 @@ const Batch5 = () => {
   const getProgramId = async () => {
     try {
       const res = await httpRequest.get('/program');
-      console.log(res.data.payload[0].program_id);
       return res.data.payload[0].program_id;
-    } catch (err: any) {
-      console.error('Failed to get program id');
-    }
+    } catch (err: any) {}
   };
 
   const imageUploadProps: UploadProps = {
@@ -58,9 +55,7 @@ const Batch5 = () => {
       try {
         setProfilePicture(file);
         onSuccess?.(file);
-      } catch (error) {
-        console.log('File upload failed', error);
-      }
+      } catch (error) {}
     }
   };
 

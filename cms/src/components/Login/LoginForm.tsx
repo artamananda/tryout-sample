@@ -6,9 +6,7 @@ import useAuthApp from "../../hooks/useAuthApp";
 const LoginForm = () => {
   const { isAuthLoading, doLogin } = useAuthApp();
 
-  const onFinishFailed = (errorInfo: any) => {
-    console.log("Failed:", errorInfo);
-  };
+  const onFinishFailed = (errorInfo: any) => {};
 
   return (
     <Form

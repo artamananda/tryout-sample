@@ -36,9 +36,7 @@ const RegisterForm = () => {
     );
   };
 
-  const onFinishFailed = (errorInfo: any) => {
-    console.log('Failed:', errorInfo);
-  };
+  const onFinishFailed = (errorInfo: any) => {};
 
   const handleResendOtp = async () => {
     const result = await doSendOtpEmail(data);

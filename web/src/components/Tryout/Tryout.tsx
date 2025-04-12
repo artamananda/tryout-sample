@@ -84,7 +84,6 @@ const Tryout = () => {
             ?.question_id,
         user_answer: answer
       };
-      console.log(data);
       if (answerIdx !== undefined && answerId) {
         await putAnswer(answerId, data);
       } else {
@@ -134,7 +133,6 @@ const Tryout = () => {
             ?.question_id,
         user_answer: answer
       };
-      console.log(data);
       if (answerIdx !== undefined && answerId) {
         await putAnswer(answerId, data);
       } else {
@@ -159,8 +157,6 @@ const Tryout = () => {
       return typeOrder.indexOf(a.type) - typeOrder.indexOf(b.type);
     });
 
-    console.log('sorted data', sortedQuestionDataFetch);
-
     setQuestionData(sortedQuestionDataFetch);
   }, [questionDataFetch]);
 
@@ -180,11 +176,9 @@ const Tryout = () => {
         );
         setAnswerId(answerData[answerIndex].user_answer_id);
         setAnswerIdx(optionIndex);
-        console.log('set to ', optionIndex);
       } else {
         setAnswerId(undefined);
         setAnswerIdx(undefined);
-        console.log('set to undefined');
       }
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
