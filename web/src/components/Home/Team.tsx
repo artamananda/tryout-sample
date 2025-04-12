@@ -21,6 +21,7 @@ export const Team = (props: { data: any[] }) => {
                     <div className="caption">
                       <h4>{d.name}</h4>
                       <p>{d.job}</p>
+                      <p>{d.university}</p>
                     </div>
                   </div>
                 </div>

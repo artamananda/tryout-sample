@@ -20,47 +20,47 @@
   },
   "Gallery": [
     {
-      "title": "Tryout bersama GenZakat Dompet Dhuafa",
-      "largeImage": "img/portfolio/01-large.png",
-      "smallImage": "img/portfolio/01-large.png"
+      "title": "Tryout UTBK bersama GenZakat Dompet Dhuafa",
+      "largeImage": "img/portfolio/01-large.jpg",
+      "smallImage": "img/portfolio/01-small.jpg"
     },
     {
-      "title": "Project Title",
+      "title": "Telisik di Obrolan Komunitas RRI PRO Palembang",
       "largeImage": "img/portfolio/02-large.jpg",
       "smallImage": "img/portfolio/02-small.jpg"
     },
     {
-      "title": "Project Title",
+      "title": "Telisik Beraspirasi bersama Ibu Amaliah Sobli, anggota DPD RI",
       "largeImage": "img/portfolio/03-large.jpg",
       "smallImage": "img/portfolio/03-small.jpg"
     },
     {
-      "title": "Project Title",
+      "title": "Telisik di Opini Jurnalis TVRI",
       "largeImage": "img/portfolio/04-large.jpg",
       "smallImage": "img/portfolio/04-small.jpg"
     },
     {
-      "title": "Project Title",
+      "title": "Telisik Berbagi",
       "largeImage": "img/portfolio/05-large.jpg",
       "smallImage": "img/portfolio/05-small.jpg"
     },
     {
-      "title": "Project Title",
+      "title": "Seminar Beasiswa YES Scholarship",
       "largeImage": "img/portfolio/06-large.jpg",
       "smallImage": "img/portfolio/06-small.jpg"
     },
     {
-      "title": "Project Title",
+      "title": "Sedekah Buku Gratis",
       "largeImage": "img/portfolio/07-large.jpg",
       "smallImage": "img/portfolio/07-small.jpg"
     },
     {
-      "title": "Project Title",
+      "title": "Brief Rutin Tutor Telisik",
       "largeImage": "img/portfolio/08-large.jpg",
       "smallImage": "img/portfolio/08-small.jpg"
     },
     {
-      "title": "Project Title",
+      "title": "Kelas Online Telisik",
       "largeImage": "img/portfolio/09-large.jpg",
       "smallImage": "img/portfolio/09-small.jpg"
     }
@@ -211,23 +211,105 @@
   "Team": [
     {
       "img": "img/team/01.jpg",
-      "name": "John Doe",
-      "job": "Director"
+      "name": "Eogenie Lakilaki",
+      "job": "Founder, Lead Mentor",
+      "university": "Universitas Sriwijaya"
     },
     {
       "img": "img/team/02.jpg",
-      "name": "Mike Doe",
-      "job": "Senior Designer"
+      "name": "Artamananda",
+      "job": "Co-Lead Mentor, Tech Lead",
+      "university": "Universitas Sriwijaya"
     },
     {
       "img": "img/team/03.jpg",
-      "name": "Jane Doe",
-      "job": "Senior Designer"
+      "name": "Annisa Fatihah Salsabila",
+      "job": "Mentor",
+      "university": "Universitas Sriwijaya"
     },
     {
       "img": "img/team/04.jpg",
-      "name": "Karen Doe",
-      "job": "Project Manager"
+      "name": "Nadia Dwitama",
+      "job": "Mentor",
+      "university": "Universitas Indonesia"
+    },
+    {
+      "img": "img/team/01.jpg",
+      "name": "Muhammad Dylan Pahlevi",
+      "job": "Mentor",
+      "university": "Institut Pertanian Bogor"
+    },
+    {
+      "img": "img/team/02.jpg",
+      "name": "Carin Amanda",
+      "job": "Mentor",
+      "university": "PKN STAN"
+    },
+    {
+      "img": "img/team/03.jpg",
+      "name": "Bima Bahiraq Pratama",
+      "job": "Mentor",
+      "university": "Universitas Brawijaya"
+    },
+    {
+      "img": "img/team/04.jpg",
+      "name": "Putri Ramadhani",
+      "job": "Mentor",
+      "university": "Universitas Sriwijaya"
+    },
+    {
+      "img": "img/team/04.jpg",
+      "name": "Dwiki Ariefandri",
+      "job": "Mentor",
+      "university": "Universitas Sriwijaya"
+    },
+    {
+      "img": "img/team/01.jpg",
+      "name": "Caroline Fitri Aurora",
+      "job": "Mentor",
+      "university": "Universitas Sriwijaya"
+    },
+    {
+      "img": "img/team/01.jpg",
+      "name": "Muhammad Fayyad Abdillah",
+      "job": "Mentor",
+      "university": "Universitas Sriwijaya"
+    },
+    {
+      "img": "img/team/02.jpg",
+      "name": "Zelka Dapala",
+      "job": "Mentor",
+      "university": "Universitas Sriwijaya"
+    },
+    {
+      "img": "img/team/03.jpg",
+      "name": "Jessica Amanda",
+      "job": "Mentor",
+      "university": "Universitas Sriwijaya"
+    },
+    {
+      "img": "img/team/04.jpg",
+      "name": "Panca Wijaya",
+      "job": "Mentor",
+      "university": "Universitas Sriwijaya"
+    },
+    {
+      "img": "img/team/04.jpg",
+      "name": "Anisha",
+      "job": "Mentor",
+      "university": "Universitas Sriwijaya"
+    },
+    {
+      "img": "img/team/01.jpg",
+      "name": "Mafazah",
+      "job": "Mentor",
+      "university": "Universitas Sriwijaya"
+    },
+    {
+      "img": "img/team/01.jpg",
+      "name": "Gres Sela Aria Anugra",
+      "job": "Mentor",
+      "university": "Universitas Sriwijaya"
     }
   ],
   "Contact": {
