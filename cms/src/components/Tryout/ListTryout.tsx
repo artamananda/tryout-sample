@@ -140,16 +140,19 @@ const ListTryout = () => {
       dataIndex: "action",
       render: (_, record) => (
         <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-          <EditFilled
+          <Link
             onClick={() => setShowModalUpdate({ status: true, data: record })}
-            style={{ color: "blue" }}
-          />
-          <DeleteOutlined
+          >
+            Edit
+          </Link>
+          <Link
             onClick={() =>
               setShowModalDelete({ status: true, tryoutId: record.tryout_id })
             }
             style={{ color: "red" }}
-          />
+          >
+            Delete
+          </Link>
         </div>
       ),
     },

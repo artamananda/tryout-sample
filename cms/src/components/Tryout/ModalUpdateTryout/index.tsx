@@ -86,7 +86,15 @@ const ModalUpdateTryout = (props: PropTypes) => {
       </Title>
       <Form
         name="updateTryout"
-        onFinish={handleUpdate}
+        onFinish={() => {
+          Modal.confirm({
+            title: "Are you sure?",
+            content: `Are you sure you want to update this tryout?`,
+            onOk: () => {
+              handleUpdate();
+            },
+          });
+        }}
         onFinishFailed={onFinishFailed}
         layout="vertical"
         form={updateForm}
