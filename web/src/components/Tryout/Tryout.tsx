@@ -1,4 +1,4 @@
-import { Flex, Layout, Image, Button, Spin } from 'antd';
+import { Flex, Layout, Image, Button, Spin, Modal } from 'antd';
 import Option from './Option';
 import Question from './Question';
 import { Content, Footer, Header } from 'antd/es/layout/layout';
@@ -14,6 +14,7 @@ import { useAuthUser } from 'react-auth-kit';
 import { UserAnswerProps } from '../../types/userAnswer';
 import { TransactionTryoutProps } from '../../types/transactionTryout';
 import FooterCopyright from '../Footer';
+import { finishTryout } from '../../api/tryout';
 
 const { Text } = Typography;
 
@@ -105,7 +106,17 @@ const Tryout = () => {
     } else if (questionType === 'ing' && Number(questionNumber) === 20) {
       navigate(`/tryout/${tryoutId}/mtk/1`);
     } else if (questionType === 'mtk' && Number(questionNumber) === 20) {
-      navigate(`/tryout`);
+      Modal.confirm({
+        title: 'Menyelesaikan Tryout',
+        content: 'Apakah anda yakin sudah menyelesaikan tryout ini?',
+        onOk: () => {
+          finishTryout({
+            user_id: auth()?.user_id,
+            tryout_id: tryoutId
+          });
+          navigate(`/tryout`);
+        }
+      });
     } else {
       navigate(
         `/tryout/${tryoutId}/${questionType}/${Number(questionNumber) + 1}`

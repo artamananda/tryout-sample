@@ -7,14 +7,10 @@ import {
   Button,
   message,
   Input,
+  Modal,
 } from "antd";
 import type { TableProps } from "antd";
-import {
-  CopyOutlined,
-  DeleteOutlined,
-  EditFilled,
-  PlusOutlined,
-} from "@ant-design/icons";
+import { DeleteOutlined, EditFilled, PlusOutlined } from "@ant-design/icons";
 import { useNavigate } from "react-router-dom";
 import useFetchList from "../../hooks/useFetchList";
 import { TryoutProps } from "../../types/tryout.type";
@@ -28,8 +24,6 @@ import ModalUpdateTryout from "./ModalUpdateTryout";
 import ModalDeleteTryout from "./ModalDeleteTryout";
 import { apiUpdateTryout } from "../../api/tryout";
 type RangePickerProps = GetProps<typeof DatePicker.RangePicker>;
-
-const { Title } = Typography;
 
 const { Text, Link } = Typography;
 
@@ -112,7 +106,6 @@ const ListTryout = () => {
           defaultChecked={is_published}
           onChange={(checked) => {
             handlePublished(tryout_id, checked);
-            console.log("Published: ", checked);
           }}
         />
       ),
@@ -124,18 +117,20 @@ const ListTryout = () => {
       render: (_, record) => (
         <div>
           <Input.Password
-            disabled={!record.token}
+            readOnly
             style={{ width: 100 }}
             value={record.token}
           />
-          <CopyOutlined
+          <Link
             onClick={() => {
               if (copy(record.token)) {
                 message.success("Token has been copied!");
               }
             }}
-            style={{ marginLeft: 10, color: "grey" }}
-          />
+            style={{ marginLeft: 10 }}
+          >
+            Copy
+          </Link>
         </div>
       ),
     },
@@ -145,16 +140,19 @@ const ListTryout = () => {
       dataIndex: "action",
       render: (_, record) => (
         <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-          <EditFilled
+          <Link
             onClick={() => setShowModalUpdate({ status: true, data: record })}
-            style={{ color: "blue" }}
-          />
-          <DeleteOutlined
+          >
+            Edit
+          </Link>
+          <Link
             onClick={() =>
               setShowModalDelete({ status: true, tryoutId: record.tryout_id })
             }
             style={{ color: "red" }}
-          />
+          >
+            Delete
+          </Link>
         </div>
       ),
     },

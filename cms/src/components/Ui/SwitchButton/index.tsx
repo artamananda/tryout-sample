@@ -1,4 +1,4 @@
-import { Switch } from 'antd';
+import { Modal, Switch } from "antd";
 
 type PropTypes = {
   onChange: (is_true: boolean) => void;
@@ -8,13 +8,17 @@ type PropTypes = {
 const SwitchButton = (props: PropTypes) => {
   const { onChange, defaultChecked } = props;
 
-  console.log(defaultChecked);
-
   return (
-    <div style={{ height: '25px' }}>
+    <div style={{ height: "25px" }}>
       <Switch
-        defaultChecked={defaultChecked}
-        onChange={onChange}
+        checked={defaultChecked}
+        onChange={(val) =>
+          Modal.confirm({
+            title: "Are you sure?",
+            content: `Are you sure you want to change the status?`,
+            onOk: () => onChange(val),
+          })
+        }
       />
     </div>
   );

@@ -52,7 +52,15 @@ const ModalCreateTryout = (props: PropTypes) => {
       </Title>
       <Form
         name="createTryout"
-        onFinish={handleCreate}
+        onFinish={(values) => {
+          Modal.confirm({
+            title: "Are you sure?",
+            content: `Are you sure you want to create this tryout?`,
+            onOk: () => {
+              handleCreate(values);
+            },
+          });
+        }}
         onFinishFailed={onFinishFailed}
         initialValues={{ is_published: false }}
         layout="vertical"
