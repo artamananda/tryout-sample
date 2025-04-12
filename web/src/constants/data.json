@@ -1,0 +1,343 @@
+{
+  "Header": {
+    "title": "TERAS BELAJAR ASIK (TELISIK)",
+    "paragraph": "Platform belajar online gratis untuk persiapan ujian masuk perguruan tinggi."
+  },
+  "About": {
+    "paragraph": "TELISIK merupakan kelas belajar GRATIS yang berdiri pada 21 Mei 2021 di Kabupaten Lahat oleh Eogenie Lakilaki, Pemuda Berprestasi Sumatera Selatan, dan dikembangkan bersama Artamananda, seorang pengembang perangkat lunak lulusan Universitas Sriwijaya. TELISIK telah menghantarkan puluhan alumni pelajar dari Provinsi Sumatera Selatan ke Perguruan Tinggi Negeri. TELISIK hadir sebagai solusi untuk mengatasi hambatan ini dengan menyediakan kelas belajar secara gratis, memfasilitasi pembelajaran yang berkualitas, dan memberikan bimbingan kepada para pelajar yang berasal dari berbagai latar belakang di Sumatera Selatan.",
+    "Why": [
+      "Gratis",
+      "Tryout online gratis",
+      "Kelas mentoring beasiswa",
+      "Program sedekah buku gratis"
+    ],
+    "Why2": [
+      "Dapat diakses kapan saja",
+      "Konsultasi online",
+      "Menjangkau seluruh Indonesia",
+      "Tutor dari Universitas ternama"
+    ]
+  },
+  "Gallery": [
+    {
+      "title": "Tryout UTBK bersama GenZakat Dompet Dhuafa",
+      "largeImage": "img/portfolio/01-large.jpg",
+      "smallImage": "img/portfolio/01-small.jpg"
+    },
+    {
+      "title": "Telisik di Obrolan Komunitas RRI PRO Palembang",
+      "largeImage": "img/portfolio/02-large.jpg",
+      "smallImage": "img/portfolio/02-small.jpg"
+    },
+    {
+      "title": "Telisik Beraspirasi bersama Ibu Amaliah Sobli, anggota DPD RI",
+      "largeImage": "img/portfolio/03-large.jpg",
+      "smallImage": "img/portfolio/03-small.jpg"
+    },
+    {
+      "title": "Telisik di Opini Jurnalis TVRI",
+      "largeImage": "img/portfolio/04-large.jpg",
+      "smallImage": "img/portfolio/04-small.jpg"
+    },
+    {
+      "title": "Telisik Berbagi",
+      "largeImage": "img/portfolio/05-large.jpg",
+      "smallImage": "img/portfolio/05-small.jpg"
+    },
+    {
+      "title": "Seminar Beasiswa YES Scholarship",
+      "largeImage": "img/portfolio/06-large.jpg",
+      "smallImage": "img/portfolio/06-small.jpg"
+    },
+    {
+      "title": "Sedekah Buku Gratis",
+      "largeImage": "img/portfolio/07-large.jpg",
+      "smallImage": "img/portfolio/07-small.jpg"
+    },
+    {
+      "title": "Brief Rutin Tutor Telisik",
+      "largeImage": "img/portfolio/08-large.jpg",
+      "smallImage": "img/portfolio/08-small.jpg"
+    },
+    {
+      "title": "Kelas Online Telisik",
+      "largeImage": "img/portfolio/09-large.jpg",
+      "smallImage": "img/portfolio/09-small.jpg"
+    }
+  ],
+  "Services": [
+    {
+      "icon": "fa fa-file-text-o",
+      "name": "Tryout & Konsultasi Online",
+      "text": "Tryout online gratis untuk persiapan ujian masuk perguruan tinggi."
+    },
+    {
+      "icon": "fa fa-group",
+      "name": "Grup Belajar",
+      "text": "Grup belajar online untuk memfasilitasi diskusi dan kolaborasi antar peserta."
+    },
+    {
+      "icon": "fa fa-pencil-square-o",
+      "name": "Bimbingan Persiapan UTBK",
+      "text": "Bimbingan persiapan UTBK untuk membantu peserta mempersiapkan ujian dengan baik."
+    },
+    {
+      "icon": "fa fa-graduation-cap",
+      "name": "Bimbingan Beasiswa",
+      "text": "Bimbingan beasiswa untuk membantu peserta mendapatkan informasi dan akses ke program beasiswa."
+    },
+    {
+      "icon": "fa fa-book",
+      "name": "Sedekah Buku",
+      "text": "Program sedekah buku gratis untuk membantu peserta mendapatkan akses ke buku-buku pelajaran."
+    },
+    {
+      "icon": "fa fa-video-camera",
+      "name": "Webinar & Diskusi",
+      "text": "Webinar dan diskusi online untuk memperluas wawasan peserta tentang berbagai topik."
+    }
+  ],
+  "Testimonials": [
+    {
+      "img": "img/testimonials/09.png",
+      "text": "Belajar di Telisik bener-bener senyaman itu, mulai dari cara kakak tutorny memberi penjelasan mengenai pembelajaran hingga  motivasi untuk kami. Terima kasih telisik sudah menjadi temen belajarku semoga kedepannya telisik makin bersinar.",
+      "name": "Jovita Leticia",
+      "subtext": "Lulus di S1 Pendidikan Kedokteran, Universitas Sriwijaya"
+    },
+    {
+      "img": "img/testimonials/01.png",
+      "text": "Walaupun dengan sistem pembelajaran secara daring, pembelajaran yang diberikan sangat mudah dimengerti karena cara penyampaian materi yang baik dan aktif.",
+      "name": "Agnis Dianatul Maula",
+      "subtext": "Lulus di S1 Peternakan, Universitas Brawijaya"
+    },
+    {
+      "img": "img/testimonials/07.png",
+      "text": "Terima kasih telisik sudah menjadi tempat bagi saya untuk memahami dan mempelajari materi-materi untuk UTBK, disini sayaa banyak belajar dengann baikk dan menyenangkan ditambah dengan para kakak-kakak pengajar yang sangat baik dan sabar membimbing saya dan teman-teman, bangga bisa menjadi bagian dari telisik",
+      "name": "Mahdevi Kia",
+      "subtext": "Lulus di D4 Akuntansi, Institut Pertanian Bogor"
+    },
+    {
+      "img": "img/testimonials/04.png",
+      "text": "Sangat baik. Selalu ada kelas pembelajaran online. Terima kasih telisik.",
+      "name": "Auliara Lutfisya Zakiyyah",
+      "subtext": "Lulus di S1 Sains Aktuaria, Institut Teknologi Sumatera"
+    },
+    {
+      "img": "img/testimonials/02.png",
+      "text": "Selama mengikuti kelas tutor ini, saya mendapatkan support dari tutor yang luar biasa, karena disaat kita sudah merasa down merekalah yang membangkitkan kita untuk lebih semangat dan giat dalam mengikuti UTBK",
+      "name": "Muhammad Rizky",
+      "subtext": "Lulus di S1 Pendidikan Seni Musik, Universitas Negeri Yogyakarta"
+    },
+    {
+      "img": "img/testimonials/03.png",
+      "text": "Penjelasan mudah dipahami, dapat cara-cara cepat dalam mengerjakan soal sehingga lebih efisien dalam mengerjakan soal serta diberi tips-tips yang sangat berguna untuk pelaksanaan UTBK. Pemateri juga memberikan motivasi yang bisa membakar semangat.",
+      "name": "M. Hafizh Pratama",
+      "subtext": "Lulus di D3 Teknik Sipil, Politeknik Negeri Sriwijaya"
+    },
+    {
+      "img": "img/testimonials/05.png",
+      "text": "Alhamdulillah bersyukur dan senang bisa belajar bareng di Telisik bersama tutor yang Masya Allah keren banget. Penjelasan materinya asik dan juga mudah di mengerti sehingga membuat temen-temen menjadi aktif selama proses pembelajaran berlangsung. Jazakumullah Khairan Kasitran buat semua tutor.",
+      "name": "Imelda Putri Zulkarnain",
+      "subtext": "Lulus di S1 Sosiologi, Universitas Sriwijaya"
+    },
+    {
+      "img": "img/testimonials/06.png",
+      "text": "Tidak ada perjuangan yang sia-sia, untuk kalian terus lah berusaha, setiap orang mempunyai proses yang berbeda-beda. Terima kasih untuk Telisik teruslah menjadi yang terbaik",
+      "name": "Badai Pangestu",
+      "subtext": "Lulus di S1 Psikologi Islam, UIN Raden Intan Lampung"
+    },
+    {
+      "img": "img/testimonials/08.png",
+      "text": "Seneng sekali bisa menjadi bagian dari Telisik 2024. Banyak sekali pelajaran dan manfaat yang didapatkan. Mulai dari pembelajarannya yang unik dan tidak cepat bikin bosan. Pokoknya terima kasih banyak buat kakak-kakak semua yang sudah membuat program yang sangat bermanfaat ini. Semoga kedepannya program ini dapat membantu orang-orang yang membutuhkan lebih banyak lagi.",
+      "name": "Naufal Ihsan A Imaduddin",
+      "subtext": "Lulus di S1 Teknik Lingkungan, Universitas Lampung"
+    },
+    {
+      "img": "img/testimonials/13.png",
+      "text": "Seru polll. TELISIK bukan skedar tempat blajar bagii akuu. Melainkan tempat bisa bertukar cerita. Akuu sngg bgt pas tau ada TELISIK, mau ngebantu pelajar-pelajar Indonesia menggapai mimpinya. Thanks to TELISIK",
+      "name": "Nyayu Nur Amalia",
+      "subtext": "Lulus di S1 Sistem Informasi, UPN Veteran Jakarta"
+    },
+    {
+      "img": "img/testimonials/11.png",
+      "text": "Alhamdulillah dan terimaksih saya ucapkan kepada kakak kakak mentor dan teman teman di Telisik yang membuat Telisik menjadi forum belajar yang asik. Dari Telisik saya belajar bahwa forum belajar yang efektif bukan berdasarkan harganya yang mahal, tetapi forum belajar yang ditekuni.",
+      "name": "Fitri Mutiara Sari",
+      "subtext": "Lulus di S1 Akuntansi, Politeknik Negeri Padang"
+    },
+    {
+      "img": "img/testimonials/10.png",
+      "text": "Terima kasih untuk para tutor telisik yang sudah membantu saya dalam mengembangkan materi belajar dan mempersiapkan mental untuk menghadapi ujian. Selain dibimbing oleh kakak-kakak tutor, saya juga mendapatkan teman-teman yang sangat kompetitif sehingga memicu semangat saya untuk belajar lebih giat lagi. Jangan ragu buat join bimbel telisik, segera join untuk yang akan datang ya.",
+      "name": "Shafa Athiya Novila",
+      "subtext": "Lulus di S1 Administrasi Publik, Universitas Sriwijaya"
+    },
+    {
+      "img": "img/testimonials/17.png",
+      "text": "Telisik sangat kerenn,disamping pembelajaran nya yg mudah d mengerti kakak pembimbing nya juga tidak kalah keren dan aktif,semoga kedepannya telisik semakin maju dan sukses untuk membantu para pejuang PTN",
+      "name": "Ajeng Tri Agustina",
+      "subtext": "Lulus di S1 Kimia, Universitas Sriwijaya"
+    },
+    {
+      "img": "img/testimonials/15.png",
+      "text": "Mentornya terbaik, terimakasih kakak-kakak TELISIK semuanya, semoga sukses selalu",
+      "name": "Nayla Salsabila",
+      "subtext": "Lulus di S1 Teknik Pertambangan, Universitas Sriwijaya"
+    },
+    {
+      "img": "img/testimonials/12.png",
+      "text": "Alhamdulillah aku lolos di prodi impian. terimakasih kakak tutor TELISIK sudah membantu aku dalam belajar utbk. yang awalnya males tapi setelah ketemu dgn TELISIK aku malah tergerak untuk belajar. TELISIK bukan cuma belajar tapi sharing juga. semoga kedepannya TELISIK terus berkembang dan sukses selalu ya!",
+      "name": "Dea Dayu Frisila",
+      "subtext": "Lulus di S1 Ilmu Komunikasi, Universitas Bengkulu"
+    },
+    {
+      "img": "img/testimonials/16.png",
+      "text": "Selalu sukses berkarya, bangga sama telisik",
+      "name": "Arijal Saputra",
+      "subtext": "Lulus di S1 Akuntansi, Universitas Bangka Belitung"
+    },
+
+    {
+      "img": "img/testimonials/14.png",
+      "text": "Menjadi bagian dari TELISIK merupakan hal yang mungkin tidak semua orang bisa. kesan ku terhadap TELISIK disini aku belajar banyak hal mulai dari jiwa yang harus terus bersyukur, tetap istiqamah dan jangan patah semangat untuk meraih cita-cita, TELISIK merupakan bagian dari perjalanan meraih mimpiku tahun ini dimana aku bisa dibilang sudah berkali-kali ditolak PTN impian. dengan rasa semangat dan dibekali rasa syukur aku terus berlatih dan meraih hal tersebut dan dititik terakhir masa-masa seleksi mandiri berbagai PTN. yes i did!! semua hal itu aku syukuri karena mungkin aku ga dapat ptn impian karena bukan aku yang gabisa tapi waktunya yang belum tepat.",
+      "name": "Hariansyah",
+      "subtext": "Lulus di S1 Ilmu Aktuaria, Universitas Negeri Padang"
+    },
+    {
+      "img": "img/testimonials/18.png",
+      "text": "Kelasnya asik banget dan mudah banget buat dimengerti, belajarnya jadi lebih asik karena kakak-kakaknya selalu responsif. Untuk kedepannya semangat terus buat temen-temen yang masih berjuang di UTBK, aku yakin banget kalian pasti lolos aamiin... SEMANGAT YA! MENYALA ABANGKUH!",
+      "name": "Lidya Rizki Amalia",
+      "subtext": "Lulus di S1 Biologi, UIN Raden Fatah Palembang"
+    }
+  ],
+  "Team": [
+    {
+      "img": "img/team/eo.jpg",
+      "name": "Eogenie Lakilaki",
+      "job": "Founder, Lead Mentor",
+      "university": "Universitas Sriwijaya"
+    },
+    {
+      "img": "img/team/arta.jpg",
+      "name": "Artamananda",
+      "job": "Co-Lead Mentor, Tech Lead",
+      "university": "Universitas Sriwijaya"
+    },
+    {
+      "img": "img/team/annisa.jpg",
+      "name": "Annisa Fatihah Salsabila",
+      "job": "Mentor",
+      "university": "Universitas Sriwijaya"
+    },
+    {
+      "img": "img/team/nadia.jpg",
+      "name": "Nadia Dwitama",
+      "job": "Mentor",
+      "university": "Universitas Indonesia"
+    },
+    {
+      "img": "img/team/dylan.jpg",
+      "name": "Muhammad Dylan Pahlevi",
+      "job": "Mentor",
+      "university": "Institut Pertanian Bogor"
+    },
+    {
+      "img": "img/team/carin.jpg",
+      "name": "Carin Amanda",
+      "job": "Mentor",
+      "university": "PKN STAN"
+    },
+    {
+      "img": "img/team/bima.jpg",
+      "name": "Bima Bahiraq Pratama",
+      "job": "Mentor",
+      "university": "Universitas Brawijaya"
+    },
+    {
+      "img": "img/team/putri.jpg",
+      "name": "Putri Ramadhani",
+      "job": "Mentor",
+      "university": "Universitas Sriwijaya"
+    },
+    {
+      "img": "img/team/dwiki.jpg",
+      "name": "Dwiki Ariefandri",
+      "job": "Mentor",
+      "university": "Universitas Sriwijaya"
+    },
+    {
+      "img": "img/team/caroline.jpg",
+      "name": "Caroline Fitri Aurora",
+      "job": "Mentor",
+      "university": "Universitas Sriwijaya"
+    },
+    {
+      "img": "img/team/fayyad.jpg",
+      "name": "Muhammad Fayyad Abdillah",
+      "job": "Mentor",
+      "university": "Universitas Sriwijaya"
+    },
+    {
+      "img": "img/team/zelka.jpg",
+      "name": "Zelka Dapala",
+      "job": "Mentor",
+      "university": "Universitas Sriwijaya"
+    },
+    {
+      "img": "img/team/jessica.jpg",
+      "name": "Jessica Amanda",
+      "job": "Mentor",
+      "university": "Universitas Sriwijaya"
+    },
+    {
+      "img": "img/team/panca.jpg",
+      "name": "Panca Wijaya",
+      "job": "Mentor",
+      "university": "Universitas Sriwijaya"
+    },
+    {
+      "img": "img/team/nisha.jpg",
+      "name": "Anisha",
+      "job": "Mentor",
+      "university": "Universitas Sriwijaya"
+    },
+    {
+      "img": "img/team/mafazah.jpg",
+      "name": "Mafazah",
+      "job": "Mentor",
+      "university": "Universitas Sriwijaya"
+    },
+    {
+      "img": "img/team/gres.jpg",
+      "name": "Gres Sela Aria Anugra",
+      "job": "Mentor",
+      "university": "Universitas Sriwijaya"
+    }
+  ],
+  "Contact": {
+    "address": "Lahat",
+    "phone": "+62 821-7704-4010 (Eogenie)",
+    "email": "contact@terasbelajarasik.web.id",
+    "instagram": "@telisik.go"
+  },
+  "Features": [
+    {
+      "icon": "fa fa-file-text-o",
+      "title": "Tryout & Konsultasi Online",
+      "text": "Tryout online gratis untuk persiapan ujian masuk perguruan tinggi."
+    },
+    {
+      "icon": "fa fa-group",
+      "title": "Grup Belajar",
+      "text": "Grup belajar online untuk memfasilitasi diskusi dan kolaborasi antar peserta."
+    },
+    {
+      "icon": "fa fa-pencil-square-o",
+      "title": "Bimbingan Persiapan UTBK",
+      "text": "Bimbingan persiapan UTBK untuk membantu peserta mempersiapkan ujian dengan baik."
+    },
+    {
+      "icon": "fa fa-graduation-cap",
+      "title": "Bimbingan Beasiswa",
+      "text": "Bimbingan beasiswa untuk membantu peserta mendapatkan informasi dan akses ke program beasiswa."
+    }
+  ]
+}
