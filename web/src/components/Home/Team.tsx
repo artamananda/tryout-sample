@@ -5,10 +5,13 @@ export const Team = (props: { data: any[] }) => {
     <div id="team" className="text-center">
       <div className="container">
         <div className="col-md-8 col-md-offset-2 section-title">
-          <h2>Meet the Team</h2>
+          <h2>TIM Telisik</h2>
           <p>
-            Lorem ipsum dolor sit amet, consectetur adipiscing elit duis sed
-            dapibus leonec.
+            Berikut adalah tim yang terlibat dalam pengembangan Telisik. Mereka
+            adalah insan yang peduli terhadap kemajuan teknologi dan pendidikan
+            di Indonesia. Dengan latar belakang yang beragam, mereka bersatu
+            untuk menciptakan platform yang bermanfaat bagi masyarakat. Mari
+            kita kenali mereka lebih dekat!
           </p>
         </div>
         <div id="row">
