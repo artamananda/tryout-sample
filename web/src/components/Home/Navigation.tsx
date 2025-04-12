@@ -9,6 +9,7 @@ import {
 } from '@ant-design/icons';
 
 export const Navigation = (props: any) => {
+  const [isNavOpen, setIsNavOpen] = React.useState(false);
   const signOut = useSignOut();
   const userAuth = useAuthUser();
   const authName = userAuth() ? userAuth()?.name : null;
@@ -44,6 +45,10 @@ export const Navigation = (props: any) => {
       )
     }
   ];
+
+  const toggleNavbar = () => {
+    setIsNavOpen(!isNavOpen);
+  };
   return (
     <nav id="menu" className="navbar navbar-default navbar-fixed-top">
       <div className="container">
@@ -53,6 +58,7 @@ export const Navigation = (props: any) => {
             className="navbar-toggle collapsed"
             data-toggle="collapse"
             data-target="#bs-example-navbar-collapse-1"
+            onClick={toggleNavbar}
           >
             {' '}
             <span className="sr-only">Toggle navigation</span>{' '}
@@ -60,20 +66,19 @@ export const Navigation = (props: any) => {
             <span className="icon-bar"></span>{' '}
             <span className="icon-bar"></span>{' '}
           </button>
-          {/* <a className="navbar-brand page-scroll" href="#page-top">
-            TELISIK WEB.
-          </a>{' '} */}
-          <img
-            src={process.env.PUBLIC_URL + '/img/logo.png'}
-            style={{
-              height: 50
-            }}
-            alt={'logo'}
-          />
+          <a className=" page-scroll" href="#page-top">
+            <img
+              src={process.env.PUBLIC_URL + '/img/logo.png'}
+              style={{
+                height: 50
+              }}
+              alt={'logo'}
+            />
+          </a>
         </div>
 
         <div
-          className="collapse navbar-collapse"
+          className={`navbar-collapse ${isNavOpen ? 'in' : 'collapse'}`}
           id="bs-example-navbar-collapse-1"
         >
           <ul className="nav navbar-nav navbar-right">
