@@ -1,0 +1,1480 @@
+basePath: /v1/api
+definitions:
+  model.CheckByEmailRequest:
+    properties:
+      email:
+        type: string
+    required:
+    - email
+    type: object
+  model.CreateProgramRequest:
+    properties:
+      close_registration:
+        type: string
+      description:
+        type: string
+      end_time:
+        type: string
+      is_published:
+        type: boolean
+      max_participants:
+        type: integer
+      name:
+        type: string
+      open_registration:
+        type: string
+      picture_url:
+        type: string
+      start_time:
+        type: string
+    type: object
+  model.CreateQuestionRequest:
+    properties:
+      correct_answer:
+        type: string
+      image_url:
+        type: string
+      is_options:
+        type: boolean
+      local_id:
+        type: integer
+      options:
+        items:
+          type: string
+        type: array
+      points:
+        type: integer
+      text:
+        type: string
+      type:
+        type: string
+    required:
+    - correct_answer
+    - text
+    type: object
+  model.CreateTransactionProgramRequest:
+    properties:
+      motivation:
+        type: string
+      program_id:
+        type: string
+      status:
+        type: string
+      user_id:
+        type: string
+    type: object
+  model.CreateTransactionTryoutRequest:
+    properties:
+      tryout_id:
+        type: string
+      user_id:
+        type: string
+    type: object
+  model.CreateTryoutRequest:
+    properties:
+      duration:
+        minimum: 1
+        type: integer
+      end_time:
+        type: string
+      is_published:
+        type: boolean
+      start_time:
+        type: string
+      title:
+        type: string
+    required:
+    - duration
+    - end_time
+    - is_published
+    - start_time
+    - title
+    type: object
+  model.CreateUserAnswerRequest:
+    properties:
+      question_id:
+        type: string
+      tryout_id:
+        type: string
+      user_answer:
+        type: string
+      user_id:
+        type: string
+    type: object
+  model.CreateUserOtpRequest:
+    properties:
+      email:
+        type: string
+      name:
+        type: string
+      username:
+        type: string
+    type: object
+  model.GeneralResponse:
+    properties:
+      code:
+        type: integer
+      message:
+        type: string
+      payload: {}
+    type: object
+  model.LoginRequest:
+    properties:
+      email:
+        type: string
+      password:
+        type: string
+    required:
+    - email
+    - password
+    type: object
+  model.RegisterRequest:
+    properties:
+      email:
+        type: string
+      grade:
+        type: string
+      name:
+        type: string
+      nisn:
+        type: string
+      password:
+        type: string
+      picture_url:
+        type: string
+      province:
+        type: string
+      regency:
+        type: string
+      role:
+        type: string
+      school:
+        type: string
+      username:
+        type: string
+    required:
+    - email
+    - name
+    - password
+    - role
+    - username
+    type: object
+  model.SelfRegisterRequest:
+    properties:
+      email:
+        type: string
+      grade:
+        type: string
+      name:
+        type: string
+      nisn:
+        type: string
+      otp:
+        type: string
+      password:
+        type: string
+      picture_url:
+        type: string
+      province:
+        type: string
+      regency:
+        type: string
+      school:
+        type: string
+      username:
+        type: string
+    required:
+    - email
+    - name
+    - otp
+    - password
+    - username
+    type: object
+  model.UpdateProgramRequest:
+    properties:
+      close_registration:
+        type: string
+      description:
+        type: string
+      end_time:
+        type: string
+      is_published:
+        type: boolean
+      max_participants:
+        type: integer
+      name:
+        type: string
+      open_registration:
+        type: string
+      picture_url:
+        type: string
+      program_id:
+        type: string
+      start_time:
+        type: string
+    type: object
+  model.UpdateQuestionRequest:
+    properties:
+      correct_answer:
+        type: string
+      image_url:
+        type: string
+      is_options:
+        type: boolean
+      local_id:
+        type: integer
+      options:
+        items:
+          type: string
+        minItems: 1
+        type: array
+      points:
+        type: integer
+      text:
+        type: string
+      type:
+        type: string
+    type: object
+  model.UpdateStatusTransactionTryoutRequest:
+    properties:
+      token:
+        type: string
+      tryout_id:
+        type: string
+      user_id:
+        type: string
+    type: object
+  model.UpdateTransactionProgramRequest:
+    properties:
+      motivation:
+        type: string
+      program_id:
+        type: string
+      status:
+        type: string
+      user_id:
+        type: string
+      user_program_id:
+        type: string
+    type: object
+  model.UpdateTransactionTryoutRequest:
+    properties:
+      end_time:
+        type: string
+      start_time:
+        type: string
+      status:
+        type: string
+      token:
+        type: string
+      transaction_tryout_id:
+        type: string
+      tryout_id:
+        type: string
+      user_id:
+        type: string
+    type: object
+  model.UpdateTryoutRequest:
+    properties:
+      duration:
+        type: integer
+      end_time:
+        type: string
+      is_published:
+        type: boolean
+      start_time:
+        type: string
+      title:
+        type: string
+    type: object
+  model.UpdateUserAnswerRequest:
+    properties:
+      question_id:
+        type: string
+      tryout_id:
+        type: string
+      user_answer:
+        type: string
+      user_id:
+        type: string
+    type: object
+  model.UpdateUserRequest:
+    properties:
+      email:
+        type: string
+      grade:
+        type: string
+      last_login:
+        type: string
+      name:
+        type: string
+      nisn:
+        type: string
+      password:
+        type: string
+      picture_url:
+        type: string
+      province:
+        type: string
+      regency:
+        type: string
+      role:
+        type: string
+      school:
+        type: string
+      username:
+        type: string
+    type: object
+host: tryout-sample.fly.dev
+info:
+  contact:
+    email: artamananda@gmail.com
+    name: Artamananda
+  description: API Documentation for Telisik Tryout
+  license:
+    name: Apache 2.0
+    url: http://www.apache.org/licenses/LICENSE-2.0.html
+  termsOfService: http://swagger.io/terms/
+  title: Tryout Sample
+  version: 0.1.3
+paths:
+  /custom/batch5:
+    post:
+      consumes:
+      - multipart/form-data
+      description: Register a new batch 5
+      parameters:
+      - description: Name
+        in: formData
+        name: name
+        required: true
+        type: string
+      - description: Email
+        in: formData
+        name: email
+        required: true
+        type: string
+      - description: Grade
+        in: formData
+        name: grade
+        required: true
+        type: string
+      - description: NISN
+        in: formData
+        name: nisn
+        required: true
+        type: string
+      - description: School
+        in: formData
+        name: school
+        required: true
+        type: string
+      - description: Regency
+        in: formData
+        name: regency
+        required: true
+        type: string
+      - description: Province
+        in: formData
+        name: province
+        required: true
+        type: string
+      - description: Motivation
+        in: formData
+        name: motivation
+        required: true
+        type: string
+      - description: Program ID
+        in: formData
+        name: program_id
+        required: true
+        type: string
+      - description: Profile Picture
+        in: formData
+        name: file
+        required: true
+        type: file
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/model.GeneralResponse'
+      summary: Register a batch 5
+      tags:
+      - Custom
+  /email/send-otp:
+    post:
+      consumes:
+      - application/json
+      description: Send OTP to user's email for verification
+      parameters:
+      - description: Request Body
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/model.CreateUserOtpRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/model.GeneralResponse'
+      security:
+      - JWT: []
+      summary: Send OTP to user's email
+      tags:
+      - Users
+  /login:
+    post:
+      consumes:
+      - application/json
+      description: Authenticate user with provided credentials
+      parameters:
+      - description: Request Body
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/model.LoginRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/model.GeneralResponse'
+      summary: Authenticate user
+      tags:
+      - Users
+  /program:
+    get:
+      consumes:
+      - application/json
+      description: Retrieve all existing programs
+      parameters:
+      - description: Search query
+        in: query
+        name: search
+        type: string
+      - description: Is published
+        in: query
+        name: is_published
+        type: boolean
+      - description: User ID
+        in: query
+        name: user_id
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/model.GeneralResponse'
+      security:
+      - JWT: []
+      summary: Find all programs
+      tags:
+      - Programs
+    post:
+      consumes:
+      - application/json
+      description: Create a new program
+      parameters:
+      - description: Request Body
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/model.CreateProgramRequest'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            $ref: '#/definitions/model.GeneralResponse'
+      security:
+      - JWT: []
+      summary: Create a program
+      tags:
+      - Programs
+  /program/{id}:
+    delete:
+      consumes:
+      - application/json
+      description: Delete an existing program by its unique ID
+      parameters:
+      - description: Program ID
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/model.GeneralResponse'
+      security:
+      - JWT: []
+      summary: Delete a program by ID
+      tags:
+      - Programs
+    get:
+      consumes:
+      - application/json
+      description: Retrieve an existing program by its unique ID
+      parameters:
+      - description: Program ID
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/model.GeneralResponse'
+      security:
+      - JWT: []
+      summary: Find a program by ID
+      tags:
+      - Programs
+    patch:
+      consumes:
+      - application/json
+      description: Update an existing program by its unique ID
+      parameters:
+      - description: Program ID
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: Request Body
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/model.UpdateProgramRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/model.GeneralResponse'
+      security:
+      - JWT: []
+      summary: Update a program by ID
+      tags:
+      - Programs
+  /program/{id}/upload-image:
+    put:
+      consumes:
+      - multipart/form-data
+      description: Update the image of an existing program by its unique ID
+      parameters:
+      - description: Program ID
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: Image file
+        in: formData
+        name: file
+        required: true
+        type: file
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/model.GeneralResponse'
+      security:
+      - JWT: []
+      summary: Update the image of a program by ID
+      tags:
+      - Programs
+  /question:
+    get:
+      consumes:
+      - application/json
+      description: Retrieve a list of all questions, optionally filtered by tryoutId
+      parameters:
+      - description: Tryout ID
+        in: query
+        name: tryoutId
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/model.GeneralResponse'
+      security:
+      - JWT: []
+      summary: Find all questions
+      tags:
+      - Questions
+  /question/{id}:
+    delete:
+      consumes:
+      - application/json
+      description: Delete an existing question by its unique ID
+      parameters:
+      - description: Question ID
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/model.GeneralResponse'
+      security:
+      - JWT: []
+      summary: Delete a question by ID
+      tags:
+      - Questions
+    get:
+      consumes:
+      - application/json
+      description: Retrieve an existing question by its unique ID
+      parameters:
+      - description: Question ID
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/model.GeneralResponse'
+      security:
+      - JWT: []
+      summary: Find a question by ID
+      tags:
+      - Questions
+    put:
+      consumes:
+      - application/json
+      description: Update an existing question by its unique ID
+      parameters:
+      - description: Question ID
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: Request Body
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/model.UpdateQuestionRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/model.GeneralResponse'
+      security:
+      - JWT: []
+      summary: Update a question by ID
+      tags:
+      - Questions
+  /question/{id}/upload-image:
+    put:
+      consumes:
+      - multipart/form-data
+      description: Update the image of an existing question by its unique ID
+      parameters:
+      - description: Question ID
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: Image File
+        in: formData
+        name: file
+        required: true
+        type: file
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/model.GeneralResponse'
+      security:
+      - JWT: []
+      summary: Update the image of a question by ID
+      tags:
+      - Questions
+  /question/{tryoutId}:
+    post:
+      consumes:
+      - application/json
+      description: Create a new question for a specific tryout
+      parameters:
+      - description: Tryout ID
+        in: path
+        name: tryoutId
+        required: true
+        type: string
+      - description: Request Body
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/model.CreateQuestionRequest'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            $ref: '#/definitions/model.GeneralResponse'
+      security:
+      - JWT: []
+      summary: Create a question
+      tags:
+      - Questions
+  /register:
+    post:
+      consumes:
+      - application/json
+      description: Self-register a new user with provided details
+      parameters:
+      - description: Request Body
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/model.SelfRegisterRequest'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            $ref: '#/definitions/model.GeneralResponse'
+      summary: Self-register a new user
+      tags:
+      - Users
+  /transaction-program:
+    get:
+      consumes:
+      - application/json
+      description: Find all transaction programs
+      parameters:
+      - description: User ID
+        in: query
+        name: user_id
+        type: string
+      - description: Program ID
+        in: query
+        name: program_id
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/model.GeneralResponse'
+      security:
+      - JWT: []
+      summary: Find all transaction programs
+      tags:
+      - Transaction Programs
+    post:
+      consumes:
+      - application/json
+      description: Create a new transaction program
+      parameters:
+      - description: Request Body
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/model.CreateTransactionProgramRequest'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            $ref: '#/definitions/model.GeneralResponse'
+      security:
+      - JWT: []
+      summary: Create a transaction program
+      tags:
+      - Transaction Programs
+  /transaction-program/{id}:
+    delete:
+      consumes:
+      - application/json
+      description: Delete an existing transaction program by its unique ID
+      parameters:
+      - description: Transaction Program ID
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/model.GeneralResponse'
+      security:
+      - JWT: []
+      summary: Delete a transaction program by ID
+      tags:
+      - Transaction Programs
+    get:
+      consumes:
+      - application/json
+      description: Find a transaction program by its unique ID
+      parameters:
+      - description: Transaction Program ID
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/model.GeneralResponse'
+      security:
+      - JWT: []
+      summary: Find a transaction program by ID
+      tags:
+      - Transaction Programs
+    patch:
+      consumes:
+      - application/json
+      description: Update a transaction program
+      parameters:
+      - description: Transaction Program ID
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: Request Body
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/model.UpdateTransactionProgramRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/model.GeneralResponse'
+      security:
+      - JWT: []
+      summary: Update a transaction program
+      tags:
+      - Transaction Programs
+  /transaction-tryout:
+    get:
+      consumes:
+      - application/json
+      description: Retrieve a list of all transaction tryouts, optionally filtered
+        by tryoutId and userId
+      parameters:
+      - description: Tryout ID
+        in: query
+        name: tryoutId
+        type: string
+      - description: User ID
+        in: query
+        name: userId
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/model.GeneralResponse'
+      security:
+      - JWT: []
+      summary: Find all transaction tryouts
+      tags:
+      - Transaction Tryouts
+    post:
+      consumes:
+      - application/json
+      description: Create a new transaction tryout with provided details
+      parameters:
+      - description: Request Body
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/model.CreateTransactionTryoutRequest'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            $ref: '#/definitions/model.GeneralResponse'
+      security:
+      - JWT: []
+      summary: Create a transaction tryout
+      tags:
+      - Transaction Tryouts
+  /transaction-tryout/{id}:
+    delete:
+      consumes:
+      - application/json
+      description: Delete a transaction tryout by its unique ID
+      parameters:
+      - description: Transaction Tryout ID
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/model.GeneralResponse'
+      security:
+      - JWT: []
+      summary: Delete a transaction tryout by ID
+      tags:
+      - Transaction Tryouts
+    get:
+      consumes:
+      - application/json
+      description: Retrieve a transaction tryout by its unique ID
+      parameters:
+      - description: Transaction Tryout ID
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/model.GeneralResponse'
+      security:
+      - JWT: []
+      summary: Find a transaction tryout by ID
+      tags:
+      - Transaction Tryouts
+  /transaction-tryout/complete:
+    patch:
+      consumes:
+      - application/json
+      description: Update the status of a transaction tryout to COMPLETED upon successful
+        validation
+      parameters:
+      - description: Request Body
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/model.UpdateStatusTransactionTryoutRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/model.GeneralResponse'
+      security:
+      - JWT: []
+      summary: Update transaction tryout status to COMPLETED
+      tags:
+      - Transaction Tryouts
+  /transaction-tryout/paid:
+    patch:
+      consumes:
+      - application/json
+      description: Update the status of a transaction tryout to PAID upon successful
+        token validation
+      parameters:
+      - description: Request Body
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/model.UpdateTransactionTryoutRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/model.GeneralResponse'
+      security:
+      - JWT: []
+      summary: Update transaction tryout status to PAID
+      tags:
+      - Transaction Tryouts
+  /tryout:
+    get:
+      consumes:
+      - application/json
+      description: Retrieve a list of all tryouts, accessible based on user role
+      parameters:
+      - description: search
+        in: query
+        name: search
+        type: string
+      - description: is_published
+        in: query
+        name: is_published
+        type: boolean
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/model.GeneralResponse'
+      security:
+      - JWT: []
+      summary: Find all tryouts
+      tags:
+      - Tryouts
+    post:
+      consumes:
+      - application/json
+      description: Create a new tryout with provided details
+      parameters:
+      - description: Request Body
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/model.CreateTryoutRequest'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            $ref: '#/definitions/model.GeneralResponse'
+      security:
+      - JWT: []
+      summary: Create a tryout
+      tags:
+      - Tryouts
+  /tryout/{id}:
+    delete:
+      consumes:
+      - application/json
+      description: Delete a tryout by ID
+      parameters:
+      - description: Tryout ID
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/model.GeneralResponse'
+      security:
+      - JWT: []
+      summary: Delete a tryout
+      tags:
+      - Tryouts
+    get:
+      consumes:
+      - application/json
+      description: Retrieve a tryout by its unique ID
+      parameters:
+      - description: Tryout ID
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/model.GeneralResponse'
+      security:
+      - JWT: []
+      summary: Find a tryout by ID
+      tags:
+      - Tryouts
+    patch:
+      consumes:
+      - application/json
+      description: Update an existing tryout with provided details
+      parameters:
+      - description: Tryout ID
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: Request Body
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/model.UpdateTryoutRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/model.GeneralResponse'
+      security:
+      - JWT: []
+      summary: Update a tryout
+      tags:
+      - Tryouts
+  /user:
+    get:
+      consumes:
+      - application/json
+      description: Retrieve a list of all users, optionally filtered by role
+      parameters:
+      - description: search users by name
+        in: query
+        name: search
+        type: string
+      - description: Filter users by role
+        in: query
+        name: role
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/model.GeneralResponse'
+      security:
+      - JWT: []
+      summary: Find all users
+      tags:
+      - Users
+    post:
+      consumes:
+      - application/json
+      description: Create a new user with provided details
+      parameters:
+      - description: Request Body
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/model.RegisterRequest'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            $ref: '#/definitions/model.GeneralResponse'
+      security:
+      - JWT: []
+      summary: Create a new user
+      tags:
+      - Users
+  /user-answer:
+    get:
+      consumes:
+      - application/json
+      description: Retrieve a list of all user answers
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/model.GeneralResponse'
+      security:
+      - JWT: []
+      summary: Find all user answers
+      tags:
+      - User Answers
+    post:
+      consumes:
+      - application/json
+      description: Create a user answer with provided details
+      parameters:
+      - description: Request Body
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/model.CreateUserAnswerRequest'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            $ref: '#/definitions/model.GeneralResponse'
+      security:
+      - JWT: []
+      summary: Create a user answer
+      tags:
+      - User Answers
+  /user-answer/{id}:
+    delete:
+      consumes:
+      - application/json
+      description: Delete a user answer by ID
+      parameters:
+      - description: User Answer ID
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/model.GeneralResponse'
+      security:
+      - JWT: []
+      summary: Delete a user answer
+      tags:
+      - User Answers
+    get:
+      consumes:
+      - application/json
+      description: Retrieve a user answer by its unique ID
+      parameters:
+      - description: User Answer ID
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/model.GeneralResponse'
+      security:
+      - JWT: []
+      summary: Find a user answer by ID
+      tags:
+      - User Answers
+    patch:
+      consumes:
+      - application/json
+      description: Update a user answer with provided details
+      parameters:
+      - description: User Answer ID
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: Request Body
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/model.UpdateUserAnswerRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/model.GeneralResponse'
+      security:
+      - JWT: []
+      summary: Update a user answer
+      tags:
+      - User Answers
+  /user-answer/user/{id}:
+    get:
+      consumes:
+      - application/json
+      description: Retrieve user answers by user ID, optionally filtered by question
+        ID
+      parameters:
+      - description: User ID
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: Filter user answers by question ID
+        in: query
+        name: question_id
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/model.GeneralResponse'
+      security:
+      - JWT: []
+      summary: Find user answers by user ID
+      tags:
+      - User Answers
+  /user/{id}:
+    delete:
+      consumes:
+      - application/json
+      description: Delete an existing user by ID
+      parameters:
+      - description: User ID
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/model.GeneralResponse'
+      security:
+      - JWT: []
+      summary: Delete an existing user
+      tags:
+      - Users
+    get:
+      consumes:
+      - application/json
+      description: Find a user by their unique ID
+      parameters:
+      - description: User ID
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/model.GeneralResponse'
+      summary: Find a user by ID
+      tags:
+      - Users
+    patch:
+      consumes:
+      - application/json
+      description: Update an existing user with provided details
+      parameters:
+      - description: User ID
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: Request Body
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/model.UpdateUserRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/model.GeneralResponse'
+      security:
+      - JWT: []
+      summary: Update an existing user
+      tags:
+      - Users
+  /user/check-by-email:
+    post:
+      consumes:
+      - application/json
+      description: Check if an email is already registered in the system
+      parameters:
+      - description: Request Body
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/model.CheckByEmailRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/model.GeneralResponse'
+      summary: Check if email is already registered
+      tags:
+      - Users
+  /users:
+    post:
+      consumes:
+      - application/json
+      description: Create multiple users in bulk with provided details
+      parameters:
+      - description: Request Body
+        in: body
+        name: request
+        required: true
+        schema:
+          items:
+            $ref: '#/definitions/model.RegisterRequest'
+          type: array
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            $ref: '#/definitions/model.GeneralResponse'
+      security:
+      - JWT: []
+      summary: Create multiple users in bulk
+      tags:
+      - Users
+securityDefinitions:
+  JWT:
+    in: header
+    name: Authorization
+    type: apiKey
+swagger: "2.0"

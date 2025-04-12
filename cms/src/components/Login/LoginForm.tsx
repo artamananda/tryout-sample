@@ -6,9 +6,7 @@ import useAuthApp from "../../hooks/useAuthApp";
 const LoginForm = () => {
   const { isAuthLoading, doLogin } = useAuthApp();
 
-  const onFinishFailed = (errorInfo: any) => {
-    console.log("Failed:", errorInfo);
-  };
+  const onFinishFailed = (errorInfo: any) => {};
 
   return (
     <Form
@@ -29,7 +27,7 @@ const LoginForm = () => {
         <Input
           prefix={<UserOutlined className="site-form-item-icon" />}
           type="email"
-          placeholder="email"
+          placeholder="Email"
         />
       </Form.Item>
 

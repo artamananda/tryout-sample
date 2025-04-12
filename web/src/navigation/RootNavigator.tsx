@@ -1,6 +1,6 @@
 import { BrowserRouter as Router, Route, Routes } from 'react-router-dom';
 import DashboardScreen from '../screens/Dashboard';
-import LoginScreen from '../screens/Login';
+import LoginScreen from '../screens/Auth/Login';
 import NotFoundScreen from '../screens/NotFound';
 import PublicRoute from './PublicRoute';
 import { Suspense } from 'react';
@@ -8,6 +8,9 @@ import { Spin } from 'antd';
 import PrivateRoute from './PrivateRoute';
 import AppLayout from '../screens/Layout/AppLayout';
 import TryoutScreen from '../screens/Tryout';
+import RegisterScreen from '../screens/Auth/Register';
+import Batch5 from '../screens/Program/Batch5';
+import TryoutRoute from './TryoutRoute';
 import HomeScreen from '../screens/Home';
 
 const RootNavigator = () => {
@@ -20,6 +23,26 @@ const RootNavigator = () => {
             <PublicRoute>
               <Suspense fallback={<Spin spinning={true} />}>
                 <LoginScreen />
+              </Suspense>
+            </PublicRoute>
+          }
+        />
+        <Route
+          path="/register"
+          element={
+            <PublicRoute>
+              <Suspense fallback={<Spin spinning={true} />}>
+                <RegisterScreen />
+              </Suspense>
+            </PublicRoute>
+          }
+        />
+        <Route
+          path="/batch5"
+          element={
+            <PublicRoute>
+              <Suspense fallback={<Spin spinning={true} />}>
+                <Batch5 />
               </Suspense>
             </PublicRoute>
           }
@@ -51,9 +74,9 @@ const RootNavigator = () => {
         <Route
           path="/tryout/:id/:type/:qNumber"
           element={
-            <PrivateRoute loginPath="/login">
+            <TryoutRoute loginPath="/tryout">
               <TryoutScreen />
-            </PrivateRoute>
+            </TryoutRoute>
           }
         />
       </Routes>

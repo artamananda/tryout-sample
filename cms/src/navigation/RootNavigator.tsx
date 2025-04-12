@@ -9,7 +9,6 @@ import PrivateRoute from "./PrivateRoute";
 import AppLayout from "../screens/Layout/AppLayout";
 import TryoutScreen from "../screens/Tryout";
 import TryoutResultScreen from "../screens/TryoutResult";
-import EditTryoutScreen from "../screens/Tryout/Edit";
 import FormKpu from "../components/Tryout/FormKpu";
 import FormPpu from "../components/Tryout/FormPpu";
 import FormPbm from "../components/Tryout/FormPbm";
@@ -17,6 +16,13 @@ import FormPku from "../components/Tryout/FormPku";
 import FormInd from "../components/Tryout/FormInd";
 import FormIng from "../components/Tryout/FormIng";
 import FormMtk from "../components/Tryout/FormMtk";
+import ResultTable from "../components/TryoutResult/ResultTable";
+import ResultScore from "../components/TryoutResult/ResultScore";
+import QuestionPage from "../screens/Question";
+import EditTryoutScreen from "../screens/Tryout/Edit";
+import ListAdminScreen from "../screens/ListAdmin";
+import ListUserScreen from "../screens/ListUser";
+import ListProgramScreen from "../screens/ListProgram";
 
 const RootNavigator = () => {
   return (
@@ -71,16 +77,24 @@ const RootNavigator = () => {
             }
           />
           <Route
-            path="/tryout/:tryoutId/edit"
+            path="/tryout/:tryoutId/question"
             element={
               <PrivateRoute loginPath="/login">
                 <EditTryoutScreen />
               </PrivateRoute>
             }
           />
+          <Route
+            path="/tryout/:tryoutId/question/:questionType"
+            element={
+              <PrivateRoute loginPath="/login">
+                <QuestionPage />
+              </PrivateRoute>
+            }
+          />
 
           <Route
-            path="/tryout/:tryoutId/edit/kpu"
+            path="/tryout/:tryoutId/create/question/kpu"
             element={
               <PrivateRoute loginPath="/login">
                 <FormKpu />
@@ -88,7 +102,7 @@ const RootNavigator = () => {
             }
           />
           <Route
-            path="/tryout/:tryoutId/edit/ppu"
+            path="/tryout/:tryoutId/create/question/ppu"
             element={
               <PrivateRoute loginPath="/login">
                 <FormPpu />
@@ -96,7 +110,7 @@ const RootNavigator = () => {
             }
           />
           <Route
-            path="/tryout/:tryoutId/edit/pbm"
+            path="/tryout/:tryoutId/create/question/pbm"
             element={
               <PrivateRoute loginPath="/login">
                 <FormPbm />
@@ -104,7 +118,7 @@ const RootNavigator = () => {
             }
           />
           <Route
-            path="/tryout/:tryoutId/edit/pku"
+            path="/tryout/:tryoutId/create/question/pku"
             element={
               <PrivateRoute loginPath="/login">
                 <FormPku />
@@ -112,7 +126,7 @@ const RootNavigator = () => {
             }
           />
           <Route
-            path="/tryout/:tryoutId/edit/ind"
+            path="/tryout/:tryoutId/create/question/ind"
             element={
               <PrivateRoute loginPath="/login">
                 <FormInd />
@@ -120,7 +134,7 @@ const RootNavigator = () => {
             }
           />
           <Route
-            path="/tryout/:tryoutId/edit/ing"
+            path="/tryout/:tryoutId/create/question/ing"
             element={
               <PrivateRoute loginPath="/login">
                 <FormIng />
@@ -128,7 +142,7 @@ const RootNavigator = () => {
             }
           />
           <Route
-            path="/tryout/:tryoutId/edit/mtk"
+            path="/tryout/:tryoutId/create/question/mtk"
             element={
               <PrivateRoute loginPath="/login">
                 <FormMtk />
@@ -141,6 +155,47 @@ const RootNavigator = () => {
             element={
               <PrivateRoute loginPath="/login">
                 <TryoutResultScreen />
+              </PrivateRoute>
+            }
+          />
+          <Route
+            path="/tryout-result/:id"
+            element={
+              <PrivateRoute loginPath="/login">
+                <ResultTable />
+              </PrivateRoute>
+            }
+          />
+          <Route
+            path="/tryout-score/:id"
+            element={
+              <PrivateRoute loginPath="/login">
+                <ResultScore />
+              </PrivateRoute>
+            }
+          />
+
+          <Route
+            path="/role/admins"
+            element={
+              <PrivateRoute loginPath="/login">
+                <ListAdminScreen />
+              </PrivateRoute>
+            }
+          />
+          <Route
+            path="/role/users"
+            element={
+              <PrivateRoute loginPath="/login">
+                <ListUserScreen />
+              </PrivateRoute>
+            }
+          />
+          <Route
+            path="/program/batch5"
+            element={
+              <PrivateRoute loginPath="/login">
+                <ListProgramScreen />
               </PrivateRoute>
             }
           />

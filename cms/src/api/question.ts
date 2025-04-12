@@ -13,7 +13,20 @@ export async function apiCreateQuestion(data: CreateQuestionRequest) {
     return res;
   } catch (err) {
     const error = getErrorMessage(err);
-    console.error(error);
+    // ;
+    // message.error(error);
+  }
+}
+
+export async function apiUpdateQuestion(data: QuestionProps) {
+  try {
+    const res = await httpRequest.put<BaseResponseProps<QuestionProps>>(
+      process.env.REACT_APP_BASE_URL + "/question/" + data.question_id,
+      data
+    );
+    return res;
+  } catch (err) {
+    const error = getErrorMessage(err);
     message.error(error);
   }
 }
@@ -22,17 +35,54 @@ export async function doCreateQuestions(data: CreateQuestionRequest[]) {
   try {
     const res = await Promise.all(
       data.map(async (item) => {
-        console.log(item);
-        await apiCreateQuestion(item);
+        if (item.text) {
+          await apiCreateQuestion(item);
+        }
       })
     );
 
     if (res) {
-      message.success("success update question");
+      message.success("success create question");
     }
   } catch (err) {
     const error = getErrorMessage(err);
-    console.error(error);
+    message.error(error);
+  }
+}
+
+export async function fetchQuestions(tryoutId: string, questionType: string) {
+  try {
+    const url = `${process.env.REACT_APP_BASE_URL}/question?tryoutId=${tryoutId}`;
+    const res = await httpRequest.get<BaseResponseProps<any>>(url);
+    const questions = res.data.payload?.results?.filter(
+      (q: any) => q.type === questionType
+    );
+
+    return questions;
+  } catch (err) {
+    const error = getErrorMessage(err);
+    message.error(error);
+    throw error;
+  }
+}
+
+export async function imageUpload(questionId: string, data: FormData) {
+  try {
+    const res = await httpRequest.put(
+      process.env.REACT_APP_BASE_URL +
+        "/question/" +
+        questionId +
+        "/upload-image",
+      data,
+      {
+        headers: {
+          "Content-Type": "multipart/form-data",
+        },
+      }
+    );
+    return res;
+  } catch (err) {
+    const error = getErrorMessage(err);
     message.error(error);
   }
 }

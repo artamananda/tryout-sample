@@ -39,6 +39,12 @@ export default function useAuthApp(props?: Props) {
         return;
       }
 
+      if (resultAuthLogin.data.payload.role !== "admin") {
+        message.error("Login failed. Permission denied.");
+        setIsAuthLoading(false);
+        return;
+      }
+
       if (resultAuthLogin) {
         saveToken(resultAuthLogin.data.payload.token);
       }
@@ -69,13 +75,13 @@ export default function useAuthApp(props?: Props) {
       if (
         signIn({
           token: resultAuthLogin.data.payload.token,
-          expiresIn: 10000,
+          expiresIn: 350,
           tokenType: "Bearer",
           authState: resProfile.data.payload,
         })
       ) {
         // Redirect or do-something
-        // console.log(resProfile)
+        //
         if (callback) {
           callback();
         } else {

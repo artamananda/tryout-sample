@@ -1,10 +1,12 @@
-import { BaseResponsePaginationProps } from "./config.type";
+import { BaseResponsePaginationProps } from './config.type';
 
 export interface TryoutProps {
   tryout_id: string;
   title: string;
   duration: number;
+  token: string;
   start_time: Date | string;
+  is_published: boolean;
   end_time: Date | string;
   created_at: Date | string;
   updated_at: Date | string;
@@ -15,6 +17,7 @@ export interface CreateTryoutRequest {
   duration: number;
   start_time: Date | string;
   end_time: Date | string;
+  is_published: boolean;
 }
 
 export interface UpdateTryoutRequest {
@@ -22,10 +25,10 @@ export interface UpdateTryoutRequest {
   duration?: number;
   start_time?: Date | string;
   end_time?: Date | string;
+  is_published?: boolean;
 }
 
-export interface FetchAllTryoutsResponse
-  extends BaseResponsePaginationProps<TryoutProps> {
+export interface FetchAllTryoutsResponse extends BaseResponsePaginationProps<TryoutProps> {
   code: string;
   message: string;
   payload: {

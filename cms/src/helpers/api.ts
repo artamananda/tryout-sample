@@ -8,13 +8,14 @@ export const httpRequest = axios.create();
 
 httpRequest.interceptors.request.use(
   async (config: any) => {
-    config.headers["Content-Type"] = "application/json";
+    if (!config.headers["Content-Type"]) {
+      config.headers["Content-Type"] = "application/json";
+    }
     config.headers["Authorization"] = "Bearer " + getToken();
     config.headers["Access-Control-Allow-Origin"] = "*";
     return config;
   },
   (error) => {
-    console.error("httpRequest: Error interceptor request:::", error.response);
     return Promise.reject(error);
   }
 );
@@ -33,13 +34,8 @@ httpRequest.interceptors.response.use(
         localStorage.clear();
         window.location.href = "/login";
       }
-      console.error(
-        "httpRequest: Error interceptor response:::",
-        error.response
-      );
       return Promise.reject(error.response);
     } else {
-      console.error(error);
     }
   }
 );

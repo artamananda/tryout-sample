@@ -3,7 +3,7 @@ CREATE TABLE users_answers (
     user_id UUID,
     tryout_id UUID,
     question_id UUID,
-    answer TEXT,
+    user_answer TEXT,
     created_at TIMESTAMPTZ,
     updated_at TIMESTAMPTZ
 );

@@ -6,6 +6,7 @@ import (
 
 	"github.com/artamananda/tryout-sample/internal/entity"
 	"github.com/google/uuid"
+	"github.com/lib/pq"
 	"gorm.io/gorm"
 )
 
@@ -27,9 +28,25 @@ func (repository *QuestionRepository) Create(ctx context.Context, question entit
 }
 
 func (repository *QuestionRepository) Update(ctx context.Context, question entity.Question) (entity.Question, error) {
-	err := repository.DB.WithContext(ctx).Where("question_id = ?", question.QuestionID).Updates(&question).Error
-	if err != nil {
-		return entity.Question{}, err
+	query := `
+        UPDATE questions
+        SET tryout_id = $1,
+            local_id = $2,
+            type = $3,
+            text = $4,
+            image_url = $5,
+			is_options = $6,
+            options = $7,
+            correct_answer = $8,
+            points = $9,
+            updated_at = $10
+        WHERE question_id = $11
+    `
+	err := repository.DB.WithContext(ctx).Where("question_id = ?", question.QuestionID).Exec(query, question.TryoutID, question.LocalID, question.Type, question.Text,
+		question.ImageUrl, question.IsOptions, pq.Array(question.Options), question.CorrectAnswer,
+		question.Points, question.UpdatedAt, question.QuestionID)
+	if err.Error != nil {
+		return entity.Question{}, err.Error
 	}
 	return question, nil
 }
@@ -52,12 +69,12 @@ func (repository *QuestionRepository) FindByID(ctx context.Context, questionID u
 }
 
 func (repository *QuestionRepository) FindByTryoutID(ctx context.Context, tryoutID uuid.UUID) ([]entity.Question, error) {
-    var questions []entity.Question
-    err := repository.DB.WithContext(ctx).Unscoped().Where("tryout_id = ?", tryoutID).Find(&questions).Error
-    if err != nil {
-        return nil, err
-    }
-    return questions, nil
+	var questions []entity.Question
+	err := repository.DB.WithContext(ctx).Unscoped().Where("tryout_id = ?", tryoutID).Find(&questions).Error
+	if err != nil {
+		return nil, err
+	}
+	return questions, nil
 }
 
 func (repository *QuestionRepository) FindAll(ctx context.Context) ([]entity.Question, error) {

@@ -2,22 +2,27 @@ package service
 
 import (
 	"context"
+	"time"
 
 	"github.com/artamananda/tryout-sample/internal/common"
 	"github.com/artamananda/tryout-sample/internal/entity"
 	"github.com/artamananda/tryout-sample/internal/exception"
+	"github.com/artamananda/tryout-sample/internal/helper"
 	"github.com/artamananda/tryout-sample/internal/model"
 	"github.com/artamananda/tryout-sample/internal/repository"
+	"github.com/aws/aws-sdk-go/service/s3/s3manager"
 	"github.com/google/uuid"
 )
 
 type QuestionService struct {
 	QuestionRepository *repository.QuestionRepository
+	Uploader           *s3manager.Uploader
 }
 
-func NewQuestionService(questionRepository *repository.QuestionRepository) QuestionService {
+func NewQuestionService(questionRepository *repository.QuestionRepository, uploader *s3manager.Uploader) QuestionService {
 	return QuestionService{
 		QuestionRepository: questionRepository,
+		Uploader:           uploader,
 	}
 }
 
@@ -31,9 +36,11 @@ func (service *QuestionService) Create(ctx context.Context, request model.Create
 
 	question := entity.Question{
 		TryoutID:      uuid.MustParse(tryoutID),
+		LocalID:       request.LocalID,
 		Type:          request.Type,
 		Text:          request.Text,
 		ImageUrl:      request.ImageUrl,
+		IsOptions:     request.IsOptions,
 		Options:       request.Options,
 		CorrectAnswer: request.CorrectAnswer,
 		Points:        request.Points,
@@ -48,8 +55,10 @@ func (service *QuestionService) Create(ctx context.Context, request model.Create
 	return model.QuestionResponse{
 		QuestionID:    question.QuestionID,
 		TryoutID:      question.TryoutID,
+		LocalID:       question.LocalID,
 		Type:          question.Type,
 		Text:          question.Text,
+		IsOptions:     question.IsOptions,
 		ImageUrl:      question.ImageUrl,
 		Options:       question.Options,
 		CorrectAnswer: question.CorrectAnswer,
@@ -70,11 +79,15 @@ func (service *QuestionService) Update(ctx context.Context, request model.Update
 		return model.QuestionResponse{}, err
 	}
 
+	question.LocalID = request.LocalID
 	question.Type = request.Type
 	question.Text = request.Text
 	question.ImageUrl = request.ImageUrl
+	question.IsOptions = request.IsOptions
+	question.Options = request.Options
 	question.CorrectAnswer = request.CorrectAnswer
 	question.Points = request.Points
+	question.UpdatedAt = time.Now()
 
 	question, err = service.QuestionRepository.Update(ctx, question)
 
@@ -87,9 +100,55 @@ func (service *QuestionService) Update(ctx context.Context, request model.Update
 	return model.QuestionResponse{
 		QuestionID:    question.QuestionID,
 		TryoutID:      question.TryoutID,
+		LocalID:       question.LocalID,
 		Type:          question.Type,
 		Text:          question.Text,
 		ImageUrl:      question.ImageUrl,
+		IsOptions:     question.IsOptions,
+		Options:       question.Options,
+		CorrectAnswer: question.CorrectAnswer,
+		Points:        question.Points,
+	}, nil
+}
+
+func (service *QuestionService) UpdateImage(ctx context.Context, request model.UploadFileRequest, questionID string) (model.QuestionResponse, error) {
+	err := common.Validate(request)
+	if err != nil {
+		return model.QuestionResponse{}, exception.ValidationError{
+			Message: err.Error(),
+		}
+	}
+
+	question, err := service.QuestionRepository.FindByID(ctx, uuid.MustParse(questionID))
+	if err != nil {
+		return model.QuestionResponse{}, err
+	}
+
+	fileLink, err := helper.UploadFile(service.Uploader, request)
+
+	if err != nil {
+		return model.QuestionResponse{}, err
+	}
+
+	question.ImageUrl = fileLink
+	question.UpdatedAt = time.Now()
+
+	question, err = service.QuestionRepository.Update(ctx, question)
+
+	if err != nil {
+		return model.QuestionResponse{}, exception.NotFoundError{
+			Message: err.Error(),
+		}
+	}
+
+	return model.QuestionResponse{
+		QuestionID:    question.QuestionID,
+		TryoutID:      question.TryoutID,
+		LocalID:       question.LocalID,
+		Type:          question.Type,
+		Text:          question.Text,
+		ImageUrl:      question.ImageUrl,
+		IsOptions:     question.IsOptions,
 		Options:       question.Options,
 		CorrectAnswer: question.CorrectAnswer,
 		Points:        question.Points,
@@ -113,9 +172,11 @@ func (service *QuestionService) FindByID(ctx context.Context, questionID string)
 	return model.QuestionResponse{
 		QuestionID:    question.QuestionID,
 		TryoutID:      question.TryoutID,
+		LocalID:       question.LocalID,
 		Type:          question.Type,
 		Text:          question.Text,
 		ImageUrl:      question.ImageUrl,
+		IsOptions:     question.IsOptions,
 		Options:       question.Options,
 		CorrectAnswer: question.CorrectAnswer,
 		Points:        question.Points,
@@ -133,9 +194,11 @@ func (service *QuestionService) FindByTryoutID(ctx context.Context, tryoutID str
 		questionResponses = append(questionResponses, model.QuestionResponse{
 			QuestionID:    question.QuestionID,
 			TryoutID:      question.TryoutID,
+			LocalID:       question.LocalID,
 			Type:          question.Type,
 			Text:          question.Text,
 			ImageUrl:      question.ImageUrl,
+			IsOptions:     question.IsOptions,
 			Options:       question.Options,
 			CorrectAnswer: question.CorrectAnswer,
 			Points:        question.Points,
@@ -159,9 +222,11 @@ func (service *QuestionService) FindAll(ctx context.Context) ([]model.QuestionRe
 			model.QuestionResponse{
 				QuestionID:    question.QuestionID,
 				TryoutID:      question.TryoutID,
+				LocalID:       question.LocalID,
 				Type:          question.Type,
 				Text:          question.Text,
 				ImageUrl:      question.ImageUrl,
+				IsOptions:     question.IsOptions,
 				Options:       question.Options,
 				CorrectAnswer: question.CorrectAnswer,
 				Points:        question.Points,

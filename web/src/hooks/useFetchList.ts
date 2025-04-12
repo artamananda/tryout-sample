@@ -21,7 +21,7 @@ type Props = {
   fetchable?: boolean;
 };
 
-const DEFAULT_LIMIT = 25;
+const DEFAULT_LIMIT = 1000;
 
 export default function useFetchList<DataType, ExtendType = {}>(props: Props) {
   const fetchable = props.fetchable === undefined ? true : props.fetchable;

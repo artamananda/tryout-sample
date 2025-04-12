@@ -2770,6 +2770,11 @@ ansi-styles@^5.0.0:
   resolved "https://registry.yarnpkg.com/ansi-styles/-/ansi-styles-5.2.0.tgz#07449690ad45777d1924ac2abb2fc8895dba836b"
   integrity sha512-Cxwpt2SfTzTtXcfOlzGEee8O+c+MmUgGrNiBcXnuWxuFJHe6a5Hz7qwhwe5OgaSYI0IJvkLqWX1ASG+cJOkEiA==
 
+antd-input-otp@^2.1.0:
+  version "2.1.0"
+  resolved "https://registry.yarnpkg.com/antd-input-otp/-/antd-input-otp-2.1.0.tgz#6b485afce3b7fac8839bc145b332749a55549bdd"
+  integrity sha512-igyTfFALQXZFiuUxUPk91zkGwCXtbt6+Gynk6bZJsXPU9Dpgs9vK9SVKwAadjP08MZjks1RKnCgcyUR8dQj1tA==
+
 antd@^5.11.5:
   version "5.11.5"
   resolved "https://registry.yarnpkg.com/antd/-/antd-5.11.5.tgz#e1528aa9a10c035ce2921d487b96da2d07b4feaa"

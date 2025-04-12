@@ -6,6 +6,6 @@ CREATE TABLE IF NOT EXISTS questions (
     correct_answer TEXT,
     points INTEGER,
     FOREIGN KEY (tryout_id) REFERENCES tryouts(tryout_id),
-    created_at TIMESTAMP,
-    updated_at TIMESTAMP
+    created_at TIMESTAMPTZ,
+    updated_at TIMESTAMPTZ
 );

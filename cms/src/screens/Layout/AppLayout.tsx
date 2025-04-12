@@ -5,12 +5,14 @@ import {
   PoweroffOutlined,
   UsergroupAddOutlined,
   BarChartOutlined,
+  Html5Outlined,
 } from "@ant-design/icons";
 import type { MenuProps } from "antd";
 import { Layout, Menu, Image, Spin } from "antd";
 import logo from "../../assets/logo-yellow.png";
 import { Outlet, useNavigate } from "react-router-dom";
 import { useAuthUser, useSignOut } from "react-auth-kit";
+import FooterCopyright from "../../components/Footer";
 
 const { Content, Footer, Sider } = Layout;
 
@@ -43,9 +45,10 @@ const AppLayout = () => {
     ]),
     getItem("Tryout", "/tryout", <CalendarOutlined />),
     getItem("Tryout Result", "/tryout-result", <BarChartOutlined />),
+    getItem("Batch 5", "/program/batch5", <Html5Outlined />),
     getItem("Role", "/role", <UsergroupAddOutlined />, [
-      getItem("Admin", "/role/admin"),
-      getItem("Student", "/role/student"),
+      getItem("Admin", "/role/admins"),
+      getItem("User", "/role/users"),
     ]),
   ];
 
@@ -55,6 +58,15 @@ const AppLayout = () => {
         // collapsible
         collapsed={collapsed}
         onCollapse={(value) => setCollapsed(value)}
+        style={{
+          overflow: "auto",
+          height: "100vh",
+          position: "fixed",
+          left: 0,
+          top: 0,
+          bottom: 0,
+          zIndex: 99,
+        }}
       >
         <Image src={logo} width={150} style={{ margin: 20 }} preview={false} />
         <Menu
@@ -72,14 +84,14 @@ const AppLayout = () => {
           }}
         />
       </Sider>
-      <Layout>
-        <Content style={{ margin: 20 }}>
+      <Layout style={{ marginLeft: 200 }}>
+        <Content style={{ margin: 20, overflowY: "auto" }}>
           <Suspense fallback={<Spin spinning={true} />}>
             <Outlet />
           </Suspense>
         </Content>
         <Footer style={{ textAlign: "center" }}>
-          Telisik Tryout ©2024 Created by Artamananda
+          <FooterCopyright />
         </Footer>
       </Layout>
     </Layout>

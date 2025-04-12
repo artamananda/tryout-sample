@@ -6,15 +6,16 @@ import { UserAnswerProps } from "../../types/userAnswer.type";
 import { apiGetUsers } from "../../api/user";
 import useFetchList from "../../hooks/useFetchList";
 import { QuestionProps } from "../../types/question";
-import { sortBy } from "lodash";
 
 interface TableRowData {
   [key: string]: string;
   question_id: string;
 }
 
+type FixedType = "left" | "right" | boolean;
+
 const ResultTable = () => {
-  const tryoutId = "bc8b74f5-d81e-4cf8-8abb-657cbb055862";
+  const tryoutId = window.location.href.split("/").pop();
   const [userAnswers, setUserAnswers] = useState<UserAnswerProps[]>([]);
   const [users, setUsers] = useState<{ user_id: string; name: string }[]>([]);
   const [uniqueUserIds, setUniqueUserIds] = useState<string[]>([]);
@@ -25,7 +26,10 @@ const ResultTable = () => {
   );
 
   const { data: questionData } = useFetchList<QuestionProps>({
-    endpoint: "tryout/question/" + tryoutId,
+    endpoint: "question",
+    initialQuery: {
+      tryoutId: tryoutId,
+    },
   });
 
   useEffect(() => {
@@ -80,6 +84,7 @@ const ResultTable = () => {
       title: "No.",
       dataIndex: "no",
       key: "no",
+      fixed: "left" as FixedType,
       render: (_: any, __: any, index: number) => index + 1,
     },
     // {
@@ -91,12 +96,34 @@ const ResultTable = () => {
       title: "Subtest",
       dataIndex: "subtest",
       key: "subtest",
+      fixed: "left" as FixedType,
+      render: (value: string) => (
+        <div style={{ fontWeight: "bold" }}>
+          {value ? value?.toUpperCase() : "-"}
+        </div>
+      ),
     },
     // Menambahkan kolom untuk setiap user ID yang unik
     ...uniqueUserIds.map((userId) => ({
       title: user[userId],
       dataIndex: userId,
       key: userId,
+      render: (value: string) => (
+        <div
+          style={{
+            backgroundColor:
+              value === "X" ? "red" : value === "V" ? "green" : "gray",
+            color: "white",
+            textAlign: "center",
+            borderRadius: "200px",
+            fontWeight: "bold",
+            width: 25,
+            height: 25,
+          }}
+        >
+          {value || "-"}
+        </div>
+      ),
     })),
   ];
 
@@ -125,19 +152,15 @@ const ResultTable = () => {
     excel
       .addSheet("sheet 1")
       .addColumns(columns)
-      .addDataSource(sortBy(dataSource, "subtest"), {
+      .addDataSource(dataSource, {
         str2Percent: true,
       })
-      .saveAs("Excel.xlsx");
+      .saveAs(`${tryoutId || "result"}.xlsx`);
   };
 
   return (
     <div>
-      <Table
-        dataSource={sortBy(dataSource, "subtest")}
-        columns={columns}
-        pagination={false}
-      />
+      <Table dataSource={dataSource} columns={columns} pagination={false} />
       <div
         style={{
           margin: 20,

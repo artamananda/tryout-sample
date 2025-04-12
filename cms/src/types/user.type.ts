@@ -1,3 +1,27 @@
+import { BaseResponsePaginationProps } from "./config.type";
+
+export interface UserProps {
+  user_id: string;
+  username: string;
+  name: string;
+  email: string;
+  role: string;
+  last_login?: Date | string;
+  created_at?: Date | string;
+}
+
+export interface FetchAllUserResponse
+  extends BaseResponsePaginationProps<UserProps> {
+  code: string;
+  message: string;
+  payload: {
+    count: number;
+    prev: string;
+    next: string;
+    results: UserProps[];
+  };
+}
+
 export type EUserRole =
   | "admin"
   | "admin_ecommerce"

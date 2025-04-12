@@ -2,23 +2,32 @@ package service
 
 import (
 	"context"
+	"errors"
 	"fmt"
+	"log"
+	"strconv"
+	"time"
 
 	"github.com/artamananda/tryout-sample/internal/common"
 	"github.com/artamananda/tryout-sample/internal/entity"
 	"github.com/artamananda/tryout-sample/internal/exception"
+	"github.com/artamananda/tryout-sample/internal/helper"
 	"github.com/artamananda/tryout-sample/internal/model"
 	"github.com/artamananda/tryout-sample/internal/repository"
+	"github.com/aws/aws-sdk-go/service/s3/s3manager"
 	"golang.org/x/crypto/bcrypt"
+	"gopkg.in/gomail.v2"
 )
 
 type UserService struct {
 	UserRepository *repository.UserRepository
+	Uploader       *s3manager.Uploader
 }
 
-func NewUserService(userRepository *repository.UserRepository) UserService {
+func NewUserService(userRepository *repository.UserRepository, uploader *s3manager.Uploader) UserService {
 	return UserService{
 		UserRepository: userRepository,
+		Uploader:       uploader,
 	}
 }
 
@@ -31,21 +40,33 @@ func (service *UserService) Create(ctx context.Context, request model.RegisterRe
 	hashedPassword, _ := bcrypt.GenerateFromPassword([]byte(request.Password), bcrypt.DefaultCost)
 
 	user := entity.User{
-		Username: request.Username,
-		Name:     request.Name,
-		Email:    request.Email,
-		Password: string(hashedPassword),
-		Role:     request.Role,
+		Username:   request.Username,
+		Name:       request.Name,
+		Email:      request.Email,
+		Password:   string(hashedPassword),
+		Role:       request.Role,
+		NISN:       request.NISN,
+		Grade:      request.Grade,
+		School:     request.School,
+		Regency:    request.Regency,
+		Province:   request.Province,
+		PictureURL: request.PictureURL,
 	}
 
 	user = service.UserRepository.Create(ctx, user)
 
 	return model.RegisterResponse{
-		UserID:   user.UserID,
-		Username: user.Username,
-		Name:     user.Name,
-		Email:    user.Email,
-		Role:     user.Role,
+		UserID:     user.UserID,
+		Username:   user.Username,
+		Name:       user.Name,
+		Email:      user.Email,
+		Role:       user.Role,
+		NISN:       user.NISN,
+		Grade:      user.Grade,
+		School:     user.School,
+		Regency:    user.Regency,
+		Province:   user.Province,
+		PictureURL: user.PictureURL,
 	}, nil
 }
 
@@ -85,20 +106,73 @@ func (service *UserService) Update(ctx context.Context, request model.UpdateUser
 		}
 	}
 
+	hashedPassword, _ := bcrypt.GenerateFromPassword([]byte(request.Password), bcrypt.DefaultCost)
+
 	user.Username = request.Username
 	user.Name = request.Name
 	user.Email = request.Email
-	user.Password = request.Password
+	user.Password = string(hashedPassword)
 	user.Role = request.Role
+	user.NISN = request.NISN
+	user.Grade = request.Grade
+	user.School = request.School
+	user.Regency = request.Regency
+	user.Province = request.Province
 
 	user = service.UserRepository.Update(ctx, user)
 
 	return model.UpdateUserResponse{
-		UserID:   user.UserID,
-		Username: user.Username,
-		Name:     user.Name,
-		Email:    user.Email,
-		Role:     user.Role,
+		UserID:     user.UserID,
+		Username:   user.Username,
+		Name:       user.Name,
+		Email:      user.Email,
+		Role:       user.Role,
+		NISN:       user.NISN,
+		Grade:      user.Grade,
+		School:     user.School,
+		Regency:    user.Regency,
+		Province:   user.Province,
+		PictureURL: user.PictureURL,
+	}, nil
+}
+
+func (service *UserService) UpdateImage(ctx context.Context, request model.UploadFileRequest, userId string) (model.UpdateUserResponse, error) {
+	err := common.Validate(request)
+	if err != nil {
+		return model.UpdateUserResponse{}, exception.ValidationError{
+			Message: err.Error(),
+		}
+	}
+
+	user, err := service.UserRepository.FindById(ctx, userId)
+	if err != nil {
+		return model.UpdateUserResponse{}, exception.NotFoundError{
+			Message: err.Error(),
+		}
+	}
+
+	fileLink, err := helper.UploadFile(service.Uploader, request)
+	if err != nil {
+		return model.UpdateUserResponse{}, err
+	}
+
+	user.PictureURL = fileLink
+	user.UpdatedAt = time.Now()
+
+	user = service.UserRepository.Update(ctx, user)
+
+	return model.UpdateUserResponse{
+		UserID:     user.UserID,
+		Username:   user.Username,
+		Name:       user.Name,
+		Email:      user.Email,
+		Role:       user.Role,
+		NISN:       user.NISN,
+		Grade:      user.Grade,
+		School:     user.School,
+		Regency:    user.Regency,
+		Province:   user.Province,
+		PictureURL: user.PictureURL,
 	}, nil
 }
 
@@ -124,26 +198,41 @@ func (service *UserService) FindById(ctx context.Context, userId string) (model.
 	}
 
 	return model.GetUserResponse{
-		UserID:   user.UserID,
-		Username: user.Username,
-		Name:     user.Name,
-		Email:    user.Email,
-		Role:     user.Role,
+		UserID:     user.UserID,
+		Username:   user.Username,
+		Name:       user.Name,
+		Email:      user.Email,
+		Role:       user.Role,
+		NISN:       user.NISN,
+		Grade:      user.Grade,
+		School:     user.School,
+		Regency:    user.Regency,
+		Province:   user.Province,
+		PictureURL: user.PictureURL,
+		CreatedAt:  user.CreatedAt,
 	}, nil
 }
 
-func (service *UserService) FindAll(ctx context.Context) []model.GetUserResponse {
-	users := service.UserRepository.FindAll(ctx)
+func (service *UserService) FindAll(ctx context.Context, params model.FindAllUserRequest) []model.GetUserResponse {
+	users := service.UserRepository.FindAll(ctx, params)
 
 	userResponses := []model.GetUserResponse{}
 	for _, user := range users {
 		userResponses = append(userResponses,
 			model.GetUserResponse{
-				UserID:   user.UserID,
-				Username: user.Username,
-				Name:     user.Name,
-				Email:    user.Email,
-				Role:     user.Role,
+				UserID:     user.UserID,
+				Username:   user.Username,
+				Name:       user.Name,
+				Email:      user.Email,
+				Role:       user.Role,
+				NISN:       user.NISN,
+				Grade:      user.Grade,
+				School:     user.School,
+				Regency:    user.Regency,
+				Province:   user.Province,
+				PictureURL: user.PictureURL,
+				LastLogin:  user.LastLogin,
+				CreatedAt:  user.CreatedAt,
 			},
 		)
 	}
@@ -168,5 +257,157 @@ func (service *UserService) Authentication(ctx context.Context, model model.Logi
 		})
 		return entity.User{}, err
 	}
+	service.UserRepository.Update(
+		ctx,
+		entity.User{
+			UserID:    userResult.UserID,
+			LastLogin: time.Now(),
+		},
+	)
 	return userResult, nil
+}
+
+func (service *UserService) SendOtp(ctx context.Context, otpConfig model.SendOtpConfig, request model.CreateUserOtpRequest) (model.UserOtpResponse, error) {
+	err := common.Validate(request)
+	if err != nil {
+		return model.UserOtpResponse{}, exception.ValidationError{
+			Message: err.Error(),
+		}
+	}
+
+	isEmailExist := service.UserRepository.FindAccountIsExist(ctx, request.Email, request.Username)
+
+	if isEmailExist {
+		return model.UserOtpResponse{}, errors.New("account is already exist")
+	}
+
+	otp := helper.GenerateOTP(6)
+
+	userOtp := entity.UserOtp{
+		Email:     request.Email,
+		Otp:       otp,
+		ExpiredAt: time.Now().Add(15 * time.Minute),
+		CreatedAt: time.Now(),
+	}
+
+	userOtp = service.UserRepository.CreateOtp(ctx, userOtp)
+
+	mailer := gomail.NewMessage()
+	mailer.SetHeader("From", otpConfig.SenderName)
+	mailer.SetHeader("To", request.Email)
+	mailer.SetHeader("Subject", "Kode Verifikasi Pendaftaran Akun Telisik")
+	mailer.SetBody("text/html", helper.TemplateEmailOtp(request.Name, otp))
+
+	smptPort, _ := strconv.Atoi(otpConfig.SmtpPort)
+
+	dialer := gomail.NewDialer(
+		otpConfig.SmtpHost,
+		smptPort,
+		otpConfig.AuthEmail,
+		otpConfig.AuthPassword,
+	)
+
+	err = dialer.DialAndSend(mailer)
+	if err != nil {
+		log.Fatal(err.Error())
+	}
+
+	log.Println("Mail sent!")
+
+	return model.UserOtpResponse{
+		Email:     userOtp.Email,
+		ExpiredAt: userOtp.ExpiredAt,
+		CreatedAt: userOtp.CreatedAt,
+	}, nil
+}
+
+func (service *UserService) CheckOtp(ctx context.Context, email string, otpReq string) bool {
+	userOtp, err := service.UserRepository.FindOtpByEmail(ctx, email)
+	if err != nil {
+		return false
+	}
+
+	if userOtp.Otp != otpReq {
+		return false
+	}
+
+	if userOtp.ExpiredAt.Before(time.Now()) {
+		return false
+	}
+
+	return true
+}
+
+func (service *UserService) SelfRegister(ctx context.Context, request model.SelfRegisterRequest) (model.RegisterResponse, error) {
+	err := common.Validate(request)
+	if err != nil {
+		return model.RegisterResponse{}, err
+	}
+
+	userOtp, err := service.UserRepository.FindOtpByEmail(ctx, request.Email)
+	if err != nil {
+		return model.RegisterResponse{}, err
+	}
+
+	if userOtp.Otp != request.Otp {
+		return model.RegisterResponse{}, errors.New("otp is not valid")
+	}
+
+	if userOtp.ExpiredAt.Before(time.Now()) {
+		return model.RegisterResponse{}, errors.New("otp is expired")
+	}
+
+	hashedPassword, _ := bcrypt.GenerateFromPassword([]byte(request.Password), bcrypt.DefaultCost)
+
+	user := entity.User{
+		Username:   request.Username,
+		Name:       request.Name,
+		Email:      request.Email,
+		Password:   string(hashedPassword),
+		Role:       "user",
+		NISN:       request.NISN,
+		Grade:      request.Grade,
+		School:     request.School,
+		Regency:    request.Regency,
+		Province:   request.Province,
+		PictureURL: request.PictureURL,
+	}
+
+	user = service.UserRepository.Create(ctx, user)
+
+	return model.RegisterResponse{
+		UserID:     user.UserID,
+		Username:   user.Username,
+		Name:       user.Name,
+		Email:      user.Email,
+		Role:       user.Role,
+		NISN:       user.NISN,
+		Grade:      user.Grade,
+		School:     user.School,
+		Regency:    user.Regency,
+		Province:   user.Province,
+		PictureURL: user.PictureURL,
+	}, nil
+}
+
+func (service *UserService) CheckByEmail(ctx context.Context, request model.CheckByEmailRequest) (bool, error) {
+	err := common.Validate(request)
+	if err != nil {
+		return false, err
+	}
+
+	isEmailExist := service.UserRepository.FindAccountIsExist(ctx, request.Email, "")
+
+	return isEmailExist, nil
+}
+
+func (service *UserService) FindByEmail(ctx context.Context, email string) (entity.User, error) {
+	user, err := service.UserRepository.FindByEmail(ctx, email)
+	if err != nil {
+		return entity.User{}, exception.NotFoundError{
+			Message: err.Error(),
+		}
+	}
+
+	return user, nil
 }

@@ -105,6 +105,26 @@ func (service *UserAnswerService) FindByID(ctx context.Context, userAnswerID str
 	}, nil
 }
 
+func (service *UserAnswerService) FindByUserID(ctx context.Context, userID string) ([]model.UserAnswerResponse) {
+	userAnswers := service.UserAnswerRepository.FindByUserId(ctx, userID)
+	userAnswerResponses := []model.UserAnswerResponse{}
+	for _, userAnswer := range userAnswers {
+		userAnswerResponses = append(userAnswerResponses,
+			model.UserAnswerResponse{
+				UserAnswerID: userAnswer.UserAnswerID,
+				UserID:       userAnswer.UserID,
+				TryoutID:     userAnswer.TryoutID,
+				QuestionID:   userAnswer.QuestionID,
+				UserAnswer:   userAnswer.UserAnswer,
+			},
+		)
+	}
+	if len(userAnswers) == 0 {
+		return []model.UserAnswerResponse{}
+	}
+	return userAnswerResponses
+}
+
 func (service *UserAnswerService) FindAll(ctx context.Context) []model.UserAnswerResponse {
 	userAnswers := service.UserAnswerRepository.FindAll(ctx)
 

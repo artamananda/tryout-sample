@@ -4,8 +4,9 @@ import type { TableProps } from 'antd';
 import useFetchList from '../../hooks/useFetchList';
 import { TryoutProps } from '../../types/tryout.type';
 import dayjs from 'dayjs';
-import { checkToken } from '../../api/tryout';
+import { redeemToken } from '../../api/tryout';
 import { useNavigate } from 'react-router-dom';
+import { useAuthUser } from 'react-auth-kit';
 
 const { Text, Link } = Typography;
 
@@ -43,22 +44,29 @@ type FieldType = {
 
 const ListTryout = () => {
   const { data: tryoutData, fetchList } = useFetchList<TryoutProps>({
-    endpoint: 'tryout'
+    endpoint: 'tryout',
+    initialQuery: {
+      is_published: 'true'
+    }
   });
 
   const [id, setId] = useState('');
   const navigate = useNavigate();
+  const auth = useAuthUser();
 
   useEffect(() => {
     fetchList();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  const onFinish = async (data: { tryout_id: string; token: string }) => {
+  const onFinish = async (data: {
+    tryout_id: string;
+    user_id: string;
+    token: string;
+  }) => {
     try {
-      const res = await checkToken(data);
+      const res = await redeemToken(data);
       if (res) {
-        message.success('Validation success');
         navigate('/tryout/' + id + '/kpu/1');
       } else {
         message.error('Token Wrong');
@@ -77,8 +85,21 @@ const ListTryout = () => {
         <Link
           underline
           onClick={() => {
-            setId(record.tryout_id);
-            showModal(record.title);
+            const tryoutStatus = checkStatus(
+              record.start_time,
+              record.end_time
+            );
+            if (tryoutStatus === 'FINISHED') {
+              message.error('Waktu tryout sudah lewat!');
+            } else if (
+              tryoutStatus === 'IN COMING' ||
+              tryoutStatus === 'UNKNOWN'
+            ) {
+              message.error('Tryout belum mulai!');
+            } else {
+              setId(record.tryout_id);
+              showModal(record.title);
+            }
           }}
         >
           {record.title}
@@ -176,6 +197,7 @@ const ListTryout = () => {
           <Form.Item name="tryout_id" initialValue={id} hidden>
             <Input value={id} />
           </Form.Item>
+          <Form.Item name="user_id" initialValue={auth()?.user_id} hidden />
           <Form.Item<FieldType>
             label="Token"
             name="token"
