@@ -1,9 +1,12 @@
 import {
   Button,
   Divider,
+  Dropdown,
   Form,
   Image,
   Input,
+  MenuProps,
+  Space,
   Upload,
   UploadProps,
   message,
@@ -12,7 +15,7 @@ import { QuestionProps } from "../../../../types/question";
 import ModalUi from "../../../Ui/Modal";
 import React, { useEffect, useState } from "react";
 import ReactQuill from "react-quill";
-import { DeleteFilled, UploadOutlined } from "@ant-design/icons";
+import { DeleteFilled, DownOutlined, UploadOutlined } from "@ant-design/icons";
 import {
   apiUpdateQuestion,
   fetchQuestions,
@@ -48,7 +51,9 @@ const ModalUpdateQuestion = (props: PropTypes) => {
   const [options, setOptions] = useState<string[]>(
     isModalOpen?.question?.options || Array.from({ length: 5 }, () => "")
   );
-  const [answer, setAnswer] = useState<string>("");
+  const [answer, setAnswer] = useState<string>(
+    isModalOpen?.question?.correct_answer || ""
+  );
   const [image, setImage] = useState<string>("");
   const [isOptions, setIsOptions] = useState<boolean>(
     isModalOpen?.question?.is_options || false
@@ -80,6 +85,20 @@ const ModalUpdateQuestion = (props: PropTypes) => {
     "bullet",
     "formula",
   ];
+
+  const items: MenuProps["items"] = options.map((option, index) => ({
+    label: option,
+    key: option,
+  }));
+
+  const handleMenuClick: MenuProps["onClick"] = (e) => {
+    handleAnswerChange(e.key);
+  };
+
+  const menuProps = {
+    items,
+    onClick: handleMenuClick,
+  };
 
   const imageUploadProps: UploadProps = {
     multiple: false,
@@ -403,7 +422,7 @@ const ModalUpdateQuestion = (props: PropTypes) => {
             </div>
           </div>
         </Form.Item>
-        {isOptions && (
+        {isOptions ? (
           <>
             <Form.Item name="optionsA" label={"Option A"}>
               <Input
@@ -450,18 +469,38 @@ const ModalUpdateQuestion = (props: PropTypes) => {
                 onChange={(e) => handleOptionChange(4, e.target.value)}
               />
             </Form.Item>
+            <Form.Item name="correct_answer" label={"Answer"} required>
+              <Dropdown menu={menuProps}>
+                <Button>
+                  <Space>
+                    <div
+                      style={
+                        options?.find((option) => option === answer)
+                          ? undefined
+                          : { fontStyle: "italic", color: "gray" }
+                      }
+                    >
+                      {options?.find((option) => option === answer) ||
+                        `${answer} (not found)`}
+                    </div>
+                    <DownOutlined />
+                  </Space>
+                </Button>
+              </Dropdown>
+            </Form.Item>
           </>
+        ) : (
+          <Form.Item name="correct_answer" label={"Answer"} required>
+            <Input
+              required
+              name="correct_answer"
+              type="correct_answer"
+              placeholder="Enter correct answer"
+              defaultValue={isModalOpen?.question?.correct_answer}
+              onChange={(e: any) => handleAnswerChange(e.target.value)}
+            />
+          </Form.Item>
         )}
-        <Form.Item name="correct_answer" label={"Answer"} required>
-          <Input
-            required
-            name="correct_answer"
-            type="correct_answer"
-            placeholder="Enter correct answer"
-            defaultValue={isModalOpen?.question?.correct_answer}
-            onChange={(e: any) => handleAnswerChange(e.target.value)}
-          />
-        </Form.Item>
 
         <Divider />
         <Form.Item>
