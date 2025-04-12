@@ -1,6 +1,6 @@
 {
   "name": "cms",
-  "version": "0.2.10",
+  "version": "0.2.11",
   "private": true,
   "dependencies": {
     "@ant-design/icons": "^5.2.6",
