@@ -107,7 +107,6 @@ const ModalCreateTryout = (props: PropTypes) => {
             defaultChecked={isPublished}
             onChange={(checked) => {
               setIsPublished(checked);
-              console.log("Published: ", checked);
             }}
           />
         </Form.Item>

@@ -187,8 +187,6 @@ const ListTryout = () => {
   const handlePublished = async (tryoutId: string, checked: boolean) => {
     try {
       const res = await apiUpdateTryout(tryoutId, { is_published: checked });
-      console.log(res?.data);
-
       if (res) {
         fetchList();
         message.success("Success Update Published Status");
@@ -205,16 +203,11 @@ const ListTryout = () => {
   const onChange = (
     value: DatePickerProps["value"] | RangePickerProps["value"],
     dateString: [string, string] | string
-  ) => {
-    console.log("Selected Time: ", value);
-    console.log("Formatted Selected Time: ", dateString);
-  };
+  ) => {};
 
   const onOk = (
     value: DatePickerProps["value"] | RangePickerProps["value"]
-  ) => {
-    console.log("onOk: ", value);
-  };
+  ) => {};
 
   return (
     <div>

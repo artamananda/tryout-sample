@@ -51,17 +51,11 @@ const ModalUpdateTryout = (props: PropTypes) => {
   const handleUpdate = async () => {
     try {
       const values = await updateForm.validateFields();
-      console.log(values);
-
       const data: UpdateTryoutRequest = {
         ...values,
         is_published: showModalUpdate.data.is_published,
       };
-      console.log(data);
-
       const res = await apiUpdateTryout(showModalUpdate.data.tryout_id, data);
-      console.log(res);
-
       if (res) {
         fetchList();
         message.success("Success Update");

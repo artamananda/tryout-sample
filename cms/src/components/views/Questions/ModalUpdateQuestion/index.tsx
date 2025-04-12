@@ -115,7 +115,6 @@ const ModalUpdateQuestion = (props: PropTypes) => {
           message.success(`File uploaded successfully`);
         }
       } catch (error) {
-        console.log("File upload failed", error);
         message.error("File upload failed");
       }
     },
@@ -165,7 +164,6 @@ const ModalUpdateQuestion = (props: PropTypes) => {
       }
     } catch (err) {
       message.error(getErrorMessage(err));
-      console.log(err);
     }
   };
 

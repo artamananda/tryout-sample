@@ -81,7 +81,7 @@ export default function useAuthApp(props?: Props) {
         })
       ) {
         // Redirect or do-something
-        // console.log(resProfile)
+        //
         if (callback) {
           callback();
         } else {

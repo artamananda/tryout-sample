@@ -17,7 +17,6 @@ export async function apiGetTryouts() {
     return res;
   } catch (err) {
     const error = getErrorMessage(err);
-    console.error(error);
     message.error(error);
   }
 }
@@ -42,7 +41,6 @@ export async function apiCreateTryout(data: CreateTryoutRequest) {
     return res;
   } catch (err) {
     const error = getErrorMessage(err);
-    console.error(error);
     message.error(error);
   }
 }
@@ -56,12 +54,9 @@ export async function apiUpdateTryout(
       process.env.REACT_APP_BASE_URL + "/tryout/" + tryoutId,
       data
     );
-    console.log(res.data);
-    
     return res;
   } catch (err) {
     const error = getErrorMessage(err);
-    console.error(error);
     message.error(error);
   }
 }
@@ -74,7 +69,6 @@ export async function apiDeleteTryout(tryoutId: string) {
     return res;
   } catch (err) {
     const error = getErrorMessage(err);
-    console.error(error);
     message.error(error);
   }
 }

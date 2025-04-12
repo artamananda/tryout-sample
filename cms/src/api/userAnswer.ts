@@ -11,7 +11,6 @@ export async function apiGetUserAnswer() {
     return res;
   } catch (err) {
     const error = getErrorMessage(err);
-    console.error(error);
     message.error(error);
   }
 }

@@ -145,8 +145,6 @@ const FormQuestion = (props: PropTypes) => {
         newData.push(createQuestion);
       }
 
-      console.log("newData", newData);
-
       await doCreateQuestions(newData);
       navigate("/tryout/" + tryoutId + "/question/" + questionType);
     } catch (err) {
@@ -223,9 +221,9 @@ const FormQuestion = (props: PropTypes) => {
     debouncedUpdateIsOptionsAtIndex(index, !isOptions[index]);
   };
   useEffect(() => {
-    // console.log(questions);
-    // console.log(images);
-    // console.log('isOptions nya bos', isOptions);
+    // ;
+    // ;
+    // ;
   }, [questions, images, isOptions]);
   return (
     <>

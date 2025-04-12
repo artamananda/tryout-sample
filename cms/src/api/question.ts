@@ -13,7 +13,7 @@ export async function apiCreateQuestion(data: CreateQuestionRequest) {
     return res;
   } catch (err) {
     const error = getErrorMessage(err);
-    // console.error(error);
+    // ;
     // message.error(error);
   }
 }
@@ -27,7 +27,6 @@ export async function apiUpdateQuestion(data: QuestionProps) {
     return res;
   } catch (err) {
     const error = getErrorMessage(err);
-    console.error(error);
     message.error(error);
   }
 }
@@ -47,7 +46,6 @@ export async function doCreateQuestions(data: CreateQuestionRequest[]) {
     }
   } catch (err) {
     const error = getErrorMessage(err);
-    console.error(error);
     message.error(error);
   }
 }
@@ -63,7 +61,6 @@ export async function fetchQuestions(tryoutId: string, questionType: string) {
     return questions;
   } catch (err) {
     const error = getErrorMessage(err);
-    console.error(error);
     message.error(error);
     throw error;
   }
@@ -86,7 +83,6 @@ export async function imageUpload(questionId: string, data: FormData) {
     return res;
   } catch (err) {
     const error = getErrorMessage(err);
-    console.error(error);
     message.error(error);
   }
 }
