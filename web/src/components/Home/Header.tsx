@@ -1,4 +1,5 @@
 import React from 'react';
+import GradientText from './GradientText';
 
 export const Header = (props: any) => {
   return (
@@ -8,10 +9,9 @@ export const Header = (props: any) => {
           <div className="container">
             <div className="row">
               <div className="col-md-8 col-md-offset-2 intro-text">
-                <h1>
+                <GradientText>
                   {props.data ? props.data.title : 'Loading'}
-                  <span></span>
-                </h1>
+                </GradientText>
                 <p>{props.data ? props.data.paragraph : 'Loading'}</p>
                 <a href="#about" className="btn btn-custom btn-lg page-scroll">
                   SELENGKAPNYA
