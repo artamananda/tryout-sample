@@ -1,0 +1,81 @@
+/* Header.css */
+.header {
+  padding: 60px 20px;
+  background-color: #fff;
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  background: linear-gradient(
+    to right,
+    var(--primary-color-start) 0%,
+    var(--primary-color-end) 100%
+  );
+}
+
+.header-container {
+  max-width: 1200px;
+  margin: 0 auto;
+}
+
+.header-content {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  gap: 40px;
+  margin-top: 40px;
+}
+
+.header-text {
+  max-width: 600px;
+}
+
+.header-text p {
+  margin-top: 20px;
+  margin-bottom: 30px;
+  color: #fff;
+}
+
+.header-image {
+  max-width: 500px;
+  width: 100%;
+}
+
+.responsive-img {
+  width: 100%;
+  height: auto;
+  max-height: 500px;
+  border-radius: 40%;
+}
+
+.header-buttons {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  margin-top: 24px;
+}
+
+@media (min-width: 768px) {
+  .header-buttons {
+    flex-direction: row;
+    justify-content: start;
+  }
+}
+
+/* Media Query for larger screens */
+@media (min-width: 768px) {
+  .header-content {
+    flex-direction: row;
+    text-align: left;
+    align-items: center;
+    justify-content: space-between;
+  }
+
+  .header-text {
+    flex: 1;
+  }
+
+  .header-image {
+    flex: 1;
+  }
+}

@@ -62,8 +62,8 @@ ol {
 ul,
 ol {
   padding: 0;
-  webkit-padding: 0;
-  moz-padding: 0;
+  /* webkit-padding: 0;
+  moz-padding: 0; */
 }
 hr {
   height: 2px;
@@ -181,13 +181,13 @@ hr {
 .btn-custom {
   font-family: 'Raleway', sans-serif;
   text-transform: uppercase;
-  color: #fff;
-  background-color: var(--primary-color-end);
-  background-image: linear-gradient(
+  color: var(--primary-color-start);
+  background-color: #fff;
+  /* background-image: linear-gradient(
     to right,
     var(--primary-color-end) 0%,
     var(--primary-color-start) 100%
-  );
+  ); */
   padding: 14px 34px;
   letter-spacing: 1px;
   margin: 0;
@@ -202,9 +202,9 @@ hr {
 .btn-custom.focus,
 .btn-custom:active,
 .btn-custom.active {
-  color: #fff;
+  color: var(--primary-color-end);
   background-image: none;
-  background-color: var(--primary-color-start);
+  background-color: rgba(255, 255, 255, 0.5);
 }
 .btn:active,
 .btn.active {
@@ -428,7 +428,7 @@ header .intro-text {
 }
 .hover-bg:hover .hover-text > h4 {
   opacity: 1;
-  -webkit-backface-visibility: hidden;
+  /* -webkit-backface-visibility: hidden; */
   -webkit-transform: translateY(0);
   transform: translateY(0);
 }
