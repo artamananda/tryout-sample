@@ -181,13 +181,13 @@ hr {
 .btn-custom {
   font-family: 'Raleway', sans-serif;
   text-transform: uppercase;
-  color: #fff;
-  background-color: var(--primary-color-end);
-  background-image: linear-gradient(
+  color: var(--primary-color-start);
+  background-color: #fff;
+  /* background-image: linear-gradient(
     to right,
     var(--primary-color-end) 0%,
     var(--primary-color-start) 100%
-  );
+  ); */
   padding: 14px 34px;
   letter-spacing: 1px;
   margin: 0;
@@ -202,9 +202,9 @@ hr {
 .btn-custom.focus,
 .btn-custom:active,
 .btn-custom.active {
-  color: #fff;
+  color: var(--primary-color-end);
   background-image: none;
-  background-color: var(--primary-color-start);
+  background-color: rgba(255, 255, 255, 0.5);
 }
 .btn:active,
 .btn.active {
