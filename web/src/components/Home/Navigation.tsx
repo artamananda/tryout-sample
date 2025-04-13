@@ -66,7 +66,7 @@ export const Navigation = (props: any) => {
             <span className="icon-bar"></span>{' '}
             <span className="icon-bar"></span>{' '}
           </button>
-          <a className=" page-scroll" href="#page-top">
+          <a className=" page-scroll" href="#header">
             <img
               src={process.env.PUBLIC_URL + '/img/logo.png'}
               style={{
