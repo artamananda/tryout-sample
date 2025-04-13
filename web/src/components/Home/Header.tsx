@@ -1,5 +1,6 @@
 import React from 'react';
 import GradientText from './GradientText';
+import Typewriter from 'typewriter-effect';
 import './Header.css';
 
 export const Header = (props: any) => {
@@ -11,7 +12,23 @@ export const Header = (props: any) => {
             <GradientText>
               {props.data ? props.data.title : 'Loading'}
             </GradientText>
-            <p>{props.data ? props.data.paragraph : 'Loading'}</p>
+            <div
+              style={{
+                color: '#fff',
+                marginTop: 10,
+                marginBottom: 30,
+                fontSize: 16
+              }}
+            >
+              <Typewriter
+                options={{
+                  strings: [props.data ? props.data.paragraph : 'Loading'],
+                  autoStart: true,
+                  loop: true
+                }}
+              />
+            </div>
+            {/* <p>{props.data ? props.data.paragraph : 'Loading'}</p> */}
             <div className="header-buttons">
               <a href="#about" className="btn btn-custom page-scroll">
                 SELENGKAPNYA
