@@ -31,7 +31,7 @@ export const finishTryout = async (data: {
   try {
     const res = await httpRequest.patch<
       BaseResponseProps<TransactionTryoutProps>
-    >(process.env.REACT_APP_BASE_URL + '/transaction-tryout/completed', data);
+    >(process.env.REACT_APP_BASE_URL + '/transaction-tryout/complete', data);
     if (res.data.payload?.transaction_tryout_id) {
       return true;
     }

@@ -310,6 +310,12 @@
       "name": "Gres Sela Aria Anugra",
       "job": "Mentor",
       "university": "Universitas Sriwijaya"
+    },
+    {
+      "img": "img/team/rahmat.jpg",
+      "name": "Rahmat Rizky Rifai",
+      "job": "Web Developer",
+      "university": "Universitas Gunadarma"
     }
   ],
   "Contact": {
