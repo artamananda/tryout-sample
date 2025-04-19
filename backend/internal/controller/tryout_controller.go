@@ -154,7 +154,7 @@ func (controller TryoutController) FindAll(c *fiber.Ctx) error {
 	claims := user.Claims.(jwt.MapClaims)
 	role := claims["roles"].(string)
 
-	if role == "admin" {
+	if role == "admin" || controller.Config.Get("IS_TRYOUT_BYPASS") == "true" {
 		result := controller.TryoutService.FindAllAsAdmin(c.Context(), params)
 		payload := map[string]interface{}{
 			"count":   len(result),

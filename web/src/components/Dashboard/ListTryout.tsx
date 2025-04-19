@@ -98,6 +98,7 @@ const ListTryout = () => {
               message.error('Tryout belum mulai!');
             } else {
               setId(record.tryout_id);
+              form.setFieldValue('token', record.token);
               showModal(record.title);
             }
           }}
@@ -181,7 +182,7 @@ const ListTryout = () => {
         title={modalTitle}
         open={isModalOpen}
         onCancel={() => {
-          setId('');
+          form.setFieldValue('token', '');
           setIsModalOpen(false);
         }}
         onOk={form.submit}

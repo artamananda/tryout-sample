@@ -49,6 +49,7 @@ jobs:
           echo "DB_POOL_LIFE_TIME=${{ secrets.DB_POOL_LIFE_TIME }}" >> ./backend/.env
           echo "JWT_SECRET_KEY=${{ secrets.JWT_SECRET_KEY }}" >> ./backend/.env
           echo "JWT_EXPIRE_MINUTES_COUNT=${{ secrets.JWT_EXPIRE_MINUTES_COUNT }}" >> ./backend/.env
+          echo "IS_TRYOUT_BYPASS=${{ secrets.IS_TRYOUT_BYPASS }}" >> ./backend/.env
           cat ./backend/.env
 
       - uses: superfly/flyctl-actions/setup-flyctl@master
