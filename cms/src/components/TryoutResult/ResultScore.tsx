@@ -36,6 +36,9 @@ const ResultScore = () => {
     {}
   );
 
+  const minScore = 350;
+  const maxScore = 1000;
+
   const { data: questionData } = useFetchList<QuestionProps>({
     endpoint: "question",
     initialQuery: {
@@ -117,7 +120,7 @@ const ResultScore = () => {
       render: (value: string | number) => (
         <div
           style={{
-            color: Number(value) > 250 ? "green" : "red",
+            color: Number(value) > minScore ? "green" : "red",
             textAlign: "center",
           }}
         >
@@ -177,28 +180,28 @@ const ResultScore = () => {
     countTrue: number,
     countTotal: number,
     subtest: string
-  ) => {
-    const countPercentIsTrue = (countTrue / countTotal) * 100;
-    const percentIsTrue =
-      countPercentIsTrue < 30 ? 0 : countPercentIsTrue < 50 ? 30 : 50;
-    const maxScore = 750;
-    if (subtest === "kpu" || subtest === "ind") {
-      const defaultScore = maxScore / 30;
-      return ((100 - percentIsTrue) / 100) * defaultScore;
-    } else if (
-      subtest === "ppu" ||
-      subtest === "pbm" ||
-      subtest === "ing" ||
-      subtest === "mtk"
-    ) {
-      const defaultScore = maxScore / 20;
-      return ((100 - percentIsTrue) / 100) * defaultScore;
-    } else if (subtest === "pku") {
-      const defaultScore = maxScore / 15;
-      return ((100 - percentIsTrue) / 100) * defaultScore;
-    } else {
-      return 0;
-    }
+  ): number => {
+    if (countTotal === 0) return 0;
+
+    const ratio = countTrue / countTotal;
+
+    const maxWeight = maxScore / 2.5;
+
+    const maxScoreMap: { [key: string]: number } = {
+      kpu: maxWeight / 30,
+      ind: maxWeight / 30,
+      ppu: maxWeight / 20,
+      pbm: maxWeight / 20,
+      ing: maxWeight / 20,
+      mtk: maxWeight / 20,
+      pku: maxWeight / 15,
+    };
+
+    const baseScore = maxScoreMap[subtest] || 0;
+    const difficultyWeight = 0.75 + (1 - ratio); // makin sedikit yang benar, makin susah → skor naik
+    const score = baseScore * difficultyWeight;
+
+    return score;
   };
 
   useEffect(() => {
@@ -231,7 +234,7 @@ const ResultScore = () => {
     const totalScore = (subtestTyped: string) => {
       uniqueUserIds.map((userId) => {
         const subtestType = subtestTyped;
-        let userScore = 250;
+        let userScore = minScore;
         oldDataSource.map((oldDataItem) =>
           oldDataItem.subtest === subtestType && oldDataItem[userId]
             ? (userScore += Number(oldDataItem[userId]))
