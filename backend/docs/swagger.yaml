@@ -325,7 +325,7 @@ definitions:
       username:
         type: string
     type: object
-host: tryout-sample.fly.dev
+host: api.terasbelajarasik.web.id
 info:
   contact:
     email: artamananda@gmail.com
@@ -336,7 +336,7 @@ info:
     url: http://www.apache.org/licenses/LICENSE-2.0.html
   termsOfService: http://swagger.io/terms/
   title: Tryout Sample
-  version: 0.1.3
+  version: 0.2.0
 paths:
   /custom/batch5:
     post:

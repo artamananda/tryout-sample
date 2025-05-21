@@ -2318,8 +2318,8 @@ const docTemplate = `{
 
 // SwaggerInfo holds exported Swagger Info so clients can modify it
 var SwaggerInfo = &swag.Spec{
-	Version:          "0.1.3",
-	Host:             "tryout-sample.fly.dev",
+	Version:          "0.2.0",
+	Host:             "api.terasbelajarasik.web.id",
 	BasePath:         "/v1/api",
 	Schemes:          []string{},
 	Title:            "Tryout Sample",
