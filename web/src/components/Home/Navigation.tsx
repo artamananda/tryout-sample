@@ -88,32 +88,37 @@ export const Navigation = (props: any) => {
               </a>
             </li> */}
             <li>
-              <a href="#about" className="page-scroll">
+              <a href="/#about" className="page-scroll">
                 Tentang
               </a>
             </li>
             <li>
-              <a href="#services" className="page-scroll">
+              <a href="/#services" className="page-scroll">
                 Layanan
               </a>
             </li>
             <li>
-              <a href="#portfolio" className="page-scroll">
+              <a href="/#portfolio" className="page-scroll">
                 Galeri
               </a>
             </li>
             <li>
-              <a href="#testimonials" className="page-scroll">
+              <a href="/library" className="page-scroll">
+                Perpustakaan Digital
+              </a>
+            </li>
+            <li>
+              <a href="/#testimonials" className="page-scroll">
                 Testimoni
               </a>
             </li>
             <li>
-              <a href="#team" className="page-scroll">
+              <a href="/#team" className="page-scroll">
                 Tim
               </a>
             </li>
             <li>
-              <a href="#contact" className="page-scroll">
+              <a href="/#contact" className="page-scroll">
                 Kontak
               </a>
             </li>

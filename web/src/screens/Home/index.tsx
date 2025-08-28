@@ -11,13 +11,14 @@ import { Contact } from '../../components/Home/Contact';
 import JsonData from '../../constants/data.json';
 import SmoothScroll from 'smooth-scroll';
 import './Home.css';
+import ScrollToHash from '../../components/Home/ScrollToHash';
 
 export const scroll = new SmoothScroll('a[href*="#"]', {
   speed: 1000,
   speedAsDuration: true
 });
 
-const App = () => {
+const HomeScreen = () => {
   const [landingPageData, setLandingPageData] = useState<any>({});
   useEffect(() => {
     setLandingPageData(JsonData);
@@ -25,6 +26,7 @@ const App = () => {
 
   return (
     <div>
+      <ScrollToHash />
       <Navigation />
       <Header data={landingPageData.Header} />
       {/* <Features data={landingPageData.Features} /> */}
@@ -38,4 +40,4 @@ const App = () => {
   );
 };
 
-export default App;
+export default HomeScreen;
