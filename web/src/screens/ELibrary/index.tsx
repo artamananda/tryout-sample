@@ -49,7 +49,7 @@ const books = [
 
 const ELibraryScreen = () => {
   useEffect(() => {
-    document.title = 'E-Library | MyApp';
+    document.title = 'Perpustakaan Digital Telisik';
   }, []);
 
   return (
