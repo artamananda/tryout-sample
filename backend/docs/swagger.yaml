@@ -7,6 +7,34 @@ definitions:
     required:
     - email
     type: object
+  model.CreateEbookRequest:
+    properties:
+      author:
+        type: string
+      category:
+        type: string
+      cover_image_url:
+        type: string
+      description:
+        type: string
+      ebook_url:
+        type: string
+      is_published:
+        type: boolean
+      isbn:
+        type: string
+      publication_date:
+        type: string
+      publisher:
+        type: string
+      title:
+        type: string
+      total_pages:
+        type: integer
+    required:
+    - author
+    - title
+    type: object
   model.CreateProgramRequest:
     properties:
       close_registration:
@@ -189,6 +217,31 @@ definitions:
     - otp
     - password
     - username
+    type: object
+  model.UpdateEbookRequest:
+    properties:
+      author:
+        type: string
+      category:
+        type: string
+      cover_image_url:
+        type: string
+      description:
+        type: string
+      ebook_url:
+        type: string
+      is_published:
+        type: boolean
+      isbn:
+        type: string
+      publication_date:
+        type: string
+      publisher:
+        type: string
+      title:
+        type: string
+      total_pages:
+        type: integer
     type: object
   model.UpdateProgramRequest:
     properties:
@@ -404,6 +457,177 @@ paths:
       summary: Register a batch 5
       tags:
       - Custom
+  /ebook:
+    get:
+      consumes:
+      - application/json
+      description: Retrieve a list of all ebooks, optionally filtered by ebookId
+      parameters:
+      - description: Tryout ID
+        in: query
+        name: ebookId
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/model.GeneralResponse'
+      summary: Find all ebooks
+      tags:
+      - Ebooks
+    post:
+      consumes:
+      - application/json
+      description: Create a new ebook for a specific tryout
+      parameters:
+      - description: Tryout ID
+        in: path
+        name: ebookId
+        required: true
+        type: string
+      - description: Request Body
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/model.CreateEbookRequest'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            $ref: '#/definitions/model.GeneralResponse'
+      security:
+      - JWT: []
+      summary: Create a ebook
+      tags:
+      - Ebooks
+  /ebook/{id}:
+    delete:
+      consumes:
+      - application/json
+      description: Delete an existing ebook by its unique ID
+      parameters:
+      - description: Ebook ID
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/model.GeneralResponse'
+      security:
+      - JWT: []
+      summary: Delete a ebook by ID
+      tags:
+      - Ebooks
+    get:
+      consumes:
+      - application/json
+      description: Retrieve an existing ebook by its unique ID
+      parameters:
+      - description: Ebook ID
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/model.GeneralResponse'
+      summary: Find a ebook by ID
+      tags:
+      - Ebooks
+    put:
+      consumes:
+      - application/json
+      description: Update an existing ebook by its unique ID
+      parameters:
+      - description: Ebook ID
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: Request Body
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/model.UpdateEbookRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/model.GeneralResponse'
+      security:
+      - JWT: []
+      summary: Update a ebook by ID
+      tags:
+      - Ebooks
+  /ebook/{id}/upload-cover:
+    put:
+      consumes:
+      - multipart/form-data
+      description: Update the image of an existing ebook by its unique ID
+      parameters:
+      - description: Ebook ID
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: Image File
+        in: formData
+        name: file
+        required: true
+        type: file
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/model.GeneralResponse'
+      security:
+      - JWT: []
+      summary: Update the image of a ebook by ID
+      tags:
+      - Ebooks
+  /ebook/{id}/upload-file:
+    put:
+      consumes:
+      - multipart/form-data
+      description: Update the file of an existing ebook by its unique ID
+      parameters:
+      - description: Ebook ID
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: File
+        in: formData
+        name: file
+        required: true
+        type: file
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/model.GeneralResponse'
+      security:
+      - JWT: []
+      summary: Update the file of a ebook by ID
+      tags:
+      - Ebooks
   /email/send-otp:
     post:
       consumes:
