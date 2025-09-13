@@ -18,7 +18,7 @@ type Program struct {
 	OpenRegistration  time.Time `json:"open_registration"`
 	CloseRegistration time.Time `json:"close_registration"`
 	CreatedAt         time.Time `json:"created_at"`
-	UpdatedAt         time.Time `json:"deleted_at"`
+	UpdatedAt         time.Time `json:"updated_at"`
 }
 
 func (Program) TableName() string {
