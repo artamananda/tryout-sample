@@ -238,7 +238,6 @@ func (controller EbookController) Delete(c *fiber.Ctx) error {
 // @Accept json
 // @Produce json
 // @Param id path string true "Ebook ID"
-// @Security JWT
 // @Success 200 {object} model.GeneralResponse
 // @Router /ebook/{id} [get]
 func (controller EbookController) FindById(c *fiber.Ctx) error {
@@ -263,7 +262,6 @@ func (controller EbookController) FindById(c *fiber.Ctx) error {
 // @Accept json
 // @Produce json
 // @Param ebookId query string false "Tryout ID"
-// @Security JWT
 // @Success 200 {object} model.GeneralResponse
 // @Router /ebook [get]
 func (controller EbookController) FindAll(c *fiber.Ctx) error {

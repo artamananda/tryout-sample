@@ -120,11 +120,6 @@ const docTemplate = `{
         },
         "/ebook": {
             "get": {
-                "security": [
-                    {
-                        "JWT": []
-                    }
-                ],
                 "description": "Retrieve a list of all ebooks, optionally filtered by ebookId",
                 "consumes": [
                     "application/json"
@@ -200,11 +195,6 @@ const docTemplate = `{
         },
         "/ebook/{id}": {
             "get": {
-                "security": [
-                    {
-                        "JWT": []
-                    }
-                ],
                 "description": "Retrieve an existing ebook by its unique ID",
                 "consumes": [
                     "application/json"
