@@ -12,5 +12,5 @@ CREATE TABLE ebooks (
     ebook_url varchar(255),
     cover_image_url varchar(255),
     created_at TIMESTAMPTZ,
-    updated_at TIMESTAMPTZ,
+    updated_at TIMESTAMPTZ
 );
