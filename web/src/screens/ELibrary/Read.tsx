@@ -15,11 +15,11 @@ pdfjs.GlobalWorkerOptions.workerSrc = new URL(
   import.meta.url
 ).toString();
 
-const options = {
-  cMapUrl: '/cmaps/',
-  standardFontDataUrl: '/standard_fonts/',
-  wasmUrl: '/wasm/'
-};
+// const options = {
+//   cMapUrl: '/cmaps/',
+//   standardFontDataUrl: '/standard_fonts/',
+//   wasmUrl: '/wasm/'
+// };
 
 type PDFFile = string | File | null;
 
@@ -62,7 +62,7 @@ export default function ReadScreen() {
           <Document
             file={file}
             onLoadSuccess={onDocumentLoadSuccess}
-            options={options}
+            // options={options}
           >
             {Array.from(new Array(numPages), (_el, index) => (
               <Page key={`page_${index + 1}`} pageNumber={index + 1} />
