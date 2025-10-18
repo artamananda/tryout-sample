@@ -5,7 +5,6 @@ import (
 	"errors"
 
 	"github.com/artamananda/tryout-sample/internal/entity"
-	"github.com/artamananda/tryout-sample/internal/exception"
 	"github.com/artamananda/tryout-sample/internal/model"
 	"github.com/google/uuid"
 	"gorm.io/gorm"
@@ -19,32 +18,39 @@ func NewEbookRepository(DB *gorm.DB) EbookRepository {
 	return EbookRepository{DB: DB}
 }
 
-func (repository *EbookRepository) Create(ctx context.Context, ebook entity.Ebook) entity.Ebook {
+func (repository *EbookRepository) Create(ctx context.Context, ebook entity.Ebook) (entity.Ebook, error) {
 	ebook.EbookID = uuid.New()
 	err := repository.DB.WithContext(ctx).Create(&ebook).Error
-	exception.PanicLogging(err)
-	return ebook
+	if err != nil {
+		return entity.Ebook{}, err
+	}
+	return ebook, nil
 }
 
-func (repository *EbookRepository) Update(ctx context.Context, ebook entity.Ebook) entity.Ebook {
+func (repository *EbookRepository) Update(ctx context.Context, ebook entity.Ebook) (entity.Ebook, error) {
 	query := `
         UPDATE ebooks
         SET is_published = $1
         WHERE ebook_id = $2
     `
 	err := repository.DB.WithContext(ctx).Where("ebook_id = ?", ebook.EbookID).Updates(&ebook).Error
-	exception.PanicLogging(err)
+	if err != nil {
+		return entity.Ebook{}, err
+	}
 
 	if !ebook.IsPublished {
 		repository.DB.WithContext(ctx).Where("ebook_id = ?", ebook.EbookID).Exec(query, ebook.IsPublished, ebook.EbookID)
 	}
 
-	return ebook
+	return ebook, nil
 }
 
-func (repository *EbookRepository) Delete(ctx context.Context, ebook entity.Ebook) {
+func (repository *EbookRepository) Delete(ctx context.Context, ebook entity.Ebook) error {
 	err := repository.DB.WithContext(ctx).Where("ebook_id = ?", ebook.EbookID).Delete(&ebook).Error
-	exception.PanicLogging(err)
+	if err != nil {
+		return err
+	}
+	return nil
 }
 
 func (repository *EbookRepository) FindById(ctx context.Context, ebookId string) (entity.Ebook, error) {

@@ -47,7 +47,10 @@ func (service *EbookService) Create(ctx context.Context, request model.CreateEbo
 		CoverImageURL:   request.CoverImageURL,
 	}
 
-	ebook = service.EbookRepository.Create(ctx, ebook)
+	ebook, err = service.EbookRepository.Create(ctx, ebook)
+	if err != nil {
+		return model.EbookResponse{}, err
+	}
 
 	return model.EbookResponse{
 		EbookID:         ebook.EbookID,
@@ -95,7 +98,11 @@ func (service *EbookService) Update(ctx context.Context, request model.UpdateEbo
 	ebook.CoverImageURL = request.CoverImageURL
 	ebook.UpdatedAt = time.Now()
 
-	ebook = service.EbookRepository.Update(ctx, ebook)
+	ebook, err = service.EbookRepository.Update(ctx, ebook)
+
+	if err != nil {
+		return model.EbookResponse{}, err
+	}
 
 	return model.EbookResponse{
 		EbookID:         ebook.EbookID,
@@ -137,7 +144,7 @@ func (service *EbookService) UpdateCover(ctx context.Context, request model.Uplo
 	ebook.CoverImageURL = fileLink
 	ebook.UpdatedAt = time.Now()
 
-	ebook = service.EbookRepository.Update(ctx, ebook)
+	ebook, err = service.EbookRepository.Update(ctx, ebook)
 
 	if err != nil {
 		return model.EbookResponse{}, exception.NotFoundError{
@@ -185,7 +192,7 @@ func (service *EbookService) UpdateFile(ctx context.Context, request model.Uploa
 	ebook.EbookURL = fileLink
 	ebook.UpdatedAt = time.Now()
 
-	ebook = service.EbookRepository.Update(ctx, ebook)
+	ebook, err = service.EbookRepository.Update(ctx, ebook)
 
 	if err != nil {
 		return model.EbookResponse{}, exception.NotFoundError{
