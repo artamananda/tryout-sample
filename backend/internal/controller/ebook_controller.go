@@ -38,7 +38,6 @@ func (controller EbookController) Route(app *fiber.App) {
 // @Tags Ebooks
 // @Accept json
 // @Produce json
-// @Param ebookId path string true "Tryout ID"
 // @Param request body model.CreateEbookRequest true "Request Body"
 // @Security JWT
 // @Success 201 {object} model.GeneralResponse

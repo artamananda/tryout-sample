@@ -482,11 +482,6 @@ paths:
       - application/json
       description: Create a new ebook for a specific tryout
       parameters:
-      - description: Tryout ID
-        in: path
-        name: ebookId
-        required: true
-        type: string
       - description: Request Body
         in: body
         name: request

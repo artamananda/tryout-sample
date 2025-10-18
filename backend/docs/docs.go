@@ -167,13 +167,6 @@ const docTemplate = `{
                 "summary": "Create a ebook",
                 "parameters": [
                     {
-                        "type": "string",
-                        "description": "Tryout ID",
-                        "name": "ebookId",
-                        "in": "path",
-                        "required": true
-                    },
-                    {
                         "description": "Request Body",
                         "name": "request",
                         "in": "body",
