@@ -13,11 +13,13 @@ import {
 import { BookOutlined } from '@ant-design/icons';
 import { EbookProps } from '../../types/ebook';
 import useFetchList from '../../hooks/useFetchList';
+import { useNavigate } from 'react-router-dom';
 
 const { Title, Paragraph } = Typography;
 const { Search } = Input;
 
 const ELibraryScreen = () => {
+  const navigate = useNavigate();
   const {
     data: books,
     setSearch,
@@ -82,9 +84,7 @@ const ELibraryScreen = () => {
                   actions={[
                     <span
                       key="read"
-                      onClick={() =>
-                        message.info('Fitur baca masih dalam pengembangan')
-                      }
+                      onClick={() => navigate(`/library/${book.ebook_id}/read`)}
                     >
                       <BookOutlined /> Baca
                     </span>
