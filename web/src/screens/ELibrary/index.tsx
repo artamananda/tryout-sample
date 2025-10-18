@@ -11,43 +11,22 @@ import {
   message
 } from 'antd';
 import { BookOutlined } from '@ant-design/icons';
+import { EbookProps } from '../../types/ebook';
+import useFetchList from '../../hooks/useFetchList';
+import { useNavigate } from 'react-router-dom';
 
-const { Content } = Layout;
 const { Title, Paragraph } = Typography;
 const { Search } = Input;
 
-// Dummy data buku
-const books = [
-  {
-    id: 1,
-    title: 'Dari Nol ke Goal: Mimpi Gratisan ala TELISIK',
-    coverUrl:
-      'https://penerbitlitnus.co.id/wp-content/uploads/2025/06/3064.jpg',
-    author:
-      'Eogenie Lakilaki, S.E., Artamananda, S.Kom, Annisa Fatihah Salsabila, S.Pd., Dwiki Ariefandri, S.E., Carin Amanda, Shafa Athiya Novila, Dea Dayu Frisilia, Panca Wijaya',
-    publisher: 'PT Literasi Nusantara Abadi Grup'
-  },
-  {
-    id: 2,
-    title: 'Dari Nol ke Goal: Mimpi Gratisan ala TELISIK',
-    coverUrl:
-      'https://penerbitlitnus.co.id/wp-content/uploads/2025/06/3064.jpg',
-    author:
-      'Eogenie Lakilaki, S.E., Artamananda, S.Kom, Annisa Fatihah Salsabila, S.Pd., Dwiki Ariefandri, S.E., Carin Amanda, Shafa Athiya Novila, Dea Dayu Frisilia, Panca Wijaya',
-    publisher: 'PT Literasi Nusantara Abadi Grup'
-  },
-  {
-    id: 3,
-    title: 'Dari Nol ke Goal: Mimpi Gratisan ala TELISIK',
-    coverUrl:
-      'https://penerbitlitnus.co.id/wp-content/uploads/2025/06/3064.jpg',
-    author:
-      'Eogenie Lakilaki, S.E., Artamananda, S.Kom, Annisa Fatihah Salsabila, S.Pd., Dwiki Ariefandri, S.E., Carin Amanda, Shafa Athiya Novila, Dea Dayu Frisilia, Panca Wijaya',
-    publisher: 'PT Literasi Nusantara Abadi Grup'
-  }
-];
-
 const ELibraryScreen = () => {
+  const navigate = useNavigate();
+  const {
+    data: books,
+    setSearch,
+    isLoading
+  } = useFetchList<EbookProps>({
+    endpoint: 'ebook'
+  });
   useEffect(() => {
     document.title = 'Perpustakaan Digital Telisik';
   }, []);
@@ -80,61 +59,70 @@ const ELibraryScreen = () => {
             enterButton="Cari"
             size="large"
             onSearch={(value) => {
-              console.log('Pencarian:', value);
-              // Implementasi pencarian bisa ditambahkan di sini
+              setSearch(value);
             }}
           />
         </div>
 
-        <Row gutter={[24, 24]}>
-          {books.map((book) => (
-            <Col xs={24} sm={12} md={8} lg={8} key={book.id}>
-              <Card
-                // title={book.title}
-                hoverable
-                actions={[
-                  <span
-                    key="read"
-                    onClick={() =>
-                      message.info('Fitur baca masih dalam pengembangan')
-                    }
-                  >
-                    <BookOutlined /> Baca
-                  </span>
-                ]}
-                style={{
-                  borderRadius: 8,
-                  height: '100%',
-                  boxShadow: '0 2px 8px rgba(0,0,0,0.05)'
-                }}
-              >
-                <Title
-                  level={4}
-                  style={{ marginBottom: 12, textAlign: 'center' }}
+        {isLoading ? (
+          <div style={{ textAlign: 'center', marginTop: 100 }}>
+            <Typography.Text>Memuat koleksi buku...</Typography.Text>
+          </div>
+        ) : books.length === 0 ? (
+          <div style={{ textAlign: 'center', marginTop: 100 }}>
+            <Typography.Text>
+              Tidak ada buku yang ditemukan. Coba kata kunci lain.
+            </Typography.Text>
+          </div>
+        ) : (
+          <Row gutter={[24, 24]}>
+            {books.map((book) => (
+              <Col xs={24} sm={12} md={8} lg={8} key={book.ebook_id}>
+                <Card
+                  // title={book.title}
+                  hoverable
+                  actions={[
+                    <span
+                      key="read"
+                      onClick={() => navigate(`/library/${book.ebook_id}/read`)}
+                    >
+                      <BookOutlined /> Baca
+                    </span>
+                  ]}
+                  style={{
+                    borderRadius: 8,
+                    height: '100%',
+                    boxShadow: '0 2px 8px rgba(0,0,0,0.05)'
+                  }}
                 >
-                  {book.title}
-                </Title>
-                <div style={{ textAlign: 'center' }}>
-                  <Image
-                    src={book.coverUrl}
-                    alt={book.title}
-                    style={{
-                      borderRadius: 8,
-                      marginBottom: 12
-                    }}
-                    height={200}
-                  />
-                </div>
-                <p style={{ marginBottom: 8 }}>
-                  <strong>Penulis:</strong> {book.author}
-                </p>
-                <p style={{ marginBottom: 8 }}>
-                  <strong>Penerbit:</strong> {book.publisher}
-                </p>
-              </Card>
-            </Col>
-          ))}
-        </Row>
+                  <Title
+                    level={4}
+                    style={{ marginBottom: 12, textAlign: 'center' }}
+                  >
+                    {book.title}
+                  </Title>
+                  <div style={{ textAlign: 'center' }}>
+                    <Image
+                      src={book.cover_image_url}
+                      alt={book.title}
+                      style={{
+                        borderRadius: 8,
+                        marginBottom: 12
+                      }}
+                      height={200}
+                    />
+                  </div>
+                  <p style={{ marginBottom: 8 }}>
+                    <strong>Penulis:</strong> {book.author}
+                  </p>
+                  <p style={{ marginBottom: 8 }}>
+                    <strong>Penerbit:</strong> {book.publisher}
+                  </p>
+                </Card>
+              </Col>
+            ))}
+          </Row>
+        )}
       </div>
     </Layout>
   );

@@ -13,6 +13,7 @@ import Batch5 from '../screens/Program/Batch5';
 import TryoutRoute from './TryoutRoute';
 import HomeScreen from '../screens/Home';
 import ELibraryScreen from '../screens/ELibrary';
+import ReadScreen from '../screens/ELibrary/Read';
 
 const RootNavigator = () => {
   return (
@@ -44,6 +45,16 @@ const RootNavigator = () => {
             <PublicRoute>
               <Suspense fallback={<Spin spinning={true} />}>
                 <ELibraryScreen />
+              </Suspense>
+            </PublicRoute>
+          }
+        />
+        <Route
+          path="/library/:id/read"
+          element={
+            <PublicRoute>
+              <Suspense fallback={<Spin spinning={true} />}>
+                <ReadScreen />
               </Suspense>
             </PublicRoute>
           }
