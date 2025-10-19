@@ -88,15 +88,15 @@ export default function ReadScreen() {
         <Document
           file={file}
           onLoadSuccess={onDocumentLoadSuccess}
-          loading={<Spin tip="Memuat dokumen..." />}
-          noData={<Spin tip="Memuat dokumen..." />}
+          loading={<Spin />}
+          noData={<Spin />}
         >
           {Array.from(new Array(numPages), (_el, index) => (
             <Page
               key={`page_${index + 1}`}
               pageNumber={index + 1}
               width={pageWidth > 500 ? 500 : pageWidth - 40} // limit max width, with some padding
-              loading={<Spin tip="Memuat halaman..." />}
+              loading={<Spin />}
             />
           ))}
         </Document>
