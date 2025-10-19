@@ -1,4 +1,4 @@
-import { useEffect, useState, useRef } from 'react';
+import { useEffect, useState, useRef, useCallback } from 'react';
 import { pdfjs, Document, Page } from 'react-pdf';
 import 'react-pdf/dist/Page/AnnotationLayer.css';
 import 'react-pdf/dist/Page/TextLayer.css';
@@ -7,7 +7,7 @@ import type { PDFDocumentProxy } from 'pdfjs-dist';
 import { httpRequest } from '../../helpers/api';
 import { message, Spin, Typography } from 'antd';
 
-pdfjs.GlobalWorkerOptions.workerSrc = `//unpkg.com/pdfjs-dist@${pdfjs.version}/build/pdf.worker.min.mjs`;
+pdfjs.GlobalWorkerOptions.workerSrc = `https://unpkg.com/pdfjs-dist@${pdfjs.version}/build/pdf.worker.min.mjs`;
 
 const { Title } = Typography;
 
@@ -18,6 +18,7 @@ export default function ReadScreen() {
   const [file, setFile] = useState<PDFFile>(null);
   const [title, setTitle] = useState<string>('');
   const [numPages, setNumPages] = useState<number>();
+  const [visiblePages, setVisiblePages] = useState<number>(3); // Start with 3 pages
   const [pageWidth, setPageWidth] = useState<number>(window.innerWidth);
 
   const containerRef = useRef<HTMLDivElement | null>(null);
@@ -59,6 +60,27 @@ export default function ReadScreen() {
     }
   }, [id]);
 
+  // Scroll handler for lazy loading
+  const handleScroll = useCallback(() => {
+    const container = containerRef.current;
+    if (!container || !numPages) return;
+
+    const { scrollTop, scrollHeight, clientHeight } = container;
+    const nearBottom = scrollTop + clientHeight >= scrollHeight - 200;
+
+    if (nearBottom && visiblePages < numPages) {
+      setVisiblePages((prev) => Math.min(prev + 3, numPages));
+    }
+  }, [numPages, visiblePages]);
+
+  useEffect(() => {
+    const container = containerRef.current;
+    if (!container) return;
+
+    container.addEventListener('scroll', handleScroll);
+    return () => container.removeEventListener('scroll', handleScroll);
+  }, [handleScroll]);
+
   return (
     <div
       style={{
@@ -91,15 +113,19 @@ export default function ReadScreen() {
           loading={<Spin />}
           noData={<Spin />}
         >
-          {Array.from(new Array(numPages), (_el, index) => (
+          {Array.from(new Array(visiblePages), (_el, index) => (
             <Page
               key={`page_${index + 1}`}
               pageNumber={index + 1}
-              width={pageWidth > 500 ? 500 : pageWidth - 40} // limit max width, with some padding
+              width={pageWidth > 500 ? 500 : pageWidth - 40}
               loading={<Spin />}
             />
           ))}
         </Document>
+
+        {visiblePages < (numPages || 0) && (
+          <Spin style={{ marginTop: 20 }} tip="Memuat halaman berikutnya..." />
+        )}
       </div>
     </div>
   );
