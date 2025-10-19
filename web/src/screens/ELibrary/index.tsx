@@ -8,7 +8,8 @@ import {
   Input,
   Typography,
   Image,
-  message
+  message,
+  Button
 } from 'antd';
 import { BookOutlined } from '@ant-design/icons';
 import { EbookProps } from '../../types/ebook';
@@ -82,12 +83,14 @@ const ELibraryScreen = () => {
                   // title={book.title}
                   hoverable
                   actions={[
-                    <span
+                    <Button
+                      style={{ width: '80%' }}
+                      type="primary"
                       key="read"
                       onClick={() => navigate(`/library/${book.ebook_id}/read`)}
                     >
                       <BookOutlined /> Baca
-                    </span>
+                    </Button>
                   ]}
                   style={{
                     borderRadius: 8,
