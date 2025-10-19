@@ -27,6 +27,10 @@ func UploadFile(uploader *s3manager.Uploader, fileUpload model.UploadFileRequest
 		Key:         aws.String(fileUpload.FileName),
 		Body:        file,
 		ContentType: &fileUpload.ContentType,
+		Metadata: map[string]*string{
+			"Access-Control-Allow-Origin": aws.String("*"),
+		},
+		ACL: aws.String("public-read"),
 	})
 	if err != nil {
 		return "", err
