@@ -2,10 +2,12 @@ import { Avatar, Image, Input, Table, Typography } from "antd";
 import useFetchList from "../../../hooks/useFetchList";
 import { useEffect } from "react";
 import dayjs from "dayjs";
+import { useParams } from "react-router-dom";
 
 const { Text, Link } = Typography;
 
 const ListProgramStudentScreen = () => {
+  const { programId } = useParams();
   const {
     data: programData,
     fetchList,
@@ -13,6 +15,9 @@ const ListProgramStudentScreen = () => {
     setSearch,
   } = useFetchList<any>({
     endpoint: "transaction-program",
+    initialQuery: {
+      programId: programId,
+    },
   });
 
   const columns = [

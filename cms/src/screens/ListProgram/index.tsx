@@ -2,30 +2,48 @@ import { Button, Card, Col, Row, Spin, Typography } from "antd";
 import useFetchList from "../../hooks/useFetchList";
 import { ProgramProps } from "../../types/program.type";
 import dayjs from "dayjs";
+import { useNavigate } from "react-router-dom";
 
 const { Text, Title } = Typography;
 
 const ListProgramScreen = () => {
+  const navigate = useNavigate();
   const { data: programData, isLoading } = useFetchList<ProgramProps>({
     endpoint: "program",
   });
 
-  return isLoading ? (
-    <Spin />
-  ) : (
+  return (
     <div>
-      <Row>
-        {programData?.map((program: ProgramProps) => (
-          <Col span={24} key={program.program_id}>
-            <CardProgram record={program} />
-          </Col>
-        ))}
-      </Row>
+      <div
+        style={{
+          display: "flex",
+          justifyContent: "space-between",
+          alignItems: "center",
+          marginBottom: 16,
+        }}
+      >
+        <Title level={2}>Daftar Program</Title>
+        <Button type="primary" onClick={() => navigate("/program/add")}>
+          Buat Program Baru
+        </Button>
+      </div>
+      {isLoading ? (
+        <Spin />
+      ) : (
+        <Row>
+          {programData?.map((program: ProgramProps) => (
+            <Col span={24} key={program.program_id}>
+              <CardProgram record={program} />
+            </Col>
+          ))}
+        </Row>
+      )}
     </div>
   );
 };
 
 const CardProgram = ({ record }: { record: ProgramProps }) => {
+  const navigate = useNavigate();
   return (
     <Card>
       <Title level={4}>{`${record.name}`}</Title>
@@ -48,8 +66,15 @@ const CardProgram = ({ record }: { record: ProgramProps }) => {
       <div
         style={{ marginTop: 16, display: "flex", flexDirection: "row", gap: 8 }}
       >
-        <Button type="primary">Peserta Terdaftar</Button>
-        <Button>Edit</Button>
+        <Button
+          type="primary"
+          onClick={() => navigate(`${record.program_id}/students`)}
+        >
+          Peserta Terdaftar
+        </Button>
+        <Button onClick={() => navigate(`${record.program_id}/edit`)}>
+          Edit
+        </Button>
       </div>
     </Card>
   );
