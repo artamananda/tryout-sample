@@ -126,6 +126,17 @@ const AppLayout = () => {
             }
           }}
         />
+        <div
+          style={{
+            color: "#fff",
+            position: "absolute",
+            textAlign: "center",
+            bottom: 60,
+            left: 0,
+            right: 0,
+            fontSize: 10,
+          }}
+        >{`${process.env.REACT_APP_WEBSITE_NAME} v${process.env.REACT_APP_VERSION_NAME}`}</div>
       </Sider>
       <Layout style={{ marginLeft: 200 }}>
         <Content style={{ margin: 20, overflowY: "auto" }}>
@@ -133,9 +144,6 @@ const AppLayout = () => {
             <Outlet />
           </Suspense>
         </Content>
-        <Footer style={{ textAlign: "center" }}>
-          <FooterCopyright />
-        </Footer>
       </Layout>
     </Layout>
   );

@@ -30,7 +30,7 @@ const ListProgramScreen = () => {
       {isLoading ? (
         <Spin />
       ) : (
-        <Row>
+        <Row gutter={[0, 16]}>
           {programData?.map((program: ProgramProps) => (
             <Col span={24} key={program.program_id}>
               <CardProgram record={program} />
