@@ -105,33 +105,60 @@ const EditProgramScreen = () => {
         <Spin />
       ) : (
         <Form form={form} layout="vertical" onFinish={handleAddEditProgram}>
-          <Form.Item label="Nama Program" name="name" required>
+          <Form.Item
+            label="Nama Program"
+            name="name"
+            required
+            rules={[{ required: true }]}
+          >
             <Input />
           </Form.Item>
-          <Form.Item label="Deskripsi Program" name="description" required>
+          <Form.Item
+            label="Deskripsi Program"
+            name="description"
+            required
+            rules={[{ required: true }]}
+          >
             <Input.TextArea rows={4} />
           </Form.Item>
-          <Form.Item label="Maksimal Peserta" name="max_participants" required>
+          <Form.Item
+            label="Maksimal Peserta"
+            name="max_participants"
+            required
+            rules={[{ required: true }]}
+          >
             <Input type="number" />
           </Form.Item>
           <Form.Item
             label="Mulai Pendaftaran"
             name="open_registration"
             required
+            rules={[{ required: true }]}
           >
-            <DatePicker showTime />
+            <DatePicker showTime={{ format: "HH:mm" }} />
           </Form.Item>
           <Form.Item
             label="Akhir Pendaftaran"
             name="close_registration"
             required
+            rules={[{ required: true }]}
           >
-            <DatePicker showTime />
+            <DatePicker showTime={{ format: "HH:mm" }} />
           </Form.Item>
-          <Form.Item label="Mulai Program" name="start_time" required>
+          <Form.Item
+            label="Mulai Program"
+            name="start_time"
+            required
+            rules={[{ required: true }]}
+          >
             <DatePicker />
           </Form.Item>
-          <Form.Item label="Akhir Program" name="end_time" required>
+          <Form.Item
+            label="Akhir Program"
+            name="end_time"
+            required
+            rules={[{ required: true }]}
+          >
             <DatePicker />
           </Form.Item>
           <Form.Item

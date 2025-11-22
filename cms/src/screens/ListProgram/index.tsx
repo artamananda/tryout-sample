@@ -1,4 +1,4 @@
-import { Button, Card, Col, Row, Spin, Typography } from "antd";
+import { Button, Card, Col, Row, Spin, Tag, Typography } from "antd";
 import useFetchList from "../../hooks/useFetchList";
 import { ProgramProps } from "../../types/program.type";
 import dayjs from "dayjs";
@@ -46,7 +46,22 @@ const CardProgram = ({ record }: { record: ProgramProps }) => {
   const navigate = useNavigate();
   return (
     <Card>
-      <Title level={4}>{`${record.name}`}</Title>
+      <div
+        style={{ display: "flex", flexDirection: "row", alignItems: "center" }}
+      >
+        <div
+          style={{ fontWeight: "bold", fontSize: 24 }}
+        >{`${record.name}`}</div>
+        {record.is_published ? (
+          <Tag color="green" style={{ marginLeft: 16, height: 24 }}>
+            Published
+          </Tag>
+        ) : (
+          <Tag color="red" style={{ marginLeft: 16, height: 24 }}>
+            Unpublished
+          </Tag>
+        )}
+      </div>
       <Text>{record.description}</Text>
 
       <Text style={{ display: "block", marginTop: 8 }}>
@@ -62,6 +77,10 @@ const CardProgram = ({ record }: { record: ProgramProps }) => {
           record.end_time
         ).format("DD MMM YYYY")}`}
       </Text>
+
+      <div>
+        <Text>Maksimal Peserta: {record.max_participants} orang</Text>
+      </div>
 
       <div
         style={{ marginTop: 16, display: "flex", flexDirection: "row", gap: 8 }}
