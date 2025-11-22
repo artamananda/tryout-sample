@@ -40,7 +40,7 @@ const Batch5 = () => {
   const [profilePicture, setProfilePicture] = useState<any | null>(null);
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const [isSuccess, setIsSuccess] = useState<boolean>(false);
-  const isOutdated = true;
+  const isOutdated = false;
 
   const getProgramId = async () => {
     try {
