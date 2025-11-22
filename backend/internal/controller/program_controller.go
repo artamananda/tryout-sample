@@ -211,14 +211,21 @@ func (controller ProgramController) FindAll(c *fiber.Ctx) error {
 		return err
 	}
 
-	response, err := controller.ProgramService.FindAll(c.Context(), request)
+	result, err := controller.ProgramService.FindAll(c.Context(), request)
 	if err != nil {
 		return err
+	}
+
+	payload := map[string]interface{}{
+		"count":   len(result),
+		"next":    nil,
+		"prev":    nil,
+		"results": result,
 	}
 
 	return c.Status(fiber.StatusOK).JSON(model.GeneralResponse{
 		Code:    200,
 		Message: "Success",
-		Data:    response,
+		Data:    payload,
 	})
 }

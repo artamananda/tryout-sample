@@ -6,9 +6,10 @@ import {
   UsergroupAddOutlined,
   BarChartOutlined,
   Html5Outlined,
+  ScheduleOutlined,
 } from "@ant-design/icons";
 import type { MenuProps } from "antd";
-import { Layout, Menu, Image, Spin } from "antd";
+import { Layout, Menu, Image, Spin, Modal } from "antd";
 import logo from "../../assets/logo-yellow.png";
 import { Outlet, useNavigate } from "react-router-dom";
 import { useAuthUser, useSignOut } from "react-auth-kit";
@@ -45,6 +46,7 @@ const AppLayout = () => {
     ]),
     getItem("Tryout", "/tryout", <CalendarOutlined />),
     getItem("Tryout Result", "/tryout-result", <BarChartOutlined />),
+    getItem("Program", "/program", <ScheduleOutlined />),
     getItem("Batch 5", "/program/batch5", <Html5Outlined />),
     getItem("Role", "/role", <UsergroupAddOutlined />, [
       getItem("Admin", "/role/admins"),
@@ -55,7 +57,7 @@ const AppLayout = () => {
   return (
     <Layout style={{ minHeight: "100vh" }}>
       <Sider
-        // collapsible
+        collapsible
         collapsed={collapsed}
         onCollapse={(value) => setCollapsed(value)}
         style={{
@@ -68,7 +70,41 @@ const AppLayout = () => {
           zIndex: 99,
         }}
       >
-        <Image src={logo} width={150} style={{ margin: 20 }} preview={false} />
+        {collapsed ? (
+          <div
+            style={{
+              height: 32,
+              margin: 16,
+              display: "flex",
+              justifyContent: "center",
+              alignItems: "center",
+            }}
+          >
+            <Image
+              src={logo}
+              alt="Logo"
+              preview={false}
+              style={{ maxHeight: 32 }}
+            />
+          </div>
+        ) : (
+          <div
+            style={{
+              height: 64,
+              margin: 16,
+              display: "flex",
+              justifyContent: "center",
+              alignItems: "center",
+            }}
+          >
+            <Image
+              src={logo}
+              alt="Logo"
+              preview={false}
+              style={{ maxHeight: 150 }}
+            />
+          </div>
+        )}
         <Menu
           theme="dark"
           defaultSelectedKeys={["tryout"]}
@@ -76,8 +112,16 @@ const AppLayout = () => {
           items={items}
           onClick={({ key }) => {
             if (key === "/logout") {
-              signOut();
-              navigate("/login");
+              Modal.confirm({
+                title: "Confirm Logout",
+                content: "Are you sure you want to logout?",
+                okText: "Yes",
+                cancelText: "No",
+                onOk: () => {
+                  signOut();
+                  navigate("/login");
+                },
+              });
             } else {
               navigate(key);
             }
