@@ -193,6 +193,7 @@ const RootNavigator = () => {
               </PrivateRoute>
             }
           />
+
           <Route
             path="/program"
             element={
@@ -201,7 +202,6 @@ const RootNavigator = () => {
               </PrivateRoute>
             }
           />
-
           <Route
             path="/program/add"
             element={
@@ -210,7 +210,6 @@ const RootNavigator = () => {
               </PrivateRoute>
             }
           />
-
           <Route
             path="/program/:programId/edit"
             element={
@@ -219,7 +218,6 @@ const RootNavigator = () => {
               </PrivateRoute>
             }
           />
-
           <Route
             path="/program/:programId/students"
             element={
