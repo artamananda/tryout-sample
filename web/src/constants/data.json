@@ -212,26 +212,38 @@
     {
       "img": "img/team/eo.jpg",
       "name": "Eogenie Lakilaki",
-      "job": "Founder, Lead Mentor",
+      "job": "Founder, Mentor Lead",
       "university": "Universitas Sriwijaya"
     },
     {
       "img": "img/team/arta.jpg",
       "name": "Artamananda",
-      "job": "Co-Lead Mentor, Tech Lead",
+      "job": "Co-Founder, Tech Lead",
       "university": "Universitas Sriwijaya"
+    },
+    {
+      "img": "img/team/panca.jpg",
+      "name": "Panca Wijaya",
+      "job": "Mentor, Koordinator Harian",
+      "university": "Universitas Sriwijaya"
+    },
+    {
+      "img": "img/team/nisha.jpg",
+      "name": "Anisha",
+      "job": "Mentor, Koordinator Harian",
+      "university": "Universitas Sriwijaya"
+    },
+    {
+      "img": "img/team/gilang.jpg",
+      "name": "Gilang Ramadhan",
+      "job": "Mentor, AI Developer",
+      "university": "Institut Teknologi Bandung"
     },
     {
       "img": "img/team/annisa.jpg",
       "name": "Annisa Fatihah Salsabila",
       "job": "Mentor",
       "university": "Universitas Sriwijaya"
-    },
-    {
-      "img": "img/team/nadia.jpg",
-      "name": "Nadia Dwitama",
-      "job": "Mentor",
-      "university": "Universitas Indonesia"
     },
     {
       "img": "img/team/dylan.jpg",
@@ -270,12 +282,6 @@
       "university": "Universitas Sriwijaya"
     },
     {
-      "img": "img/team/caroline.jpg",
-      "name": "Caroline Fitri Aurora",
-      "job": "Mentor",
-      "university": "Universitas Sriwijaya"
-    },
-    {
       "img": "img/team/fayyad.jpg",
       "name": "Muhammad Fayyad Abdillah",
       "job": "Mentor",
@@ -294,34 +300,34 @@
       "university": "Universitas Sriwijaya"
     },
     {
-      "img": "img/team/panca.jpg",
-      "name": "Panca Wijaya",
-      "job": "Mentor",
-      "university": "Universitas Sriwijaya"
-    },
-    {
-      "img": "img/team/nisha.jpg",
-      "name": "Anisha",
-      "job": "Mentor",
-      "university": "Universitas Sriwijaya"
-    },
-    {
-      "img": "img/team/mafazah.jpg",
-      "name": "Mafazah",
-      "job": "Mentor",
-      "university": "Universitas Sriwijaya"
-    },
-    {
       "img": "img/team/gres.jpg",
       "name": "Gres Sela Aria Anugra",
       "job": "Mentor",
       "university": "Universitas Sriwijaya"
     },
     {
-      "img": "img/team/rahmat.jpg",
-      "name": "Rahmat Rizky Rifai",
-      "job": "Web Developer",
-      "university": "Universitas Gunadarma"
+      "img": "img/team/renisya.jpg",
+      "name": "Renisya Kusnadi",
+      "job": "Mentor",
+      "university": "Universitas Airlangga"
+    },
+    {
+      "img": "img/team/dita.jpg",
+      "name": "Dita Irfaul Khasanah",
+      "job": "Mentor",
+      "university": "Universitas Sriwijaya"
+    },
+    {
+      "img": "img/team/andini.jpg",
+      "name": "Andini Kholisyah",
+      "job": "Mentor",
+      "university": "Universitas Sriwijaya"
+    },
+    {
+      "img": "img/team/tri.jpg",
+      "name": "Tri Wahyuni",
+      "job": "Mentor",
+      "university": "Universitas Sriwijaya"
     }
   ],
   "Contact": {

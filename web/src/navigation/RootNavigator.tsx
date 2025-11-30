@@ -14,6 +14,7 @@ import TryoutRoute from './TryoutRoute';
 import HomeScreen from '../screens/Home';
 import ELibraryScreen from '../screens/ELibrary';
 import ReadScreen from '../screens/ELibrary/Read';
+import ProgramScreen from '../screens/Program';
 
 const RootNavigator = () => {
   return (
@@ -59,16 +60,6 @@ const RootNavigator = () => {
             </PublicRoute>
           }
         />
-        <Route
-          path="/batch5"
-          element={
-            <PublicRoute>
-              <Suspense fallback={<Spin spinning={true} />}>
-                <Batch5 />
-              </Suspense>
-            </PublicRoute>
-          }
-        />
         <Route path="*" element={<NotFoundScreen />} />
 
         <Route path="/" element={<HomeScreen />} />
@@ -88,6 +79,24 @@ const RootNavigator = () => {
             element={
               <PrivateRoute loginPath="/login">
                 <DashboardScreen />
+              </PrivateRoute>
+            }
+          />
+
+          <Route
+            path="/program"
+            element={
+              <PrivateRoute loginPath="/login">
+                <ProgramScreen />
+              </PrivateRoute>
+            }
+          />
+
+          <Route
+            path="/program/:programId/register"
+            element={
+              <PrivateRoute loginPath="/login">
+                <Batch5 />
               </PrivateRoute>
             }
           />

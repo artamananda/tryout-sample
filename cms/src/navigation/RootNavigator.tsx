@@ -23,6 +23,8 @@ import EditTryoutScreen from "../screens/Tryout/Edit";
 import ListAdminScreen from "../screens/ListAdmin";
 import ListUserScreen from "../screens/ListUser";
 import ListProgramScreen from "../screens/ListProgram";
+import ListProgramStudentScreen from "../screens/ListProgram/ListProgramStudent/ProgramStudent";
+import EditProgramScreen from "../screens/ListProgram/Edit";
 
 const RootNavigator = () => {
   return (
@@ -191,11 +193,36 @@ const RootNavigator = () => {
               </PrivateRoute>
             }
           />
+
           <Route
-            path="/program/batch5"
+            path="/program"
             element={
               <PrivateRoute loginPath="/login">
                 <ListProgramScreen />
+              </PrivateRoute>
+            }
+          />
+          <Route
+            path="/program/add"
+            element={
+              <PrivateRoute loginPath="/login">
+                <EditProgramScreen />
+              </PrivateRoute>
+            }
+          />
+          <Route
+            path="/program/:programId/edit"
+            element={
+              <PrivateRoute loginPath="/login">
+                <EditProgramScreen />
+              </PrivateRoute>
+            }
+          />
+          <Route
+            path="/program/:programId/students"
+            element={
+              <PrivateRoute loginPath="/login">
+                <ListProgramStudentScreen />
               </PrivateRoute>
             }
           />

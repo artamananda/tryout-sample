@@ -2,10 +2,11 @@ import React, { Suspense, useState } from 'react';
 import {
   CalendarOutlined,
   UserOutlined,
-  PoweroffOutlined
+  PoweroffOutlined,
+  ScheduleOutlined
 } from '@ant-design/icons';
 import type { MenuProps } from 'antd';
-import { Layout, Menu, Image, Spin } from 'antd';
+import { Layout, Menu, Image, Spin, Modal } from 'antd';
 import logo from '../../assets/logo-yellow.png';
 import { Outlet, useNavigate } from 'react-router-dom';
 import { useAuthUser, useSignOut } from 'react-auth-kit';
@@ -40,17 +41,52 @@ const AppLayout = () => {
     getItem(name, '/user', <UserOutlined />, [
       getItem('Logout', '/logout', <PoweroffOutlined />)
     ]),
-    getItem('Tryout', '/tryout', <CalendarOutlined />)
+    getItem('Tryout', '/tryout', <CalendarOutlined />),
+    getItem('Program', '/program', <ScheduleOutlined />)
   ];
 
   return (
     <Layout style={{ minHeight: '100vh' }}>
       <Sider
-        // collapsible
+        collapsible
         collapsed={collapsed}
         onCollapse={(value) => setCollapsed(value)}
       >
-        <Image src={logo} width={150} style={{ margin: 20 }} preview={false} />
+        {collapsed ? (
+          <div
+            style={{
+              height: 32,
+              margin: 16,
+              display: 'flex',
+              justifyContent: 'center',
+              alignItems: 'center'
+            }}
+          >
+            <Image
+              src={logo}
+              alt="Logo"
+              preview={false}
+              style={{ maxHeight: 32 }}
+            />
+          </div>
+        ) : (
+          <div
+            style={{
+              height: 64,
+              margin: 16,
+              display: 'flex',
+              justifyContent: 'center',
+              alignItems: 'center'
+            }}
+          >
+            <Image
+              src={logo}
+              alt="Logo"
+              preview={false}
+              style={{ maxHeight: 150 }}
+            />
+          </div>
+        )}
         <Menu
           theme="dark"
           defaultSelectedKeys={['tryout']}
@@ -58,13 +94,32 @@ const AppLayout = () => {
           items={items}
           onClick={({ key }) => {
             if (key === '/logout') {
-              signOut();
-              navigate('/login');
+              Modal.confirm({
+                title: 'Confirm Logout',
+                content: 'Are you sure you want to logout?',
+                okText: 'Yes',
+                cancelText: 'No',
+                onOk: () => {
+                  signOut();
+                  navigate('/login');
+                }
+              });
             } else {
               navigate(key);
             }
           }}
         />
+        <div
+          style={{
+            color: '#fff',
+            position: 'absolute',
+            textAlign: 'center',
+            bottom: 60,
+            left: 0,
+            right: 0,
+            fontSize: 10
+          }}
+        >{`${process.env.REACT_APP_WEBSITE_NAME} v${process.env.REACT_APP_VERSION_NAME}`}</div>
       </Sider>
       <Layout>
         <Content style={{ margin: 20 }}>
@@ -72,9 +127,6 @@ const AppLayout = () => {
             <Outlet />
           </Suspense>
         </Content>
-        <Footer style={{ textAlign: 'center' }}>
-          <FooterCopyright />
-        </Footer>
       </Layout>
     </Layout>
   );
