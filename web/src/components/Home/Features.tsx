@@ -41,7 +41,7 @@ export const Features = ({ targetDate }: { targetDate: string }) => {
 
   return (
     <div style={styles.container}>
-      <h2 style={styles.title}>Countdown Menuju</h2>
+      <h2 style={styles.title}>Countdown Menuju Pendaftaran</h2>
       <h1 style={styles.dateText}>TELISIK BATCH 6 🚀</h1>
 
       <div style={styles.timerWrapper}>
