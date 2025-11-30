@@ -15,20 +15,23 @@ const ProgramScreen = () => {
 
   return (
     <div style={{ padding: 16 }}>
-      <Title level={2} style={{ marginBottom: 24 }}>
-        Program yang Sedang Dibuka
-      </Title>
-
       {isLoading ? (
         <Spin />
+      ) : programData && programData.length > 0 ? (
+        <>
+          <Title level={3} style={{ marginBottom: 24 }}>
+            Program yang Sedang Dibuka
+          </Title>
+          <Row gutter={[24, 24]}>
+            {programData?.map((program) => (
+              <Col xs={24} sm={12} md={8} key={program.program_id}>
+                <ProgramCard record={program} navigate={navigate} />
+              </Col>
+            ))}
+          </Row>
+        </>
       ) : (
-        <Row gutter={[24, 24]}>
-          {programData?.map((program) => (
-            <Col xs={24} sm={12} md={8} key={program.program_id}>
-              <ProgramCard record={program} navigate={navigate} />
-            </Col>
-          ))}
-        </Row>
+        <Text>Belum ada program yang tersedia saat ini.</Text>
       )}
     </div>
   );
