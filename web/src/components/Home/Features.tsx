@@ -32,11 +32,7 @@ export const Features = ({ targetDate }: { targetDate: string }) => {
         <div style={{ marginBottom: 20 }}>
           <Text>Segera daftarkan dirimu sebelum kuota habis!</Text>
         </div>
-        <Button
-          type="primary"
-          size="large"
-          href="/program"
-        >
+        <Button type="primary" size="large" href="/program">
           Daftar Sekarang
         </Button>
       </div>
@@ -46,7 +42,7 @@ export const Features = ({ targetDate }: { targetDate: string }) => {
   return (
     <div style={styles.container}>
       <h2 style={styles.title}>Countdown Menuju</h2>
-      <h1 style={styles.dateText}>TELISIK BATCH 6</h1>
+      <h1 style={styles.dateText}>TELISIK BATCH 6 🚀</h1>
 
       <div style={styles.timerWrapper}>
         {[
