@@ -9,19 +9,6 @@ const { Text, Link } = Typography;
 const RegisterForm = () => {
   const [form] = Form.useForm();
   const { isAuthLoading, doSendOtpEmail, doRegister } = useAuthApp();
-  const [data, setData] = useState<{
-    email: string;
-    username: string;
-    name: string;
-    password: string;
-    otp: string;
-  }>({
-    email: '',
-    username: '',
-    name: '',
-    password: '',
-    otp: ''
-  });
   const [countdown, setCountdown] = useState(0);
   const [isShowModal, setIsShowModal] = useState(false);
   const [otp, setOtp] = useState<string[]>();
@@ -39,7 +26,8 @@ const RegisterForm = () => {
   const onFinishFailed = (errorInfo: any) => {};
 
   const handleResendOtp = async () => {
-    const result = await doSendOtpEmail(data);
+    const formData = form.getFieldsValue(['email', 'username', 'name', 'password']);
+    const result = await doSendOtpEmail(formData);
     if (result !== 1) {
       setCountdown(59);
       setIsShowModal(true);
@@ -60,8 +48,9 @@ const RegisterForm = () => {
     form.setFieldValue('otp', otp?.join('') || '');
   }, [otp]);
   return (
-    <div style={{ minWidth: '50vw' }}>
+    <div style={{ width: '100%', maxWidth: '600px', padding: '0 16px' }}>
       <Form
+        form={form}
         name="basic"
         layout="vertical"
         onFinish={handleResendOtp}
@@ -83,7 +72,6 @@ const RegisterForm = () => {
             prefix={<UserOutlined className="site-form-item-icon" />}
             type="email"
             placeholder="Email"
-            onChange={(e) => setData({ ...data, email: e.target.value })}
           />
         </Form.Item>
         <Form.Item
@@ -95,7 +83,6 @@ const RegisterForm = () => {
             prefix={<UserOutlined className="site-form-item-icon" />}
             type="name"
             placeholder="Name"
-            onChange={(e) => setData({ ...data, name: e.target.value })}
           />
         </Form.Item>
         <Form.Item
@@ -115,7 +102,6 @@ const RegisterForm = () => {
             prefix={<UserOutlined className="site-form-item-icon" />}
             type="username"
             placeholder="Username"
-            onChange={(e) => setData({ ...data, username: e.target.value })}
           />
         </Form.Item>
         <Form.Item
@@ -126,7 +112,6 @@ const RegisterForm = () => {
           <Input.Password
             prefix={<LockOutlined className="site-form-item-icon" />}
             placeholder="Password"
-            onChange={(e) => setData({ ...data, password: e.target.value })}
           />
         </Form.Item>
 
@@ -145,6 +130,9 @@ const RegisterForm = () => {
       <Modal
         open={isShowModal}
         footer={false}
+        width="90%"
+        style={{ maxWidth: '500px' }}
+        centered
         onCancel={() => {
           setIsShowModal(false);
         }}
@@ -152,19 +140,14 @@ const RegisterForm = () => {
         <Form
           form={form}
           onFinish={doRegister}
-          initialValues={{
-            ...data,
-            otp: otp?.join('') || '',
-            otpInput: otp
-          }}
         >
           <div>
             <Text style={{ fontWeight: 'bold' }}>Email Verification</Text>
             <Divider style={{ marginTop: 10 }} />
-            <div style={{ paddingInline: 60, textAlign: 'center' }}>
+            <div style={{ paddingInline: '5%', textAlign: 'center' }}>
               <Text>
                 Check your inbox. We've sent you the OTP verification code to{' '}
-                <Link>{data?.email}</Link>
+                <Link>{form.getFieldValue('email')}</Link>
               </Text>
             </div>
             <div style={{ marginBlock: 20 }}>

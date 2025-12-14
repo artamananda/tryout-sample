@@ -40,8 +40,8 @@ const RegisterProgramScreen = () => {
   const { programId } = useParams();
   const getAuthUser = useAuthUser();
   const user = getAuthUser() as UserProperties;
+  const [form] = Form.useForm();
   const [program, setProgram] = useState<ProgramProps>();
-  const [selectedProvince, setSelectedProvince] = useState<string>();
   const [provinceList, setProvinceList] = useState<ProvinceProps[]>([]);
   const [regencyList, setRegencyList] = useState<RegencyProps[]>([]);
   const [profilePicture, setProfilePicture] = useState<any | null>(null);
@@ -76,24 +76,32 @@ const RegisterProgramScreen = () => {
 
   const imageUploadProps: UploadProps = {
     multiple: false,
+    accept: 'image/*',
+    beforeUpload: (file) => {
+      const isImage = file.type.startsWith('image/');
+      const isLt2M = file.size / 1024 / 1024 < 2;
+      if (!isImage) {
+        message.error('File harus berupa gambar (JPEG/PNG).');
+        return Upload.LIST_IGNORE;
+      }
+      if (!isLt2M) {
+        message.error('Ukuran file maksimal 2MB.');
+        return Upload.LIST_IGNORE;
+      }
+      return true;
+    },
     customRequest: async ({ file, onSuccess }) => {
       try {
         setProfilePicture(file);
         onSuccess?.(file);
       } catch (error) {}
+    },
+    onRemove: () => {
+      setProfilePicture(null);
     }
   };
 
   const handleSubmit = async (values: any) => {
-    if (!values.grade) {
-      return message.error('Mohon pilih asal kelas');
-    }
-    if (!values.province) {
-      return message.error('Mohon pilih asal provinsi');
-    }
-    if (!values.regency) {
-      return message.error('Mohon pilih asal kabupaten');
-    }
     if (!profilePicture) {
       return message.error('Mohon upload foto formal');
     }
@@ -124,7 +132,9 @@ const RegisterProgramScreen = () => {
       await axios.post('/register-program', formData, {
         headers: {
           'Content-Type': 'multipart/form-data'
-        }
+        },
+        withCredentials: true,
+        maxContentLength: 2 * 1024 * 1024
       });
       setIsSuccess(true);
       message.success('Pendaftaran berhasil, silahkan cek email anda');
@@ -138,24 +148,32 @@ const RegisterProgramScreen = () => {
   };
 
   useEffect(() => {
-    fetchProgram();
+    if (programId && user?.user_id) {
+      fetchProgram();
+    }
     fetch(`https://www.emsifa.com/api-wilayah-indonesia/api/provinces.json`)
       .then((response) => response.json())
       .then((provinces: ProvinceProps[]) => setProvinceList(provinces));
-  }, []);
+  }, [programId, user?.user_id]);
 
   useEffect(() => {
-    const prov = provinceList.find(
-      (province) => province.name === selectedProvince
-    );
-    if (prov) {
-      fetch(
-        `https://www.emsifa.com/api-wilayah-indonesia/api/regencies/${prov?.id}.json`
-      )
-        .then((response) => response.json())
-        .then((regencies) => setRegencyList(regencies));
+    const selectedProvince = form.getFieldValue('province');
+    if (selectedProvince && provinceList.length > 0) {
+      const prov = provinceList.find(
+        (province) => province.name === selectedProvince
+      );
+      if (prov) {
+        fetch(
+          `https://www.emsifa.com/api-wilayah-indonesia/api/regencies/${prov.id}.json`
+        )
+          .then((response) => response.json())
+          .then((regencies) => setRegencyList(regencies));
+      }
+    } else {
+      setRegencyList([]);
+      form.setFieldValue('regency', undefined);
     }
-  }, [selectedProvince]);
+  }, [form.getFieldValue('province'), provinceList]);
   return isFetching ? (
     <Spin />
   ) : isOutdated ? (
@@ -174,19 +192,40 @@ const RegisterProgramScreen = () => {
         Pendaftaran {program?.name}
       </div>
       <Form
+        form={form}
         layout="vertical"
         onFinish={handleSubmit}
         initialValues={{
           ...user
         }}
       >
-        <Form.Item required name={'email'} label="Email">
-          <Input required type="email" />
+        <Form.Item
+          name={'email'}
+          label="Email"
+          rules={[
+            { required: true, message: 'Please input your email!' },
+            { type: 'email', message: 'Please input valid email!' }
+          ]}
+          normalize={(value) => value?.trim()}
+        >
+          <Input type="email" inputMode="email" />
         </Form.Item>
-        <Form.Item required name={'name'} label="Nama Lengkap">
-          <Input required />
+        <Form.Item
+          name={'name'}
+          label="Nama Lengkap"
+          rules={[
+            { required: true, message: 'Please input your name!' },
+            { min: 3, message: 'Nama minimal 3 karakter' }
+          ]}
+          normalize={(value) => value?.trim()}
+        >
+          <Input inputMode="text" />
         </Form.Item>
-        <Form.Item required name={'grade'} label="Asal Kelas">
+        <Form.Item
+          name={'grade'}
+          label="Asal Kelas"
+          rules={[{ required: true, message: 'Mohon pilih asal kelas!' }]}
+        >
           <Select>
             <Select.Option value="10">10</Select.Option>
             <Select.Option value="11">11</Select.Option>
@@ -194,14 +233,42 @@ const RegisterProgramScreen = () => {
             <Select.Option value="Gap Year">Gap Year</Select.Option>
           </Select>
         </Form.Item>
-        <Form.Item required name={'school'} label="Asal Sekolah">
-          <Input required />
+        <Form.Item
+          name={'school'}
+          label="Asal Sekolah"
+          rules={[
+            { required: true, message: 'Please input your school!' },
+            { min: 3, message: 'Nama sekolah minimal 3 karakter' }
+          ]}
+          normalize={(value) => value?.trim()}
+        >
+          <Input inputMode="text" />
         </Form.Item>
-        <Form.Item required name={'nisn'} label="NISN">
-          <Input required maxLength={10} />
+        <Form.Item
+          name={'nisn'}
+          label="NISN"
+          rules={[
+            { required: true, message: 'Please input your NISN!' },
+            { len: 10, message: 'NISN must be exactly 10 digits!' },
+            {
+              pattern: /^\d+$/,
+              message: 'NISN hanya boleh angka'
+            }
+          ]}
+        >
+          <Input maxLength={10} inputMode="numeric" />
         </Form.Item>
-        <Form.Item required name={'province'} label="Asal Provinsi">
-          <Select onSelect={(value) => setSelectedProvince(value)}>
+        <Form.Item
+          name={'province'}
+          label="Asal Provinsi"
+          rules={[{ required: true, message: 'Mohon pilih asal provinsi!' }]}
+        >
+          <Select
+            onSelect={(value) => {
+              form.setFieldValue('province', value);
+              form.setFieldValue('regency', undefined);
+            }}
+          >
             {provinceList.map((province) => (
               <Select.Option key={province.id} value={province.name}>
                 {province.name}
@@ -209,8 +276,12 @@ const RegisterProgramScreen = () => {
             ))}
           </Select>
         </Form.Item>
-        <Form.Item required name={'regency'} label="Asal Kabupaten">
-          <Select disabled={!selectedProvince}>
+        <Form.Item
+          name={'regency'}
+          label="Asal Kabupaten"
+          rules={[{ required: true, message: 'Mohon pilih asal kabupaten!' }]}
+        >
+          <Select disabled={!form.getFieldValue('province')}>
             {regencyList.map((regency) => (
               <Select.Option key={regency.id} value={regency.name}>
                 {regency.name}
@@ -219,14 +290,17 @@ const RegisterProgramScreen = () => {
           </Select>
         </Form.Item>
         <Form.Item
-          required
           name={'motivation'}
           label="Motivasi Mengikuti Telisik"
+          rules={[
+            { required: true, message: 'Please input your motivation!' },
+            { min: 20, message: 'Motivasi minimal 20 karakter' }
+          ]}
+          normalize={(value) => value?.trim()}
         >
-          <Input.TextArea required style={{ height: 100 }} />
+          <Input.TextArea style={{ height: 100 }} />
         </Form.Item>
         <Form.Item
-          required
           name={'profilePicture'}
           label="Foto Formal Berpakaian Sekolah"
         >
@@ -234,8 +308,19 @@ const RegisterProgramScreen = () => {
             <Button type="primary">Click to Upload</Button>
           </Upload>
         </Form.Item>
-        <Form.Item required name={'agreement'}>
-          <Checkbox required>
+        <Form.Item
+          name={'agreement'}
+          valuePropName="checked"
+          rules={[
+            {
+              validator: (_, value) =>
+                value
+                  ? Promise.resolve()
+                  : Promise.reject(new Error('Mohon setujui komitmen!'))
+            }
+          ]}
+        >
+          <Checkbox>
             <Text style={{ fontStyle: 'italic' }}>
               Saya berkomitmen akan mengikuti kelas belajar dengan tertib dan
               disiplin, selalu melaporkan setiap hasil pelaksanaan tes, dan
@@ -243,7 +328,7 @@ const RegisterProgramScreen = () => {
             </Text>
           </Checkbox>
         </Form.Item>
-        <Form.Item required>
+        <Form.Item>
           <Button
             style={{ width: '100%', marginTop: 20 }}
             type="primary"
