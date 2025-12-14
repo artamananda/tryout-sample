@@ -30,6 +30,8 @@ func (controller UserController) Route(app *fiber.App) {
 	app.Delete("/v1/api/user/:id", middleware.AuthenticateJWT([]string{"admin"}, controller.Config), controller.Delete)
 	app.Get("/v1/api/user/:id", controller.FindById)
 	app.Get("/v1/api/user", middleware.AuthenticateJWT([]string{"admin", "user"}, controller.Config), controller.FindAll)
+	app.Post("/v1/api/forgot-password/send-otp", controller.SendPasswordResetOtp)
+	app.Post("/v1/api/forgot-password/reset", controller.ResetPassword)
 }
 
 // SelfRegister handles self-registration of users.
@@ -311,5 +313,65 @@ func (controller UserController) CheckByEmail(c *fiber.Ctx) error {
 		Code:    200,
 		Message: "Success",
 		Data:    result,
+	})
+}
+
+// SendPasswordResetOtp handles sending OTP for password reset.
+// @Summary Send OTP for password reset
+// @Description Send OTP to user's email for password reset verification
+// @Tags Users
+// @Accept json
+// @Produce json
+// @Param request body model.ForgotPasswordRequest true "Request Body"
+// @Success 200 {object} model.GeneralResponse
+// @Router /forgot-password/send-otp [post]
+func (controller UserController) SendPasswordResetOtp(c *fiber.Ctx) error {
+	var request model.ForgotPasswordRequest
+	err := c.BodyParser(&request)
+	exception.PanicLogging(err)
+
+	otpCfg := model.SendOtpConfig{
+		SmtpHost:     controller.Config.Get("GOMAIL_SMTP_HOST"),
+		SmtpPort:     controller.Config.Get("GOMAIL_SMTP_PORT"),
+		SenderName:   controller.Config.Get("GOMAIL_SENDER_NAME"),
+		AuthEmail:    controller.Config.Get("GOMAIL_AUTH_EMAIL"),
+		AuthPassword: controller.Config.Get("GOMAIL_AUTH_PASSWORD"),
+	}
+
+	result, err := controller.UserService.SendPasswordResetOtp(c.Context(), otpCfg, request)
+	if err != nil {
+		return exception.ErrorHandler(c, err)
+	}
+
+	return c.Status(fiber.StatusOK).JSON(model.GeneralResponse{
+		Code:    200,
+		Message: "OTP sent to your email",
+		Data:    result,
+	})
+}
+
+// ResetPassword handles password reset with OTP verification.
+// @Summary Reset password with OTP
+// @Description Reset user password after OTP verification
+// @Tags Users
+// @Accept json
+// @Produce json
+// @Param request body model.ResetPasswordRequest true "Request Body"
+// @Success 200 {object} model.GeneralResponse
+// @Router /forgot-password/reset [post]
+func (controller UserController) ResetPassword(c *fiber.Ctx) error {
+	var request model.ResetPasswordRequest
+	err := c.BodyParser(&request)
+	exception.PanicLogging(err)
+
+	err = controller.UserService.ResetPassword(c.Context(), request)
+	if err != nil {
+		return exception.ErrorHandler(c, err)
+	}
+
+	return c.Status(fiber.StatusOK).JSON(model.GeneralResponse{
+		Code:    200,
+		Message: "Password reset successfully",
+		Data:    nil,
 	})
 }

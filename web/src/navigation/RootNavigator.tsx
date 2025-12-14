@@ -9,6 +9,7 @@ import PrivateRoute from './PrivateRoute';
 import AppLayout from '../screens/Layout/AppLayout';
 import TryoutScreen from '../screens/Tryout';
 import RegisterScreen from '../screens/Auth/Register';
+import ForgotPasswordScreen from '../screens/Auth/ForgotPassword';
 import Batch5 from '../screens/Program/Batch5';
 import TryoutRoute from './TryoutRoute';
 import HomeScreen from '../screens/Home';
@@ -37,6 +38,16 @@ const RootNavigator = () => {
             <PublicRoute>
               <Suspense fallback={<Spin spinning={true} />}>
                 <RegisterScreen />
+              </Suspense>
+            </PublicRoute>
+          }
+        />
+        <Route
+          path="/forgot-password"
+          element={
+            <PublicRoute>
+              <Suspense fallback={<Spin spinning={true} />}>
+                <ForgotPasswordScreen />
               </Suspense>
             </PublicRoute>
           }

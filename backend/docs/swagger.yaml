@@ -138,6 +138,13 @@ definitions:
       username:
         type: string
     type: object
+  model.ForgotPasswordRequest:
+    properties:
+      email:
+        type: string
+    required:
+    - email
+    type: object
   model.GeneralResponse:
     properties:
       code:
@@ -186,6 +193,20 @@ definitions:
     - password
     - role
     - username
+    type: object
+  model.ResetPasswordRequest:
+    properties:
+      email:
+        type: string
+      new_password:
+        minLength: 6
+        type: string
+      otp:
+        type: string
+    required:
+    - email
+    - new_password
+    - otp
     type: object
   model.SelfRegisterRequest:
     properties:
@@ -363,8 +384,6 @@ definitions:
         type: string
       nisn:
         type: string
-      password:
-        type: string
       picture_url:
         type: string
       province:
@@ -372,6 +391,7 @@ definitions:
       regency:
         type: string
       role:
+        description: Password   string    `json:"password"`
         type: string
       school:
         type: string
@@ -389,74 +409,8 @@ info:
     url: http://www.apache.org/licenses/LICENSE-2.0.html
   termsOfService: http://swagger.io/terms/
   title: Tryout Sample
-  version: 0.2.0
+  version: 0.3.0
 paths:
-  /custom/batch5:
-    post:
-      consumes:
-      - multipart/form-data
-      description: Register a new batch 5
-      parameters:
-      - description: Name
-        in: formData
-        name: name
-        required: true
-        type: string
-      - description: Email
-        in: formData
-        name: email
-        required: true
-        type: string
-      - description: Grade
-        in: formData
-        name: grade
-        required: true
-        type: string
-      - description: NISN
-        in: formData
-        name: nisn
-        required: true
-        type: string
-      - description: School
-        in: formData
-        name: school
-        required: true
-        type: string
-      - description: Regency
-        in: formData
-        name: regency
-        required: true
-        type: string
-      - description: Province
-        in: formData
-        name: province
-        required: true
-        type: string
-      - description: Motivation
-        in: formData
-        name: motivation
-        required: true
-        type: string
-      - description: Program ID
-        in: formData
-        name: program_id
-        required: true
-        type: string
-      - description: Profile Picture
-        in: formData
-        name: file
-        required: true
-        type: file
-      produces:
-      - application/json
-      responses:
-        "200":
-          description: OK
-          schema:
-            $ref: '#/definitions/model.GeneralResponse'
-      summary: Register a batch 5
-      tags:
-      - Custom
   /ebook:
     get:
       consumes:
@@ -645,6 +599,50 @@ paths:
       security:
       - JWT: []
       summary: Send OTP to user's email
+      tags:
+      - Users
+  /forgot-password/reset:
+    post:
+      consumes:
+      - application/json
+      description: Reset user password after OTP verification
+      parameters:
+      - description: Request Body
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/model.ResetPasswordRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/model.GeneralResponse'
+      summary: Reset password with OTP
+      tags:
+      - Users
+  /forgot-password/send-otp:
+    post:
+      consumes:
+      - application/json
+      description: Send OTP to user's email for password reset verification
+      parameters:
+      - description: Request Body
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/model.ForgotPasswordRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/model.GeneralResponse'
+      summary: Send OTP for password reset
       tags:
       - Users
   /login:
@@ -993,6 +991,77 @@ paths:
       summary: Self-register a new user
       tags:
       - Users
+  /register-program:
+    post:
+      consumes:
+      - multipart/form-data
+      description: Register a new batch 5
+      parameters:
+      - description: User ID
+        in: formData
+        name: user_id
+        required: true
+        type: string
+      - description: Name
+        in: formData
+        name: name
+        required: true
+        type: string
+      - description: Email
+        in: formData
+        name: email
+        required: true
+        type: string
+      - description: Grade
+        in: formData
+        name: grade
+        required: true
+        type: string
+      - description: NISN
+        in: formData
+        name: nisn
+        required: true
+        type: string
+      - description: School
+        in: formData
+        name: school
+        required: true
+        type: string
+      - description: Regency
+        in: formData
+        name: regency
+        required: true
+        type: string
+      - description: Province
+        in: formData
+        name: province
+        required: true
+        type: string
+      - description: Motivation
+        in: formData
+        name: motivation
+        required: true
+        type: string
+      - description: Program ID
+        in: formData
+        name: program_id
+        required: true
+        type: string
+      - description: Profile Picture
+        in: formData
+        name: file
+        required: true
+        type: file
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/model.GeneralResponse'
+      summary: Register a batch 5
+      tags:
+      - RegisterProgram
   /transaction-program:
     get:
       consumes:

@@ -411,3 +411,97 @@ func (service *UserService) FindByEmail(ctx context.Context, email string) (enti
 
 	return user, nil
 }
+
+func (service *UserService) SendPasswordResetOtp(ctx context.Context, otpConfig model.SendOtpConfig, request model.ForgotPasswordRequest) (model.UserOtpResponse, error) {
+	err := common.Validate(request)
+	if err != nil {
+		return model.UserOtpResponse{}, exception.ValidationError{
+			Message: err.Error(),
+		}
+	}
+
+	// Check if user exists
+	user, err := service.UserRepository.FindByEmail(ctx, request.Email)
+	if err != nil {
+		return model.UserOtpResponse{}, errors.New("email not found")
+	}
+
+	otp := helper.GenerateOTP(6)
+
+	userOtp := entity.UserOtp{
+		Email:     request.Email,
+		Otp:       otp,
+		ExpiredAt: time.Now().Add(15 * time.Minute),
+		CreatedAt: time.Now(),
+	}
+
+	userOtp = service.UserRepository.CreateOtp(ctx, userOtp)
+
+	mailer := gomail.NewMessage()
+	mailer.SetHeader("From", otpConfig.SenderName)
+	mailer.SetHeader("To", request.Email)
+	mailer.SetHeader("Subject", "Reset Password - Kode Verifikasi Telisik")
+	mailer.SetBody("text/html", helper.TemplateEmailOtp(user.Name, otp))
+
+	smptPort, _ := strconv.Atoi(otpConfig.SmtpPort)
+
+	dialer := gomail.NewDialer(
+		otpConfig.SmtpHost,
+		smptPort,
+		otpConfig.AuthEmail,
+		otpConfig.AuthPassword,
+	)
+
+	err = dialer.DialAndSend(mailer)
+	if err != nil {
+		log.Fatal(err.Error())
+	}
+
+	log.Println("Password reset OTP sent!")
+
+	return model.UserOtpResponse{
+		Email:     userOtp.Email,
+		ExpiredAt: userOtp.ExpiredAt,
+		CreatedAt: userOtp.CreatedAt,
+	}, nil
+}
+
+func (service *UserService) ResetPassword(ctx context.Context, request model.ResetPasswordRequest) error {
+	err := common.Validate(request)
+	if err != nil {
+		return exception.ValidationError{
+			Message: err.Error(),
+		}
+	}
+
+	// Verify OTP
+	userOtp, err := service.UserRepository.FindOtpByEmail(ctx, request.Email)
+	if err != nil {
+		return errors.New("invalid OTP request")
+	}
+
+	if userOtp.Otp != request.Otp {
+		return errors.New("otp is not valid")
+	}
+
+	if userOtp.ExpiredAt.Before(time.Now()) {
+		return errors.New("otp is expired")
+	}
+
+	// Find user by email
+	user, err := service.UserRepository.FindByEmail(ctx, request.Email)
+	if err != nil {
+		return errors.New("user not found")
+	}
+
+	// Hash new password
+	hashedPassword, _ := bcrypt.GenerateFromPassword([]byte(request.NewPassword), bcrypt.DefaultCost)
+
+	// Update password
+	user.Password = string(hashedPassword)
+	user.UpdatedAt = time.Now()
+
+	service.UserRepository.Update(ctx, user)
+
+	return nil
+}

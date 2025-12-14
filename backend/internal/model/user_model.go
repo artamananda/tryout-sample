@@ -111,3 +111,13 @@ type FindAllUserRequest struct {
 type CheckByEmailRequest struct {
 	Email string `json:"email" validate:"required"`
 }
+
+type ForgotPasswordRequest struct {
+	Email string `json:"email" validate:"required,email"`
+}
+
+type ResetPasswordRequest struct {
+	Email       string `json:"email" validate:"required,email"`
+	Otp         string `json:"otp" validate:"required"`
+	NewPassword string `json:"new_password" validate:"required,min=6"`
+}

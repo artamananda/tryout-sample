@@ -3,12 +3,12 @@ import { Image } from 'antd';
 import logo from '../../assets/logo.png';
 import { Typography } from 'antd';
 import { useNavigate } from 'react-router-dom';
-import LoginForm from '../../components/Auth/LoginForm';
+import ForgotPasswordForm from '../../components/Auth/ForgotPasswordForm';
 import FooterCopyright from '../../components/Footer';
 
 const { Text, Link } = Typography;
 
-const LoginScreen = () => {
+const ForgotPasswordScreen = () => {
   const navigate = useNavigate();
   return (
     <div
@@ -25,13 +25,10 @@ const LoginScreen = () => {
       <div style={{ marginBottom: '40px', marginTop: 'auto' }}>
         <Image width={250} src={logo} preview={false} />
       </div>
-      <LoginForm />
+      <ForgotPasswordForm />
       <Text>
-        Don't have an account?{' '}
-        <Link onClick={() => navigate('/register')}>Register</Link>
-      </Text>
-      <Text style={{ marginTop: 8 }}>
-        <Link onClick={() => navigate('/forgot-password')}>Forgot Password?</Link>
+        Remember your password?{' '}
+        <Link onClick={() => navigate('/login')}>Back to Login</Link>
       </Text>
       <div
         style={{
@@ -47,4 +44,4 @@ const LoginScreen = () => {
   );
 };
 
-export default LoginScreen;
+export default ForgotPasswordScreen;
