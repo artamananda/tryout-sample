@@ -15,7 +15,7 @@ type RegisterProgramController struct {
 func NewRegisterProgramController(registerProgramService *service.RegisterProgramService, config config.Config) *RegisterProgramController {
 	return &RegisterProgramController{
 		RegisterProgramService: *registerProgramService,
-		Config:        config,
+		Config:                 config,
 	}
 }
 
@@ -75,6 +75,7 @@ func (controller RegisterProgramController) RegisterProgram(c *fiber.Ctx) error 
 	request.Province = form.Value["province"][0]
 	request.Motivation = form.Value["motivation"][0]
 	request.ProgramID = form.Value["program_id"][0]
+	request.UserID = form.Value["user_id"][0]
 
 	otpCfg := model.SendOtpConfig{
 		SmtpHost:     controller.Config.Get("GOMAIL_SMTP_HOST"),

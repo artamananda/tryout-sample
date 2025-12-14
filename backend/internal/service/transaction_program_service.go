@@ -7,6 +7,7 @@ import (
 	"github.com/artamananda/tryout-sample/internal/common"
 	"github.com/artamananda/tryout-sample/internal/entity"
 	"github.com/artamananda/tryout-sample/internal/exception"
+	"github.com/artamananda/tryout-sample/internal/helper"
 	"github.com/artamananda/tryout-sample/internal/model"
 	"github.com/artamananda/tryout-sample/internal/repository"
 	"github.com/google/uuid"
@@ -69,7 +70,7 @@ func (service *TransactionProgramService) Create(ctx context.Context, request mo
 		}
 	}
 
-	var invoiceNumber = "INV-" + uuid.New().String()[:8]
+	var invoiceNumber = helper.GenerateInvoiceNumber()
 
 	transactionProgram := entity.TransactionProgram{
 		UserID:        uuid.MustParse(request.UserID),

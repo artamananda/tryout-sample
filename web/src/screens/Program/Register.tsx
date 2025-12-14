@@ -105,7 +105,7 @@ const RegisterProgramScreen = () => {
         message.error('Program ID is required');
         return;
       }
-      if(user.user_id){
+      if (user?.user_id) {
         formData.append('user_id', user.user_id);
       } else {
         message.error('User ID is required');
@@ -116,14 +116,14 @@ const RegisterProgramScreen = () => {
           'Content-Type': 'multipart/form-data'
         }
       });
-      setIsLoading(false);
       setIsSuccess(true);
       message.success('Pendaftaran berhasil, silahkan cek email anda');
     } catch (err: any) {
-      setIsLoading(false);
       message.error(
         err?.response?.data || 'Gagal mendaftar, silahkan hubungi admin'
       );
+    } finally {
+      setIsLoading(false);
     }
   };
 
