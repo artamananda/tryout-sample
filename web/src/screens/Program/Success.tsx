@@ -1,7 +1,7 @@
 import { Button, Card } from 'antd';
 import './style.css';
 
-const SuccessRegisterBatch5 = () => {
+const SuccessRegisterProgram = ({programName}: {programName?: string}) => {
   return (
     <Card className="card">
       <div
@@ -19,13 +19,13 @@ const SuccessRegisterBatch5 = () => {
           marginBottom: 20
         }}
       >
-        {`Terima kasih telah mendaftar TELISIK Angkatan 5! Silahkan cek email Anda dan bergabung dengan grup WhatsApp kami untuk informasi lebih lanjut.`}
+        {`Terima kasih telah mendaftar ${programName || ''}! Silahkan cek email Anda dan bergabung dengan grup WhatsApp kami untuk informasi lebih lanjut.`}
       </div>
       <Button
         type="primary"
         style={{ backgroundColor: '#25D366', borderColor: '#25D366' }}
         onClick={() =>
-          window.open('https://chat.whatsapp.com/Gk8SNcsHmk49ixHrnbjUNx')
+          window.open('https://chat.whatsapp.com/LFW3nOq08WHLM21vIBKqIf')
         }
       >
         Gabung Grup WhatsApp
@@ -34,4 +34,4 @@ const SuccessRegisterBatch5 = () => {
   );
 };
 
-export default SuccessRegisterBatch5;
+export default SuccessRegisterProgram;

@@ -182,7 +182,7 @@ func TemplateEmailRegisterGenerate(name string, email string, password string) s
 
         <div class="button-container">
           <a
-            href="https://chat.whatsapp.com/Gk8SNcsHmk49ixHrnbjUNx"
+            href="https://chat.whatsapp.com/LFW3nOq08WHLM21vIBKqIf"
             target="_blank"
             class="button"
             >Masuk Grup WhatsApp</a

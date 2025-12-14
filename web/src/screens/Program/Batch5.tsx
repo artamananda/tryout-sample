@@ -15,7 +15,7 @@ import { useEffect, useState } from 'react';
 import { httpRequest } from '../../helpers/api';
 import axios from 'axios';
 import { useNavigate } from 'react-router-dom';
-import SuccessRegisterBatch5 from './Success';
+import SuccessRegisterProgram from './Success';
 import Outdated from './Outdated';
 
 const { Text } = Typography;
@@ -125,7 +125,7 @@ const Batch5 = () => {
   return isOutdated ? (
     <Outdated />
   ) : isSuccess ? (
-    <SuccessRegisterBatch5 />
+    <SuccessRegisterProgram />
   ) : (
     <Card className="card">
       <div
