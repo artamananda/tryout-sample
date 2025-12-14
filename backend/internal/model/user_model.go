@@ -61,7 +61,7 @@ type UpdateUserRequest struct {
 	Username   string    `json:"username"`
 	Name       string    `json:"name"`
 	Email      string    `json:"email"`
-	Password   string    `json:"password"`
+	// Password   string    `json:"password"`
 	Role       string    `json:"role"`
 	NISN       string    `json:"nisn"`
 	Grade      string    `json:"grade"`

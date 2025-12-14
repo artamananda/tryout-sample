@@ -106,12 +106,12 @@ func (service *UserService) Update(ctx context.Context, request model.UpdateUser
 		}
 	}
 
-	hashedPassword, _ := bcrypt.GenerateFromPassword([]byte(request.Password), bcrypt.DefaultCost)
+	// hashedPassword, _ := bcrypt.GenerateFromPassword([]byte(request.Password), bcrypt.DefaultCost)
 
 	user.Username = request.Username
 	user.Name = request.Name
 	user.Email = request.Email
-	user.Password = string(hashedPassword)
+	// user.Password = string(hashedPassword)
 	user.Role = request.Role
 	user.NISN = request.NISN
 	user.Grade = request.Grade
