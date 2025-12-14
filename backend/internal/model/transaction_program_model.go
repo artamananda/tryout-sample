@@ -27,9 +27,9 @@ type TransactionProgramResponse struct {
 }
 
 type FindAllTransactionProgramsRequest struct {
-	UserID    string `json:"user_id"`
-	ProgramID string `json:"program_id"`
-	Search    string `json:"search"`
+	UserID    string `query:"user_id"`
+	ProgramID string `query:"program_id"`
+	Search    string `query:"search"`
 }
 
 type UpdateTransactionProgramRequest struct {

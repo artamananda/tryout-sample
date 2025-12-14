@@ -81,6 +81,10 @@ func (service *TransactionProgramService) Create(ctx context.Context, request mo
 	}
 
 	transactionProgram = service.TransactionProgramRepository.Create(ctx, transactionProgram)
+	transactionProgram = service.TransactionProgramRepository.FindAll(ctx, model.FindAllTransactionProgramsRequest{
+		ProgramID: request.ProgramID,
+		UserID:    request.UserID,
+	})[0]
 
 	return model.TransactionProgramResponse{
 		TransactionProgramID: transactionProgram.TransactionProgramID,
@@ -89,6 +93,7 @@ func (service *TransactionProgramService) Create(ctx context.Context, request mo
 		Status:               transactionProgram.Status,
 		Motivation:           transactionProgram.Motivation,
 		InvoiceNumber:        transactionProgram.InvoiceNumber,
+		Program: model.ProgramResponse(transactionProgram.Program),
 		CreatedAt:            transactionProgram.CreatedAt,
 		UpdatedAt:            transactionProgram.UpdatedAt,
 	}, nil

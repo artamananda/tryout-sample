@@ -41,12 +41,10 @@ func (service *RegisterProgramService) RegisterProgram(ctx context.Context, requ
 
 	var userId = request.UserID
 
-	user, err := service.UserService.FindByEmail(ctx, request.Email)
+	_, err = service.UserService.FindById(ctx, userId)
 	if err != nil {
 		return err
 	}
-
-	userId = user.UserID.String()
 
 	resUpdateUser, err := service.UserService.Update(ctx, model.UpdateUserRequest{
 		Name:     request.Name,

@@ -57,6 +57,16 @@ const RegisterProgramScreen = () => {
       if (res.data?.payload) {
         setProgram(res.data.payload);
       }
+
+      const transactionProgram = await httpRequest.get(
+        '/transaction-program?program_id=' +
+          programId +
+          '&user_id=' +
+          user.user_id
+      );
+      if (transactionProgram.data?.payload?.results?.length > 0) {
+        setIsSuccess(true);
+      }
     } catch (err: any) {
       message.error(err?.response?.data || 'Gagal mengambil data program');
     } finally {
@@ -151,7 +161,7 @@ const RegisterProgramScreen = () => {
   ) : isOutdated ? (
     <Outdated />
   ) : isSuccess ? (
-    <SuccessRegisterRegister />
+    <SuccessRegisterRegister programName={program?.name} />
   ) : (
     <Card className="card">
       <div
