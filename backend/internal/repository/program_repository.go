@@ -68,6 +68,8 @@ func (repository *ProgramRepository) FindAll(ctx context.Context, params model.F
 		query = query.Joins("JOIN users_programs up ON programs.program_id = up.program_id").Where("up.user_id = ?", params.UserID)
 	}
 
+	query = query.Order("open_registration DESC")
+
 	query.Find(&programs)
 	return programs
 }
