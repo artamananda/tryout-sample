@@ -7,7 +7,8 @@ import (
 	"github.com/artamananda/tryout-sample/internal/model"
 	"github.com/artamananda/tryout-sample/internal/repository"
 	"github.com/artamananda/tryout-sample/internal/service"
-	"github.com/aws/aws-sdk-go/service/s3/s3manager"
+	"github.com/aws/aws-sdk-go-v2/feature/s3/manager"
+	"github.com/aws/aws-sdk-go-v2/service/s3"
 	"github.com/gofiber/fiber/v2"
 	"github.com/gofiber/fiber/v2/middleware/cors"
 	"github.com/gofiber/swagger"
@@ -36,8 +37,9 @@ func main() {
 	initConfig := config.New()
 	db := config.NewDB(initConfig)
 	app := fiber.New()
-	sess, _ := config.NewSession(initConfig)
-	uploader := s3manager.NewUploader(sess)
+	awsConfig, _ := config.NewAWSConfig(initConfig)
+	s3Client := s3.NewFromConfig(awsConfig)
+	uploader := manager.NewUploader(s3Client)
 
 	app.Use(cors.New(cors.Config{
 		AllowHeaders:     "*",

@@ -11,7 +11,7 @@ import (
 	"github.com/artamananda/tryout-sample/internal/exception"
 	"github.com/artamananda/tryout-sample/internal/helper"
 	"github.com/artamananda/tryout-sample/internal/model"
-	"github.com/aws/aws-sdk-go/service/s3/s3manager"
+	"github.com/aws/aws-sdk-go-v2/feature/s3/manager"
 	"gopkg.in/gomail.v2"
 )
 
@@ -19,10 +19,10 @@ type CustomService struct {
 	UserService               *UserService
 	ProgramService            *ProgramService
 	TransactionProgramService *TransactionProgramService
-	Uploader                  *s3manager.Uploader
+	Uploader                  *manager.Uploader
 }
 
-func NewCustomService(userService *UserService, programService *ProgramService, transactionProgramService *TransactionProgramService, uploader *s3manager.Uploader) CustomService {
+func NewCustomService(userService *UserService, programService *ProgramService, transactionProgramService *TransactionProgramService, uploader *manager.Uploader) CustomService {
 	return CustomService{
 		UserService:               userService,
 		ProgramService:            programService,

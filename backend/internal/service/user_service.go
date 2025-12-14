@@ -14,17 +14,17 @@ import (
 	"github.com/artamananda/tryout-sample/internal/helper"
 	"github.com/artamananda/tryout-sample/internal/model"
 	"github.com/artamananda/tryout-sample/internal/repository"
-	"github.com/aws/aws-sdk-go/service/s3/s3manager"
+	"github.com/aws/aws-sdk-go-v2/feature/s3/manager"
 	"golang.org/x/crypto/bcrypt"
 	"gopkg.in/gomail.v2"
 )
 
 type UserService struct {
 	UserRepository *repository.UserRepository
-	Uploader       *s3manager.Uploader
+	Uploader       *manager.Uploader
 }
 
-func NewUserService(userRepository *repository.UserRepository, uploader *s3manager.Uploader) UserService {
+func NewUserService(userRepository *repository.UserRepository, uploader *manager.Uploader) UserService {
 	return UserService{
 		UserRepository: userRepository,
 		Uploader:       uploader,

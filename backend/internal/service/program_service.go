@@ -10,16 +10,16 @@ import (
 	"github.com/artamananda/tryout-sample/internal/helper"
 	"github.com/artamananda/tryout-sample/internal/model"
 	"github.com/artamananda/tryout-sample/internal/repository"
-	"github.com/aws/aws-sdk-go/service/s3/s3manager"
+	"github.com/aws/aws-sdk-go-v2/feature/s3/manager"
 	"github.com/google/uuid"
 )
 
 type ProgramService struct {
 	ProgramRepository *repository.ProgramRepository
-	Uploader          *s3manager.Uploader
+	Uploader          *manager.Uploader
 }
 
-func NewProgramService(programRepository *repository.ProgramRepository, uploader *s3manager.Uploader) ProgramService {
+func NewProgramService(programRepository *repository.ProgramRepository, uploader *manager.Uploader) ProgramService {
 	return ProgramService{
 		ProgramRepository: programRepository,
 		Uploader:          uploader,

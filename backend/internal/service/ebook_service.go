@@ -10,15 +10,15 @@ import (
 	"github.com/artamananda/tryout-sample/internal/helper"
 	"github.com/artamananda/tryout-sample/internal/model"
 	"github.com/artamananda/tryout-sample/internal/repository"
-	"github.com/aws/aws-sdk-go/service/s3/s3manager"
+	"github.com/aws/aws-sdk-go-v2/feature/s3/manager"
 )
 
 type EbookService struct {
 	EbookRepository *repository.EbookRepository
-	Uploader        *s3manager.Uploader
+	Uploader        *manager.Uploader
 }
 
-func NewEbookService(ebookRepository *repository.EbookRepository, uploader *s3manager.Uploader) EbookService {
+func NewEbookService(ebookRepository *repository.EbookRepository, uploader *manager.Uploader) EbookService {
 	return EbookService{
 		EbookRepository: ebookRepository,
 		Uploader:        uploader,

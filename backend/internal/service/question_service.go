@@ -10,16 +10,16 @@ import (
 	"github.com/artamananda/tryout-sample/internal/helper"
 	"github.com/artamananda/tryout-sample/internal/model"
 	"github.com/artamananda/tryout-sample/internal/repository"
-	"github.com/aws/aws-sdk-go/service/s3/s3manager"
+	"github.com/aws/aws-sdk-go-v2/feature/s3/manager"
 	"github.com/google/uuid"
 )
 
 type QuestionService struct {
 	QuestionRepository *repository.QuestionRepository
-	Uploader           *s3manager.Uploader
+	Uploader           *manager.Uploader
 }
 
-func NewQuestionService(questionRepository *repository.QuestionRepository, uploader *s3manager.Uploader) QuestionService {
+func NewQuestionService(questionRepository *repository.QuestionRepository, uploader *manager.Uploader) QuestionService {
 	return QuestionService{
 		QuestionRepository: questionRepository,
 		Uploader:           uploader,

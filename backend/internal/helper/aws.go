@@ -1,13 +1,17 @@
 package helper
 
 import (
+	"context"
+
 	"github.com/artamananda/tryout-sample/internal/config"
 	"github.com/artamananda/tryout-sample/internal/model"
-	"github.com/aws/aws-sdk-go/aws"
-	"github.com/aws/aws-sdk-go/service/s3/s3manager"
+	"github.com/aws/aws-sdk-go-v2/aws"
+	"github.com/aws/aws-sdk-go-v2/feature/s3/manager"
+	"github.com/aws/aws-sdk-go-v2/service/s3"
+	"github.com/aws/aws-sdk-go-v2/service/s3/types"
 )
 
-func UploadFile(uploader *s3manager.Uploader, fileUpload model.UploadFileRequest) (string, error) {
+func UploadFile(uploader *manager.Uploader, fileUpload model.UploadFileRequest) (string, error) {
 	newConfig := config.New()
 	bucketName := newConfig.Get("AWS_BUCKET_NAME")
 	bucketUrl := newConfig.Get("AWS_BUCKET_PUBLIC_URL")
@@ -22,15 +26,15 @@ func UploadFile(uploader *s3manager.Uploader, fileUpload model.UploadFileRequest
 	}
 
 	// Upload file to S3
-	_, err = uploader.Upload(&s3manager.UploadInput{
+	_, err = uploader.Upload(context.TODO(), &s3.PutObjectInput{
 		Bucket:      aws.String(bucketName),
 		Key:         aws.String(fileUpload.FileName),
 		Body:        file,
 		ContentType: &fileUpload.ContentType,
-		Metadata: map[string]*string{
-			"Access-Control-Allow-Origin": aws.String("*"),
+		Metadata: map[string]string{
+			"Access-Control-Allow-Origin": "*",
 		},
-		ACL: aws.String("public-read"),
+		ACL: types.ObjectCannedACLPublicRead,
 	})
 	if err != nil {
 		return "", err
