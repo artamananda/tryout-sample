@@ -1,4 +1,4 @@
-FROM golang:1.24.3-alpine3.21 as builder
+FROM golang:1.25.5-alpine3.21 as builder
 
 ARG GO_BUILD_COMMAND="go build -tags static_all"
 # Install some build deps + ssh tools for the setup below.

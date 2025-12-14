@@ -15,10 +15,10 @@ import (
 	_ "github.com/artamananda/tryout-sample/docs"
 )
 
-const APP_VERSION = "0.2.0"
+const APP_VERSION = "0.3.0"
 
 // @title Tryout Sample
-// @version 0.2.0
+// @version 0.3.0
 // @description API Documentation for Telisik Tryout
 // @termsOfService http://swagger.io/terms/
 // @contact.name Artamananda
