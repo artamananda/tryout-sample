@@ -21,6 +21,7 @@ type TransactionProgramResponse struct {
 	Program              ProgramResponse `json:"program"`
 	Status               string          `json:"status"`
 	Motivation           string          `json:"motivation"`
+	InvoiceNumber        string          `json:"invoice_number"`
 	CreatedAt            time.Time       `json:"created_at"`
 	UpdatedAt            time.Time       `json:"updated_at"`
 }

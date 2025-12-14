@@ -12,6 +12,7 @@ type TransactionProgram struct {
 	User                 User      `json:"user" gorm:"foreignKey:UserID;references:UserID"`
 	ProgramID            uuid.UUID `json:"program_id"`
 	Program              Program   `json:"program" gorm:"foreignKey:ProgramID;references:ProgramID"`
+	InvoiceNumber        string    `json:"invoice_number"`
 	Status               string    `json:"status"`
 	Motivation           string    `json:"motivation"`
 	CreatedAt            time.Time `json:"created_at"`

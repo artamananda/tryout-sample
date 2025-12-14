@@ -1,10 +1,5 @@
-import { BaseResponseProps } from "./config.type";
-import { UserProperties, EUserRole } from "./user.type";
-
-export enum EAuthStatus {
-  LOGGED_OUT = "LOGGED_OUT",
-  LOGGED_IN = "LOGGED_IN",
-}
+import { BaseResponseProps } from './config.type';
+import { UserProperties } from './user.type';
 
 export interface ILoginData {
   email: string;
@@ -12,9 +7,8 @@ export interface ILoginData {
 }
 
 export type AuthState = {
-  status: EAuthStatus;
   user: UserProperties;
-  role: EUserRole;
+  role: string;
 };
 
 export interface SignInProps {

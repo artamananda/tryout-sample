@@ -1,10 +1,10 @@
-import React, { useState, useEffect } from "react";
-import AuthContext from "./AuthContext";
-import { AuthState, EAuthStatus } from "../types/auth.type";
-import { initialUser } from "../types/user.type";
-import { getToken } from "../helpers/auth";
-import { message, Spin } from "antd";
-import { getLoginData } from "../helpers/auth";
+import React, { useState, useEffect } from 'react';
+import AuthContext from './AuthContext';
+import { AuthState } from '../types/auth.type';
+import { initialUser } from '../types/user.type';
+import { getToken } from '../helpers/auth';
+import { message, Spin } from 'antd';
+import { getLoginData } from '../helpers/auth';
 
 type Props = {
   children?: React.ReactNode;
@@ -12,9 +12,8 @@ type Props = {
 
 const AuthProvider: React.FC<Props> = ({ children }) => {
   const [auth, setAuth] = useState<AuthState>({
-    status: EAuthStatus.LOGGED_OUT,
     user: initialUser,
-    role: "",
+    role: ''
   });
   const [isLoaded, setIsLoaded] = useState<boolean>(false);
 
@@ -28,8 +27,7 @@ const AuthProvider: React.FC<Props> = ({ children }) => {
     getLoginData()
       .then((result) => {
         setAuth({
-          status: EAuthStatus.LOGGED_IN,
-          ...result,
+          ...result
         });
       })
       .catch((err) => message.error(err))
@@ -44,7 +42,7 @@ const AuthProvider: React.FC<Props> = ({ children }) => {
         children
       ) : (
         <Spin size="large">
-          <div style={{ width: "100vw", height: "100vh" }} />
+          <div style={{ width: '100vw', height: '100vh' }} />
         </Spin>
       )}
     </AuthContext.Provider>

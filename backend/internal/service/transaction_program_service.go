@@ -69,11 +69,14 @@ func (service *TransactionProgramService) Create(ctx context.Context, request mo
 		}
 	}
 
+	var invoiceNumber = "INV-" + uuid.New().String()[:8]
+
 	transactionProgram := entity.TransactionProgram{
-		UserID:     uuid.MustParse(request.UserID),
-		ProgramID:  uuid.MustParse(request.ProgramID),
-		Status:     request.Status,
-		Motivation: request.Motivation,
+		UserID:        uuid.MustParse(request.UserID),
+		ProgramID:     uuid.MustParse(request.ProgramID),
+		Status:        request.Status,
+		Motivation:    request.Motivation,
+		InvoiceNumber: invoiceNumber,
 	}
 
 	transactionProgram = service.TransactionProgramRepository.Create(ctx, transactionProgram)
@@ -84,6 +87,7 @@ func (service *TransactionProgramService) Create(ctx context.Context, request mo
 		ProgramID:            transactionProgram.ProgramID,
 		Status:               transactionProgram.Status,
 		Motivation:           transactionProgram.Motivation,
+		InvoiceNumber:        transactionProgram.InvoiceNumber,
 		CreatedAt:            transactionProgram.CreatedAt,
 		UpdatedAt:            transactionProgram.UpdatedAt,
 	}, nil
@@ -113,6 +117,7 @@ func (service *TransactionProgramService) Update(ctx context.Context, request mo
 		ProgramID:            transactionProgram.ProgramID,
 		Status:               transactionProgram.Status,
 		Motivation:           transactionProgram.Motivation,
+		InvoiceNumber:        transactionProgram.InvoiceNumber,
 		CreatedAt:            transactionProgram.CreatedAt,
 		UpdatedAt:            transactionProgram.UpdatedAt,
 	}, nil
@@ -173,6 +178,7 @@ func (service *TransactionProgramService) FindById(ctx context.Context, transact
 		Program:              programDataRespone,
 		Status:               transactionProgram.Status,
 		Motivation:           transactionProgram.Motivation,
+		InvoiceNumber:        transactionProgram.InvoiceNumber,
 		CreatedAt:            transactionProgram.CreatedAt,
 		UpdatedAt:            transactionProgram.UpdatedAt,
 	}, nil
@@ -220,6 +226,7 @@ func (service *TransactionProgramService) FindAll(ctx context.Context, params mo
 			Program:              programDataRespone,
 			Status:               transactionProgram.Status,
 			Motivation:           transactionProgram.Motivation,
+			InvoiceNumber:        transactionProgram.InvoiceNumber,
 			CreatedAt:            transactionProgram.CreatedAt,
 			UpdatedAt:            transactionProgram.UpdatedAt,
 		})

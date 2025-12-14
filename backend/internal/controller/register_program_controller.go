@@ -7,28 +7,29 @@ import (
 	"github.com/gofiber/fiber/v2"
 )
 
-type CustomController struct {
-	service.CustomService
+type RegisterProgramController struct {
+	service.RegisterProgramService
 	config.Config
 }
 
-func NewCustomController(customService *service.CustomService, config config.Config) *CustomController {
-	return &CustomController{
-		CustomService: *customService,
+func NewRegisterProgramController(registerProgramService *service.RegisterProgramService, config config.Config) *RegisterProgramController {
+	return &RegisterProgramController{
+		RegisterProgramService: *registerProgramService,
 		Config:        config,
 	}
 }
 
-func (controller CustomController) Route(fiber *fiber.App) {
-	fiber.Post("/v1/api/custom/batch5", controller.RegisterBatch5)
+func (controller RegisterProgramController) Route(fiber *fiber.App) {
+	fiber.Post("/v1/api/register-program", controller.RegisterProgram)
 }
 
-// RegisterBatch5 handles registration of a batch 5.
+// RegisterProgram handles registration of a batch 5.
 // @Summary Register a batch 5
 // @Description Register a new batch 5
-// @Tags Custom
+// @Tags RegisterProgram
 // @Accept multipart/form-data
 // @Produce json
+// @Param user_id formData string true "User ID"
 // @Param name formData string true "Name"
 // @Param email formData string true "Email"
 // @Param grade formData string true "Grade"
@@ -40,9 +41,9 @@ func (controller CustomController) Route(fiber *fiber.App) {
 // @Param program_id formData string true "Program ID"
 // @Param file formData file true "Profile Picture" // Menambahkan parameter file
 // @Success 200 {object} model.GeneralResponse
-// @Router /custom/batch5 [post]
-func (controller CustomController) RegisterBatch5(c *fiber.Ctx) error {
-	var request model.Batch5Model
+// @Router /register-program [post]
+func (controller RegisterProgramController) RegisterProgram(c *fiber.Ctx) error {
+	var request model.RegisterProgramModel
 	form, err := c.MultipartForm()
 	if err != nil {
 		return err
@@ -83,7 +84,7 @@ func (controller CustomController) RegisterBatch5(c *fiber.Ctx) error {
 		AuthPassword: controller.Config.Get("GOMAIL_AUTH_PASSWORD"),
 	}
 
-	err = controller.CustomService.RegisterBatch5(c.Context(), request, otpCfg)
+	err = controller.RegisterProgramService.RegisterProgram(c.Context(), request, otpCfg)
 	if err != nil {
 		return err
 	}

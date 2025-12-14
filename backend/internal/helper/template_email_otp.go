@@ -206,3 +206,149 @@ func TemplateEmailRegisterGenerate(name string, email string, password string) s
 </html>`, name, email, password)
 	return htmlBody
 }
+
+func TemplateProgramRegistrationSuccess(
+	name string,
+	email string,
+	invoiceNumber string,
+	programName string,
+) string {
+
+	htmlBody := fmt.Sprintf(`
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8" />
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background-color: #f4f4f4;
+      margin: 0;
+      padding: 0;
+    }
+    .container {
+      max-width: 600px;
+      margin: 20px auto;
+      background-color: #ffffff;
+      border-radius: 8px;
+      box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+      overflow: hidden;
+    }
+    .header {
+      background-color: #04073b;
+      color: #ffffff;
+      text-align: center;
+      padding: 20px;
+    }
+    .header h2 {
+      margin: 0;
+      color: #f9c92d;
+    }
+    .content {
+      padding: 30px;
+      color: #333333;
+      line-height: 1.6;
+    }
+    .highlight-card {
+      background-color: #f0f0f0;
+      padding: 20px;
+      margin: 20px 0;
+      border-radius: 8px;
+    }
+    .highlight-card p {
+      margin: 10px 0;
+      font-size: 16px;
+    }
+    .label {
+      display: inline-block;
+      width: 140px;
+      font-weight: bold;
+      color: #04073b;
+    }
+    .button-container {
+      text-align: center;
+      margin: 30px 0;
+    }
+    .button {
+      display: inline-block;
+      padding: 12px 30px;
+      background-color: #25d366;
+      color: #ffffff;
+      font-size: 16px;
+      font-weight: bold;
+      text-decoration: none;
+      border-radius: 5px;
+    }
+    .button:hover {
+      background-color: #128c7e;
+    }
+    .footer {
+      background-color: #fafafa;
+      text-align: center;
+      padding: 20px;
+      font-size: 14px;
+      color: #666666;
+    }
+    .footer a {
+      color: #007bff;
+      text-decoration: none;
+    }
+  </style>
+</head>
+
+<body>
+  <div class="container">
+    <div class="header">
+      <h2>TELISIK SYSTEM</h2>
+    </div>
+
+    <div class="content">
+      <p>Halo <strong>%s</strong>,</p>
+
+      <p>
+        Terima kasih telah melakukan pendaftaran program di <strong>Telisik</strong>.
+        Pendaftaran Anda telah kami terima dengan detail sebagai berikut:
+      </p>
+
+      <div class="highlight-card">
+        <p><span class="label">Nama Program</span>: %s</p>
+        <p><span class="label">Email</span>: %s</p>
+        <p><span class="label">Nomor Invoice</span>: %s</p>
+      </div>
+
+      <p>
+        Mohon simpan nomor invoice tersebut sebagai bukti transaksi Anda.
+        Informasi lanjutan terkait program akan kami sampaikan melalui email
+        dan melalui grup WhatsApp resmi Telisik.
+      </p>
+
+      <p>Silakan bergabung ke grup WhatsApp berikut:</p>
+
+      <div class="button-container">
+        <a
+          href="https://chat.whatsapp.com/LFW3nOq08WHLM21vIBKqIf"
+          target="_blank"
+          class="button"
+        >
+          Masuk Grup WhatsApp
+        </a>
+      </div>
+
+      <p>Salam hangat,</p>
+      <p><strong>Tim Telisik</strong></p>
+    </div>
+
+    <div class="footer">
+      <p>Email ini dikirim secara otomatis, mohon tidak membalas email ini.</p>
+      <p>
+        Butuh bantuan?
+        <a href="https://wa.me/6283193592551">Hubungi Kami</a>
+      </p>
+    </div>
+  </div>
+</body>
+</html>
+`, name, programName, email, invoiceNumber)
+
+	return htmlBody
+}

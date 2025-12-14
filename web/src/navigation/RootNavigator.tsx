@@ -15,6 +15,7 @@ import HomeScreen from '../screens/Home';
 import ELibraryScreen from '../screens/ELibrary';
 import ReadScreen from '../screens/ELibrary/Read';
 import ProgramScreen from '../screens/Program';
+import RegisterProgramScreen from '../screens/Program/Register';
 
 const RootNavigator = () => {
   return (
@@ -96,7 +97,7 @@ const RootNavigator = () => {
             path="/program/:programId/register"
             element={
               <PrivateRoute loginPath="/login">
-                <Batch5 />
+                <RegisterProgramScreen />
               </PrivateRoute>
             }
           />

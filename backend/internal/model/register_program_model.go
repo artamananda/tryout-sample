@@ -2,7 +2,8 @@ package model
 
 import "mime/multipart"
 
-type Batch5Model struct {
+type RegisterProgramModel struct {
+	UserID     string                `json:"user_id" validate:"required"`
 	Name       string                `json:"name" validate:"required"`
 	Email      string                `json:"email" validate:"required"`
 	Grade      string                `json:"grade" validate:"required"`

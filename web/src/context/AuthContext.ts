@@ -1,6 +1,6 @@
-import React from "react";
-import { AuthState, EAuthStatus } from "../types/auth.type";
-import { initialUser } from "../types/user.type";
+import React from 'react';
+import { AuthState } from '../types/auth.type';
+import { initialUser } from '../types/user.type';
 
 type IContext = {
   auth: AuthState;
@@ -9,11 +9,10 @@ type IContext = {
 
 const authContext = React.createContext<IContext>({
   auth: {
-    status: EAuthStatus.LOGGED_OUT,
     user: initialUser,
-    role: "",
+    role: ''
   },
-  setAuth: () => {},
+  setAuth: () => {}
 });
 
 export default authContext;
