@@ -103,7 +103,8 @@ const RegisterProgramScreen = () => {
 
   const handleSubmit = async (values: any) => {
     if (!profilePicture) {
-      return message.error('Mohon upload foto formal');
+      message.error('Mohon upload foto formal');
+      return;
     }
     try {
       setIsLoading(true);
@@ -217,7 +218,7 @@ const RegisterProgramScreen = () => {
             { required: true, message: 'Please input your name!' },
             { min: 3, message: 'Nama minimal 3 karakter' }
           ]}
-          normalize={(value) => value?.trim()}
+          // normalize={(value) => value?.trim()}
         >
           <Input inputMode="text" />
         </Form.Item>
@@ -240,7 +241,7 @@ const RegisterProgramScreen = () => {
             { required: true, message: 'Please input your school!' },
             { min: 3, message: 'Nama sekolah minimal 3 karakter' }
           ]}
-          normalize={(value) => value?.trim()}
+          // normalize={(value) => value?.trim()}
         >
           <Input inputMode="text" />
         </Form.Item>
@@ -296,7 +297,7 @@ const RegisterProgramScreen = () => {
             { required: true, message: 'Please input your motivation!' },
             { min: 20, message: 'Motivasi minimal 20 karakter' }
           ]}
-          normalize={(value) => value?.trim()}
+          // normalize={(value) => value?.trim()}
         >
           <Input.TextArea style={{ height: 100 }} />
         </Form.Item>

@@ -16,7 +16,7 @@ const ListProgramStudentScreen = () => {
   } = useFetchList<any>({
     endpoint: "transaction-program",
     initialQuery: {
-      programId: programId,
+      program_id: programId,
     },
   });
 
