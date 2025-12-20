@@ -139,7 +139,6 @@ const RegisterProgramScreen = () => {
         headers: {
           'Content-Type': 'multipart/form-data'
         },
-        withCredentials: true,
         maxContentLength: 2 * 1024 * 1024
       });
       setIsSuccess(true);
