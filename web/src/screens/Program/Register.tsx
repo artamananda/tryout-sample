@@ -136,9 +136,6 @@ const RegisterProgramScreen = () => {
         return;
       }
       await httpRequest.post('/register-program', formData, {
-        headers: {
-          'Content-Type': 'multipart/form-data'
-        },
         maxContentLength: 2 * 1024 * 1024
       });
       setIsSuccess(true);
