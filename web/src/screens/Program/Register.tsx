@@ -14,7 +14,7 @@ import {
 import './style.css';
 import { useEffect, useState } from 'react';
 import { httpRequest } from '../../helpers/api';
-import axios from 'axios';
+
 import { useNavigate, useParams } from 'react-router-dom';
 import SuccessRegisterRegister from './Success';
 import Outdated from './Outdated';
@@ -135,7 +135,7 @@ const RegisterProgramScreen = () => {
         message.error('User ID is required');
         return;
       }
-      await axios.post('/register-program', formData, {
+      await httpRequest.post('/register-program', formData, {
         headers: {
           'Content-Type': 'multipart/form-data'
         },
@@ -146,7 +146,9 @@ const RegisterProgramScreen = () => {
       message.success('Pendaftaran berhasil, silahkan cek email anda');
     } catch (err: any) {
       message.error(
-        err?.response?.data || 'Gagal mendaftar, silahkan hubungi admin'
+        err?.response?.data ||
+          err?.response ||
+          'Gagal mendaftar, silahkan hubungi admin'
       );
     } finally {
       setIsLoading(false);
