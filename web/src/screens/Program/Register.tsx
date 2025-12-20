@@ -21,6 +21,7 @@ import Outdated from './Outdated';
 import { ProgramProps } from '../../types/program.type';
 import { useAuthUser } from 'react-auth-kit';
 import { UserProperties } from '../../types/user.type';
+import axios from 'axios';
 
 const { Text } = Typography;
 
@@ -135,8 +136,12 @@ const RegisterProgramScreen = () => {
         message.error('User ID is required');
         return;
       }
-      await httpRequest.post('/register-program', formData, {
-        maxContentLength: 2 * 1024 * 1024
+      await axios.post('/register-program', formData, {
+        headers: {
+          'Content-Type': 'multipart/form-data'
+        },
+        maxContentLength: 2 * 1024 * 1024,
+        timeout: 300000
       });
       setIsSuccess(true);
       message.success('Pendaftaran berhasil, silahkan cek email anda');
