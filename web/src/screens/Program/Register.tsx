@@ -106,6 +106,11 @@ const RegisterProgramScreen = () => {
       message.error('Mohon upload foto formal');
       return;
     }
+
+    if (profilePicture.size > 2 * 1024 * 1024) {
+      message.error('Ukuran foto formal maksimal 2MB');
+      return;
+    }
     try {
       setIsLoading(true);
       const formData = new FormData();
