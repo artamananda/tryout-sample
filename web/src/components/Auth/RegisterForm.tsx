@@ -6,6 +6,9 @@ import { InputOTP } from 'antd-input-otp';
 
 const { Text, Link } = Typography;
 
+// OTP Bypass mode - set to true to skip OTP verification
+const IS_OTP_BYPASS = true;
+
 const RegisterForm = () => {
   const [form] = Form.useForm();
   const { isAuthLoading, doSendOtpEmail, doRegister } = useAuthApp();
@@ -26,13 +29,35 @@ const RegisterForm = () => {
   const onFinishFailed = (errorInfo: any) => {};
 
   const handleResendOtp = async () => {
-    const formData = form.getFieldsValue(['email', 'username', 'name', 'password']);
+    const formData = form.getFieldsValue([
+      'email',
+      'username',
+      'name',
+      'password'
+    ]);
     const result = await doSendOtpEmail(formData);
     if (result !== 1) {
       setCountdown(59);
       setIsShowModal(true);
     }
   };
+
+  // Direct registration handler (bypasses OTP)
+  const handleDirectRegister = async () => {
+    const formData = form.getFieldsValue([
+      'email',
+      'username',
+      'name',
+      'password'
+    ]);
+    // Add dummy OTP for bypass mode
+    await doRegister({ ...formData, otp: '000000' });
+  };
+
+  // Choose handler based on bypass mode
+  const handleFormSubmit = IS_OTP_BYPASS
+    ? handleDirectRegister
+    : handleResendOtp;
 
   useEffect(() => {
     if (countdown > 0) {
@@ -53,7 +78,7 @@ const RegisterForm = () => {
         form={form}
         name="basic"
         layout="vertical"
-        onFinish={handleResendOtp}
+        onFinish={handleFormSubmit}
         onFinishFailed={onFinishFailed}
         autoComplete="off"
       >
@@ -137,10 +162,7 @@ const RegisterForm = () => {
           setIsShowModal(false);
         }}
       >
-        <Form
-          form={form}
-          onFinish={doRegister}
-        >
+        <Form form={form} onFinish={doRegister}>
           <div>
             <Text style={{ fontWeight: 'bold' }}>Email Verification</Text>
             <Divider style={{ marginTop: 10 }} />

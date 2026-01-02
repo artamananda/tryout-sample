@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"log"
+	"os"
 	"strconv"
 	"time"
 
@@ -292,6 +293,17 @@ func (service *UserService) SendOtp(ctx context.Context, otpConfig model.SendOtp
 
 	userOtp = service.UserRepository.CreateOtp(ctx, userOtp)
 
+	// Bypass email sending in development mode
+	isOtpBypass := os.Getenv("IS_OTP_BYPASS") == "true"
+	if isOtpBypass {
+		log.Printf("[OTP BYPASS] OTP for %s: %s", request.Email, otp)
+		return model.UserOtpResponse{
+			Email:     userOtp.Email,
+			ExpiredAt: userOtp.ExpiredAt,
+			CreatedAt: userOtp.CreatedAt,
+		}, nil
+	}
+
 	mailer := gomail.NewMessage()
 	mailer.SetHeader("From", otpConfig.SenderName)
 	mailer.SetHeader("To", request.Email)
@@ -344,17 +356,23 @@ func (service *UserService) SelfRegister(ctx context.Context, request model.Self
 		return model.RegisterResponse{}, err
 	}
 
-	userOtp, err := service.UserRepository.FindOtpByEmail(ctx, request.Email)
-	if err != nil {
-		return model.RegisterResponse{}, err
-	}
+	// Bypass OTP verification in development mode
+	isOtpBypass := os.Getenv("IS_OTP_BYPASS") == "true"
+	fmt.Println("Debug isOtpBypass: ", isOtpBypass)
 
-	if userOtp.Otp != request.Otp {
-		return model.RegisterResponse{}, errors.New("otp is not valid")
-	}
+	if !isOtpBypass {
+		userOtp, err := service.UserRepository.FindOtpByEmail(ctx, request.Email)
+		if err != nil {
+			return model.RegisterResponse{}, err
+		}
 
-	if userOtp.ExpiredAt.Before(time.Now()) {
-		return model.RegisterResponse{}, errors.New("otp is expired")
+		if userOtp.Otp != request.Otp {
+			return model.RegisterResponse{}, errors.New("otp is not valid")
+		}
+
+		if userOtp.ExpiredAt.Before(time.Now()) {
+			return model.RegisterResponse{}, errors.New("otp is expired")
+		}
 	}
 
 	hashedPassword, _ := bcrypt.GenerateFromPassword([]byte(request.Password), bcrypt.DefaultCost)

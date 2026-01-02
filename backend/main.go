@@ -3,6 +3,7 @@ package main
 import (
 	"github.com/artamananda/tryout-sample/internal/config"
 	"github.com/artamananda/tryout-sample/internal/controller"
+	"github.com/artamananda/tryout-sample/internal/cron"
 	"github.com/artamananda/tryout-sample/internal/exception"
 	"github.com/artamananda/tryout-sample/internal/model"
 	"github.com/artamananda/tryout-sample/internal/repository"
@@ -57,6 +58,22 @@ func main() {
 	transactionProgramRepository := repository.NewTransactionProgramRepository(db)
 	ebookRepository := repository.NewEbookRepository(db)
 	bankSoalRepository := repository.NewBankSoalRepository(db)
+	chatLogRepository := repository.NewChatLogRepository(db)
+	dailyChallengeRepository := repository.NewDailyChallengeRepository(db)
+	questionStatisticsRepository := repository.NewQuestionStatisticsRepository(db)
+	aiExampleRepository := repository.NewAIExampleRepository(db)
+	chatArtifactRepository := repository.NewChatArtifactRepository(db)
+
+	// Cron Scheduler
+	scheduler := cron.NewScheduler(
+		initConfig,
+		&bankSoalRepository,
+		&chatLogRepository,
+		&dailyChallengeRepository,
+		&questionStatisticsRepository,
+	)
+	scheduler.Start()
+	defer scheduler.Stop()
 
 	userService := service.NewUserService(&userRepository, uploader)
 	tryoutService := service.NewTryoutService(&tryoutRepository)
@@ -67,7 +84,7 @@ func main() {
 	transactionProgramService := service.NewTransactionProgramService(&transactionProgramRepository, &programRepository)
 	registerProgramService := service.NewRegisterProgramService(&userService, &programService, &transactionProgramService, uploader)
 	ebookService := service.NewEbookService(&ebookRepository, uploader)
-	aiService := service.NewAIService(initConfig)
+	aiService := service.NewAIService(initConfig, &chatLogRepository, &aiExampleRepository, &chatArtifactRepository)
 	bankSoalService := service.NewBankSoalService(&bankSoalRepository)
 
 	userController := controller.NewUserController(&userService, initConfig)

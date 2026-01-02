@@ -7,20 +7,31 @@ import (
 	"fmt"
 	"io"
 	"net/http"
+	"strings"
+	"time"
 
 	"github.com/artamananda/tryout-sample/internal/common"
 	"github.com/artamananda/tryout-sample/internal/config"
+	"github.com/artamananda/tryout-sample/internal/entity"
 	"github.com/artamananda/tryout-sample/internal/exception"
 	"github.com/artamananda/tryout-sample/internal/model"
+	"github.com/artamananda/tryout-sample/internal/repository"
+	"github.com/google/uuid"
 )
 
 type AIService struct {
-	Config config.Config
+	Config                 config.Config
+	ChatLogRepository      *repository.ChatLogRepository
+	AIExampleRepository    *repository.AIExampleRepository
+	ChatArtifactRepository *repository.ChatArtifactRepository
 }
 
-func NewAIService(cfg config.Config) AIService {
+func NewAIService(cfg config.Config, chatLogRepo *repository.ChatLogRepository, aiExampleRepo *repository.AIExampleRepository, chatArtifactRepo *repository.ChatArtifactRepository) AIService {
 	return AIService{
-		Config: cfg,
+		Config:                 cfg,
+		ChatLogRepository:      chatLogRepo,
+		AIExampleRepository:    aiExampleRepo,
+		ChatArtifactRepository: chatArtifactRepo,
 	}
 }
 
@@ -196,7 +207,7 @@ func getContextSection(context string) string {
 	return fmt.Sprintf("\nAdditional context/material to base questions on:\n%s", context)
 }
 
-func (service *AIService) Chat(ctx context.Context, request model.AIChatRequest) (model.AIChatResponse, error) {
+func (service *AIService) Chat(ctx context.Context, request model.AIChatRequest, adminID string) (model.AIChatResponse, error) {
 	err := common.Validate(request)
 	if err != nil {
 		return model.AIChatResponse{}, exception.ValidationError{
@@ -255,6 +266,16 @@ If the user wants to generate questions, ask them to provide:
 - Question type if not specified
 
 Always respond with valid JSON only.`
+	}
+
+	// Inject examples if Topic is available
+	var usedExamples []entity.AIExample
+	if request.Topic != "" {
+		var examplesContext string
+		examplesContext, usedExamples = service.includeContext(ctx, request.Topic)
+		if examplesContext != "" {
+			systemMessage += examplesContext
+		}
 	}
 
 	// Convert messages to OpenAI format
@@ -321,9 +342,17 @@ Always respond with valid JSON only.`
 
 	content := openAIResp.Choices[0].Message.Content
 
+	// Extract and clean JSON
+	cleanContent := service.extractJSON(content)
+
+	// Remove markdown if leftovers (though extractJSON should handle bounds)
+	cleanContent = strings.ReplaceAll(cleanContent, "```json", "")
+	cleanContent = strings.ReplaceAll(cleanContent, "```", "")
+
 	var result model.AIChatResponse
-	err = json.Unmarshal([]byte(content), &result)
+	err = json.Unmarshal([]byte(cleanContent), &result)
 	if err != nil {
+		fmt.Printf("JSON Parse Error: %v\nContent: %s\n", err, content) // Debug Log
 		// If JSON parsing fails, return as plain message
 		result = model.AIChatResponse{
 			Message:      content,
@@ -331,5 +360,226 @@ Always respond with valid JSON only.`
 		}
 	}
 
+	// --- PERSISTENCE LOGIC START ---
+	// Update history
+	newHistory := append(request.Messages, model.AIChatMessage{
+		Role:    "assistant",
+		Content: result.Message,
+	})
+
+	chatLogBytes, _ := json.Marshal(newHistory)
+	var chatLogID uuid.UUID
+	adminUUID, _ := uuid.Parse(adminID)
+
+	if request.SessionID != "" {
+		// Update existing
+		parsedID, err := uuid.Parse(request.SessionID)
+		if err == nil {
+			existing, err := service.ChatLogRepository.FindByID(ctx, parsedID)
+			if err == nil && existing.AdminID == adminUUID {
+				existing.Messages = json.RawMessage(chatLogBytes)
+				existing.UpdatedAt = time.Now()
+				existing.Status = "active"
+				if request.Topic != "" {
+					existing.Topic = request.Topic
+				}
+				service.ChatLogRepository.Update(ctx, existing)
+				chatLogID = existing.ChatLogID
+			} else {
+				// Fallback create new
+				chatLogID = uuid.New()
+				newLog := entity.ChatLog{
+					ChatLogID:    chatLogID,
+					AdminID:      adminUUID,
+					QuestionType: request.QuestionType,
+					Topic:        request.Topic,
+					Messages:     json.RawMessage(chatLogBytes),
+					Status:       "active",
+					CreatedAt:    time.Now(),
+					UpdatedAt:    time.Now(),
+				}
+				if newLog.Topic == "" {
+					newLog.Topic = "New Chat " + time.Now().Format("15:04")
+				}
+				service.ChatLogRepository.Create(ctx, newLog)
+			}
+		}
+	} else {
+		// Create New
+		chatLogID = uuid.New()
+		newLog := entity.ChatLog{
+			ChatLogID:    chatLogID,
+			AdminID:      adminUUID,
+			QuestionType: request.QuestionType,
+			Topic:        request.Topic,
+			Messages:     json.RawMessage(chatLogBytes),
+			Status:       "active",
+			CreatedAt:    time.Now(),
+			UpdatedAt:    time.Now(),
+		}
+		if newLog.Topic == "" {
+			newLog.Topic = "New Chat " + time.Now().Format("15:04")
+		}
+		service.ChatLogRepository.Create(ctx, newLog)
+	}
+
+	result.SessionID = chatLogID.String()
+
+	// Store Generated Artifacts
+	if result.IsGenerating && len(result.Questions) > 0 {
+		var referencesJSON []byte
+		if len(usedExamples) > 0 {
+			referencesJSON, _ = json.Marshal(usedExamples)
+		}
+
+		for _, q := range result.Questions {
+			qBytes, _ := json.Marshal(q)
+			artifact := entity.ChatArtifact{
+				ID:             uuid.New(),
+				ChatLogID:      chatLogID,
+				Type:           "question",
+				Content:        json.RawMessage(qBytes),
+				ReferencesData: json.RawMessage(referencesJSON),
+				Metadata:       json.RawMessage([]byte(`{"source": "ai_generated"}`)),
+				Status:         "generated",
+				CreatedAt:      time.Now(),
+				UpdatedAt:      time.Now(),
+			}
+			service.ChatArtifactRepository.Create(ctx, &artifact)
+		}
+	}
+	// --- PERSISTENCE LOGIC END ---
+
 	return result, nil
+}
+
+func (service *AIService) SaveChatLog(ctx context.Context, request model.SaveChatLogRequest, adminID string) error {
+	err := common.Validate(request)
+	if err != nil {
+		return exception.ValidationError{
+			Message: err.Error(),
+		}
+	}
+
+	adminUUID, err := uuid.Parse(adminID)
+	if err != nil {
+		return exception.ValidationError{
+			Message: "Invalid Admin ID",
+		}
+	}
+
+	messagesJSON, err := json.Marshal(request.Messages)
+	if err != nil {
+		return err
+	}
+
+	chatLog := entity.ChatLog{
+		AdminID:      adminUUID,
+		QuestionType: request.QuestionType,
+		Topic:        request.Topic,
+		Messages:     messagesJSON,
+		Status:       entity.ChatLogStatusPending,
+		CreatedAt:    time.Now(),
+		UpdatedAt:    time.Now(),
+	}
+
+	_, err = service.ChatLogRepository.Create(ctx, chatLog)
+	return err
+}
+
+func (service *AIService) GetHistory(ctx context.Context, adminID string) ([]entity.ChatLog, error) {
+	uuidID, err := uuid.Parse(adminID)
+	if err != nil {
+		return nil, err
+	}
+	return service.ChatLogRepository.FindByAdminID(ctx, uuidID)
+}
+
+func (service *AIService) GetSession(ctx context.Context, id string) (entity.ChatLog, error) {
+	uuidID, err := uuid.Parse(id)
+	if err != nil {
+		return entity.ChatLog{}, err
+	}
+	return service.ChatLogRepository.FindByID(ctx, uuidID)
+}
+
+func (service *AIService) DeleteSession(ctx context.Context, id string) error {
+	uuidID, err := uuid.Parse(id)
+	if err != nil {
+		return err
+	}
+	return service.ChatLogRepository.Delete(ctx, uuidID)
+}
+
+func (service *AIService) UpdateSession(ctx context.Context, id string, request model.UpdateChatLogRequest, adminID string) error {
+	uuidID, err := uuid.Parse(id)
+	if err != nil {
+		return err
+	}
+
+	chatLog, err := service.ChatLogRepository.FindByID(ctx, uuidID)
+	if err != nil {
+		return err
+	}
+
+	adminUUID, err := uuid.Parse(adminID)
+	if err != nil {
+		return err
+	}
+
+	if chatLog.AdminID != adminUUID {
+		return exception.ValidationError{Message: "Unauthorized to update this session"}
+	}
+
+	chatLog.Topic = request.Topic
+	chatLog.UpdatedAt = time.Now()
+
+	return service.ChatLogRepository.Update(ctx, chatLog)
+}
+
+func (service *AIService) SaveExample(ctx context.Context, request model.SaveAIExampleRequest, adminID string) error {
+	adminUUID, err := uuid.Parse(adminID)
+	if err != nil {
+		return err
+	}
+
+	example := entity.AIExample{
+		ID:        uuid.New(),
+		CreatedBy: adminUUID,
+		Topic:     request.Topic,
+		Content:   request.Content,
+		CreatedAt: time.Now(),
+	}
+
+	return service.AIExampleRepository.Save(ctx, example)
+}
+
+func (service *AIService) includeContext(ctx context.Context, topic string) (string, []entity.AIExample) {
+	if topic == "" {
+		return "", nil
+	}
+	examples, err := service.AIExampleRepository.FindByTopic(ctx, topic, 3)
+	if err != nil || len(examples) == 0 {
+		return "", nil
+	}
+
+	var contextMsg string
+	contextMsg += "\n\nReferensi contoh soal/dataset yang relevan (gunakan gaya serupa):\n"
+	for _, example := range examples {
+		contextMsg += fmt.Sprintf("- %s\n", example.Content)
+	}
+	return contextMsg, examples
+}
+
+func (service *AIService) GetSessionArtifacts(ctx context.Context, sessionID string) ([]entity.ChatArtifact, error) {
+	return service.ChatArtifactRepository.FindByChatLogID(ctx, sessionID)
+}
+
+func (service *AIService) extractJSON(content string) string {
+	start := strings.Index(content, "{")
+	end := strings.LastIndex(content, "}")
+	if start != -1 && end != -1 && start < end {
+		return content[start : end+1]
+	}
+	return content
 }

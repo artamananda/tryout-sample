@@ -11,6 +11,7 @@ export interface GeneratedQuestion {
   options: string[];
   correct_answer: string;
   explanation: string;
+  type?: string; 
 }
 
 export interface GenerateQuestionsResponse {
@@ -24,16 +25,53 @@ export interface AIChatMessage {
 }
 
 export interface AIChatRequest {
+  session_id?: string;
+  topic?: string;
   messages: AIChatMessage[];
   question_type?: string;
   mode: 'chat' | 'generate';
 }
 
 export interface AIChatResponse {
+  session_id: string;
   message: string;
   questions?: GeneratedQuestion[];
   is_generating: boolean;
   suggestion?: string;
+}
+
+export interface ChatLog {
+  chat_log_id: string;
+  admin_id: string;
+  question_type: string;
+  topic: string;
+  messages: AIChatMessage[];
+  status: string;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface SaveAIExampleRequest {
+	Topic: string;
+	Content: string;
+}
+
+export interface ChatArtifact {
+  id: string;
+  chat_log_id: string;
+  type: string;
+  content: GeneratedQuestion;
+  references_data?: { topic: string; content: string }[];
+  metadata?: { source: string };
+  user_feedback?: string;
+  status: string;
+  created_at: string;
+}
+
+export interface SaveChatLogRequest {
+  question_type: string;
+  topic: string;
+  messages: AIChatMessage[];
 }
 
 // Bank Soal types

@@ -30,15 +30,34 @@ type AIChatMessage struct {
 
 // AIChatRequest represents a chat request to the AI
 type AIChatRequest struct {
+	SessionID    string          `json:"session_id"`
+	Topic        string          `json:"topic"`
 	Messages     []AIChatMessage `json:"messages" validate:"required"`
 	QuestionType string          `json:"question_type"`
-	Mode         string          `json:"mode"` // "chat" or "generate"
+	Mode         string          `json:"mode"`
+}
+
+type UpdateChatLogRequest struct {
+	Topic string `json:"topic" validate:"required"`
+}
+
+type SaveAIExampleRequest struct {
+	Topic   string `json:"topic" validate:"required"`
+	Content string `json:"content" validate:"required"`
 }
 
 // AIChatResponse represents the AI's chat response
 type AIChatResponse struct {
+	SessionID    string              `json:"session_id"`
 	Message      string              `json:"message"`
 	Questions    []GeneratedQuestion `json:"questions,omitempty"`
 	IsGenerating bool                `json:"is_generating"`
 	Suggestion   string              `json:"suggestion,omitempty"`
+}
+
+// SaveChatLogRequest represents request to save chat for background processing
+type SaveChatLogRequest struct {
+	QuestionType string          `json:"question_type"`
+	Topic        string          `json:"topic"`
+	Messages     []AIChatMessage `json:"messages" validate:"required"`
 }

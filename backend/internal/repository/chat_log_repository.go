@@ -59,6 +59,14 @@ func (repo *ChatLogRepository) UpdateStatus(ctx context.Context, id uuid.UUID, s
 	return repo.DB.WithContext(ctx).Model(&entity.ChatLog{}).Where("chat_log_id = ?", id).Updates(updates).Error
 }
 
+func (repo *ChatLogRepository) Update(ctx context.Context, chatLog entity.ChatLog) error {
+	return repo.DB.WithContext(ctx).Save(&chatLog).Error
+}
+
+func (repo *ChatLogRepository) Delete(ctx context.Context, id uuid.UUID) error {
+	return repo.DB.WithContext(ctx).Delete(&entity.ChatLog{}, "chat_log_id = ?", id).Error
+}
+
 func (repo *ChatLogRepository) FindByAdminID(ctx context.Context, adminID uuid.UUID) ([]entity.ChatLog, error) {
 	var chatLogs []entity.ChatLog
 	err := repo.DB.WithContext(ctx).Where("admin_id = ?", adminID).Order("created_at DESC").Find(&chatLogs).Error

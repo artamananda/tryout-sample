@@ -7,8 +7,12 @@ import {
   GenerateQuestionsResponse,
   AIChatRequest,
   AIChatResponse,
+  SaveChatLogRequest,
   CreateBankSoalBatchRequest,
   BankSoalResponse,
+  ChatLog,
+  GeneratedQuestion,
+  ChatArtifact,
 } from "../types/ai.type";
 
 export async function apiGenerateQuestions(
@@ -42,6 +46,22 @@ export async function apiChat(
   }
 }
 
+export async function apiSaveChatLog(
+  data: SaveChatLogRequest
+): Promise<boolean> {
+  try {
+    await httpRequest.post<BaseResponseProps<null>>(
+      process.env.REACT_APP_BASE_URL + "/ai/chat/log",
+      data
+    );
+    return true;
+  } catch (err) {
+    const error = getErrorMessage(err);
+    message.error(error);
+    return false;
+  }
+}
+
 export async function apiSaveToBankSoal(
   data: CreateBankSoalBatchRequest
 ): Promise<BankSoalResponse[] | undefined> {
@@ -55,5 +75,84 @@ export async function apiSaveToBankSoal(
     const error = getErrorMessage(err);
     message.error(error);
     return undefined;
+  }
+
+}
+
+export async function apiGetHistory(): Promise<ChatLog[] | undefined> {
+  try {
+    const res = await httpRequest.get<BaseResponseProps<ChatLog[]>>(
+      process.env.REACT_APP_BASE_URL + "/ai/chat/history"
+    );
+    return res.data.payload;
+  } catch (err) {
+    const error = getErrorMessage(err);
+    message.error(error);
+    return undefined;
+  }
+}
+
+export async function apiGetSession(id: string): Promise<ChatLog | undefined> {
+  try {
+    const res = await httpRequest.get<BaseResponseProps<ChatLog>>(
+      process.env.REACT_APP_BASE_URL + `/ai/chat/history/${id}`
+    );
+    return res.data.payload;
+  } catch (err) {
+    const error = getErrorMessage(err);
+    message.error(error);
+    return undefined;
+  }
+}
+
+export async function apiDeleteSession(id: string): Promise<boolean> {
+  try {
+    await httpRequest.delete<BaseResponseProps<null>>(
+      process.env.REACT_APP_BASE_URL + `/ai/chat/history/${id}`
+    );
+    return true;
+  } catch (err) {
+    const error = getErrorMessage(err);
+    message.error(error);
+    return false;
+  }
+}
+
+export async function apiUpdateSession(id: string, topic: string): Promise<boolean> {
+  try {
+    await httpRequest.put<BaseResponseProps<null>>(
+      process.env.REACT_APP_BASE_URL + `/ai/chat/history/${id}`,
+      { topic }
+    );
+    return true;
+  } catch (err) {
+    const error = getErrorMessage(err);
+    message.error(error);
+    return false;
+  }
+}
+
+export async function apiGetSessionArtifacts(sessionId: string): Promise<ChatArtifact[]> {
+  try {
+    const res = await httpRequest.get<BaseResponseProps<ChatArtifact[]>>(
+      process.env.REACT_APP_BASE_URL + `/ai/chat/history/${sessionId}/artifacts`
+    );
+    return res.data.payload || [];
+  } catch (err) {
+    return [];
+  }
+}
+
+export async function apiSaveExample(topic: string, content: string): Promise<boolean> {
+  try {
+    await httpRequest.post<BaseResponseProps<null>>(
+      process.env.REACT_APP_BASE_URL + "/ai/examples",
+      { topic, content }
+    );
+    return true;
+  } catch (err) {
+    const error = getErrorMessage(err);
+    message.error(error);
+    return false;
   }
 }

@@ -6,6 +6,8 @@ import {
   UsergroupAddOutlined,
   BarChartOutlined,
   ScheduleOutlined,
+  BookOutlined,
+  RobotOutlined,
 } from "@ant-design/icons";
 import type { MenuProps } from "antd";
 import { Layout, Menu, Image, Spin, Modal } from "antd";
@@ -45,6 +47,8 @@ const AppLayout = () => {
     ]),
     getItem("Tryout", "/tryout", <CalendarOutlined />),
     getItem("Tryout Result", "/tryout-result", <BarChartOutlined />),
+    getItem("Bank Soal", "/bank-soal", <BookOutlined />),
+    getItem("AI Generator", "/ai-generator", <RobotOutlined />),
     getItem("Program", "/program", <ScheduleOutlined />),
     // getItem("Batch 5", "/program/batch5", <Html5Outlined />),
     getItem("Role", "/role", <UsergroupAddOutlined />, [

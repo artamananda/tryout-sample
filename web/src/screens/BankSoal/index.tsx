@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { Navigation } from '../../components/Home/Navigation';
+// import { Navigation } from '../../components/Home/Navigation';
 import {
   Layout,
   Row,
@@ -69,7 +69,7 @@ const BankSoalScreen = () => {
     setQuery,
     query
   } = useFetchList<QuestionProps>({
-    endpoint: 'question'
+    endpoint: 'bank-soal'
   });
 
   useEffect(() => {
@@ -93,8 +93,8 @@ const BankSoalScreen = () => {
   };
 
   return (
-    <Layout style={{ minHeight: '100vh', backgroundColor: '#f5f5f5' }}>
-      <Navigation />
+    <div style={{ minHeight: '100%', backgroundColor: '#f5f5f5' }}>
+      {/* <Navigation /> */}
       <div
         style={{
           padding: '40px 24px',
@@ -368,7 +368,7 @@ const BankSoalScreen = () => {
           </div>
         )}
       </div>
-    </Layout>
+    </div>
   );
 };
 

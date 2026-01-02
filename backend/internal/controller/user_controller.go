@@ -241,7 +241,7 @@ func (controller UserController) Authentication(c *fiber.Ctx) error {
 		return exception.ErrorHandler(c, exception.NotFoundError{Message: err.Error()})
 	}
 
-	tokenJwtResult := common.GenerateToken(result.Username, result.Role, controller.Config)
+	tokenJwtResult := common.GenerateToken(result.UserID.String(), result.Username, result.Role, controller.Config)
 	resultWithToken := map[string]interface{}{
 		"token":    tokenJwtResult,
 		"user_id":  result.UserID,

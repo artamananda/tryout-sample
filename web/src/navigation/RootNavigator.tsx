@@ -77,18 +77,15 @@ const RootNavigator = () => {
 
         <Route path="/" element={<HomeScreen />} />
 
-        <Route
-          path="/bank-soal"
-          element={
-            <PublicRoute>
-              <Suspense fallback={<Spin spinning={true} />}>
-                <BankSoalScreen />
-              </Suspense>
-            </PublicRoute>
-          }
-        />
-
         <Route element={<AppLayout />}>
+          <Route
+            path="/bank-soal"
+            element={
+              <PrivateRoute loginPath="/login">
+                <BankSoalScreen />
+              </PrivateRoute>
+            }
+          />
           <Route
             path="/dashboard"
             element={
