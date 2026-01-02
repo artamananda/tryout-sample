@@ -66,6 +66,7 @@ func main() {
 	transactionProgramService := service.NewTransactionProgramService(&transactionProgramRepository, &programRepository)
 	registerProgramService := service.NewRegisterProgramService(&userService, &programService, &transactionProgramService, uploader)
 	ebookService := service.NewEbookService(&ebookRepository, uploader)
+	aiService := service.NewAIService(initConfig)
 
 	userController := controller.NewUserController(&userService, initConfig)
 	tryoutController := controller.NewTryoutController(&tryoutService, initConfig)
@@ -76,6 +77,7 @@ func main() {
 	transactionProgramController := controller.NewTransactionProgramController(&transactionProgramService, initConfig)
 	registerProgramController := controller.NewRegisterProgramController(&registerProgramService, initConfig)
 	ebookController := controller.NewEbookController(&ebookService, initConfig)
+	aiController := controller.NewAIController(&aiService, initConfig)
 
 	userController.Route(app)
 	tryoutController.Route(app)
@@ -86,6 +88,7 @@ func main() {
 	transactionProgramController.Route(app)
 	registerProgramController.Route(app)
 	ebookController.Route(app)
+	aiController.Route(app)
 
 	app.Get("/", func(c *fiber.Ctx) error {
 		return c.Status(fiber.StatusCreated).JSON(model.GeneralResponse{

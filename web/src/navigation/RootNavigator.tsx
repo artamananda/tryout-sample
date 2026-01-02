@@ -17,6 +17,7 @@ import ELibraryScreen from '../screens/ELibrary';
 import ReadScreen from '../screens/ELibrary/Read';
 import ProgramScreen from '../screens/Program';
 import RegisterProgramScreen from '../screens/Program/Register';
+import BankSoalScreen from '../screens/BankSoal';
 
 const RootNavigator = () => {
   return (
@@ -75,6 +76,17 @@ const RootNavigator = () => {
         <Route path="*" element={<NotFoundScreen />} />
 
         <Route path="/" element={<HomeScreen />} />
+
+        <Route
+          path="/bank-soal"
+          element={
+            <PublicRoute>
+              <Suspense fallback={<Spin spinning={true} />}>
+                <BankSoalScreen />
+              </Suspense>
+            </PublicRoute>
+          }
+        />
 
         <Route element={<AppLayout />}>
           <Route
