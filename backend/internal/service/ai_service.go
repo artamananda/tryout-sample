@@ -195,3 +195,141 @@ func getContextSection(context string) string {
 	}
 	return fmt.Sprintf("\nAdditional context/material to base questions on:\n%s", context)
 }
+
+func (service *AIService) Chat(ctx context.Context, request model.AIChatRequest) (model.AIChatResponse, error) {
+	err := common.Validate(request)
+	if err != nil {
+		return model.AIChatResponse{}, exception.ValidationError{
+			Message: err.Error(),
+		}
+	}
+
+	apiKey := service.Config.Get("OPENAI_API_KEY")
+	if apiKey == "" {
+		return model.AIChatResponse{}, exception.ValidationError{
+			Message: "OpenAI API key not configured",
+		}
+	}
+
+	// Build system message based on mode
+	var systemMessage string
+	if request.Mode == "generate" {
+		systemMessage = `You are an expert exam question creator assistant. You help create multiple choice questions.
+
+When you receive a request to generate questions:
+1. Generate the questions in the format requested
+2. Return a JSON response like this:
+{
+  "message": "I've generated N questions about [topic].",
+  "is_generating": true,
+  "questions": [
+    {
+      "text": "Question text?",
+      "options": ["A. Option 1", "B. Option 2", "C. Option 3", "D. Option 4"],
+      "correct_answer": "A",
+      "explanation": "Why A is correct"
+    }
+  ]
+}
+
+Always respond with valid JSON only.`
+	} else {
+		systemMessage = `You are a helpful AI assistant for creating exam questions. You help teachers and admins prepare questions.
+
+You can:
+1. Discuss topics and help refine question ideas
+2. Suggest question types and difficulty levels
+3. When asked to generate questions, guide the user on what information you need
+
+When chatting, respond in this JSON format:
+{
+  "message": "Your conversational response here",
+  "is_generating": false,
+  "suggestion": "Optional suggestion for what to do next"
+}
+
+If the user wants to generate questions, ask them to provide:
+- Topic/subject matter
+- Number of questions
+- Difficulty level (easy/medium/hard)
+- Question type if not specified
+
+Always respond with valid JSON only.`
+	}
+
+	// Convert messages to OpenAI format
+	var openAIMessages []openAIMessage
+	openAIMessages = append(openAIMessages, openAIMessage{
+		Role:    "system",
+		Content: systemMessage,
+	})
+
+	for _, msg := range request.Messages {
+		openAIMessages = append(openAIMessages, openAIMessage{
+			Role:    msg.Role,
+			Content: msg.Content,
+		})
+	}
+
+	openAIReq := openAIRequest{
+		Model:    "gpt-4o-mini",
+		Messages: openAIMessages,
+	}
+
+	reqBody, err := json.Marshal(openAIReq)
+	if err != nil {
+		return model.AIChatResponse{}, err
+	}
+
+	httpReq, err := http.NewRequestWithContext(ctx, "POST", "https://api.openai.com/v1/chat/completions", bytes.NewBuffer(reqBody))
+	if err != nil {
+		return model.AIChatResponse{}, err
+	}
+
+	httpReq.Header.Set("Content-Type", "application/json")
+	httpReq.Header.Set("Authorization", "Bearer "+apiKey)
+
+	client := &http.Client{}
+	resp, err := client.Do(httpReq)
+	if err != nil {
+		return model.AIChatResponse{}, err
+	}
+	defer resp.Body.Close()
+
+	body, err := io.ReadAll(resp.Body)
+	if err != nil {
+		return model.AIChatResponse{}, err
+	}
+
+	var openAIResp openAIResponse
+	err = json.Unmarshal(body, &openAIResp)
+	if err != nil {
+		return model.AIChatResponse{}, err
+	}
+
+	if openAIResp.Error != nil {
+		return model.AIChatResponse{}, exception.ValidationError{
+			Message: "OpenAI API error: " + openAIResp.Error.Message,
+		}
+	}
+
+	if len(openAIResp.Choices) == 0 {
+		return model.AIChatResponse{}, exception.ValidationError{
+			Message: "No response from OpenAI",
+		}
+	}
+
+	content := openAIResp.Choices[0].Message.Content
+
+	var result model.AIChatResponse
+	err = json.Unmarshal([]byte(content), &result)
+	if err != nil {
+		// If JSON parsing fails, return as plain message
+		result = model.AIChatResponse{
+			Message:      content,
+			IsGenerating: false,
+		}
+	}
+
+	return result, nil
+}

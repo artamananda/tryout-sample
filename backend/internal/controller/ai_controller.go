@@ -22,6 +22,7 @@ func NewAIController(aiService *service.AIService, config config.Config) *AICont
 
 func (controller AIController) Route(app *fiber.App) {
 	app.Post("/v1/api/ai/generate-questions", middleware.AuthenticateJWT([]string{"admin"}, controller.Config), controller.GenerateQuestions)
+	app.Post("/v1/api/ai/chat", middleware.AuthenticateJWT([]string{"admin"}, controller.Config), controller.Chat)
 }
 
 // GenerateQuestions handles AI question generation.
@@ -42,6 +43,35 @@ func (controller AIController) GenerateQuestions(c *fiber.Ctx) error {
 	}
 
 	response, err := controller.AIService.GenerateQuestions(c.Context(), request)
+	if err != nil {
+		return err
+	}
+
+	return c.Status(fiber.StatusOK).JSON(model.GeneralResponse{
+		Code:    200,
+		Message: "Success",
+		Data:    response,
+	})
+}
+
+// Chat handles AI chatbot conversation.
+// @Summary Chat with AI assistant
+// @Description Have a conversation with AI to discuss and generate questions
+// @Tags AI
+// @Accept json
+// @Produce json
+// @Param request body model.AIChatRequest true "Request Body"
+// @Security JWT
+// @Success 200 {object} model.GeneralResponse
+// @Router /ai/chat [post]
+func (controller AIController) Chat(c *fiber.Ctx) error {
+	var request model.AIChatRequest
+	err := c.BodyParser(&request)
+	if err != nil {
+		return err
+	}
+
+	response, err := controller.AIService.Chat(c.Context(), request)
 	if err != nil {
 		return err
 	}

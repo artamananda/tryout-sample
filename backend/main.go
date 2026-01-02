@@ -56,6 +56,7 @@ func main() {
 	programRepository := repository.NewProgramRepository(db)
 	transactionProgramRepository := repository.NewTransactionProgramRepository(db)
 	ebookRepository := repository.NewEbookRepository(db)
+	bankSoalRepository := repository.NewBankSoalRepository(db)
 
 	userService := service.NewUserService(&userRepository, uploader)
 	tryoutService := service.NewTryoutService(&tryoutRepository)
@@ -67,6 +68,7 @@ func main() {
 	registerProgramService := service.NewRegisterProgramService(&userService, &programService, &transactionProgramService, uploader)
 	ebookService := service.NewEbookService(&ebookRepository, uploader)
 	aiService := service.NewAIService(initConfig)
+	bankSoalService := service.NewBankSoalService(&bankSoalRepository)
 
 	userController := controller.NewUserController(&userService, initConfig)
 	tryoutController := controller.NewTryoutController(&tryoutService, initConfig)
@@ -78,6 +80,7 @@ func main() {
 	registerProgramController := controller.NewRegisterProgramController(&registerProgramService, initConfig)
 	ebookController := controller.NewEbookController(&ebookService, initConfig)
 	aiController := controller.NewAIController(&aiService, initConfig)
+	bankSoalController := controller.NewBankSoalController(&bankSoalService, initConfig)
 
 	userController.Route(app)
 	tryoutController.Route(app)
@@ -89,6 +92,7 @@ func main() {
 	registerProgramController.Route(app)
 	ebookController.Route(app)
 	aiController.Route(app)
+	bankSoalController.Route(app)
 
 	app.Get("/", func(c *fiber.Ctx) error {
 		return c.Status(fiber.StatusCreated).JSON(model.GeneralResponse{

@@ -4,6 +4,7 @@ import ButtonUi from "../../Ui/Button";
 import ModalUpdateQuestion from "./ModalUpdateQuestion";
 import ModalConfirmDeleteQuestion from "./ModalConfirmDeleteQuestion";
 import ModalGenerateAI from "./ModalGenerateAI";
+import ModalAIChatbot from "./ModalAIChatbot";
 import { Image, Spin } from "antd";
 import QuestionCard from "../../Ui/QuestionCard";
 import emptyIcon from "../../../assets/emptyIcon.png";
@@ -45,6 +46,7 @@ const QuestionView = (props: PropTypes) => {
     },
   });
   const [isAIModalOpen, setIsAIModalOpen] = useState(false);
+  const [isChatbotOpen, setIsChatbotOpen] = useState(false);
 
   const showModal = (
     status: boolean,
@@ -169,6 +171,13 @@ const QuestionView = (props: PropTypes) => {
 
             <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
               <ButtonUi
+                title="AI Chat"
+                backgroundColor="#8C59F1"
+                color="white"
+                icon={<RobotOutlined />}
+                onClick={() => setIsChatbotOpen(true)}
+              />
+              <ButtonUi
                 title="Generate with AI"
                 backgroundColor="#52c41a"
                 color="white"
@@ -223,6 +232,13 @@ const QuestionView = (props: PropTypes) => {
           </h3>
           <div style={{ display: "flex", gap: "10px" }}>
             <ButtonUi
+              title="AI Chat"
+              backgroundColor="#8C59F1"
+              color="white"
+              icon={<RobotOutlined />}
+              onClick={() => setIsChatbotOpen(true)}
+            />
+            <ButtonUi
               title="Generate with AI"
               backgroundColor="#52c41a"
               color="white"
@@ -269,6 +285,14 @@ const QuestionView = (props: PropTypes) => {
       <ModalGenerateAI
         isOpen={isAIModalOpen}
         onClose={() => setIsAIModalOpen(false)}
+        tryoutId={tryoutId}
+        questionType={questionType}
+        onQuestionsCreated={() => window.location.reload()}
+      />
+
+      <ModalAIChatbot
+        isOpen={isChatbotOpen}
+        onClose={() => setIsChatbotOpen(false)}
         tryoutId={tryoutId}
         questionType={questionType}
         onQuestionsCreated={() => window.location.reload()}

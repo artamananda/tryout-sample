@@ -21,3 +21,24 @@ type GeneratedQuestion struct {
 type GenerateQuestionsResponse struct {
 	Questions []GeneratedQuestion `json:"questions"`
 }
+
+// AIChatMessage represents a single message in the chat
+type AIChatMessage struct {
+	Role    string `json:"role"`    // "user" or "assistant"
+	Content string `json:"content"` // message content
+}
+
+// AIChatRequest represents a chat request to the AI
+type AIChatRequest struct {
+	Messages     []AIChatMessage `json:"messages" validate:"required"`
+	QuestionType string          `json:"question_type"`
+	Mode         string          `json:"mode"` // "chat" or "generate"
+}
+
+// AIChatResponse represents the AI's chat response
+type AIChatResponse struct {
+	Message      string              `json:"message"`
+	Questions    []GeneratedQuestion `json:"questions,omitempty"`
+	IsGenerating bool                `json:"is_generating"`
+	Suggestion   string              `json:"suggestion,omitempty"`
+}
