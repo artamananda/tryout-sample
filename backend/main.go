@@ -85,6 +85,7 @@ func main() {
 	registerProgramService := service.NewRegisterProgramService(&userService, &programService, &transactionProgramService, uploader)
 	ebookService := service.NewEbookService(&ebookRepository, uploader)
 	aiService := service.NewAIService(initConfig, &chatLogRepository, &aiExampleRepository, &chatArtifactRepository)
+	extractionService := service.NewExtractionService(initConfig)
 	bankSoalService := service.NewBankSoalService(&bankSoalRepository)
 
 	userController := controller.NewUserController(&userService, initConfig)
@@ -96,7 +97,7 @@ func main() {
 	transactionProgramController := controller.NewTransactionProgramController(&transactionProgramService, initConfig)
 	registerProgramController := controller.NewRegisterProgramController(&registerProgramService, initConfig)
 	ebookController := controller.NewEbookController(&ebookService, initConfig)
-	aiController := controller.NewAIController(&aiService, initConfig)
+	aiController := controller.NewAIController(&aiService, extractionService, initConfig)
 	bankSoalController := controller.NewBankSoalController(&bankSoalService, initConfig)
 
 	userController.Route(app)

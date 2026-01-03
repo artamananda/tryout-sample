@@ -28,3 +28,16 @@ func (r *ChatArtifactRepository) FindByChatLogID(ctx context.Context, chatLogID 
 func (r *ChatArtifactRepository) Update(ctx context.Context, artifact *entity.ChatArtifact) error {
 	return r.DB.WithContext(ctx).Save(artifact).Error
 }
+
+func (r *ChatArtifactRepository) FindByID(ctx context.Context, id string) (*entity.ChatArtifact, error) {
+	var artifact entity.ChatArtifact
+	err := r.DB.WithContext(ctx).Where("id = ?", id).First(&artifact).Error
+	if err != nil {
+		return nil, err
+	}
+	return &artifact, nil
+}
+
+func (r *ChatArtifactRepository) Delete(ctx context.Context, id string) error {
+	return r.DB.WithContext(ctx).Delete(&entity.ChatArtifact{}, "id = ?", id).Error
+}

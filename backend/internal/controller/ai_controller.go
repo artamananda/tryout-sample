@@ -11,13 +11,15 @@ import (
 
 type AIController struct {
 	service.AIService
+	ExtractionService *service.ExtractionService
 	config.Config
 }
 
-func NewAIController(aiService *service.AIService, config config.Config) *AIController {
+func NewAIController(aiService *service.AIService, extractionService *service.ExtractionService, config config.Config) *AIController {
 	return &AIController{
-		AIService: *aiService,
-		Config:    config,
+		AIService:         *aiService,
+		ExtractionService: extractionService,
+		Config:            config,
 	}
 }
 
@@ -31,6 +33,12 @@ func (controller AIController) Route(app *fiber.App) {
 	app.Put("/v1/api/ai/chat/history/:id", middleware.AuthenticateJWT([]string{"admin"}, controller.Config), controller.UpdateSession)
 	app.Post("/v1/api/ai/examples", middleware.AuthenticateJWT([]string{"admin"}, controller.Config), controller.SaveExample)
 	app.Get("/v1/api/ai/chat/history/:id/artifacts", middleware.AuthenticateJWT([]string{"admin"}, controller.Config), controller.GetSessionArtifacts)
+	// Tools
+	app.Post("/v1/api/ai/upload-context", middleware.AuthenticateJWT([]string{"admin"}, controller.Config), controller.UploadContext)
+	app.Post("/v1/api/ai/artifacts/:id/refine", middleware.AuthenticateJWT([]string{"admin"}, controller.Config), controller.RefineArtifact)
+	app.Put("/v1/api/ai/artifacts/:id", middleware.AuthenticateJWT([]string{"admin"}, controller.Config), controller.UpdateArtifact)
+	app.Delete("/v1/api/ai/artifacts/:id", middleware.AuthenticateJWT([]string{"admin"}, controller.Config), controller.DeleteArtifact)
+	app.Post("/v1/api/ai/artifacts/:id/approve", middleware.AuthenticateJWT([]string{"admin"}, controller.Config), controller.ApproveArtifact)
 }
 
 // GenerateQuestions handles AI question generation.
@@ -262,5 +270,88 @@ func (controller AIController) GetSessionArtifacts(c *fiber.Ctx) error {
 		Code:    200,
 		Message: "Artifacts Retrieved",
 		Data:    artifacts,
+	})
+}
+
+func (controller AIController) UploadContext(c *fiber.Ctx) error {
+	file, err := c.FormFile("file")
+	if err != nil {
+		return c.Status(fiber.StatusBadRequest).JSON(model.GeneralResponse{Code: 400, Message: "File is required"})
+	}
+
+	text, err := controller.ExtractionService.ExtractText(file)
+	if err != nil {
+		return c.Status(fiber.StatusInternalServerError).JSON(model.GeneralResponse{Code: 500, Message: "Extraction failed: " + err.Error()})
+	}
+
+	return c.Status(fiber.StatusOK).JSON(model.GeneralResponse{
+		Code:    200,
+		Message: "Text Extracted",
+		Data: map[string]string{
+			"text":     text,
+			"filename": file.Filename,
+		},
+	})
+}
+
+func (controller AIController) RefineArtifact(c *fiber.Ctx) error {
+	id := c.Params("id")
+	var request struct {
+		Instruction string `json:"instruction"`
+	}
+	if err := c.BodyParser(&request); err != nil {
+		return c.Status(fiber.StatusBadRequest).JSON(model.GeneralResponse{Code: 400, Message: "Invalid Request"})
+	}
+
+	artifact, err := controller.AIService.RefineArtifact(c.Context(), id, request.Instruction)
+	if err != nil {
+		return c.Status(fiber.StatusInternalServerError).JSON(model.GeneralResponse{Code: 500, Message: err.Error()})
+	}
+
+	return c.Status(fiber.StatusOK).JSON(model.GeneralResponse{
+		Code:    200,
+		Message: "Artifact Refined",
+		Data:    artifact,
+	})
+}
+
+func (controller AIController) UpdateArtifact(c *fiber.Ctx) error {
+	id := c.Params("id")
+	var request model.GeneratedQuestion
+	if err := c.BodyParser(&request); err != nil {
+		return c.Status(fiber.StatusBadRequest).JSON(model.GeneralResponse{Code: 400, Message: "Invalid Request"})
+	}
+
+	artifact, err := controller.AIService.UpdateArtifact(c.Context(), id, request)
+	if err != nil {
+		return c.Status(fiber.StatusInternalServerError).JSON(model.GeneralResponse{Code: 500, Message: err.Error()})
+	}
+
+	return c.Status(fiber.StatusOK).JSON(model.GeneralResponse{
+		Code:    200,
+		Message: "Artifact Updated",
+		Data:    artifact,
+	})
+}
+
+func (controller AIController) DeleteArtifact(c *fiber.Ctx) error {
+	id := c.Params("id")
+	if err := controller.AIService.DeleteArtifact(c.Context(), id); err != nil {
+		return c.Status(fiber.StatusInternalServerError).JSON(model.GeneralResponse{Code: 500, Message: err.Error()})
+	}
+	return c.Status(fiber.StatusOK).JSON(model.GeneralResponse{
+		Code:    200,
+		Message: "Artifact Deleted",
+	})
+}
+
+func (controller AIController) ApproveArtifact(c *fiber.Ctx) error {
+	id := c.Params("id")
+	if err := controller.AIService.ApproveArtifact(c.Context(), id); err != nil {
+		return c.Status(fiber.StatusInternalServerError).JSON(model.GeneralResponse{Code: 500, Message: err.Error()})
+	}
+	return c.Status(fiber.StatusOK).JSON(model.GeneralResponse{
+		Code:    200,
+		Message: "Artifact Approved",
 	})
 }

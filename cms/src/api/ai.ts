@@ -76,7 +76,20 @@ export async function apiSaveToBankSoal(
     message.error(error);
     return undefined;
   }
+}
 
+export async function apiUpdateBankSoal(id: string, data: any): Promise<BankSoalResponse | undefined> {
+  try {
+    const res = await httpRequest.put<BaseResponseProps<BankSoalResponse>>(
+      process.env.REACT_APP_BASE_URL + `/bank-soal/${id}`,
+      data
+    );
+    return res.data.payload;
+  } catch (err) {
+    const error = getErrorMessage(err);
+    message.error(error);
+    return undefined;
+  }
 }
 
 export async function apiGetHistory(): Promise<ChatLog[] | undefined> {
@@ -140,6 +153,82 @@ export async function apiGetSessionArtifacts(sessionId: string): Promise<ChatArt
     return res.data.payload || [];
   } catch (err) {
     return [];
+  }
+}
+
+export async function apiUploadContext(file: File): Promise<{ text: string; filename: string } | undefined> {
+  try {
+    const formData = new FormData();
+    formData.append("file", file);
+    const res = await httpRequest.post<BaseResponseProps<{ text: string; filename: string }>>(
+      process.env.REACT_APP_BASE_URL + "/ai/upload-context",
+      formData,
+      {
+         headers: {
+            'Content-Type': 'multipart/form-data'
+         }
+      }
+    );
+    return res.data.payload;
+  } catch (err) {
+    const error = getErrorMessage(err);
+    message.error(error);
+    return undefined;
+  }
+}
+
+export async function apiRefineArtifact(id: string, instruction: string): Promise<ChatArtifact | undefined> {
+  try {
+    const res = await httpRequest.post<BaseResponseProps<ChatArtifact>>(
+      process.env.REACT_APP_BASE_URL + `/ai/artifacts/${id}/refine`,
+      { instruction }
+    );
+    return res.data.payload;
+  } catch (err) {
+    const error = getErrorMessage(err);
+    message.error(error);
+    return undefined;
+  }
+}
+
+export async function apiUpdateArtifact(id: string, content: GeneratedQuestion): Promise<ChatArtifact | undefined> {
+  try {
+    const res = await httpRequest.put<BaseResponseProps<ChatArtifact>>(
+      process.env.REACT_APP_BASE_URL + `/ai/artifacts/${id}`,
+      content
+    );
+    return res.data.payload;
+  } catch (err) {
+    const error = getErrorMessage(err);
+    message.error(error);
+    return undefined;
+  }
+}
+
+export async function apiDeleteArtifact(id: string): Promise<boolean> {
+  try {
+    await httpRequest.delete<BaseResponseProps<null>>(
+      process.env.REACT_APP_BASE_URL + `/ai/artifacts/${id}`
+    );
+    return true;
+  } catch (err) {
+    const error = getErrorMessage(err);
+    message.error(error);
+    return false;
+  }
+}
+
+export async function apiApproveArtifact(id: string): Promise<boolean> {
+  try {
+    await httpRequest.post<BaseResponseProps<null>>(
+      process.env.REACT_APP_BASE_URL + `/ai/artifacts/${id}/approve`,
+      {}
+    );
+    return true;
+  } catch (err) {
+    const error = getErrorMessage(err);
+    message.error(error);
+    return false;
   }
 }
 

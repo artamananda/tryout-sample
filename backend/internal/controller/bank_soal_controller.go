@@ -24,6 +24,7 @@ func NewBankSoalController(bankSoalService *service.BankSoalService, config conf
 func (controller BankSoalController) Route(app *fiber.App) {
 	app.Post("/v1/api/bank-soal", middleware.AuthenticateJWT([]string{"admin"}, controller.Config), controller.Create)
 	app.Post("/v1/api/bank-soal/batch", middleware.AuthenticateJWT([]string{"admin"}, controller.Config), controller.CreateBatch)
+	app.Put("/v1/api/bank-soal/:id", middleware.AuthenticateJWT([]string{"admin"}, controller.Config), controller.Update)
 	app.Get("/v1/api/bank-soal/:id", controller.FindById)
 	app.Get("/v1/api/bank-soal", controller.FindAll)
 	app.Delete("/v1/api/bank-soal/:id", middleware.AuthenticateJWT([]string{"admin"}, controller.Config), controller.Delete)
@@ -176,5 +177,36 @@ func (controller BankSoalController) Delete(c *fiber.Ctx) error {
 	return c.Status(fiber.StatusOK).JSON(model.GeneralResponse{
 		Code:    200,
 		Message: "Success",
+	})
+}
+
+// Update handles updating a bank soal question.
+// @Summary Update a bank soal question
+// @Description Update an existing bank soal question
+// @Tags BankSoal
+// @Accept json
+// @Produce json
+// @Param id path string true "Bank Soal ID"
+// @Param request body model.CreateBankSoalRequest true "Request Body"
+// @Security JWT
+// @Success 200 {object} model.GeneralResponse
+// @Router /bank-soal/{id} [put]
+func (controller BankSoalController) Update(c *fiber.Ctx) error {
+	id := c.Params("id")
+	var request model.CreateBankSoalRequest
+	err := c.BodyParser(&request)
+	if err != nil {
+		return err
+	}
+
+	response, err := controller.BankSoalService.Update(c.Context(), id, request)
+	if err != nil {
+		return err
+	}
+
+	return c.Status(fiber.StatusOK).JSON(model.GeneralResponse{
+		Code:    200,
+		Message: "Success",
+		Data:    response,
 	})
 }

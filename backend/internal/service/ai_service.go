@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"io"
 	"net/http"
@@ -225,10 +226,19 @@ func (service *AIService) Chat(ctx context.Context, request model.AIChatRequest,
 	// Build system message based on mode
 	var systemMessage string
 	if request.Mode == "generate" {
-		systemMessage = `You are an expert exam question creator assistant. You help create multiple choice questions.
+		formatInstruction := "Provide 5 options (Multiple Choice). 'correct_answer' is a single letter (e.g. 'A')."
+		if request.QuestionFormat == "essay" {
+			formatInstruction = "Provide NO options (leave empty array). 'correct_answer' field should contain the model answer or grading rubric."
+		} else if request.QuestionFormat == "multiple_answer" {
+			formatInstruction = "Provide 5 options. 'correct_answer' should list all correct options (e.g. 'A, C')."
+		} else if request.QuestionFormat == "short_answer" {
+			formatInstruction = "Provide NO options (leave empty array). 'correct_answer' is the short answer key."
+		}
+
+		systemMessage = `You are an expert exam question creator assistant.
 
 When you receive a request to generate questions:
-1. Generate the questions in the format requested
+1. Generate the questions in the format requested: ` + formatInstruction + `
 2. Return a JSON response like this:
 {
   "message": "I've generated N questions about [topic].",
@@ -238,12 +248,13 @@ When you receive a request to generate questions:
       "text": "Question text?",
       "options": ["A. Option 1", "B. Option 2", "C. Option 3", "D. Option 4"],
       "correct_answer": "A",
-      "explanation": "Why A is correct"
+      "explanation": "Why A is correct",
+      "type": "` + request.QuestionFormat + `"
     }
   ]
 }
 
-Always respond with valid JSON only.`
+Always respond with valid JSON only. Do not wrap code in markdown blocks.`
 	} else {
 		systemMessage = `You are a helpful AI assistant for creating exam questions. You help teachers and admins prepare questions.
 
@@ -362,70 +373,22 @@ Always respond with valid JSON only.`
 
 	// --- PERSISTENCE LOGIC START ---
 	// Update history
-	newHistory := append(request.Messages, model.AIChatMessage{
-		Role:    "assistant",
-		Content: result.Message,
-	})
-
-	chatLogBytes, _ := json.Marshal(newHistory)
+	// --- PERSISTENCE LOGIC ---
 	var chatLogID uuid.UUID
+	var errUUID error
 	adminUUID, _ := uuid.Parse(adminID)
 
 	if request.SessionID != "" {
-		// Update existing
-		parsedID, err := uuid.Parse(request.SessionID)
-		if err == nil {
-			existing, err := service.ChatLogRepository.FindByID(ctx, parsedID)
-			if err == nil && existing.AdminID == adminUUID {
-				existing.Messages = json.RawMessage(chatLogBytes)
-				existing.UpdatedAt = time.Now()
-				existing.Status = "active"
-				if request.Topic != "" {
-					existing.Topic = request.Topic
-				}
-				service.ChatLogRepository.Update(ctx, existing)
-				chatLogID = existing.ChatLogID
-			} else {
-				// Fallback create new
-				chatLogID = uuid.New()
-				newLog := entity.ChatLog{
-					ChatLogID:    chatLogID,
-					AdminID:      adminUUID,
-					QuestionType: request.QuestionType,
-					Topic:        request.Topic,
-					Messages:     json.RawMessage(chatLogBytes),
-					Status:       "active",
-					CreatedAt:    time.Now(),
-					UpdatedAt:    time.Now(),
-				}
-				if newLog.Topic == "" {
-					newLog.Topic = "New Chat " + time.Now().Format("15:04")
-				}
-				service.ChatLogRepository.Create(ctx, newLog)
-			}
+		chatLogID, errUUID = uuid.Parse(request.SessionID)
+		if errUUID != nil {
+			chatLogID = uuid.New() // Fallback
 		}
 	} else {
-		// Create New
 		chatLogID = uuid.New()
-		newLog := entity.ChatLog{
-			ChatLogID:    chatLogID,
-			AdminID:      adminUUID,
-			QuestionType: request.QuestionType,
-			Topic:        request.Topic,
-			Messages:     json.RawMessage(chatLogBytes),
-			Status:       "active",
-			CreatedAt:    time.Now(),
-			UpdatedAt:    time.Now(),
-		}
-		if newLog.Topic == "" {
-			newLog.Topic = "New Chat " + time.Now().Format("15:04")
-		}
-		service.ChatLogRepository.Create(ctx, newLog)
 	}
 
-	result.SessionID = chatLogID.String()
-
-	// Store Generated Artifacts
+	// 1. Store Generated Artifacts First (to get IDs)
+	var artifactIDs []string
 	if result.IsGenerating && len(result.Questions) > 0 {
 		var referencesJSON []byte
 		if len(usedExamples) > 0 {
@@ -446,8 +409,131 @@ Always respond with valid JSON only.`
 				UpdatedAt:      time.Now(),
 			}
 			service.ChatArtifactRepository.Create(ctx, &artifact)
+			artifactIDs = append(artifactIDs, artifact.ID.String())
 		}
+		result.ArtifactIDs = artifactIDs
 	}
+
+	// 2. Prepare Assistant Message
+	assistantMsg := model.AIChatMessage{
+		Role:        "assistant",
+		Content:     result.Message,
+		ArtifactIDs: artifactIDs,
+	}
+
+	// 3. Save Chat Log
+	if request.SessionID != "" {
+		chatLog, err := service.ChatLogRepository.FindByID(ctx, chatLogID)
+		if err == nil {
+			var currentMessages []model.AIChatMessage
+			json.Unmarshal(chatLog.Messages, &currentMessages)
+
+			// Append User Message (Last one)
+			if len(request.Messages) > 0 {
+				lastUserMsg := request.Messages[len(request.Messages)-1]
+				if lastUserMsg.Role == "user" {
+					currentMessages = append(currentMessages, lastUserMsg)
+				}
+			}
+
+			// Append Assistant Message
+			currentMessages = append(currentMessages, assistantMsg)
+
+			chatLogBytes, _ := json.Marshal(currentMessages)
+			chatLog.Messages = json.RawMessage(chatLogBytes)
+			chatLog.UpdatedAt = time.Now()
+
+			// Update Topic if needed
+			if chatLog.Topic == "" || strings.HasPrefix(chatLog.Topic, "New Chat") {
+				if len(request.Messages) > 0 {
+					firstMsg := request.Messages[len(request.Messages)-1].Content
+					if len(firstMsg) > 30 {
+						chatLog.Topic = firstMsg[:30] + "..."
+					} else {
+						chatLog.Topic = firstMsg
+					}
+				}
+			}
+
+			service.ChatLogRepository.Update(ctx, chatLog)
+		} else {
+			// Fallback: Create New if ID not found but supplied
+			var newMessages []model.AIChatMessage
+			// Append User Message (Last one)
+			if len(request.Messages) > 0 {
+				lastUserMsg := request.Messages[len(request.Messages)-1]
+				if lastUserMsg.Role == "user" {
+					newMessages = append(newMessages, lastUserMsg)
+				}
+			}
+			newMessages = append(newMessages, assistantMsg)
+			chatLogBytes, _ := json.Marshal(newMessages)
+
+			newLog := entity.ChatLog{
+				ChatLogID:    chatLogID,
+				AdminID:      adminUUID,
+				QuestionType: request.QuestionType,
+				Topic:        request.Topic,
+				Messages:     json.RawMessage(chatLogBytes),
+				Status:       "active",
+				CreatedAt:    time.Now(),
+				UpdatedAt:    time.Now(),
+			}
+
+			if newLog.Topic == "" {
+				if len(newMessages) > 0 {
+					firstMsg := newMessages[0].Content
+					if len(firstMsg) > 30 {
+						newLog.Topic = firstMsg[:30] + "..."
+					} else {
+						newLog.Topic = firstMsg
+					}
+				} else {
+					newLog.Topic = "New Chat " + time.Now().Format("15:04")
+				}
+			}
+			service.ChatLogRepository.Create(ctx, newLog)
+		}
+	} else {
+		// Create Messages Array
+		var newMessages []model.AIChatMessage
+		// Append User Message (Last one)
+		if len(request.Messages) > 0 {
+			lastUserMsg := request.Messages[len(request.Messages)-1]
+			if lastUserMsg.Role == "user" {
+				newMessages = append(newMessages, lastUserMsg)
+			}
+		}
+		newMessages = append(newMessages, assistantMsg)
+		chatLogBytes, _ := json.Marshal(newMessages)
+
+		newLog := entity.ChatLog{
+			ChatLogID:    chatLogID,
+			AdminID:      adminUUID,
+			QuestionType: request.QuestionType,
+			Topic:        request.Topic,
+			Messages:     json.RawMessage(chatLogBytes),
+			Status:       "active",
+			CreatedAt:    time.Now(),
+			UpdatedAt:    time.Now(),
+		}
+		if newLog.Topic == "" {
+			// Generate Topic from User Message
+			if len(newMessages) > 0 {
+				firstMsg := newMessages[0].Content
+				if len(firstMsg) > 30 {
+					newLog.Topic = firstMsg[:30] + "..."
+				} else {
+					newLog.Topic = firstMsg
+				}
+			} else {
+				newLog.Topic = "New Chat " + time.Now().Format("15:04")
+			}
+		}
+		service.ChatLogRepository.Create(ctx, newLog)
+	}
+
+	result.SessionID = chatLogID.String()
 	// --- PERSISTENCE LOGIC END ---
 
 	return result, nil
@@ -582,4 +668,111 @@ func (service *AIService) extractJSON(content string) string {
 		return content[start : end+1]
 	}
 	return content
+}
+
+func (service *AIService) RefineArtifact(ctx context.Context, artifactID string, instruction string) (*entity.ChatArtifact, error) {
+	// Find Artifact
+	artifact, err := service.ChatArtifactRepository.FindByID(ctx, artifactID) // Need FindByID implementation?
+	// Assuming FindByID exists or usage of generic Find
+	// If not, I'll check Repo first.
+	// Wait, ChatArtifactRepository only has FindByChatLogID and Create/Update.
+	// I need FindByID.
+	if err != nil {
+		return nil, err
+	}
+
+	// Build Prompt
+	systemPrompt := "You are an expert exam question editor. Update the following question based on the user's instruction. Output ONLY the updated question in JSON format."
+	userPrompt := fmt.Sprintf("Original Question JSON: %s\n\nInstruction: %s\n\nOutput JSON:", artifact.Content, instruction)
+
+	// Call OpenAI (Copy logic from Chat or make helper? Copy for speed)
+	req := model.OpenAIChatRequest{
+		Model: "gpt-4o", // Use high quality
+		Messages: []model.OpenAIMessage{
+			{Role: "system", Content: systemPrompt},
+			{Role: "user", Content: userPrompt},
+		},
+		Temperature: 0.7,
+	}
+
+	reqBody, _ := json.Marshal(req)
+	client := &http.Client{Timeout: 60 * time.Second}
+	openAIReq, _ := http.NewRequest("POST", "https://api.openai.com/v1/chat/completions", bytes.NewBuffer(reqBody))
+	openAIReq.Header.Set("Content-Type", "application/json")
+	openAIReq.Header.Set("Authorization", "Bearer "+service.Config.Get("OPENAI_API_KEY"))
+
+	resp, err := client.Do(openAIReq)
+	if err != nil {
+		return nil, err
+	}
+	defer resp.Body.Close()
+
+	var openAIResp model.OpenAIChatResponse
+	if err := json.NewDecoder(resp.Body).Decode(&openAIResp); err != nil {
+		return nil, err
+	}
+	if len(openAIResp.Choices) == 0 {
+		return nil, errors.New("no response from AI")
+	}
+
+	// Parse content (interface{} -> string)
+	var contentStr string
+	if cStr, ok := openAIResp.Choices[0].Message.Content.(string); ok {
+		contentStr = cStr
+	} else {
+		// Handle unexpected content (unlikely for gpt-4o text generation, but safety check)
+		return nil, errors.New("unexpected content format from AI")
+	}
+
+	jsonContent := service.extractJSON(contentStr)
+
+	// Update Artifact
+	// Store old content in metadata?
+	// Map existing metadata
+	// For now just overwrite content
+	artifact.Content = json.RawMessage(jsonContent)
+	artifact.Status = "refined"
+
+	// Update DB
+	if err := service.ChatArtifactRepository.Update(ctx, artifact); err != nil {
+		return nil, err
+	}
+
+	return artifact, nil
+}
+
+func (service *AIService) UpdateArtifact(ctx context.Context, id string, content model.GeneratedQuestion) (*entity.ChatArtifact, error) {
+	artifact, err := service.ChatArtifactRepository.FindByID(ctx, id)
+	if err != nil {
+		return nil, err
+	}
+
+	bytes, err := json.Marshal(content)
+	if err != nil {
+		return nil, err
+	}
+
+	artifact.Content = json.RawMessage(bytes)
+	artifact.Status = "edited"
+	artifact.UpdatedAt = time.Now()
+
+	if err := service.ChatArtifactRepository.Update(ctx, artifact); err != nil {
+		return nil, err
+	}
+
+	return artifact, nil
+}
+
+func (service *AIService) DeleteArtifact(ctx context.Context, id string) error {
+	return service.ChatArtifactRepository.Delete(ctx, id)
+}
+
+func (service *AIService) ApproveArtifact(ctx context.Context, id string) error {
+	artifact, err := service.ChatArtifactRepository.FindByID(ctx, id)
+	if err != nil {
+		return err
+	}
+	artifact.Status = "approved"
+	artifact.UpdatedAt = time.Now()
+	return service.ChatArtifactRepository.Update(ctx, artifact)
 }

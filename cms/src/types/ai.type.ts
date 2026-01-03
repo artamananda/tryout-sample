@@ -22,6 +22,8 @@ export interface GenerateQuestionsResponse {
 export interface AIChatMessage {
   role: 'user' | 'assistant';
   content: string;
+  questions?: GeneratedQuestion[];
+  artifact_ids?: string[];
 }
 
 export interface AIChatRequest {
@@ -29,6 +31,7 @@ export interface AIChatRequest {
   topic?: string;
   messages: AIChatMessage[];
   question_type?: string;
+  question_format?: string;
   mode: 'chat' | 'generate';
 }
 
@@ -36,6 +39,7 @@ export interface AIChatResponse {
   session_id: string;
   message: string;
   questions?: GeneratedQuestion[];
+  artifact_ids?: string[];
   is_generating: boolean;
   suggestion?: string;
 }

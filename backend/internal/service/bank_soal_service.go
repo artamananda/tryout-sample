@@ -179,3 +179,43 @@ func toResponse(bankSoal entity.BankSoal) model.BankSoalResponse {
 		UpdatedAt:     bankSoal.UpdatedAt,
 	}
 }
+
+func (service *BankSoalService) Update(ctx context.Context, id string, request model.CreateBankSoalRequest) (model.BankSoalResponse, error) {
+	err := common.Validate(request)
+	if err != nil {
+		return model.BankSoalResponse{}, exception.ValidationError{
+			Message: err.Error(),
+		}
+	}
+
+	bankSoal, err := service.BankSoalRepository.FindByID(ctx, uuid.MustParse(id))
+	if err != nil {
+		return model.BankSoalResponse{}, exception.NotFoundError{
+			Message: "Bank Soal not found",
+		}
+	}
+
+	isOptions := true
+	if request.IsOptions != nil {
+		isOptions = *request.IsOptions
+	}
+
+	bankSoal.Type = request.Type
+	bankSoal.Text = request.Text
+	bankSoal.ImageUrl = request.ImageUrl
+	bankSoal.IsOptions = &isOptions
+	bankSoal.Options = request.Options
+	bankSoal.CorrectAnswer = request.CorrectAnswer
+	bankSoal.Explanation = request.Explanation
+	bankSoal.Difficulty = request.Difficulty
+	bankSoal.Topic = request.Topic
+	bankSoal.Points = request.Points
+	bankSoal.UpdatedAt = time.Now()
+
+	updatedBankSoal, err := service.BankSoalRepository.Update(ctx, bankSoal)
+	if err != nil {
+		return model.BankSoalResponse{}, err
+	}
+
+	return toResponse(updatedBankSoal), nil
+}

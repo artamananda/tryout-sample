@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+// Remove Duplicate useState import if any.
 import {
   Row,
   Col,
@@ -11,15 +12,19 @@ import {
   Empty,
   Radio,
   Divider,
+  Button,
 } from "antd";
 import {
   BookOutlined,
   QuestionCircleOutlined,
   FilterOutlined,
   CheckCircleOutlined,
+  EditOutlined,
 } from "@ant-design/icons";
 import useFetchList from "../../hooks/useFetchList";
 import { QuestionProps } from "../../types/question";
+import ModalUpdateBankSoal from "./ModalUpdateBankSoal";
+import { BankSoalResponse } from "../../types/ai.type";
 
 const { Title, Text } = Typography;
 const { Search } = Input;
@@ -57,6 +62,11 @@ const BankSoalScreen = () => {
   const [selectedType, setSelectedType] = useState<string>("");
   const [expandedQuestion, setExpandedQuestion] = useState<string | null>(null);
   const [showAnswer, setShowAnswer] = useState<Record<string, boolean>>({});
+
+  // Edit State
+  const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+  const [currentEditingQuestion, setCurrentEditingQuestion] =
+    useState<BankSoalResponse | null>(null);
 
   const {
     data: questions,
@@ -158,6 +168,7 @@ const BankSoalScreen = () => {
                   expandedQuestion === question.question_id
                     ? "2px solid #1890ff"
                     : "1px solid #f0f0f0",
+                position: "relative",
               }}
               onClick={() =>
                 setExpandedQuestion(
@@ -173,14 +184,30 @@ const BankSoalScreen = () => {
                   justifyContent: "space-between",
                   alignItems: "flex-start",
                   marginBottom: 12,
+                  paddingRight: 40, // Space for Edit button
                 }}
               >
-                <Tag color={getTypeColor(question.type)}>
-                  {getQuestionTypeName(question.type)}
-                </Tag>
-                <Text type="secondary" style={{ fontSize: 12 }}>
-                  #{index + 1}
-                </Text>
+                <div>
+                  <Tag color={getTypeColor(question.type)}>
+                    {getQuestionTypeName(question.type)}
+                  </Tag>
+                  <Text type="secondary" style={{ fontSize: 12 }}>
+                    #{index + 1}
+                  </Text>
+                </div>
+              </div>
+
+              <div style={{ position: "absolute", top: 12, right: 12 }}>
+                <Button
+                  type="text"
+                  icon={<EditOutlined />}
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    // Type casting QuestionProps -> any -> BankSoalResponse
+                    setCurrentEditingQuestion(question as any);
+                    setIsEditModalOpen(true);
+                  }}
+                />
               </div>
 
               <Title level={5} style={{ marginBottom: 16 }}>
@@ -286,12 +313,23 @@ const BankSoalScreen = () => {
                     </span>
                   )}
                 </Text>
-                {/* Points not always in Bank Soal payload or needs optional chain */}
-                {/* question.points && <Tag color="gold">{question.points} Poin</Tag> */}
               </div>
             </Card>
           ))}
         </div>
+      )}
+
+      {/* Edit Modal */}
+      {isEditModalOpen && currentEditingQuestion && (
+        <ModalUpdateBankSoal
+          isModalOpen={isEditModalOpen}
+          setIsModalOpen={setIsEditModalOpen}
+          questionData={currentEditingQuestion}
+          onSuccess={() => {
+            // Reload page to reflect changes
+            window.location.reload();
+          }}
+        />
       )}
     </div>
   );

@@ -24,17 +24,19 @@ type GenerateQuestionsResponse struct {
 
 // AIChatMessage represents a single message in the chat
 type AIChatMessage struct {
-	Role    string `json:"role"`    // "user" or "assistant"
-	Content string `json:"content"` // message content
+	Role        string   `json:"role"`    // "user" or "assistant"
+	Content     string   `json:"content"` // message content
+	ArtifactIDs []string `json:"artifact_ids,omitempty"`
 }
 
 // AIChatRequest represents a chat request to the AI
 type AIChatRequest struct {
-	SessionID    string          `json:"session_id"`
-	Topic        string          `json:"topic"`
-	Messages     []AIChatMessage `json:"messages" validate:"required"`
-	QuestionType string          `json:"question_type"`
-	Mode         string          `json:"mode"`
+	SessionID      string          `json:"session_id"`
+	Topic          string          `json:"topic"`
+	Messages       []AIChatMessage `json:"messages" validate:"required"`
+	QuestionType   string          `json:"question_type"`
+	QuestionFormat string          `json:"question_format"`
+	Mode           string          `json:"mode"`
 }
 
 type UpdateChatLogRequest struct {
@@ -48,11 +50,13 @@ type SaveAIExampleRequest struct {
 
 // AIChatResponse represents the AI's chat response
 type AIChatResponse struct {
-	SessionID    string              `json:"session_id"`
-	Message      string              `json:"message"`
-	Questions    []GeneratedQuestion `json:"questions,omitempty"`
-	IsGenerating bool                `json:"is_generating"`
-	Suggestion   string              `json:"suggestion,omitempty"`
+	SessionID     string              `json:"session_id"`
+	Message       string              `json:"message"`
+	Questions     []GeneratedQuestion `json:"questions,omitempty"`
+	ArtifactIDs   []string            `json:"artifact_ids,omitempty"`
+	IsGenerating  bool                `json:"is_generating"`
+	Suggestion    string              `json:"suggestion,omitempty"`
+	GeneratedFile string              `json:"generated_file,omitempty"`
 }
 
 // SaveChatLogRequest represents request to save chat for background processing

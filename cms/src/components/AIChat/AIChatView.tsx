@@ -28,7 +28,13 @@ import {
   EditOutlined,
   BookOutlined,
   HistoryOutlined,
+  UploadOutlined,
+  RedoOutlined,
+  LoadingOutlined,
+  InboxOutlined,
 } from "@ant-design/icons";
+import ModalEditQuestion, { EditQuestionData } from "../Ui/ModalEditQuestion";
+
 import {
   apiChat,
   apiSaveToBankSoal,
@@ -39,10 +45,16 @@ import {
   apiUpdateSession,
   apiSaveExample,
   apiGetSessionArtifacts,
+  apiUploadContext,
+  apiRefineArtifact,
+  apiUpdateArtifact,
+  apiDeleteArtifact,
+  apiApproveArtifact,
 } from "../../api/ai";
 import { apiCreateQuestion } from "../../api/question";
 import {
   AIChatMessage,
+  AIChatRequest,
   GeneratedQuestion,
   CreateBankSoalRequest,
   ChatLog,
@@ -64,6 +76,7 @@ interface Message {
   content: string;
   timestamp: Date;
   questions?: GeneratedQuestion[];
+  artifact_ids?: string[];
 }
 
 const QUESTION_TYPES = [
@@ -121,6 +134,27 @@ const AIChatView = ({
   // Artifacts State
   const [artifacts, setArtifacts] = useState<ChatArtifact[]>([]);
   const [isArtifactDrawerVisible, setIsArtifactDrawerVisible] = useState(false);
+
+  // File Context State
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const [fileContext, setFileContext] = useState<{
+    text: string;
+    name: string;
+  } | null>(null);
+
+  // Refine State
+  const [isRefineModalVisible, setIsRefineModalVisible] = useState(false);
+  const [refineArtifactId, setRefineArtifactId] = useState<string | null>(null);
+  const [refineInstruction, setRefineInstruction] = useState("");
+  const [refineLoading, setRefineLoading] = useState(false);
+
+  // Edit Artifact State
+  const [editingArtifactId, setEditingArtifactId] = useState<string | null>(
+    null
+  );
+  const [actionLoading, setActionLoading] = useState<string | null>(null);
+  const [selectedFormat, setSelectedFormat] =
+    useState<string>("multiple_choice");
 
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const activeQuestionType = initialQuestionType || selectedType;
@@ -227,10 +261,35 @@ const AIChatView = ({
     setIsEditModalVisible(true);
   };
 
-  const handleSaveQuestion = () => {
-    if (editingQuestionIndex >= 0 && editingQuestionData) {
+  const handleEditArtifact = (art: ChatArtifact) => {
+    setEditingArtifactId(art.id);
+    // Ensure content matches GeneratedQuestion structure. It usually does.
+    setEditingQuestionData(art.content);
+    setIsEditModalVisible(true);
+  };
+
+  const handleSaveQuestion = async (newData?: any) => {
+    // If newData provided directly from Modal onSave
+    const dataToSave = newData || editingQuestionData;
+
+    if (editingArtifactId && dataToSave) {
+      const updated = await apiUpdateArtifact(editingArtifactId, dataToSave);
+      if (updated) {
+        message.success("Artifact Updated");
+        if (sessionId) {
+          const arts = await apiGetSessionArtifacts(sessionId);
+          if (arts) setArtifacts(arts);
+        }
+        setIsEditModalVisible(false);
+        setEditingArtifactId(null);
+        setEditingQuestionData(null);
+      }
+      return;
+    }
+
+    if (editingQuestionIndex >= 0 && dataToSave) {
       const newQuestions = [...pendingQuestions];
-      newQuestions[editingQuestionIndex] = editingQuestionData;
+      newQuestions[editingQuestionIndex] = dataToSave;
       setPendingQuestions(newQuestions);
       setIsEditModalVisible(false);
       setEditingQuestionIndex(-1);
@@ -245,13 +304,91 @@ const AIChatView = ({
   };
 
   const handleSaveExample = async () => {
-    if (exampleContent && exampleTopic) {
-      const success = await apiSaveExample(exampleTopic, exampleContent);
-      if (success) {
-        message.success("Berhasil disimpan ke dataset!");
-        setIsSaveExampleModalVisible(false);
+    if (!exampleTopic || !exampleContent) return;
+    const ok = await apiSaveExample(exampleTopic, exampleContent);
+    if (ok) {
+      message.success("Prompt saved to dataset");
+      setIsSaveExampleModalVisible(false);
+      setExampleTopic("");
+      setExampleContent("");
+    }
+  };
+
+  const handleOpenRefine = (id: string) => {
+    setRefineArtifactId(id);
+    setRefineInstruction("");
+    setIsRefineModalVisible(true);
+  };
+
+  const handleRefineSubmit = async () => {
+    if (!refineArtifactId || !refineInstruction) return;
+    setRefineLoading(true);
+    const updated = await apiRefineArtifact(
+      refineArtifactId,
+      refineInstruction
+    );
+    setRefineLoading(false);
+    if (updated) {
+      message.success("Artifact Refined");
+      setIsRefineModalVisible(false);
+      // Refresh artifacts
+      if (sessionId) {
+        const arts = await apiGetSessionArtifacts(sessionId);
+        if (arts) setArtifacts(arts);
       }
     }
+  };
+
+  const handleDeleteArtifact = async (id: string) => {
+    Modal.confirm({
+      title: "Delete Artifact",
+      content: "Are you sure you want to delete this generated item?",
+      onOk: async () => {
+        const success = await apiDeleteArtifact(id);
+        if (success) {
+          message.success("Deleted");
+          if (sessionId) {
+            const arts = await apiGetSessionArtifacts(sessionId);
+            if (arts) setArtifacts(arts);
+          }
+        }
+      },
+    });
+  };
+
+  const handleAddToBankSoalSingle = async (art: ChatArtifact) => {
+    // If already approved, ask specific confirmation or just allow re-save (create new?)
+    // User wants "Addedtable". So maybe just add.
+    if (!sessionId || actionLoading) return;
+
+    setActionLoading(art.id);
+    // Construct Bank Soal Request
+    const bankData: CreateBankSoalRequest = {
+      type: activeQuestionType, // Fallback to activeQuestionType
+      // Note: "source_type" field might not exist in GeneratedQuestion interface yet in frontend, check ai.type.ts if needed.
+      // GeneratedQuestion in ai.type.ts: text, options, correct_answer, explanation. No type.
+      // We will fallback to activeQuestionType or user select?
+      // Risk: If I generated 'kpu' but switch select to 'ppu', it saves as 'ppu'.
+      // Acceptable for now.
+      text: art.content.text,
+      options: art.content.options,
+      correct_answer: art.content.correct_answer,
+      explanation: art.content.explanation,
+      difficulty: "medium",
+      topic: topic,
+      is_ai_generated: true,
+      is_options: !!(art.content.options && art.content.options.length > 0),
+    };
+
+    const res = await apiSaveToBankSoal({ questions: [bankData] });
+    if (res) {
+      await apiApproveArtifact(art.id);
+      message.success("Saved to Bank Soal");
+      // Refresh
+      const arts = await apiGetSessionArtifacts(sessionId);
+      if (arts) setArtifacts(arts);
+    }
+    setActionLoading(null);
   };
 
   const getQuestionTypeName = (code: string) => {
@@ -260,16 +397,22 @@ const AIChatView = ({
   };
 
   const handleSend = async () => {
-    if (!inputValue.trim() || loading) return;
+    if ((!inputValue.trim() && !fileContext) || loading) return;
+
+    let finalContent = inputValue;
+    if (fileContext) {
+      finalContent = `[Context from Attached File: ${fileContext.name}]\n${fileContext.text}\n\n${inputValue}`;
+    }
 
     const userMessage: Message = {
       role: "user",
-      content: inputValue,
+      content: finalContent,
       timestamp: new Date(),
     };
 
     setMessages((prev) => [...prev, userMessage]);
     setInputValue("");
+    setFileContext(null); // Clear after send
     setLoading(true);
 
     try {
@@ -282,15 +425,18 @@ const AIChatView = ({
         role: m.role,
         content: m.content,
       }));
-      chatMessages.push({ role: "user", content: inputValue });
+      chatMessages.push({ role: "user", content: finalContent });
 
-      const response = await apiChat({
+      const reqData: AIChatRequest = {
         session_id: sessionId,
         topic: topic,
         messages: chatMessages,
         question_type: activeQuestionType,
+        question_format: selectedFormat,
         mode: isGenerateRequest ? "generate" : "chat",
-      });
+      };
+
+      const response = await apiChat(reqData);
 
       if (response) {
         setMessages((prev) => [
@@ -299,6 +445,7 @@ const AIChatView = ({
             role: "assistant",
             content: response.message,
             questions: response.questions,
+            artifact_ids: response.artifact_ids,
             timestamp: new Date(),
           },
         ]);
@@ -430,31 +577,36 @@ const AIChatView = ({
         gap: 24,
         height: "100%",
         flexDirection: "row",
+        fontFamily: "'Inter', sans-serif", // Ensure font if available, or inherit
       }}
     >
       {/* History Sidebar */}
       <div
         style={{
-          width: 260,
+          width: 280,
           backgroundColor: "#fff",
           borderRadius: 24,
-          padding: 16,
+          padding: "20px 16px",
           display: "flex",
           flexDirection: "column",
           border: "1px solid #f0f0f0",
+          boxShadow: "0 4px 20px rgba(0,0,0,0.02)",
         }}
       >
         <Button
-          type="dashed"
+          type="primary"
           block
           icon={<PlusOutlined />}
           onClick={handleNewChat}
           style={{
-            marginBottom: 16,
-            height: 40,
-            borderRadius: 12,
-            borderColor: "#8C59F1",
-            color: "#8C59F1",
+            marginBottom: 24,
+            height: 48,
+            borderRadius: 16,
+            background: "linear-gradient(135deg, #8C59F1 0%, #9e73f8 100%)",
+            border: "none",
+            boxShadow: "0 4px 14px rgba(140, 89, 241, 0.3)",
+            fontWeight: 600,
+            fontSize: 15,
           }}
         >
           New Chat
@@ -462,45 +614,83 @@ const AIChatView = ({
 
         <Text
           type="secondary"
-          style={{ fontSize: 12, marginBottom: 8, paddingLeft: 4 }}
+          style={{
+            fontSize: 11,
+            fontWeight: 700,
+            textTransform: "uppercase",
+            letterSpacing: "0.5px",
+            color: "#999",
+            marginBottom: 12,
+            paddingLeft: 8,
+          }}
         >
           History
         </Text>
 
-        <div style={{ flex: 1, overflowY: "auto" }}>
+        <div style={{ flex: 1, overflowY: "auto", paddingRight: 4 }}>
           {historyLoading ? (
-            <Spin style={{ display: "block", margin: "20px auto" }} />
+            <div style={{ padding: 20, textAlign: "center" }}>
+              <Spin
+                indicator={
+                  <LoadingOutlined
+                    style={{ fontSize: 24, color: "#8C59F1" }}
+                    spin
+                  />
+                }
+              />
+            </div>
           ) : (
-            <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+            <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
               {history.map((item) => (
                 <div
                   key={item.chat_log_id}
                   onClick={() => handleLoadSession(item.chat_log_id)}
                   style={{
-                    padding: "10px 12px",
-                    borderRadius: 12,
+                    padding: "12px 14px",
+                    borderRadius: 14,
                     backgroundColor:
                       sessionId === item.chat_log_id
-                        ? "#f9f0ff"
+                        ? "#f5ebff"
                         : "transparent",
                     cursor: "pointer",
                     display: "flex",
                     alignItems: "center",
-                    gap: 10,
-                    transition: "all 0.2s",
+                    gap: 12,
+                    transition: "all 0.2s cubic-bezier(0.4, 0, 0.2, 1)",
                     border:
                       sessionId === item.chat_log_id
-                        ? "1px solid #efdbff"
+                        ? "1px solid #d3adf7"
                         : "1px solid transparent",
+                    position: "relative",
+                    overflow: "hidden",
                   }}
                   className="history-item"
+                  onMouseEnter={(e) => {
+                    if (sessionId !== item.chat_log_id)
+                      e.currentTarget.style.backgroundColor = "#fafafa";
+                  }}
+                  onMouseLeave={(e) => {
+                    if (sessionId !== item.chat_log_id)
+                      e.currentTarget.style.backgroundColor = "transparent";
+                  }}
                 >
-                  <MessageOutlined
+                  <div
                     style={{
+                      minWidth: 32,
+                      height: 32,
+                      borderRadius: 10,
+                      backgroundColor:
+                        sessionId === item.chat_log_id ? "#fff" : "#f5f5f5",
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "center",
                       color:
-                        sessionId === item.chat_log_id ? "#8C59F1" : "#999",
+                        sessionId === item.chat_log_id ? "#8C59F1" : "#ccc",
                     }}
-                  />
+                  >
+                    <MessageOutlined style={{ fontSize: 16 }} />
+                  </div>
+
                   <div style={{ flex: 1, overflow: "hidden" }}>
                     {editingSessionId === item.chat_log_id ? (
                       <Input
@@ -511,15 +701,23 @@ const AIChatView = ({
                         autoFocus
                         onClick={(e) => e.stopPropagation()}
                         size="small"
-                        style={{ height: 24, fontSize: 13 }}
+                        style={{ height: 26, fontSize: 13, borderRadius: 6 }}
                       />
                     ) : (
-                      <>
+                      <div
+                        style={{
+                          display: "flex",
+                          flexDirection: "column",
+                          gap: 2,
+                        }}
+                      >
                         <div
                           style={{
-                            fontSize: 13,
-                            fontWeight: 500,
-                            color: "#333",
+                            fontSize: 14,
+                            fontWeight:
+                              sessionId === item.chat_log_id ? 600 : 500,
+                            color:
+                              sessionId === item.chat_log_id ? "#222" : "#444",
                             whiteSpace: "nowrap",
                             overflow: "hidden",
                             textOverflow: "ellipsis",
@@ -527,44 +725,83 @@ const AIChatView = ({
                         >
                           {item.topic || "Untitled Chat"}
                         </div>
-                        <div style={{ fontSize: 10, color: "#999" }}>
-                          {new Date(item.updated_at).toLocaleDateString()}
+                        <div
+                          style={{
+                            fontSize: 11,
+                            color:
+                              sessionId === item.chat_log_id
+                                ? "#8C59F1"
+                                : "#aaa",
+                          }}
+                        >
+                          {new Date(item.updated_at).toLocaleDateString(
+                            undefined,
+                            {
+                              month: "short",
+                              day: "numeric",
+                              hour: "2-digit",
+                              minute: "2-digit",
+                            }
+                          )}
                         </div>
-                      </>
+                      </div>
                     )}
                   </div>
-                  {editingSessionId !== item.chat_log_id && (
-                    <div
-                      className="actions"
-                      style={{ display: "flex", gap: 4 }}
-                    >
-                      <EditOutlined
-                        style={{ fontSize: 12, color: "#1890ff", opacity: 0.7 }}
-                        onClick={(e) =>
-                          handleEditSession(e, item.chat_log_id, item.topic)
-                        }
-                      />
-                      <DeleteOutlined
-                        className="delete-icon"
-                        style={{ fontSize: 12, color: "#ff4d4f", opacity: 0.5 }}
-                        onClick={(e) =>
-                          handleDeleteSession(e, item.chat_log_id)
-                        }
-                      />
-                    </div>
-                  )}
+
+                  {/* Subtle Actions showing only on active or special hover class (css dependent, or static for now) */}
+                  {editingSessionId !== item.chat_log_id &&
+                    sessionId === item.chat_log_id && (
+                      <div
+                        className="actions"
+                        style={{ display: "flex", gap: 6 }}
+                      >
+                        <Button
+                          type="text"
+                          size="small"
+                          icon={<EditOutlined style={{ fontSize: 14 }} />}
+                          onClick={(e) =>
+                            handleEditSession(e, item.chat_log_id, item.topic)
+                          }
+                          style={{
+                            color: "#1890ff",
+                            minWidth: 24,
+                            height: 24,
+                            padding: 0,
+                          }}
+                        />
+                        <Button
+                          type="text"
+                          size="small"
+                          icon={<DeleteOutlined style={{ fontSize: 14 }} />}
+                          onClick={(e) =>
+                            handleDeleteSession(e, item.chat_log_id)
+                          }
+                          style={{
+                            color: "#ff4d4f",
+                            minWidth: 24,
+                            height: 24,
+                            padding: 0,
+                          }}
+                        />
+                      </div>
+                    )}
                 </div>
               ))}
               {history.length === 0 && (
                 <div
                   style={{
                     textAlign: "center",
-                    color: "#ccc",
-                    marginTop: 20,
-                    fontSize: 13,
+                    color: "#999",
+                    marginTop: 40,
+                    fontSize: 14,
+                    display: "flex",
+                    flexDirection: "column",
+                    alignItems: "center",
+                    gap: 8,
                   }}
                 >
-                  Belum ada riwayat
+                  <InboxOutlined style={{ fontSize: 32, opacity: 0.3 }} />
+                  <span>Belum ada riwayat chat</span>
                 </div>
               )}
             </div>
@@ -682,7 +919,7 @@ const AIChatView = ({
                 <div style={{ whiteSpace: "pre-wrap", fontSize: 15 }}>
                   {msg.content}
                 </div>
-                {msg.questions && msg.questions.length > 0 && (
+                {msg.artifact_ids && msg.artifact_ids.length > 0 ? (
                   <div
                     style={{
                       marginTop: 12,
@@ -691,44 +928,114 @@ const AIChatView = ({
                       gap: 8,
                     }}
                   >
-                    {msg.questions.map((q, qIdx) => (
-                      <Card
-                        key={qIdx}
-                        size="small"
-                        style={{
-                          border: "1px solid #eee",
-                          background: "#fafafa",
-                        }}
-                        hoverable
-                      >
-                        <div
+                    <div
+                      style={{
+                        fontSize: 12,
+                        color: "#8C59F1",
+                        display: "flex",
+                        alignItems: "center",
+                        gap: 4,
+                        fontWeight: 500,
+                      }}
+                    >
+                      <HistoryOutlined /> Generated Questions (Checkpoint)
+                    </div>
+                    {artifacts
+                      .filter((art) => msg.artifact_ids?.includes(art.id))
+                      .map((art) => (
+                        <Card
+                          key={art.id}
+                          size="small"
                           style={{
-                            display: "flex",
-                            justifyContent: "space-between",
-                            alignItems: "start",
+                            border: "1px solid #efdbff",
+                            background: "#fcf7ff",
                           }}
-                        >
-                          <Text
-                            ellipsis={{ tooltip: q.text }}
-                            style={{ maxWidth: "90%" }}
-                          >
-                            <span
-                              style={{ fontWeight: "bold", marginRight: 4 }}
-                            >
-                              #{qIdx + 1}
+                          title={
+                            <span style={{ fontSize: 11, color: "#8C59F1" }}>
+                              {art.content.type
+                                ? art.content.type
+                                    .replace("_", " ")
+                                    .toUpperCase()
+                                : "QUESTION"}
                             </span>
-                            {q.text}
-                          </Text>
-                          {/* View/Edit Trigger could go here */}
-                        </div>
-                        <div
-                          style={{ marginTop: 4, fontSize: 11, color: "#999" }}
+                          }
+                          extra={
+                            <Button
+                              type="text"
+                              size="small"
+                              icon={<EditOutlined />}
+                              onClick={() => handleEditArtifact(art)}
+                            />
+                          }
                         >
-                          Type: {q.type} | Options: {q.options.length}
-                        </div>
-                      </Card>
-                    ))}
+                          <div
+                            style={{
+                              fontWeight: 500,
+                              fontSize: 13,
+                              marginBottom: 4,
+                            }}
+                          >
+                            {art.content.text}
+                          </div>
+                          <div style={{ fontSize: 11, color: "#666" }}>
+                            Key: <b>{art.content.correct_answer}</b>
+                          </div>
+                        </Card>
+                      ))}
                   </div>
+                ) : (
+                  msg.questions &&
+                  msg.questions.length > 0 && (
+                    <div
+                      style={{
+                        marginTop: 12,
+                        display: "flex",
+                        flexDirection: "column",
+                        gap: 8,
+                      }}
+                    >
+                      {msg.questions.map((q, qIdx) => (
+                        <Card
+                          key={qIdx}
+                          size="small"
+                          style={{
+                            border: "1px solid #eee",
+                            background: "#fafafa",
+                          }}
+                          hoverable
+                        >
+                          <div
+                            style={{
+                              display: "flex",
+                              justifyContent: "space-between",
+                              alignItems: "start",
+                            }}
+                          >
+                            <Text
+                              ellipsis={{ tooltip: q.text }}
+                              style={{ maxWidth: "90%" }}
+                            >
+                              <span
+                                style={{ fontWeight: "bold", marginRight: 4 }}
+                              >
+                                #{qIdx + 1}
+                              </span>
+                              {q.text}
+                            </Text>
+                          </div>
+                          <div
+                            style={{
+                              marginTop: 4,
+                              fontSize: 11,
+                              color: "#999",
+                            }}
+                          >
+                            Type: {q.type} | Options: {q.options.length}
+                          </div>
+                        </Card>
+                      ))}
+                    </div>
+                  )
                 )}
 
                 {/* Message Metadata */}
@@ -807,14 +1114,15 @@ const AIChatView = ({
             border: "1px solid #f0f0f0",
           }}
         >
-          {/* Quick Actions (Pills) */}
+          {/* Top Bar: Controls */}
           <div
             style={{
-              marginBottom: 16,
               display: "flex",
+              justifyContent: "space-between",
+              alignItems: "center",
+              marginBottom: 12,
+              flexWrap: "wrap",
               gap: 8,
-              overflowX: "auto",
-              paddingBottom: 4,
             }}
           >
             <Tag
@@ -830,46 +1138,105 @@ const AIChatView = ({
             >
               {savingLog ? "Menyimpan..." : "Proses Background"}
             </Tag>
-            <div
-              style={{ width: 1, backgroundColor: "#eee", margin: "0 4px" }}
-            />
 
-            {[
-              { label: "5 Mudah", count: 5, diff: "easy" },
-              { label: "5 Sedang", count: 5, diff: "medium" },
-              { label: "3 Sulit", count: 3, diff: "hard" },
-            ].map((action, idx) => (
-              <Tag
-                key={idx}
-                color="purple"
-                style={{
-                  borderRadius: 16,
-                  padding: "4px 12px",
-                  cursor: "pointer",
-                  backgroundColor: "#f9f0ff",
-                  color: "#8C59F1",
-                  border: "1px solid #efdbff",
-                }}
-                onClick={() => handleQuickGenerate(action.count, action.diff)}
-              >
-                {action.label}
-              </Tag>
-            ))}
+            <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
+              <Select
+                value={selectedFormat}
+                onChange={(val) => setSelectedFormat(val)}
+                style={{ width: 140 }}
+                size="small"
+                options={[
+                  { label: "PG Tunggal", value: "multiple_choice" },
+                  { label: "PG Majemuk", value: "multiple_answer" },
+                  { label: "Isian Singkat", value: "short_answer" },
+                  { label: "Essay / Uraian", value: "essay" },
+                ]}
+              />
+              <div style={{ display: "flex", gap: 4 }}>
+                {[
+                  { label: "5 Mudah", count: 5, diff: "easy" },
+                  { label: "5 Sedang", count: 5, diff: "medium" },
+                  { label: "3 Sulit", count: 3, diff: "hard" },
+                ].map((action, idx) => (
+                  <Tag
+                    key={idx}
+                    color="purple"
+                    style={{
+                      borderRadius: 16,
+                      padding: "4px 12px",
+                      cursor: "pointer",
+                      backgroundColor: "#f9f0ff",
+                      color: "#8C59F1",
+                      border: "1px solid #efdbff",
+                    }}
+                    onClick={() =>
+                      handleQuickGenerate(action.count, action.diff)
+                    }
+                  >
+                    {action.label}
+                  </Tag>
+                ))}
+              </div>
+            </div>
           </div>
 
-          <div style={{ display: "flex", gap: 12, alignItems: "flex-end" }}>
+          {/* File Context Info */}
+          {fileContext && (
+            <div style={{ margin: "0 0 8px 4px" }}>
+              <Tag closable onClose={() => setFileContext(null)} color="blue">
+                Attached: {fileContext.name}
+              </Tag>
+            </div>
+          )}
+
+          {/* Main Input Area */}
+          <div
+            style={{
+              display: "flex",
+              gap: 12,
+              alignItems: "flex-end",
+              backgroundColor: "#f8f9fa",
+              padding: "8px 12px",
+              borderRadius: 16,
+              border: "1px solid #eee",
+            }}
+          >
+            <input
+              type="file"
+              ref={fileInputRef}
+              onChange={async (e) => {
+                const file = e.target.files?.[0];
+                if (file) {
+                  const res = await apiUploadContext(file);
+                  if (res) {
+                    setFileContext({ text: res.text, name: res.filename });
+                    message.success("Context loaded");
+                  }
+                }
+              }}
+              style={{ display: "none" }}
+            />
+            <Button
+              icon={<UploadOutlined />}
+              type="text"
+              shape="circle"
+              onClick={() => fileInputRef.current?.click()}
+              style={{ color: "#666" }}
+            />
+
             <Input.TextArea
               value={inputValue}
               onChange={(e) => setInputValue(e.target.value)}
               placeholder="Ketik pesan atau topik soal..."
-              autoSize={{ minRows: 1, maxRows: 4 }}
+              autoSize={{ minRows: 1, maxRows: 6 }}
               bordered={false}
               style={{
                 flex: 1,
-                padding: "8px 0",
+                padding: "6px 0",
                 resize: "none",
                 fontSize: 15,
                 backgroundColor: "transparent",
+                lineHeight: 1.5,
               }}
               onKeyDown={(e) => {
                 if (e.key === "Enter" && !e.shiftKey) {
@@ -879,36 +1246,40 @@ const AIChatView = ({
               }}
               disabled={loading}
             />
+
             <Button
               type="primary"
               shape="circle"
-              icon={<SendOutlined style={{ marginLeft: 2 }} />}
+              icon={<SendOutlined style={{ marginLeft: 3 }} />}
               size="large"
               onClick={handleSend}
               loading={loading}
               style={{
                 backgroundColor: "#8C59F1",
-                boxShadow: "0 4px 12px rgba(140, 89, 241, 0.4)",
+                boxShadow: "0 4px 12px rgba(140, 89, 241, 0.3)",
                 border: "none",
-                minWidth: 40,
-                height: 40,
+                minWidth: 44,
+                height: 44,
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
               }}
             />
           </div>
 
-          {/* Topic Input (Subtle) */}
+          {/* Topic Input (Subtle Footer) */}
           {topic && (
             <div
               style={{
                 marginTop: 8,
-                borderTop: "1px solid #f5f5f5",
-                paddingTop: 8,
+                paddingTop: 4,
                 display: "flex",
                 alignItems: "center",
                 gap: 8,
+                paddingLeft: 4,
               }}
             >
-              <Text type="secondary" style={{ fontSize: 12 }}>
+              <Text type="secondary" style={{ fontSize: 11 }}>
                 Topik Aktif:
               </Text>
               <Input
@@ -921,270 +1292,425 @@ const AIChatView = ({
                   fontSize: 12,
                   color: "#8C59F1",
                   fontWeight: 600,
+                  padding: 0,
                 }}
               />
             </div>
           )}
         </div>
-      </div>
 
-      {/* Generated Questions Sidebar */}
-      {pendingQuestions.length > 0 && (
-        <div
-          style={{
-            width: 340,
-            paddingLeft: 20,
-            borderLeft: "1px solid #f0f0f0",
-            display: "flex",
-            flexDirection: "column",
-          }}
-        >
+        {/* Generated Questions Sidebar */}
+        {pendingQuestions.length > 0 && (
           <div
             style={{
-              padding: "16px",
-              backgroundColor: "#f6ffed",
-              borderRadius: 16,
-              marginBottom: 16,
-              border: "1px solid #b7eb8f",
+              width: 340,
+              paddingLeft: 20,
+              borderLeft: "1px solid #f0f0f0",
+              display: "flex",
+              flexDirection: "column",
             }}
           >
             <div
               style={{
-                display: "flex",
-                justifyContent: "space-between",
-                alignItems: "center",
-                marginBottom: 8,
+                padding: "16px",
+                backgroundColor: "#f6ffed",
+                borderRadius: 16,
+                marginBottom: 16,
+                border: "1px solid #b7eb8f",
               }}
             >
-              <Title level={5} style={{ margin: 0, color: "#389e0d" }}>
-                <QuestionCircleOutlined /> Generated ({pendingQuestions.length})
-              </Title>
-              <Tag color="success">{selectedQuestions.size} Dipilih</Tag>
-            </div>
-            <Checkbox
-              checked={saveToBankSoal}
-              onChange={(e) => setSaveToBankSoal(e.target.checked)}
-              style={{ fontSize: 13 }}
-            >
-              Simpan ke Bank Soal <BulbOutlined style={{ color: "#fa8c16" }} />
-            </Checkbox>
-          </div>
-
-          <div style={{ flex: 1, overflowY: "auto", paddingRight: 4 }}>
-            {pendingQuestions.map((q, i) => (
               <div
-                key={i}
-                onClick={() => toggleQuestionSelection(i)}
                 style={{
-                  padding: 12,
-                  marginBottom: 12,
-                  borderRadius: 12,
+                  display: "flex",
+                  justifyContent: "space-between",
+                  alignItems: "center",
+                  marginBottom: 8,
+                }}
+              >
+                <Title level={5} style={{ margin: 0, color: "#389e0d" }}>
+                  <QuestionCircleOutlined /> Generated (
+                  {pendingQuestions.length})
+                </Title>
+                <Tag color="success">{selectedQuestions.size} Dipilih</Tag>
+              </div>
+              <Checkbox
+                checked={saveToBankSoal}
+                onChange={(e) => setSaveToBankSoal(e.target.checked)}
+                style={{ fontSize: 13 }}
+              >
+                Simpan ke Bank Soal{" "}
+                <BulbOutlined style={{ color: "#fa8c16" }} />
+              </Checkbox>
+            </div>
+
+            <div style={{ flex: 1, overflowY: "auto", paddingRight: 4 }}>
+              {pendingQuestions.map((q, i) => (
+                <div
+                  key={i}
+                  onClick={() => toggleQuestionSelection(i)}
+                  style={{
+                    padding: 12,
+                    marginBottom: 12,
+                    borderRadius: 12,
+                    backgroundColor: "white",
+                    border: selectedQuestions.has(i)
+                      ? "2px solid #52c41a"
+                      : "1px solid #f0f0f0",
+                    boxShadow: "0 2px 6px rgba(0,0,0,0.03)",
+                    cursor: "pointer",
+                    transition: "all 0.2s",
+                  }}
+                >
+                  <div
+                    style={{
+                      display: "flex",
+                      justifyContent: "space-between",
+                      marginBottom: 6,
+                    }}
+                  >
+                    <Tag
+                      color={selectedQuestions.has(i) ? "green" : "default"}
+                      style={{ margin: 0 }}
+                    >
+                      #{i + 1}
+                    </Tag>
+                    <Button
+                      type="text"
+                      size="small"
+                      icon={<EditOutlined />}
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        handleEditQuestion(i);
+                      }}
+                      style={{ height: 20, fontSize: 12, color: "#1890ff" }}
+                    />
+                  </div>
+                  <div
+                    style={{ fontSize: 13, lineHeight: "1.5", color: "#444" }}
+                  >
+                    {q.text.substring(0, 120)}
+                    {q.text.length > 120 ? "..." : ""}
+                  </div>
+                </div>
+              ))}
+            </div>
+
+            <Button
+              type="primary"
+              onClick={handleSaveQuestions}
+              loading={saving}
+              disabled={selectedQuestions.size === 0}
+              size="large"
+              icon={<SaveOutlined />}
+              block
+              style={{
+                marginTop: 16,
+                borderRadius: 12,
+                height: 44,
+                backgroundColor: "#52c41a",
+                borderColor: "#52c41a",
+                boxShadow: "0 4px 12px rgba(82, 196, 26, 0.3)",
+              }}
+            >
+              Simpan Soal
+            </Button>
+          </div>
+        )}
+        <ModalEditQuestion
+          isModalOpen={isEditModalVisible}
+          setIsModalOpen={setIsEditModalVisible}
+          initialData={editingQuestionData}
+          onSave={handleSaveQuestion}
+          title={
+            editingArtifactId
+              ? "Edit Generated Question"
+              : "Edit Pending Question"
+          }
+        />
+
+        <Modal
+          title="Simpan ke Dataset AI"
+          open={isSaveExampleModalVisible}
+          onOk={handleSaveExample}
+          onCancel={() => setIsSaveExampleModalVisible(false)}
+        >
+          <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
+            <Typography.Text type="secondary">
+              Simpan prompt ini sebagai referensi untuk generate soal di masa
+              depan.
+            </Typography.Text>
+            <div>
+              <Typography.Text strong>Topik:</Typography.Text>
+              <Input
+                value={exampleTopic}
+                onChange={(e) => setExampleTopic(e.target.value)}
+                placeholder="Topik Soal (misal: Aljabar)"
+              />
+            </div>
+            <div>
+              <Typography.Text strong>Konten Prompt:</Typography.Text>
+              <Input.TextArea
+                rows={4}
+                value={exampleContent}
+                onChange={(e) => setExampleContent(e.target.value)}
+              />
+            </div>
+          </div>
+        </Modal>
+
+        <Modal
+          title="Refine Generated Question"
+          open={isRefineModalVisible}
+          onOk={handleRefineSubmit}
+          confirmLoading={refineLoading}
+          onCancel={() => setIsRefineModalVisible(false)}
+        >
+          <Typography.Paragraph type="secondary">
+            Provide instructions to AI on how to improve this question.
+          </Typography.Paragraph>
+          <Input.TextArea
+            rows={4}
+            placeholder="e.g. Make it closer to UTBK 2024 style, or fix the calculation error..."
+            value={refineInstruction}
+            onChange={(e) => setRefineInstruction(e.target.value)}
+          />
+        </Modal>
+
+        <Drawer
+          title={
+            <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+              <HistoryOutlined style={{ color: "#8C59F1", fontSize: 18 }} />
+              <div style={{ display: "flex", flexDirection: "column" }}>
+                <span style={{ fontWeight: 600, fontSize: 16 }}>
+                  Riwayat Generasi
+                </span>
+                <span style={{ fontWeight: 400, fontSize: 11, color: "#999" }}>
+                  Tracking Generated Questions
+                </span>
+              </div>
+            </div>
+          }
+          placement="right"
+          onClose={() => setIsArtifactDrawerVisible(false)}
+          open={isArtifactDrawerVisible}
+          width={420}
+          headerStyle={{
+            borderBottom: "1px solid #f0f0f0",
+            padding: "16px 24px",
+          }}
+          bodyStyle={{ backgroundColor: "#fafafa", padding: "20px" }}
+        >
+          <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
+            {artifacts.map((art) => (
+              <div
+                key={art.id}
+                style={{
                   backgroundColor: "white",
-                  border: selectedQuestions.has(i)
-                    ? "2px solid #52c41a"
-                    : "1px solid #f0f0f0",
-                  boxShadow: "0 2px 6px rgba(0,0,0,0.03)",
-                  cursor: "pointer",
+                  borderRadius: 16,
+                  padding: "16px",
+                  border: "1px solid #eee",
+                  boxShadow: "0 2px 12px rgba(0,0,0,0.03)",
+                  position: "relative",
+                  overflow: "hidden",
                   transition: "all 0.2s",
                 }}
               >
+                {/* Status Strip */}
+                <div
+                  style={{
+                    position: "absolute",
+                    left: 0,
+                    top: 0,
+                    bottom: 0,
+                    width: 4,
+                    backgroundColor:
+                      art.status === "approved" ? "#52c41a" : "#8C59F1",
+                  }}
+                />
+
+                {/* Header */}
                 <div
                   style={{
                     display: "flex",
                     justifyContent: "space-between",
-                    marginBottom: 6,
+                    marginBottom: 10,
+                    paddingLeft: 10,
+                    alignItems: "center",
                   }}
                 >
-                  <Tag
-                    color={selectedQuestions.has(i) ? "green" : "default"}
-                    style={{ margin: 0 }}
+                  <span
+                    style={{ fontSize: 11, fontWeight: 600, color: "#999" }}
                   >
-                    #{i + 1}
+                    {new Date(art.created_at).toLocaleString()}
+                  </span>
+                  <Tag
+                    color={art.status === "approved" ? "success" : "purple"}
+                    style={{ marginRight: 0, fontSize: 10, border: "none" }}
+                  >
+                    {art.status.toUpperCase()}
                   </Tag>
-                  <Button
-                    type="text"
-                    size="small"
-                    icon={<EditOutlined />}
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      handleEditQuestion(i);
-                    }}
-                    style={{ height: 20, fontSize: 12, color: "#1890ff" }}
-                  />
                 </div>
-                <div style={{ fontSize: 13, lineHeight: "1.5", color: "#444" }}>
-                  {q.text.substring(0, 120)}
-                  {q.text.length > 120 ? "..." : ""}
+
+                {/* Content */}
+                <div style={{ paddingLeft: 10, marginBottom: 12 }}>
+                  <Typography.Paragraph
+                    ellipsis={{ rows: 3, expandable: true }}
+                    style={{
+                      margin: 0,
+                      fontSize: 13,
+                      color: "#333",
+                      lineHeight: "1.6",
+                    }}
+                  >
+                    {art.content.text}
+                  </Typography.Paragraph>
+                  {art.metadata?.source && (
+                    <div
+                      style={{
+                        marginTop: 8,
+                        fontSize: 11,
+                        color: "#aaa",
+                        display: "flex",
+                        alignItems: "center",
+                        gap: 4,
+                      }}
+                    >
+                      <BookOutlined /> Ref: {art.metadata.source}
+                    </div>
+                  )}
+                </div>
+
+                {/* Footer Actions */}
+                <div
+                  style={{
+                    display: "flex",
+                    gap: 8,
+                    paddingLeft: 10,
+                    marginTop: 12,
+                    borderTop: "1px solid #f7f7f7",
+                    paddingTop: 10,
+                    flexWrap: "wrap",
+                  }}
+                >
+                  <Button
+                    size="small"
+                    type="text"
+                    icon={<EditOutlined />}
+                    onClick={() => handleEditArtifact(art)}
+                    style={{
+                      fontSize: 12,
+                      color: "#666",
+                      backgroundColor: "#f9f9f9",
+                      borderRadius: 6,
+                    }}
+                  >
+                    Edit
+                  </Button>
+                  <Button
+                    size="small"
+                    type="text"
+                    icon={<RedoOutlined />}
+                    onClick={() => handleOpenRefine(art.id)}
+                    style={{
+                      fontSize: 12,
+                      color: "#666",
+                      backgroundColor: "#f9f9f9",
+                      borderRadius: 6,
+                    }}
+                  >
+                    Refine
+                  </Button>
+
+                  <div style={{ flex: 1 }} />
+
+                  {art.status === "approved" ? (
+                    <Button
+                      size="small"
+                      type="text"
+                      icon={<CheckCircleOutlined />}
+                      disabled
+                      style={{
+                        fontSize: 12,
+                        color: "#52c41a",
+                        cursor: "default",
+                        backgroundColor: "rgba(82, 196, 26, 0.1)",
+                        borderRadius: 6,
+                        border: "none",
+                      }}
+                    >
+                      Saved
+                    </Button>
+                  ) : (
+                    <Button
+                      size="small"
+                      icon={
+                        actionLoading === art.id ? (
+                          <LoadingOutlined />
+                        ) : (
+                          <SaveOutlined />
+                        )
+                      }
+                      disabled={actionLoading === art.id}
+                      onClick={() => handleAddToBankSoalSingle(art)}
+                      style={{
+                        fontSize: 12,
+                        color: "#fff",
+                        backgroundColor: "#8C59F1", // Use theme color for action
+                        borderRadius: 6,
+                        border: "none",
+                        boxShadow: "0 2px 4px rgba(140, 89, 241, 0.2)",
+                      }}
+                    >
+                      {actionLoading === art.id ? "Saving..." : "Save"}
+                    </Button>
+                  )}
+
+                  <Button
+                    size="small"
+                    type="text"
+                    danger
+                    icon={<DeleteOutlined />}
+                    onClick={() => handleDeleteArtifact(art.id)}
+                    style={{
+                      fontSize: 12,
+                      backgroundColor: "#fff1f0",
+                      borderRadius: 6,
+                    }}
+                  />
                 </div>
               </div>
             ))}
-          </div>
-
-          <Button
-            type="primary"
-            onClick={handleSaveQuestions}
-            loading={saving}
-            disabled={selectedQuestions.size === 0}
-            size="large"
-            icon={<SaveOutlined />}
-            block
-            style={{
-              marginTop: 16,
-              borderRadius: 12,
-              height: 44,
-              backgroundColor: "#52c41a",
-              borderColor: "#52c41a",
-              boxShadow: "0 4px 12px rgba(82, 196, 26, 0.3)",
-            }}
-          >
-            Simpan Soal
-          </Button>
-        </div>
-      )}
-      <Modal
-        title="Edit Question"
-        open={isEditModalVisible}
-        onOk={handleSaveQuestion}
-        onCancel={() => setIsEditModalVisible(false)}
-        width={600}
-      >
-        {editingQuestionData && (
-          <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
-            <div>
-              <Typography.Text strong>Question Text:</Typography.Text>
-              <Input.TextArea
-                rows={3}
-                value={editingQuestionData.text}
-                onChange={(e) =>
-                  setEditingQuestionData({
-                    ...editingQuestionData,
-                    text: e.target.value,
-                  })
-                }
-              />
-            </div>
-            <div>
-              <Typography.Text strong>Options:</Typography.Text>
-              {editingQuestionData.options.map((opt, idx) => (
-                <Input
-                  key={idx}
-                  addonBefore={String.fromCharCode(65 + idx)}
-                  value={opt}
-                  style={{ marginBottom: 8 }}
-                  onChange={(e) => {
-                    const newOpts = [...editingQuestionData.options];
-                    newOpts[idx] = e.target.value;
-                    setEditingQuestionData({
-                      ...editingQuestionData,
-                      options: newOpts,
-                    });
+            {artifacts.length === 0 && (
+              <div
+                style={{
+                  textAlign: "center",
+                  color: "#999",
+                  marginTop: 60,
+                  display: "flex",
+                  flexDirection: "column",
+                  alignItems: "center",
+                  gap: 12,
+                }}
+              >
+                <div
+                  style={{
+                    width: 60,
+                    height: 60,
+                    borderRadius: "50%",
+                    backgroundColor: "#f5f5f5",
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
                   }}
-                />
-              ))}
-            </div>
-            <div>
-              <Typography.Text strong>Correct Answer:</Typography.Text>
-              <Select
-                value={editingQuestionData.correct_answer}
-                onChange={(val) =>
-                  setEditingQuestionData({
-                    ...editingQuestionData,
-                    correct_answer: val,
-                  })
-                }
-                style={{ width: "100%" }}
-                options={editingQuestionData.options.map((opt, idx) => ({
-                  label: opt || `Option ${String.fromCharCode(65 + idx)}`,
-                  value: opt,
-                }))}
-              />
-            </div>
-            <div>
-              <Typography.Text strong>Explanation:</Typography.Text>
-              <Input.TextArea
-                rows={2}
-                value={editingQuestionData.explanation}
-                onChange={(e) =>
-                  setEditingQuestionData({
-                    ...editingQuestionData,
-                    explanation: e.target.value,
-                  })
-                }
-              />
-            </div>
+                >
+                  <InboxOutlined style={{ fontSize: 24, color: "#ccc" }} />
+                </div>
+                <span>Belum ada item yang digenerate.</span>
+              </div>
+            )}
           </div>
-        )}
-      </Modal>
-
-      <Modal
-        title="Simpan ke Dataset AI"
-        open={isSaveExampleModalVisible}
-        onOk={handleSaveExample}
-        onCancel={() => setIsSaveExampleModalVisible(false)}
-      >
-        <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
-          <Typography.Text type="secondary">
-            Simpan prompt ini sebagai referensi untuk generate soal di masa
-            depan.
-          </Typography.Text>
-          <div>
-            <Typography.Text strong>Topik:</Typography.Text>
-            <Input
-              value={exampleTopic}
-              onChange={(e) => setExampleTopic(e.target.value)}
-              placeholder="Topik Soal (misal: Aljabar)"
-            />
-          </div>
-          <div>
-            <Typography.Text strong>Konten Prompt:</Typography.Text>
-            <Input.TextArea
-              rows={4}
-              value={exampleContent}
-              onChange={(e) => setExampleContent(e.target.value)}
-            />
-          </div>
-        </div>
-      </Modal>
-
-      <Drawer
-        title="Riwayat Generasi Soal"
-        placement="right"
-        onClose={() => setIsArtifactDrawerVisible(false)}
-        open={isArtifactDrawerVisible}
-        width={400}
-      >
-        <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
-          {artifacts.map((art) => (
-            <Card
-              key={art.id}
-              size="small"
-              title={
-                <span style={{ fontSize: 12 }}>
-                  {new Date(art.created_at).toLocaleString()}
-                </span>
-              }
-              extra={<Tag color="blue">{art.status}</Tag>}
-            >
-              <Typography.Paragraph ellipsis={{ rows: 3, expandable: true }}>
-                <b>Q: </b> {art.content.text}
-              </Typography.Paragraph>
-              <Typography.Paragraph type="secondary" style={{ fontSize: 11 }}>
-                <b>Ref:</b> {art.metadata?.source || "AI Generated"}
-                {art.references_data && art.references_data.length > 0 && (
-                  <div style={{ marginTop: 4 }}>
-                    Using {art.references_data.length} Examples
-                  </div>
-                )}
-              </Typography.Paragraph>
-            </Card>
-          ))}
-          {artifacts.length === 0 && (
-            <div style={{ textAlign: "center", color: "#999" }}>
-              Belum ada item yang digenerate.
-            </div>
-          )}
-        </div>
-      </Drawer>
+        </Drawer>
+      </div>
     </div>
   );
 };
