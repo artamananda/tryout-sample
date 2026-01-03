@@ -12,6 +12,7 @@ export interface GeneratedQuestion {
   correct_answer: string;
   explanation: string;
   type?: string; 
+  metadata?: { source: string };
 }
 
 export interface GenerateQuestionsResponse {

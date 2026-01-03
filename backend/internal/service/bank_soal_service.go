@@ -219,3 +219,7 @@ func (service *BankSoalService) Update(ctx context.Context, id string, request m
 
 	return toResponse(updatedBankSoal), nil
 }
+
+func (service *BankSoalService) GetUniqueTypes(ctx context.Context) ([]string, error) {
+	return service.BankSoalRepository.GetUniqueTypes(ctx)
+}

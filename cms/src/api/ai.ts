@@ -245,3 +245,14 @@ export async function apiSaveExample(topic: string, content: string): Promise<bo
     return false;
   }
 }
+
+export async function apiGetBankSoalTypes(): Promise<string[]> {
+  try {
+    const res = await httpRequest.get<BaseResponseProps<string[]>>(
+      process.env.REACT_APP_BASE_URL + "/bank-soal/types"
+    );
+    return res.data.payload || [];
+  } catch (err) {
+    return [];
+  }
+}

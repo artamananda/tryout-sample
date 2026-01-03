@@ -27,25 +27,14 @@ import { QuestionProps } from "../../types/question";
 import ModalUpdateBankSoal from "./ModalUpdateBankSoal";
 import ModalCreateBankSoal from "./ModalCreateBankSoal";
 import { BankSoalResponse } from "../../types/ai.type";
-import { getCustomTypes } from "./questionTypes";
+import {
+  getCustomTypes,
+  KNOWN_TYPE_LABELS,
+  getQuestionTypeName,
+} from "./questionTypes";
 
 const { Title, Text } = Typography;
 const { Search } = Input;
-
-// Known question type labels for display
-const KNOWN_TYPE_LABELS: Record<string, string> = {
-  kpu: "Penalaran Umum (KPU)",
-  ppu: "Pengetahuan dan Pemahaman Umum (PPU)",
-  pbm: "Pemahaman Bacaan dan Menulis (PBM)",
-  pku: "Pengetahuan Kuantitatif (PKU)",
-  ind: "Literasi Bahasa Indonesia (IND)",
-  ing: "Literasi Bahasa Inggris (ING)",
-  mtk: "Penalaran Matematika (MTK)",
-};
-
-const getQuestionTypeName = (code: string) => {
-  return KNOWN_TYPE_LABELS[code] || code.toUpperCase();
-};
 
 const getTypeColor = (type: string) => {
   const colors: Record<string, string> = {

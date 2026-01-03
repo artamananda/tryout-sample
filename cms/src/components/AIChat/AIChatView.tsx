@@ -12,6 +12,7 @@ import {
   Select,
   Modal,
   Drawer,
+  Divider,
   Pagination,
   Empty,
 } from "antd";
@@ -35,6 +36,8 @@ import {
   LoadingOutlined,
   InboxOutlined,
   SearchOutlined,
+  PlusCircleOutlined,
+  MinusCircleOutlined,
 } from "@ant-design/icons";
 import ModalEditQuestion, { EditQuestionData } from "../Ui/ModalEditQuestion";
 
@@ -53,6 +56,7 @@ import {
   apiUpdateArtifact,
   apiDeleteArtifact,
   apiApproveArtifact,
+  apiGetBankSoalTypes,
 } from "../../api/ai";
 import { apiCreateQuestion } from "../../api/question";
 import {
@@ -63,6 +67,12 @@ import {
   ChatLog,
   ChatArtifact,
 } from "../../types/ai.type";
+import {
+  getQuestionTypeName as getTypeName,
+  KNOWN_TYPE_LABELS,
+  formatTypeOptions,
+  saveCustomType,
+} from "../../screens/BankSoal/questionTypes";
 
 const { Text, Title } = Typography;
 const { TextArea } = Input;
@@ -82,15 +92,7 @@ interface Message {
   artifact_ids?: string[];
 }
 
-const QUESTION_TYPES = [
-  { value: "kpu", label: "Penalaran Umum (KPU)" },
-  { value: "ppu", label: "Pengetahuan dan Pemahaman Umum (PPU)" },
-  { value: "pbm", label: "Pemahaman Bacaan dan Menulis (PBM)" },
-  { value: "pku", label: "Pengetahuan Kuantitatif (PKU)" },
-  { value: "ind", label: "Literasi Bahasa Indonesia (IND)" },
-  { value: "ing", label: "Literasi Bahasa Inggris (ING)" },
-  { value: "mtk", label: "Penalaran Matematika (MTK)" },
-];
+// Removed Hardcoded QUESTION_TYPES
 
 const AIChatView = ({
   tryoutId,
@@ -111,9 +113,21 @@ const AIChatView = ({
     []
   );
   const [topic, setTopic] = useState("");
-  const [selectedType, setSelectedType] = useState(
+  const [activeQuestionType, setActiveQuestionType] = useState(
     initialQuestionType || "kpu"
   );
+  const [availableTypes, setAvailableTypes] = useState<
+    { value: string; label: string }[]
+  >([]);
+
+  useEffect(() => {
+    const loadTypes = async () => {
+      const rawTypes = await apiGetBankSoalTypes();
+      const options = formatTypeOptions(rawTypes);
+      setAvailableTypes(options);
+    };
+    loadTypes();
+  }, []);
 
   // History State
   const [history, setHistory] = useState<ChatLog[]>([]);
@@ -137,6 +151,26 @@ const AIChatView = ({
   // Artifacts State
   const [artifacts, setArtifacts] = useState<ChatArtifact[]>([]);
   const [isArtifactDrawerVisible, setIsArtifactDrawerVisible] = useState(false);
+  const [newTypeName, setNewTypeName] = useState("");
+  const [diffDistribution, setDiffDistribution] = useState<{
+    easy: number;
+    medium: number;
+    hard: number;
+  }>({
+    easy: 0,
+    medium: 0,
+    hard: 0,
+  });
+
+  const updateDiffCount = (
+    diff: keyof typeof diffDistribution,
+    delta: number
+  ) => {
+    setDiffDistribution((prev) => ({
+      ...prev,
+      [diff]: Math.max(0, prev[diff] + delta),
+    }));
+  };
 
   // File Context State
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -235,7 +269,6 @@ const AIChatView = ({
   );
 
   const messagesEndRef = useRef<HTMLDivElement>(null);
-  const activeQuestionType = initialQuestionType || selectedType;
 
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -286,10 +319,11 @@ const AIChatView = ({
         role: m.role,
         content: m.content,
         timestamp: new Date(), // We don't have detailed timestamps per message in DB json
+        artifact_ids: m.artifact_ids, // Preserve artifact_ids for checkpoint buttons
       }));
       setMessages(converted);
       // If we have question types in history, set it?
-      if (session.question_type) setSelectedType(session.question_type);
+      if (session.question_type) setActiveQuestionType(session.question_type);
     }
     setLoading(false);
   };
@@ -470,8 +504,7 @@ const AIChatView = ({
   };
 
   const getQuestionTypeName = (code: string) => {
-    const type = QUESTION_TYPES.find((t) => t.value === code);
-    return type ? type.label : code.toUpperCase();
+    return getTypeName(code);
   };
 
   const handleSend = async () => {
@@ -553,13 +586,25 @@ const AIChatView = ({
     }
   };
 
-  const handleQuickGenerate = async (count: number, diff: string) => {
-    if (!topic.trim()) {
-      message.warning("Masukkan topik terlebih dahulu");
+  const handleQuickGenerate = async () => {
+    const parts: string[] = [];
+    if (diffDistribution.easy > 0)
+      parts.push(`${diffDistribution.easy} soal mudah`);
+    if (diffDistribution.medium > 0)
+      parts.push(`${diffDistribution.medium} soal sedang`);
+    if (diffDistribution.hard > 0)
+      parts.push(`${diffDistribution.hard} soal sulit`);
+
+    if (parts.length === 0) {
+      message.warning("Pilih jumlah soal yang ingin digenerate");
       return;
     }
+
+    const diffPrompt = parts.join(" dan ");
+    const topicText = topic.trim() || "...";
+
     setInputValue(
-      `Buat ${count} soal ${diff} tentang ${topic} untuk ${getQuestionTypeName(
+      `Buat ${diffPrompt} tentang ${topicText} untuk ${getQuestionTypeName(
         activeQuestionType
       )}`
     );
@@ -967,15 +1012,64 @@ const AIChatView = ({
                 Jenis Soal:
               </Text>
               <Select
-                value={selectedType}
-                onChange={setSelectedType}
-                options={QUESTION_TYPES}
+                value={activeQuestionType}
+                onChange={setActiveQuestionType}
+                options={availableTypes}
                 style={{ width: 280 }}
                 size="large"
                 variant="borderless"
-                suffixIcon={
-                  <QuestionCircleOutlined style={{ color: "#8C59F1" }} />
+                showSearch
+                placeholder="Pilih jenis soal"
+                filterOption={(input, option) =>
+                  String(option?.label ?? "")
+                    .toLowerCase()
+                    .includes(input.toLowerCase())
                 }
+                suffixIcon={<PlusOutlined style={{ color: "#8C59F1" }} />}
+                dropdownRender={(menu) => (
+                  <>
+                    {menu}
+                    <Divider style={{ margin: "8px 0" }} />
+                    <div style={{ padding: "8px 12px" }}>
+                      <div style={{ display: "flex", gap: 8 }}>
+                        <Input
+                          placeholder="Tambah jenis baru..."
+                          value={newTypeName}
+                          onChange={(e) => setNewTypeName(e.target.value)}
+                          onKeyDown={(e) => e.stopPropagation()}
+                          size="small"
+                        />
+                        <Button
+                          type="primary"
+                          size="small"
+                          icon={<PlusOutlined />}
+                          disabled={!newTypeName.trim()}
+                          onClick={() => {
+                            const trimmed = newTypeName.trim();
+                            if (trimmed) {
+                              import(
+                                "../../screens/BankSoal/questionTypes"
+                              ).then((m) => {
+                                m.saveCustomType(trimmed);
+                                const newOptions = m.formatTypeOptions(
+                                  availableTypes.map((t) => t.value)
+                                );
+                                setAvailableTypes(newOptions);
+                                setActiveQuestionType(trimmed);
+                                setNewTypeName("");
+                                message.success(
+                                  `Jenis soal "${trimmed}" ditambahkan!`
+                                );
+                              });
+                            }
+                          }}
+                        >
+                          Add
+                        </Button>
+                      </div>
+                    </div>
+                  </>
+                )}
                 listHeight={300}
               />
             </div>
@@ -1102,10 +1196,23 @@ const AIChatView = ({
                         backgroundColor: "#f9f0ff",
                       }}
                       icon={<HistoryOutlined />}
-                      onClick={() => {
-                        const checkpointData = artifacts.filter((art) =>
-                          msg.artifact_ids?.includes(art.id)
-                        );
+                      onClick={async () => {
+                        // Fetch artifacts for this session when button is clicked
+                        let checkpointData: ChatArtifact[] = [];
+                        if (
+                          sessionId &&
+                          msg.artifact_ids &&
+                          msg.artifact_ids.length > 0
+                        ) {
+                          const allArtifacts = await apiGetSessionArtifacts(
+                            sessionId
+                          );
+                          if (allArtifacts) {
+                            checkpointData = allArtifacts.filter((art) =>
+                              msg.artifact_ids?.includes(art.id)
+                            );
+                          }
+                        }
                         // Map to GeneratedQuestion-like for display
                         const normalized = checkpointData.map((art) => ({
                           text: art.content.text,
@@ -1113,6 +1220,7 @@ const AIChatView = ({
                           correct_answer: art.content.correct_answer,
                           explanation: art.content.explanation,
                           type: art.content.type,
+                          metadata: art.metadata,
                         }));
                         setReviewDrawer({
                           visible: true,
@@ -1257,6 +1365,64 @@ const AIChatView = ({
 
             <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
               <Select
+                value={activeQuestionType}
+                onChange={(val) => setActiveQuestionType(val)}
+                style={{ minWidth: 200, color: "#8C59F1", fontWeight: 600 }}
+                bordered={false}
+                options={availableTypes}
+                showSearch
+                placeholder="Jenis Soal"
+                filterOption={(input, option) =>
+                  String(option?.label ?? "")
+                    .toLowerCase()
+                    .includes(input.toLowerCase())
+                }
+                dropdownRender={(menu) => (
+                  <>
+                    {menu}
+                    <Divider style={{ margin: "8px 0" }} />
+                    <div style={{ padding: "8px 12px" }}>
+                      <div style={{ display: "flex", gap: 8 }}>
+                        <Input
+                          placeholder="Tambah jenis..."
+                          value={newTypeName}
+                          onChange={(e) => setNewTypeName(e.target.value)}
+                          onKeyDown={(e) => e.stopPropagation()}
+                          size="small"
+                        />
+                        <Button
+                          type="primary"
+                          size="small"
+                          icon={<PlusOutlined />}
+                          disabled={!newTypeName.trim()}
+                          onClick={() => {
+                            const trimmed = newTypeName.trim();
+                            if (trimmed) {
+                              import(
+                                "../../screens/BankSoal/questionTypes"
+                              ).then((m) => {
+                                m.saveCustomType(trimmed);
+                                const newOptions = m.formatTypeOptions(
+                                  availableTypes.map((t) => t.value)
+                                );
+                                setAvailableTypes(newOptions);
+                                setActiveQuestionType(trimmed);
+                                setNewTypeName("");
+                                message.success(
+                                  `Jenis soal "${trimmed}" ditambahkan!`
+                                );
+                              });
+                            }
+                          }}
+                        >
+                          Add
+                        </Button>
+                      </div>
+                    </div>
+                  </>
+                )}
+              />
+              <Select
                 value={selectedFormat}
                 onChange={(val) => setSelectedFormat(val)}
                 style={{ width: 140 }}
@@ -1268,30 +1434,127 @@ const AIChatView = ({
                   { label: "Essay / Uraian", value: "essay" },
                 ]}
               />
-              <div style={{ display: "flex", gap: 4 }}>
+              <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
                 {[
-                  { label: "5 Mudah", count: 5, diff: "easy" },
-                  { label: "5 Sedang", count: 5, diff: "medium" },
-                  { label: "3 Sulit", count: 3, diff: "hard" },
-                ].map((action, idx) => (
-                  <Tag
-                    key={idx}
-                    color="purple"
+                  { label: "Mudah", key: "easy" as const },
+                  { label: "Sedang", key: "medium" as const },
+                  { label: "Sulit", key: "hard" as const },
+                ].map((diff) => (
+                  <div
+                    key={diff.key}
+                    style={{
+                      display: "flex",
+                      alignItems: "center",
+                      backgroundColor:
+                        diffDistribution[diff.key] > 0 ? "#f9f0ff" : "#fff",
+                      border:
+                        diffDistribution[diff.key] > 0
+                          ? "1px solid #d3adf7"
+                          : "1px solid #d9d9d9",
+                      borderRadius: 16,
+                      padding: "2px 4px",
+                      transition: "all 0.3s ease",
+                      boxShadow:
+                        diffDistribution[diff.key] > 0
+                          ? "0 2px 4px rgba(140, 89, 241, 0.1)"
+                          : "none",
+                    }}
+                  >
+                    <Button
+                      type="text"
+                      size="small"
+                      icon={
+                        <MinusCircleOutlined
+                          style={{
+                            fontSize: 14,
+                            color:
+                              diffDistribution[diff.key] > 0
+                                ? "#8C59F1"
+                                : "#ccc",
+                          }}
+                        />
+                      }
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        updateDiffCount(diff.key, -1);
+                      }}
+                      style={{
+                        width: 24,
+                        height: 24,
+                        padding: 0,
+                        display: "flex",
+                        alignItems: "center",
+                        justifyContent: "center",
+                      }}
+                      disabled={diffDistribution[diff.key] <= 0}
+                    />
+                    <span
+                      style={{
+                        padding: "0 4px",
+                        fontWeight: 600,
+                        fontSize: 12,
+                        color:
+                          diffDistribution[diff.key] > 0
+                            ? "#8C59F1"
+                            : "#bfbfbf",
+                        minWidth: 65,
+                        textAlign: "center",
+                        cursor: "pointer",
+                        userSelect: "none",
+                      }}
+                      onClick={() => updateDiffCount(diff.key, 1)}
+                    >
+                      {diffDistribution[diff.key]} {diff.label}
+                    </span>
+                    <Button
+                      type="text"
+                      size="small"
+                      icon={
+                        <PlusCircleOutlined
+                          style={{
+                            fontSize: 14,
+                            color: "#8C59F1",
+                          }}
+                        />
+                      }
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        updateDiffCount(diff.key, 1);
+                      }}
+                      style={{
+                        width: 24,
+                        height: 24,
+                        padding: 0,
+                        display: "flex",
+                        alignItems: "center",
+                        justifyContent: "center",
+                      }}
+                    />
+                  </div>
+                ))}
+
+                {(diffDistribution.easy > 0 ||
+                  diffDistribution.medium > 0 ||
+                  diffDistribution.hard > 0) && (
+                  <Button
+                    type="primary"
+                    size="small"
+                    onClick={() => handleQuickGenerate()}
                     style={{
                       borderRadius: 16,
-                      padding: "4px 12px",
-                      cursor: "pointer",
-                      backgroundColor: "#f9f0ff",
-                      color: "#8C59F1",
-                      border: "1px solid #efdbff",
+                      backgroundColor: "#8C59F1",
+                      border: "none",
+                      fontSize: 11,
+                      fontWeight: 700,
+                      height: 28,
+                      padding: "0 14px",
+                      marginLeft: 4,
+                      boxShadow: "0 4px 10px rgba(140, 89, 241, 0.3)",
                     }}
-                    onClick={() =>
-                      handleQuickGenerate(action.count, action.diff)
-                    }
                   >
-                    {action.label}
-                  </Tag>
-                ))}
+                    Apply Template
+                  </Button>
+                )}
               </div>
             </div>
           </div>
@@ -1417,24 +1680,65 @@ const AIChatView = ({
 
         {/* Generated Questions Sidebar */}
         <Drawer
-          title={reviewDrawer.title}
+          title={
+            <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+              <div
+                style={{
+                  width: 36,
+                  height: 36,
+                  borderRadius: 10,
+                  background:
+                    "linear-gradient(135deg, #8C59F1 0%, #9e73f8 100%)",
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  boxShadow: "0 2px 8px rgba(140, 89, 241, 0.3)",
+                }}
+              >
+                <HistoryOutlined style={{ color: "white", fontSize: 18 }} />
+              </div>
+              <div style={{ display: "flex", flexDirection: "column" }}>
+                <span style={{ fontWeight: 700, fontSize: 17, color: "#333" }}>
+                  {reviewDrawer.title}
+                </span>
+                <span style={{ fontWeight: 400, fontSize: 12, color: "#999" }}>
+                  {reviewDrawer.mode === "checkpoint"
+                    ? "Review and manage saved questions"
+                    : "Select and refine pending generations"}
+                </span>
+              </div>
+            </div>
+          }
           placement="right"
           onClose={() => setReviewDrawer({ ...reviewDrawer, visible: false })}
           open={reviewDrawer.visible}
-          width={400}
-          mask={false}
-          style={{ marginTop: 64 }}
-          bodyStyle={{ padding: 20, backgroundColor: "#fafafa" }}
+          width={600}
+          mask={true}
+          maskStyle={{ backgroundColor: "rgba(0,0,0,0.05)" }}
+          zIndex={1000}
+          headerStyle={{
+            borderBottom: "1px solid #f0f0f0",
+            padding: "20px 24px",
+          }}
+          bodyStyle={{ padding: "24px", backgroundColor: "#fcfaff" }} // Very light purple tint
+          closeIcon={
+            <div
+              style={{ padding: 4, borderRadius: 6, transition: "0.2s" }}
+              className="hover-bg-gray"
+            />
+          }
         >
           {reviewDrawer.mode === "pending" && (
             <>
               <div
                 style={{
-                  padding: "16px",
-                  backgroundColor: "#f6ffed",
-                  borderRadius: 16,
-                  marginBottom: 16,
+                  padding: "20px",
+                  background:
+                    "linear-gradient(135deg, #f6ffed 0%, #f0f9eb 100%)",
+                  borderRadius: 20,
+                  marginBottom: 20,
                   border: "1px solid #b7eb8f",
+                  boxShadow: "0 2px 10px rgba(82, 196, 26, 0.05)",
                 }}
               >
                 <div
@@ -1442,22 +1746,34 @@ const AIChatView = ({
                     display: "flex",
                     justifyContent: "space-between",
                     alignItems: "center",
-                    marginBottom: 8,
+                    marginBottom: 12,
                   }}
                 >
-                  <Title level={5} style={{ margin: 0, color: "#389e0d" }}>
+                  <Title
+                    level={5}
+                    style={{ margin: 0, color: "#389e0d", fontWeight: 700 }}
+                  >
                     <QuestionCircleOutlined /> Generated (
                     {pendingQuestions.length})
                   </Title>
-                  <Tag color="success">{selectedQuestions.size} Dipilih</Tag>
+                  <Tag
+                    color="success"
+                    style={{
+                      borderRadius: 6,
+                      fontWeight: 600,
+                      padding: "2px 8px",
+                    }}
+                  >
+                    {selectedQuestions.size} Dipilih
+                  </Tag>
                 </div>
                 <Checkbox
                   checked={saveToBankSoal}
                   onChange={(e) => setSaveToBankSoal(e.target.checked)}
-                  style={{ fontSize: 13 }}
+                  style={{ fontSize: 13, fontWeight: 500 }}
                 >
                   Simpan ke Bank Soal{" "}
-                  <BulbOutlined style={{ color: "#fa8c16" }} />
+                  <BulbOutlined style={{ color: "#fa8c16", marginLeft: 4 }} />
                 </Checkbox>
               </div>
 
@@ -1465,8 +1781,8 @@ const AIChatView = ({
                 style={{
                   display: "flex",
                   flexDirection: "column",
-                  gap: 12,
-                  marginBottom: 20,
+                  gap: 16,
+                  marginBottom: 24,
                 }}
               >
                 {pendingQuestions.map((q, i) => (
@@ -1474,27 +1790,29 @@ const AIChatView = ({
                     key={i}
                     onClick={() => toggleQuestionSelection(i)}
                     style={{
-                      padding: 12,
-                      borderRadius: 12,
+                      padding: 16,
+                      borderRadius: 16,
                       backgroundColor: "white",
                       border: selectedQuestions.has(i)
                         ? "2px solid #52c41a"
-                        : "1px solid #f0f0f0",
-                      boxShadow: "0 2px 6px rgba(0,0,0,0.03)",
+                        : "1px solid #eee",
+                      boxShadow: selectedQuestions.has(i)
+                        ? "0 4px 12px rgba(82, 196, 26, 0.1)"
+                        : "0 2px 8px rgba(0,0,0,0.02)",
                       cursor: "pointer",
-                      transition: "all 0.2s",
+                      transition: "all 0.3s ease",
                     }}
                   >
                     <div
                       style={{
                         display: "flex",
                         justifyContent: "space-between",
-                        marginBottom: 6,
+                        marginBottom: 10,
                       }}
                     >
                       <Tag
                         color={selectedQuestions.has(i) ? "green" : "default"}
-                        style={{ margin: 0 }}
+                        style={{ margin: 0, borderRadius: 6, fontWeight: 600 }}
                       >
                         #{i + 1}
                       </Tag>
@@ -1506,14 +1824,47 @@ const AIChatView = ({
                           e.stopPropagation();
                           handleEditQuestion(i);
                         }}
-                        style={{ height: 20, fontSize: 12, color: "#1890ff" }}
-                      />
+                        style={{
+                          height: 28,
+                          padding: "0 8px",
+                          borderRadius: 8,
+                          fontSize: 12,
+                          color: "#1890ff",
+                          backgroundColor: "rgba(24, 144, 255, 0.05)",
+                        }}
+                      >
+                        Edit
+                      </Button>
                     </div>
                     <div
-                      style={{ fontSize: 13, lineHeight: "1.5", color: "#444" }}
+                      style={{
+                        fontSize: 14,
+                        lineHeight: "1.6",
+                        color: "#333",
+                        fontWeight: 400,
+                        marginBottom: 12,
+                      }}
                     >
-                      {q.text.substring(0, 120)}
-                      {q.text.length > 120 ? "..." : ""}
+                      {q.text.substring(0, 180)}
+                      {q.text.length > 180 ? "..." : ""}
+                    </div>
+
+                    <div
+                      style={{
+                        padding: "4px 10px",
+                        backgroundColor: "#f9f0ff",
+                        borderRadius: 8,
+                        fontSize: 11,
+                        color: "#8C59F1",
+                        display: "inline-flex",
+                        alignItems: "center",
+                        gap: 6,
+                        border: "1px solid #e9d5ff",
+                        fontWeight: 600,
+                      }}
+                    >
+                      <RobotOutlined style={{ fontSize: 13 }} />
+                      <span>Synthesized by AI</span>
                     </div>
                   </div>
                 ))}
@@ -1529,43 +1880,184 @@ const AIChatView = ({
                 block
                 style={{
                   borderRadius: 12,
-                  height: 44,
+                  height: 52,
                   backgroundColor: "#52c41a",
                   borderColor: "#52c41a",
-                  boxShadow: "0 4px 12px rgba(82, 196, 26, 0.3)",
+                  fontWeight: 700,
+                  fontSize: 16,
+                  boxShadow: "0 6px 16px rgba(82, 196, 26, 0.25)",
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  gap: 8,
                 }}
               >
-                Simpan Soal
+                Simpan {selectedQuestions.size} Soal Pilihan
               </Button>
             </>
           )}
 
           {reviewDrawer.mode === "checkpoint" && (
-            <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
+            <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
               {reviewDrawer.data.map((q, i) => (
-                <Card key={i} title={`Question #${i + 1}`} size="small">
-                  <div style={{ fontWeight: 500, marginBottom: 8 }}>
-                    {q.text}
-                  </div>
-                  <div style={{ fontSize: 12, color: "#666" }}>
-                    Answer: {q.correct_answer}
-                  </div>
-                  <Button
-                    size="small"
-                    icon={<EditOutlined />}
-                    style={{ marginTop: 8 }}
-                    onClick={() => {
-                      if (
-                        reviewDrawer.originalArtifacts &&
-                        reviewDrawer.originalArtifacts[i]
-                      ) {
-                        handleEditArtifact(reviewDrawer.originalArtifacts[i]);
-                      }
+                <div
+                  key={i}
+                  style={{
+                    background: "white",
+                    borderRadius: 20,
+                    overflow: "hidden",
+                    border: "1px solid #f0e6ff",
+                    boxShadow: "0 4px 12px rgba(140, 89, 241, 0.05)",
+                  }}
+                >
+                  <div
+                    style={{
+                      padding: "12px 20px",
+                      background:
+                        "linear-gradient(90deg, #f9f0ff 0%, #ffffff 100%)",
+                      borderBottom: "1px solid #f0e6ff",
+                      display: "flex",
+                      justifyContent: "space-between",
+                      alignItems: "center",
                     }}
                   >
-                    Edit / Detail
-                  </Button>
-                </Card>
+                    <span
+                      style={{
+                        fontWeight: 700,
+                        color: "#8C59F1",
+                        fontSize: 13,
+                      }}
+                    >
+                      SOAL #{i + 1}
+                    </span>
+                    {q.type && (
+                      <Tag
+                        color="purple"
+                        style={{
+                          margin: 0,
+                          borderRadius: 4,
+                          textTransform: "uppercase",
+                          fontSize: 10,
+                        }}
+                      >
+                        {q.type}
+                      </Tag>
+                    )}
+                  </div>
+
+                  <div style={{ padding: "16px 20px" }}>
+                    <div
+                      style={{
+                        fontSize: 15,
+                        color: "#333",
+                        lineHeight: "1.6",
+                        marginBottom: 16,
+                        fontWeight: 400,
+                      }}
+                    >
+                      {q.text}
+                    </div>
+
+                    <div
+                      style={{
+                        padding: "12px 16px",
+                        backgroundColor: "#f9f9f9",
+                        borderRadius: 12,
+                        marginBottom: 16,
+                        border: "1px dashed #eee",
+                      }}
+                    >
+                      <div
+                        style={{
+                          fontSize: 11,
+                          color: "#999",
+                          textTransform: "uppercase",
+                          letterSpacing: 1,
+                          marginBottom: 4,
+                          fontWeight: 700,
+                        }}
+                      >
+                        Correct Answer
+                      </div>
+                      <div
+                        style={{
+                          fontWeight: 700,
+                          color: "#52c41a",
+                          fontSize: 16,
+                        }}
+                      >
+                        {q.correct_answer}
+                      </div>
+                    </div>
+
+                    {q.metadata?.source && (
+                      <div
+                        style={{
+                          marginBottom: 16,
+                          padding: "6px 12px",
+                          backgroundColor:
+                            q.metadata.source === "ai_generated"
+                              ? "#f9f0ff"
+                              : "#f5f5f5",
+                          borderRadius: 10,
+                          fontSize: 12,
+                          color:
+                            q.metadata.source === "ai_generated"
+                              ? "#8C59F1"
+                              : "#666",
+                          display: "inline-flex",
+                          alignItems: "center",
+                          gap: 8,
+                          border:
+                            q.metadata.source === "ai_generated"
+                              ? "1px solid #e9d5ff"
+                              : "1px solid #eee",
+                          fontWeight: 500,
+                          boxShadow: "0 2px 4px rgba(0,0,0,0.02)",
+                        }}
+                      >
+                        {q.metadata.source === "ai_generated" ? (
+                          <>
+                            <RobotOutlined style={{ fontSize: 14 }} />
+                            <span>Synthesized by AI</span>
+                          </>
+                        ) : (
+                          <>
+                            <BookOutlined style={{ fontSize: 14 }} />
+                            <span>Source: {q.metadata.source}</span>
+                          </>
+                        )}
+                      </div>
+                    )}
+
+                    <div style={{ display: "flex", gap: 8 }}>
+                      <Button
+                        type="primary"
+                        ghost
+                        size="middle"
+                        icon={<EditOutlined />}
+                        style={{
+                          borderRadius: 10,
+                          fontWeight: 600,
+                          borderColor: "#8C59F1",
+                          color: "#8C59F1",
+                        }}
+                        onClick={() => {
+                          if (
+                            reviewDrawer.originalArtifacts &&
+                            reviewDrawer.originalArtifacts[i]
+                          ) {
+                            handleEditArtifact(
+                              reviewDrawer.originalArtifacts[i]
+                            );
+                          }
+                        }}
+                      >
+                        Edit / Detail
+                      </Button>
+                    </div>
+                  </div>
+                </div>
               ))}
             </div>
           )}
@@ -1575,6 +2067,7 @@ const AIChatView = ({
           setIsModalOpen={setIsEditModalVisible}
           initialData={editingQuestionData}
           onSave={handleSaveQuestion}
+          zIndex={2000}
           title={
             editingArtifactId
               ? "Edit Generated Question"
@@ -1587,6 +2080,7 @@ const AIChatView = ({
           open={isSaveExampleModalVisible}
           onOk={handleSaveExample}
           onCancel={() => setIsSaveExampleModalVisible(false)}
+          zIndex={2000}
         >
           <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
             <Typography.Text type="secondary">
@@ -1618,6 +2112,7 @@ const AIChatView = ({
           onOk={handleRefineSubmit}
           confirmLoading={refineLoading}
           onCancel={() => setIsRefineModalVisible(false)}
+          zIndex={2000}
         >
           <Typography.Paragraph type="secondary">
             Provide instructions to AI on how to improve this question.
@@ -1632,14 +2127,28 @@ const AIChatView = ({
 
         <Drawer
           title={
-            <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-              <HistoryOutlined style={{ color: "#8C59F1", fontSize: 18 }} />
+            <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+              <div
+                style={{
+                  width: 36,
+                  height: 36,
+                  borderRadius: 10,
+                  background:
+                    "linear-gradient(135deg, #8C59F1 0%, #9e73f8 100%)",
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  boxShadow: "0 2px 8px rgba(140, 89, 241, 0.3)",
+                }}
+              >
+                <HistoryOutlined style={{ color: "white", fontSize: 18 }} />
+              </div>
               <div style={{ display: "flex", flexDirection: "column" }}>
-                <span style={{ fontWeight: 600, fontSize: 16 }}>
+                <span style={{ fontWeight: 700, fontSize: 17, color: "#333" }}>
                   Riwayat Generasi
                 </span>
-                <span style={{ fontWeight: 400, fontSize: 11, color: "#999" }}>
-                  Tracking Generated Questions
+                <span style={{ fontWeight: 400, fontSize: 12, color: "#999" }}>
+                  Tracking all generated questions in this session
                 </span>
               </div>
             </div>
@@ -1647,40 +2156,59 @@ const AIChatView = ({
           placement="right"
           onClose={() => setIsArtifactDrawerVisible(false)}
           open={isArtifactDrawerVisible}
-          width={420}
+          width={600}
+          mask={true}
+          maskStyle={{ backgroundColor: "rgba(0,0,0,0.05)" }}
+          zIndex={1000}
           headerStyle={{
             borderBottom: "1px solid #f0f0f0",
-            padding: "16px 24px",
+            padding: "20px 24px",
           }}
-          bodyStyle={{ backgroundColor: "#fafafa", padding: "20px" }}
+          bodyStyle={{ backgroundColor: "#fcfaff", padding: "24px" }}
+          closeIcon={
+            <div
+              style={{ padding: 4, borderRadius: 6, transition: "0.2s" }}
+              className="hover-bg-gray"
+            />
+          }
         >
           <div
             style={{
               display: "flex",
               flexDirection: "column",
-              gap: 12,
-              marginBottom: 16,
+              gap: 16,
+              marginBottom: 24,
+              backgroundColor: "white",
+              padding: "16px",
+              borderRadius: 20,
+              border: "1px solid #f0e6ff",
+              boxShadow: "0 4px 12px rgba(140, 89, 241, 0.03)",
             }}
           >
             <Input
               placeholder="Cari pertanyaan..."
-              prefix={<SearchOutlined style={{ color: "#ccc" }} />}
+              size="large"
+              prefix={<SearchOutlined style={{ color: "#8C59F1" }} />}
               value={artifactSearch}
               onChange={(e) => setArtifactSearch(e.target.value)}
               allowClear
+              style={{ borderRadius: 12 }}
             />
-            <div style={{ display: "flex", gap: 8 }}>
+            <div style={{ display: "flex", gap: 12 }}>
               <Select
                 style={{ flex: 1 }}
+                size="middle"
                 value={artifactSort}
                 onChange={setArtifactSort}
                 options={[
                   { label: "Terbaru", value: "newest" },
                   { label: "Terlama", value: "oldest" },
                 ]}
+                dropdownStyle={{ borderRadius: 12 }}
               />
               <Select
                 style={{ flex: 1 }}
+                size="middle"
                 value={artifactFilter}
                 onChange={setArtifactFilter}
                 options={[
@@ -1688,186 +2216,239 @@ const AIChatView = ({
                   { label: "Pending", value: "pending" },
                   { label: "Approved", value: "approved" },
                 ]}
+                dropdownStyle={{ borderRadius: 12 }}
               />
             </div>
           </div>
-          <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
-            {paginatedArtifacts.map((art) => (
+
+          <div style={{ display: "flex", flexDirection: "column", gap: 20 }}>
+            {paginatedArtifacts.map((art, idx) => (
               <div
                 key={art.id}
                 style={{
                   backgroundColor: "white",
-                  borderRadius: 16,
-                  padding: "16px",
-                  border: "1px solid #eee",
-                  boxShadow: "0 2px 12px rgba(0,0,0,0.03)",
-                  position: "relative",
+                  borderRadius: 20,
+                  border: "1px solid #f0e6ff",
+                  boxShadow: "0 4px 15px rgba(140, 89, 241, 0.05)",
                   overflow: "hidden",
-                  transition: "all 0.2s",
+                  transition: "all 0.3s ease",
+                  position: "relative",
                 }}
               >
-                {/* Status Strip */}
+                {/* Header with Subtitle Styling */}
                 <div
                   style={{
-                    position: "absolute",
-                    left: 0,
-                    top: 0,
-                    bottom: 0,
-                    width: 4,
-                    backgroundColor:
-                      art.status === "approved" ? "#52c41a" : "#8C59F1",
-                  }}
-                />
-
-                {/* Header */}
-                <div
-                  style={{
+                    padding: "12px 20px",
+                    background:
+                      "linear-gradient(90deg, #f9f0ff 0%, #ffffff 100%)",
+                    borderBottom: "1px solid #f0e6ff",
                     display: "flex",
                     justifyContent: "space-between",
-                    marginBottom: 10,
-                    paddingLeft: 10,
                     alignItems: "center",
                   }}
                 >
-                  <span
-                    style={{ fontSize: 11, fontWeight: 600, color: "#999" }}
+                  <div
+                    style={{ display: "flex", alignItems: "center", gap: 8 }}
                   >
-                    {new Date(art.created_at).toLocaleString()}
-                  </span>
+                    <span
+                      style={{
+                        fontWeight: 700,
+                        color: "#8C59F1",
+                        fontSize: 13,
+                      }}
+                    >
+                      ARTIFACT #
+                      {(artifactPage - 1) * ARTIFACT_PAGE_SIZE + idx + 1}
+                    </span>
+                    <span
+                      style={{ fontSize: 11, color: "#aaa", fontWeight: 400 }}
+                    >
+                      •{" "}
+                      {new Date(art.created_at).toLocaleTimeString([], {
+                        hour: "2-digit",
+                        minute: "2-digit",
+                      })}
+                    </span>
+                  </div>
                   <Tag
                     color={art.status === "approved" ? "success" : "purple"}
-                    style={{ marginRight: 0, fontSize: 10, border: "none" }}
+                    style={{
+                      margin: 0,
+                      borderRadius: 6,
+                      fontSize: 10,
+                      fontWeight: 700,
+                      border: "none",
+                      padding: "2px 8px",
+                    }}
                   >
                     {art.status.toUpperCase()}
                   </Tag>
                 </div>
 
-                {/* Content */}
-                <div style={{ paddingLeft: 10, marginBottom: 12 }}>
+                {/* Content Area */}
+                <div style={{ padding: "20px" }}>
                   <Typography.Paragraph
-                    ellipsis={{ rows: 3, expandable: true }}
+                    ellipsis={{
+                      rows: 4,
+                      expandable: true,
+                      symbol: "lihat selengkapnya",
+                    }}
                     style={{
                       margin: 0,
-                      fontSize: 13,
+                      fontSize: 14,
                       color: "#333",
-                      lineHeight: "1.6",
+                      lineHeight: "1.7",
+                      fontWeight: 400,
                     }}
                   >
                     {art.content.text}
                   </Typography.Paragraph>
+
                   {art.metadata?.source && (
                     <div
                       style={{
-                        marginTop: 8,
-                        fontSize: 11,
-                        color: "#aaa",
-                        display: "flex",
+                        marginTop: 16,
+                        padding: "6px 12px",
+                        backgroundColor:
+                          art.metadata.source === "ai_generated"
+                            ? "#f9f0ff"
+                            : "#f5f5f5",
+                        borderRadius: 10,
+                        fontSize: 12,
+                        color:
+                          art.metadata.source === "ai_generated"
+                            ? "#8C59F1"
+                            : "#666",
+                        display: "inline-flex",
                         alignItems: "center",
-                        gap: 4,
+                        gap: 8,
+                        border:
+                          art.metadata.source === "ai_generated"
+                            ? "1px solid #e9d5ff"
+                            : "1px solid #eee",
+                        fontWeight: 500,
+                        boxShadow: "0 2px 4px rgba(0,0,0,0.02)",
                       }}
                     >
-                      <BookOutlined /> Ref: {art.metadata.source}
+                      {art.metadata.source === "ai_generated" ? (
+                        <>
+                          <RobotOutlined style={{ fontSize: 14 }} />
+                          <span>Synthesized by AI</span>
+                        </>
+                      ) : (
+                        <>
+                          <BookOutlined style={{ fontSize: 14 }} />
+                          <span>Source: {art.metadata.source}</span>
+                        </>
+                      )}
                     </div>
                   )}
-                </div>
 
-                {/* Footer Actions */}
-                <div
-                  style={{
-                    display: "flex",
-                    gap: 8,
-                    paddingLeft: 10,
-                    marginTop: 12,
-                    borderTop: "1px solid #f7f7f7",
-                    paddingTop: 10,
-                    flexWrap: "wrap",
-                  }}
-                >
-                  <Button
-                    size="small"
-                    type="text"
-                    icon={<EditOutlined />}
-                    onClick={() => handleEditArtifact(art)}
+                  {/* Action Bar */}
+                  <div
                     style={{
-                      fontSize: 12,
-                      color: "#666",
-                      backgroundColor: "#f9f9f9",
-                      borderRadius: 6,
+                      display: "flex",
+                      gap: 8,
+                      marginTop: 20,
+                      paddingTop: 16,
+                      borderTop: "1px solid #f7f7f7",
+                      alignItems: "center",
                     }}
                   >
-                    Edit
-                  </Button>
-                  <Button
-                    size="small"
-                    type="text"
-                    icon={<RedoOutlined />}
-                    onClick={() => handleOpenRefine(art.id)}
-                    style={{
-                      fontSize: 12,
-                      color: "#666",
-                      backgroundColor: "#f9f9f9",
-                      borderRadius: 6,
-                    }}
-                  >
-                    Refine
-                  </Button>
-
-                  <div style={{ flex: 1 }} />
-
-                  {art.status === "approved" ? (
                     <Button
-                      size="small"
+                      size="middle"
                       type="text"
-                      icon={<CheckCircleOutlined />}
-                      disabled
+                      icon={<EditOutlined />}
+                      onClick={() => handleEditArtifact(art)}
                       style={{
-                        fontSize: 12,
-                        color: "#52c41a",
-                        cursor: "default",
-                        backgroundColor: "rgba(82, 196, 26, 0.1)",
-                        borderRadius: 6,
-                        border: "none",
+                        fontSize: 13,
+                        fontWeight: 600,
+                        color: "#666",
+                        backgroundColor: "#f5f5f5",
+                        borderRadius: 10,
+                        padding: "0 12px",
                       }}
                     >
-                      Saved
+                      Edit
                     </Button>
-                  ) : (
                     <Button
-                      size="small"
-                      icon={
-                        actionLoading === art.id ? (
-                          <LoadingOutlined />
-                        ) : (
-                          <SaveOutlined />
-                        )
-                      }
-                      disabled={actionLoading === art.id}
-                      onClick={() => handleAddToBankSoalSingle(art)}
+                      size="middle"
+                      type="text"
+                      icon={<RedoOutlined />}
+                      onClick={() => handleOpenRefine(art.id)}
                       style={{
-                        fontSize: 12,
-                        color: "#fff",
-                        backgroundColor: "#8C59F1", // Use theme color for action
-                        borderRadius: 6,
-                        border: "none",
-                        boxShadow: "0 2px 4px rgba(140, 89, 241, 0.2)",
+                        fontSize: 13,
+                        fontWeight: 600,
+                        color: "#666",
+                        backgroundColor: "#f5f5f5",
+                        borderRadius: 10,
+                        padding: "0 12px",
                       }}
                     >
-                      {actionLoading === art.id ? "Saving..." : "Save"}
+                      Refine
                     </Button>
-                  )}
 
-                  <Button
-                    size="small"
-                    type="text"
-                    danger
-                    icon={<DeleteOutlined />}
-                    onClick={() => handleDeleteArtifact(art.id)}
-                    style={{
-                      fontSize: 12,
-                      backgroundColor: "#fff1f0",
-                      borderRadius: 6,
-                    }}
-                  />
+                    <div style={{ flex: 1 }} />
+
+                    {art.status === "approved" ? (
+                      <div
+                        style={{
+                          display: "flex",
+                          alignItems: "center",
+                          gap: 6,
+                          padding: "6px 12px",
+                          backgroundColor: "#f6ffed",
+                          borderRadius: 10,
+                          color: "#52c41a",
+                          fontSize: 13,
+                          fontWeight: 600,
+                        }}
+                      >
+                        <CheckCircleOutlined /> Saved
+                      </div>
+                    ) : (
+                      <Button
+                        type="primary"
+                        size="middle"
+                        icon={
+                          actionLoading === art.id ? (
+                            <LoadingOutlined />
+                          ) : (
+                            <SaveOutlined />
+                          )
+                        }
+                        disabled={actionLoading === art.id}
+                        onClick={() => handleAddToBankSoalSingle(art)}
+                        style={{
+                          borderRadius: 10,
+                          backgroundColor: "#8C59F1",
+                          borderColor: "#8C59F1",
+                          fontWeight: 700,
+                          padding: "0 20px",
+                          boxShadow: "0 4px 10px rgba(140, 89, 241, 0.2)",
+                        }}
+                      >
+                        {actionLoading === art.id ? "Saving..." : "Save"}
+                      </Button>
+                    )}
+
+                    <Button
+                      size="middle"
+                      type="text"
+                      danger
+                      icon={<DeleteOutlined />}
+                      onClick={() => handleDeleteArtifact(art.id)}
+                      style={{
+                        backgroundColor: "#fff1f0",
+                        borderRadius: 10,
+                        width: 36,
+                        height: 36,
+                        display: "flex",
+                        alignItems: "center",
+                        justifyContent: "center",
+                      }}
+                    />
+                  </div>
                 </div>
               </div>
             ))}

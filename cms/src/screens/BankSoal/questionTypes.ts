@@ -10,6 +10,39 @@ export const DEFAULT_QUESTION_TYPES = [
   { value: "mtk", label: "Penalaran Matematika (MTK)" },
 ];
 
+export const KNOWN_TYPE_LABELS: Record<string, string> = {
+  kpu: "Penalaran Umum (KPU)",
+  ppu: "Pengetahuan dan Pemahaman Umum (PPU)",
+  pbm: "Pemahaman Bacaan dan Menulis (PBM)",
+  pku: "Pengetahuan Kuantitatif (PKU)",
+  ind: "Literasi Bahasa Indonesia (IND)",
+  ing: "Literasi Bahasa Inggris (ING)",
+  mtk: "Penalaran Matematika (MTK)",
+};
+
+export const getQuestionTypeName = (code: string) => {
+  return KNOWN_TYPE_LABELS[code] || code.toUpperCase();
+};
+
+export const formatTypeOptions = (rawTypes: string[]) => {
+  const customTypes = getCustomTypes().map(t => t.value);
+  const allRawTypes = Array.from(new Set([...rawTypes, ...customTypes]));
+  
+  const options = allRawTypes.map(type => ({
+      value: type,
+      label: getQuestionTypeName(type)
+  }));
+  
+  // Also include defaults that might not be in the database yet but are "known"
+  DEFAULT_QUESTION_TYPES.forEach(def => {
+      if (!options.find(o => o.value === def.value)) {
+          options.push(def);
+      }
+  });
+
+  return options;
+};
+
 const CUSTOM_TYPES_KEY = "banksoal_custom_types";
 
 export const getCustomTypes = (): { value: string; label: string }[] => {

@@ -32,6 +32,7 @@ type PropTypes = {
   initialData: any; // Can be any object structure, we map it to state
   onSave: (data: EditQuestionData) => void;
   title?: string;
+  zIndex?: number;
 };
 
 const ModalEditQuestion = (props: PropTypes) => {
@@ -41,6 +42,7 @@ const ModalEditQuestion = (props: PropTypes) => {
     initialData,
     onSave,
     title = "Edit Question",
+    zIndex,
   } = props;
 
   // State
@@ -155,6 +157,7 @@ const ModalEditQuestion = (props: PropTypes) => {
       handleOk={handleSave}
       handleCancel={() => setIsModalOpen(false)}
       title={title}
+      zIndex={zIndex}
     >
       <Form layout="vertical">
         <Form.Item label="Question Text">

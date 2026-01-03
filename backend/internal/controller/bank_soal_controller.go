@@ -25,6 +25,7 @@ func (controller BankSoalController) Route(app *fiber.App) {
 	app.Post("/v1/api/bank-soal", middleware.AuthenticateJWT([]string{"admin"}, controller.Config), controller.Create)
 	app.Post("/v1/api/bank-soal/batch", middleware.AuthenticateJWT([]string{"admin"}, controller.Config), controller.CreateBatch)
 	app.Put("/v1/api/bank-soal/:id", middleware.AuthenticateJWT([]string{"admin"}, controller.Config), controller.Update)
+	app.Get("/v1/api/bank-soal/types", controller.GetUniqueTypes)
 	app.Get("/v1/api/bank-soal/:id", controller.FindById)
 	app.Get("/v1/api/bank-soal", controller.FindAll)
 	app.Delete("/v1/api/bank-soal/:id", middleware.AuthenticateJWT([]string{"admin"}, controller.Config), controller.Delete)
@@ -208,5 +209,26 @@ func (controller BankSoalController) Update(c *fiber.Ctx) error {
 		Code:    200,
 		Message: "Success",
 		Data:    response,
+	})
+}
+
+// GetUniqueTypes handles fetching unique question types from the bank soal.
+// @Summary Get unique question types
+// @Description Retrieve a list of all unique question types currently in the bank soal
+// @Tags BankSoal
+// @Accept json
+// @Produce json
+// @Success 200 {object} model.GeneralResponse
+// @Router /bank-soal/types [get]
+func (controller BankSoalController) GetUniqueTypes(c *fiber.Ctx) error {
+	result, err := controller.BankSoalService.GetUniqueTypes(c.Context())
+	if err != nil {
+		return err
+	}
+
+	return c.Status(fiber.StatusOK).JSON(model.GeneralResponse{
+		Code:    200,
+		Message: "Success",
+		Data:    result,
 	})
 }

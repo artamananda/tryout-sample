@@ -178,3 +178,12 @@ func (repository *BankSoalRepository) FindPublishedByDifficulty(ctx context.Cont
 func (repository *BankSoalRepository) FindPublished(ctx context.Context) ([]entity.BankSoal, error) {
 	return repository.FindByStatus(ctx, entity.BankSoalStatusPublished)
 }
+
+func (repository *BankSoalRepository) GetUniqueTypes(ctx context.Context) ([]string, error) {
+	var types []string
+	err := repository.DB.WithContext(ctx).Model(&entity.BankSoal{}).Distinct("type").Pluck("type", &types).Error
+	if err != nil {
+		return nil, err
+	}
+	return types, nil
+}

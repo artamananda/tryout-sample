@@ -7,10 +7,12 @@ type PropTypes = {
   isModalOpen: any;
   handleCancel?: any;
   handleOk?: any;
+  zIndex?: number;
 };
 
 const ModalUi = (props: PropTypes) => {
-  const { children, title, isModalOpen, handleCancel, handleOk } = props;
+  const { children, title, isModalOpen, handleCancel, handleOk, zIndex } =
+    props;
 
   return (
     <Modal
@@ -20,6 +22,7 @@ const ModalUi = (props: PropTypes) => {
       onCancel={handleCancel}
       width={"50%"}
       footer={null}
+      zIndex={zIndex}
     >
       {children}
     </Modal>
