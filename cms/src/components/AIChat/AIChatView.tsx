@@ -12,6 +12,8 @@ import {
   Select,
   Modal,
   Drawer,
+  Pagination,
+  Empty,
 } from "antd";
 import {
   RobotOutlined,
@@ -32,6 +34,7 @@ import {
   RedoOutlined,
   LoadingOutlined,
   InboxOutlined,
+  SearchOutlined,
 } from "@ant-design/icons";
 import ModalEditQuestion, { EditQuestionData } from "../Ui/ModalEditQuestion";
 
@@ -144,6 +147,33 @@ const AIChatView = ({
 
   // Refine State
   const [isRefineModalVisible, setIsRefineModalVisible] = useState(false);
+  // Session History Filters
+  const [sessionSearch, setSessionSearch] = useState("");
+  const [sessionSort, setSessionSort] = useState("newest");
+  const [sessionPage, setSessionPage] = useState(1);
+  const SESSION_PAGE_SIZE = 5;
+
+  const filteredSessions = history
+    .filter((h) =>
+      (h.topic || "").toLowerCase().includes(sessionSearch.toLowerCase())
+    )
+    .sort((a, b) => {
+      if (sessionSort === "newest")
+        return (
+          new Date(b.updated_at).getTime() - new Date(a.updated_at).getTime()
+        );
+      if (sessionSort === "oldest")
+        return (
+          new Date(a.updated_at).getTime() - new Date(b.updated_at).getTime()
+        );
+      return 0;
+    });
+
+  const paginatedSessions = filteredSessions.slice(
+    (sessionPage - 1) * SESSION_PAGE_SIZE,
+    sessionPage * SESSION_PAGE_SIZE
+  );
+
   const [refineArtifactId, setRefineArtifactId] = useState<string | null>(null);
   const [refineInstruction, setRefineInstruction] = useState("");
   const [refineLoading, setRefineLoading] = useState(false);
@@ -155,6 +185,54 @@ const AIChatView = ({
   const [actionLoading, setActionLoading] = useState<string | null>(null);
   const [selectedFormat, setSelectedFormat] =
     useState<string>("multiple_choice");
+
+  // Review Drawer State (Pending or Checkpoint)
+  const [reviewDrawer, setReviewDrawer] = useState<{
+    visible: boolean;
+    mode: "pending" | "checkpoint";
+    title: string;
+    data: GeneratedQuestion[]; // Normalized data
+    originalArtifacts?: ChatArtifact[]; // For checkpoint references
+  }>({
+    visible: false,
+    mode: "pending",
+    title: "",
+    data: [],
+  });
+
+  // History Filters
+  // Artifact Drawer Filters & Pagination
+  const [artifactSearch, setArtifactSearch] = useState("");
+  const [artifactSort, setArtifactSort] = useState("newest");
+  const [artifactFilter, setArtifactFilter] = useState("all");
+  const [artifactPage, setArtifactPage] = useState(1);
+  const ARTIFACT_PAGE_SIZE = 5;
+
+  const filteredArtifacts = artifacts
+    .filter((art) => {
+      const matchesSearch = art.content.text
+        .toLowerCase()
+        .includes(artifactSearch.toLowerCase());
+      const matchesFilter =
+        artifactFilter === "all" ? true : art.status === artifactFilter;
+      return matchesSearch && matchesFilter;
+    })
+    .sort((a, b) => {
+      if (artifactSort === "newest")
+        return (
+          new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
+        );
+      if (artifactSort === "oldest")
+        return (
+          new Date(a.created_at).getTime() - new Date(b.created_at).getTime()
+        );
+      return 0;
+    });
+
+  const paginatedArtifacts = filteredArtifacts.slice(
+    (artifactPage - 1) * ARTIFACT_PAGE_SIZE,
+    artifactPage * ARTIFACT_PAGE_SIZE
+  );
 
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const activeQuestionType = initialQuestionType || selectedType;
@@ -452,6 +530,12 @@ const AIChatView = ({
 
         if (response.questions && response.questions.length > 0) {
           setPendingQuestions(response.questions);
+          setReviewDrawer({
+            visible: true,
+            mode: "pending",
+            title: "Review Generated Questions",
+            data: response.questions,
+          });
           const topicMatch = inputValue.match(/tentang\s+(.+)/i);
           if (topicMatch) setTopic(topicMatch[1].trim());
           setSelectedQuestions(new Set(response.questions.map((_, i) => i)));
@@ -641,7 +725,36 @@ const AIChatView = ({
             </div>
           ) : (
             <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
-              {history.map((item) => (
+              {/* Sidebar Filters */}
+              <div
+                style={{
+                  padding: "0 4px 8px 4px",
+                  display: "flex",
+                  flexDirection: "column",
+                  gap: 8,
+                }}
+              >
+                <Input
+                  placeholder="Cari..."
+                  prefix={<SearchOutlined style={{ color: "#ccc" }} />}
+                  value={sessionSearch}
+                  onChange={(e) => setSessionSearch(e.target.value)}
+                  size="small"
+                  allowClear
+                />
+                <Select
+                  value={sessionSort}
+                  onChange={setSessionSort}
+                  size="small"
+                  options={[
+                    { label: "Terbaru", value: "newest" },
+                    { label: "Terlama", value: "oldest" },
+                  ]}
+                  style={{ width: "100%" }}
+                />
+              </div>
+
+              {paginatedSessions.map((item) => (
                 <div
                   key={item.chat_log_id}
                   onClick={() => handleLoadSession(item.chat_log_id)}
@@ -787,7 +900,28 @@ const AIChatView = ({
                     )}
                 </div>
               ))}
-              {history.length === 0 && (
+
+              {/* Session Pagination */}
+              {filteredSessions.length > 0 && (
+                <div
+                  style={{
+                    display: "flex",
+                    justifyContent: "center",
+                    marginTop: 12,
+                    paddingBottom: 12,
+                  }}
+                >
+                  <Pagination
+                    current={sessionPage}
+                    pageSize={SESSION_PAGE_SIZE}
+                    total={filteredSessions.length}
+                    onChange={setSessionPage}
+                    size="small"
+                  />
+                </div>
+              )}
+
+              {filteredSessions.length === 0 && (
                 <div
                   style={{
                     textAlign: "center",
@@ -849,6 +983,26 @@ const AIChatView = ({
             <div />
           )}
           <div style={{ display: "flex", gap: 8 }}>
+            {pendingQuestions.length > 0 && (
+              <Button
+                type={
+                  reviewDrawer.visible && reviewDrawer.mode === "pending"
+                    ? "primary"
+                    : "default"
+                }
+                onClick={() =>
+                  setReviewDrawer({
+                    visible: true,
+                    mode: "pending",
+                    title: "Review Generated Questions",
+                    data: pendingQuestions,
+                  })
+                }
+                icon={<CheckCircleOutlined />}
+              >
+                Review ({pendingQuestions.length})
+              </Button>
+            )}
             <Button
               icon={<HistoryOutlined />}
               onClick={() => setIsArtifactDrawerVisible(true)}
@@ -940,100 +1094,62 @@ const AIChatView = ({
                     >
                       <HistoryOutlined /> Generated Questions (Checkpoint)
                     </div>
-                    {artifacts
-                      .filter((art) => msg.artifact_ids?.includes(art.id))
-                      .map((art) => (
-                        <Card
-                          key={art.id}
-                          size="small"
-                          style={{
-                            border: "1px solid #efdbff",
-                            background: "#fcf7ff",
-                          }}
-                          title={
-                            <span style={{ fontSize: 11, color: "#8C59F1" }}>
-                              {art.content.type
-                                ? art.content.type
-                                    .replace("_", " ")
-                                    .toUpperCase()
-                                : "QUESTION"}
-                            </span>
-                          }
-                          extra={
-                            <Button
-                              type="text"
-                              size="small"
-                              icon={<EditOutlined />}
-                              onClick={() => handleEditArtifact(art)}
-                            />
-                          }
-                        >
-                          <div
-                            style={{
-                              fontWeight: 500,
-                              fontSize: 13,
-                              marginBottom: 4,
-                            }}
-                          >
-                            {art.content.text}
-                          </div>
-                          <div style={{ fontSize: 11, color: "#666" }}>
-                            Key: <b>{art.content.correct_answer}</b>
-                          </div>
-                        </Card>
-                      ))}
+                    <Button
+                      type="dashed"
+                      style={{
+                        borderColor: "#b37feb",
+                        color: "#b37feb",
+                        backgroundColor: "#f9f0ff",
+                      }}
+                      icon={<HistoryOutlined />}
+                      onClick={() => {
+                        const checkpointData = artifacts.filter((art) =>
+                          msg.artifact_ids?.includes(art.id)
+                        );
+                        // Map to GeneratedQuestion-like for display
+                        const normalized = checkpointData.map((art) => ({
+                          text: art.content.text,
+                          options: art.content.options || [],
+                          correct_answer: art.content.correct_answer,
+                          explanation: art.content.explanation,
+                          type: art.content.type,
+                        }));
+                        setReviewDrawer({
+                          visible: true,
+                          mode: "checkpoint",
+                          title: "Checkpoint Review",
+                          data: normalized as GeneratedQuestion[],
+                          originalArtifacts: checkpointData,
+                        });
+                      }}
+                    >
+                      View {msg.artifact_ids.length} Saved Questions
+                    </Button>
                   </div>
                 ) : (
                   msg.questions &&
                   msg.questions.length > 0 && (
-                    <div
-                      style={{
-                        marginTop: 12,
-                        display: "flex",
-                        flexDirection: "column",
-                        gap: 8,
-                      }}
-                    >
-                      {msg.questions.map((q, qIdx) => (
-                        <Card
-                          key={qIdx}
-                          size="small"
-                          style={{
-                            border: "1px solid #eee",
-                            background: "#fafafa",
-                          }}
-                          hoverable
-                        >
-                          <div
-                            style={{
-                              display: "flex",
-                              justifyContent: "space-between",
-                              alignItems: "start",
-                            }}
-                          >
-                            <Text
-                              ellipsis={{ tooltip: q.text }}
-                              style={{ maxWidth: "90%" }}
-                            >
-                              <span
-                                style={{ fontWeight: "bold", marginRight: 4 }}
-                              >
-                                #{qIdx + 1}
-                              </span>
-                              {q.text}
-                            </Text>
-                          </div>
-                          <div
-                            style={{
-                              marginTop: 4,
-                              fontSize: 11,
-                              color: "#999",
-                            }}
-                          >
-                            Type: {q.type} | Options: {q.options.length}
-                          </div>
-                        </Card>
-                      ))}
+                    <div style={{ marginTop: 12 }}>
+                      <Button
+                        type="dashed"
+                        style={{
+                          borderColor: "#8C59F1",
+                          color: "#8C59F1",
+                          backgroundColor: "#f9f0ff",
+                        }}
+                        icon={<QuestionCircleOutlined />}
+                        onClick={() => {
+                          setPendingQuestions(msg.questions || []);
+                          setReviewDrawer({
+                            visible: true,
+                            mode: "pending",
+                            title: "Review Generated Questions",
+                            data: msg.questions || [],
+                          });
+                        }}
+                      >
+                        View {msg.questions.length} Generated Questions
+                      </Button>
                     </div>
                   )
                 )}
@@ -1300,122 +1416,160 @@ const AIChatView = ({
         </div>
 
         {/* Generated Questions Sidebar */}
-        {pendingQuestions.length > 0 && (
-          <div
-            style={{
-              width: 340,
-              paddingLeft: 20,
-              borderLeft: "1px solid #f0f0f0",
-              display: "flex",
-              flexDirection: "column",
-            }}
-          >
-            <div
-              style={{
-                padding: "16px",
-                backgroundColor: "#f6ffed",
-                borderRadius: 16,
-                marginBottom: 16,
-                border: "1px solid #b7eb8f",
-              }}
-            >
+        <Drawer
+          title={reviewDrawer.title}
+          placement="right"
+          onClose={() => setReviewDrawer({ ...reviewDrawer, visible: false })}
+          open={reviewDrawer.visible}
+          width={400}
+          mask={false}
+          style={{ marginTop: 64 }}
+          bodyStyle={{ padding: 20, backgroundColor: "#fafafa" }}
+        >
+          {reviewDrawer.mode === "pending" && (
+            <>
+              <div
+                style={{
+                  padding: "16px",
+                  backgroundColor: "#f6ffed",
+                  borderRadius: 16,
+                  marginBottom: 16,
+                  border: "1px solid #b7eb8f",
+                }}
+              >
+                <div
+                  style={{
+                    display: "flex",
+                    justifyContent: "space-between",
+                    alignItems: "center",
+                    marginBottom: 8,
+                  }}
+                >
+                  <Title level={5} style={{ margin: 0, color: "#389e0d" }}>
+                    <QuestionCircleOutlined /> Generated (
+                    {pendingQuestions.length})
+                  </Title>
+                  <Tag color="success">{selectedQuestions.size} Dipilih</Tag>
+                </div>
+                <Checkbox
+                  checked={saveToBankSoal}
+                  onChange={(e) => setSaveToBankSoal(e.target.checked)}
+                  style={{ fontSize: 13 }}
+                >
+                  Simpan ke Bank Soal{" "}
+                  <BulbOutlined style={{ color: "#fa8c16" }} />
+                </Checkbox>
+              </div>
+
               <div
                 style={{
                   display: "flex",
-                  justifyContent: "space-between",
-                  alignItems: "center",
-                  marginBottom: 8,
+                  flexDirection: "column",
+                  gap: 12,
+                  marginBottom: 20,
                 }}
               >
-                <Title level={5} style={{ margin: 0, color: "#389e0d" }}>
-                  <QuestionCircleOutlined /> Generated (
-                  {pendingQuestions.length})
-                </Title>
-                <Tag color="success">{selectedQuestions.size} Dipilih</Tag>
-              </div>
-              <Checkbox
-                checked={saveToBankSoal}
-                onChange={(e) => setSaveToBankSoal(e.target.checked)}
-                style={{ fontSize: 13 }}
-              >
-                Simpan ke Bank Soal{" "}
-                <BulbOutlined style={{ color: "#fa8c16" }} />
-              </Checkbox>
-            </div>
-
-            <div style={{ flex: 1, overflowY: "auto", paddingRight: 4 }}>
-              {pendingQuestions.map((q, i) => (
-                <div
-                  key={i}
-                  onClick={() => toggleQuestionSelection(i)}
-                  style={{
-                    padding: 12,
-                    marginBottom: 12,
-                    borderRadius: 12,
-                    backgroundColor: "white",
-                    border: selectedQuestions.has(i)
-                      ? "2px solid #52c41a"
-                      : "1px solid #f0f0f0",
-                    boxShadow: "0 2px 6px rgba(0,0,0,0.03)",
-                    cursor: "pointer",
-                    transition: "all 0.2s",
-                  }}
-                >
+                {pendingQuestions.map((q, i) => (
                   <div
+                    key={i}
+                    onClick={() => toggleQuestionSelection(i)}
                     style={{
-                      display: "flex",
-                      justifyContent: "space-between",
-                      marginBottom: 6,
+                      padding: 12,
+                      borderRadius: 12,
+                      backgroundColor: "white",
+                      border: selectedQuestions.has(i)
+                        ? "2px solid #52c41a"
+                        : "1px solid #f0f0f0",
+                      boxShadow: "0 2px 6px rgba(0,0,0,0.03)",
+                      cursor: "pointer",
+                      transition: "all 0.2s",
                     }}
                   >
-                    <Tag
-                      color={selectedQuestions.has(i) ? "green" : "default"}
-                      style={{ margin: 0 }}
-                    >
-                      #{i + 1}
-                    </Tag>
-                    <Button
-                      type="text"
-                      size="small"
-                      icon={<EditOutlined />}
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        handleEditQuestion(i);
+                    <div
+                      style={{
+                        display: "flex",
+                        justifyContent: "space-between",
+                        marginBottom: 6,
                       }}
-                      style={{ height: 20, fontSize: 12, color: "#1890ff" }}
-                    />
+                    >
+                      <Tag
+                        color={selectedQuestions.has(i) ? "green" : "default"}
+                        style={{ margin: 0 }}
+                      >
+                        #{i + 1}
+                      </Tag>
+                      <Button
+                        type="text"
+                        size="small"
+                        icon={<EditOutlined />}
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleEditQuestion(i);
+                        }}
+                        style={{ height: 20, fontSize: 12, color: "#1890ff" }}
+                      />
+                    </div>
+                    <div
+                      style={{ fontSize: 13, lineHeight: "1.5", color: "#444" }}
+                    >
+                      {q.text.substring(0, 120)}
+                      {q.text.length > 120 ? "..." : ""}
+                    </div>
                   </div>
-                  <div
-                    style={{ fontSize: 13, lineHeight: "1.5", color: "#444" }}
+                ))}
+              </div>
+
+              <Button
+                type="primary"
+                onClick={handleSaveQuestions}
+                loading={saving}
+                disabled={selectedQuestions.size === 0}
+                size="large"
+                icon={<SaveOutlined />}
+                block
+                style={{
+                  borderRadius: 12,
+                  height: 44,
+                  backgroundColor: "#52c41a",
+                  borderColor: "#52c41a",
+                  boxShadow: "0 4px 12px rgba(82, 196, 26, 0.3)",
+                }}
+              >
+                Simpan Soal
+              </Button>
+            </>
+          )}
+
+          {reviewDrawer.mode === "checkpoint" && (
+            <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
+              {reviewDrawer.data.map((q, i) => (
+                <Card key={i} title={`Question #${i + 1}`} size="small">
+                  <div style={{ fontWeight: 500, marginBottom: 8 }}>
+                    {q.text}
+                  </div>
+                  <div style={{ fontSize: 12, color: "#666" }}>
+                    Answer: {q.correct_answer}
+                  </div>
+                  <Button
+                    size="small"
+                    icon={<EditOutlined />}
+                    style={{ marginTop: 8 }}
+                    onClick={() => {
+                      if (
+                        reviewDrawer.originalArtifacts &&
+                        reviewDrawer.originalArtifacts[i]
+                      ) {
+                        handleEditArtifact(reviewDrawer.originalArtifacts[i]);
+                      }
+                    }}
                   >
-                    {q.text.substring(0, 120)}
-                    {q.text.length > 120 ? "..." : ""}
-                  </div>
-                </div>
+                    Edit / Detail
+                  </Button>
+                </Card>
               ))}
             </div>
-
-            <Button
-              type="primary"
-              onClick={handleSaveQuestions}
-              loading={saving}
-              disabled={selectedQuestions.size === 0}
-              size="large"
-              icon={<SaveOutlined />}
-              block
-              style={{
-                marginTop: 16,
-                borderRadius: 12,
-                height: 44,
-                backgroundColor: "#52c41a",
-                borderColor: "#52c41a",
-                boxShadow: "0 4px 12px rgba(82, 196, 26, 0.3)",
-              }}
-            >
-              Simpan Soal
-            </Button>
-          </div>
-        )}
+          )}
+        </Drawer>
         <ModalEditQuestion
           isModalOpen={isEditModalVisible}
           setIsModalOpen={setIsEditModalVisible}
@@ -1500,8 +1654,45 @@ const AIChatView = ({
           }}
           bodyStyle={{ backgroundColor: "#fafafa", padding: "20px" }}
         >
+          <div
+            style={{
+              display: "flex",
+              flexDirection: "column",
+              gap: 12,
+              marginBottom: 16,
+            }}
+          >
+            <Input
+              placeholder="Cari pertanyaan..."
+              prefix={<SearchOutlined style={{ color: "#ccc" }} />}
+              value={artifactSearch}
+              onChange={(e) => setArtifactSearch(e.target.value)}
+              allowClear
+            />
+            <div style={{ display: "flex", gap: 8 }}>
+              <Select
+                style={{ flex: 1 }}
+                value={artifactSort}
+                onChange={setArtifactSort}
+                options={[
+                  { label: "Terbaru", value: "newest" },
+                  { label: "Terlama", value: "oldest" },
+                ]}
+              />
+              <Select
+                style={{ flex: 1 }}
+                value={artifactFilter}
+                onChange={setArtifactFilter}
+                options={[
+                  { label: "Semua Status", value: "all" },
+                  { label: "Pending", value: "pending" },
+                  { label: "Approved", value: "approved" },
+                ]}
+              />
+            </div>
+          </div>
           <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
-            {artifacts.map((art) => (
+            {paginatedArtifacts.map((art) => (
               <div
                 key={art.id}
                 style={{
@@ -1680,7 +1871,27 @@ const AIChatView = ({
                 </div>
               </div>
             ))}
-            {artifacts.length === 0 && (
+
+            {/* Artifact Pagination */}
+            {filteredArtifacts.length > 0 && (
+              <div
+                style={{
+                  display: "flex",
+                  justifyContent: "center",
+                  marginTop: 16,
+                }}
+              >
+                <Pagination
+                  current={artifactPage}
+                  pageSize={ARTIFACT_PAGE_SIZE}
+                  total={filteredArtifacts.length}
+                  onChange={setArtifactPage}
+                  size="small"
+                />
+              </div>
+            )}
+
+            {filteredArtifacts.length === 0 && (
               <div
                 style={{
                   textAlign: "center",

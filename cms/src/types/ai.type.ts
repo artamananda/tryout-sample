@@ -99,6 +99,7 @@ export interface CreateBankSoalBatchRequest {
 
 export interface BankSoalResponse {
   bank_soal_id: string;
+  question_id?: string; // alias for bank_soal_id in some contexts
   type: string;
   text: string;
   options: string[];
@@ -106,6 +107,7 @@ export interface BankSoalResponse {
   explanation?: string;
   difficulty?: string;
   topic?: string;
+  image_url?: string;
   is_ai_generated: boolean;
   created_at: string;
 }

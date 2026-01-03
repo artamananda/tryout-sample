@@ -10,13 +10,12 @@ import {
   message,
 } from "antd";
 import ModalUi from "../../components/Ui/Modal";
-import React, { useEffect, useState } from "react";
+import React, { useState } from "react";
 import ReactQuill from "react-quill";
 import { DownOutlined, PlusOutlined } from "@ant-design/icons";
-import { apiUpdateBankSoal } from "../../api/ai";
+import { apiSaveToBankSoal } from "../../api/ai";
 import { getErrorMessage } from "../../helpers/errorHandler";
 import SwitchButton from "../../components/Ui/SwitchButton";
-import { BankSoalResponse, CreateBankSoalRequest } from "../../types/ai.type";
 import {
   getAllQuestionTypes,
   saveCustomType,
@@ -26,50 +25,22 @@ import {
 type PropTypes = {
   setIsModalOpen: (val: boolean) => void;
   isModalOpen: boolean;
-  questionData: any;
   onSuccess: () => void;
 };
 
-const ModalUpdateBankSoal = (props: PropTypes) => {
-  const { setIsModalOpen, isModalOpen, questionData, onSuccess } = props;
+const ModalCreateBankSoal = (props: PropTypes) => {
+  const { setIsModalOpen, isModalOpen, onSuccess } = props;
 
-  const [questionText, setQuestionText] = useState<string>(
-    questionData?.text || ""
-  );
-  const [options, setOptions] = useState<string[]>(
-    questionData?.options || Array.from({ length: 5 }, () => "")
-  );
-  const [answer, setAnswer] = useState<string>(
-    questionData?.correct_answer || ""
-  );
-  const [explanation, setExplanation] = useState<string>(
-    questionData?.explanation || ""
-  );
-  const [isOptions, setIsOptions] = useState<boolean>(
-    questionData?.is_options ?? true
-  );
-  const [questionType, setQuestionType] = useState<string>(
-    questionData?.type || "kpu"
-  );
-  const [difficulty, setDifficulty] = useState<string>(
-    questionData?.difficulty || "medium"
-  );
-  const [topic, setTopic] = useState<string>(questionData?.topic || "");
-  const [newTypeName, setNewTypeName] = useState<string>("");
+  const [questionType, setQuestionType] = useState<string>("kpu");
+  const [questionText, setQuestionText] = useState<string>("");
+  const [options, setOptions] = useState<string[]>(["", "", "", "", ""]);
+  const [answer, setAnswer] = useState<string>("A");
+  const [explanation, setExplanation] = useState<string>("");
+  const [difficulty, setDifficulty] = useState<string>("medium");
+  const [topic, setTopic] = useState<string>("");
+  const [isOptions, setIsOptions] = useState<boolean>(true);
   const [isLoading, setIsLoading] = useState(false);
-
-  useEffect(() => {
-    if (isModalOpen && questionData) {
-      setQuestionText(questionData.text || "");
-      setOptions(questionData.options || Array.from({ length: 5 }, () => ""));
-      setAnswer(questionData.correct_answer || "");
-      setExplanation(questionData.explanation || "");
-      setIsOptions(questionData.is_options ?? true);
-      setQuestionType(questionData.type || "kpu");
-      setDifficulty(questionData.difficulty || "medium");
-      setTopic(questionData.topic || "");
-    }
-  }, [isModalOpen, questionData]);
+  const [newTypeName, setNewTypeName] = useState<string>("");
 
   const quillModules = {
     toolbar: [
@@ -104,32 +75,55 @@ const ModalUpdateBankSoal = (props: PropTypes) => {
     };
   });
 
-  const handleMenuClick: MenuProps["onClick"] = (e) => setAnswer(e.key);
+  const handleMenuClick: MenuProps["onClick"] = (e) => {
+    setAnswer(e.key);
+  };
+
   const menuProps = { items, onClick: handleMenuClick };
 
-  const handleUpdate = async () => {
+  const resetForm = () => {
+    setQuestionType("kpu");
+    setQuestionText("");
+    setOptions(["", "", "", "", ""]);
+    setAnswer("A");
+    setExplanation("");
+    setDifficulty("medium");
+    setTopic("");
+    setIsOptions(true);
+  };
+
+  const handleCreate = async () => {
+    if (!questionText.trim()) {
+      message.error("Silakan masukkan teks soal");
+      return;
+    }
+    if (isOptions && options.filter((o) => o.trim()).length < 2) {
+      message.error("Silakan masukkan minimal 2 opsi jawaban");
+      return;
+    }
     setIsLoading(true);
     try {
-      const payload: CreateBankSoalRequest = {
-        type: questionType,
-        text: questionText,
-        options: isOptions && options.every((o) => o !== "") ? options : [],
-        correct_answer: answer,
-        explanation: explanation,
-        difficulty: difficulty,
-        topic: topic,
-        image_url: questionData?.image_url || "",
-        is_options: isOptions,
-        points: questionData?.points || 0,
-        is_ai_generated: questionData?.is_ai_generated,
+      const payload = {
+        questions: [
+          {
+            type: questionType,
+            text: questionText,
+            options: isOptions ? options.filter((o) => o.trim()) : [],
+            correct_answer: answer,
+            explanation: explanation,
+            difficulty: difficulty,
+            topic: topic,
+            is_options: isOptions,
+            points: 1,
+            is_ai_generated: false,
+          },
+        ],
       };
-      const res = await apiUpdateBankSoal(
-        questionData.bank_soal_id || questionData.question_id,
-        payload
-      );
-      if (res) {
-        message.success("Soal berhasil diperbarui!");
+      const res = await apiSaveToBankSoal(payload);
+      if (res && res.length > 0) {
+        message.success("Soal berhasil dibuat!");
         setIsModalOpen(false);
+        resetForm();
         onSuccess();
       }
     } catch (err) {
@@ -143,6 +137,11 @@ const ModalUpdateBankSoal = (props: PropTypes) => {
     const updated = [...options];
     updated[index] = value;
     setOptions(updated);
+  };
+
+  const handleCancel = () => {
+    setIsModalOpen(false);
+    resetForm();
   };
 
   const sectionStyle = {
@@ -167,12 +166,12 @@ const ModalUpdateBankSoal = (props: PropTypes) => {
   return (
     <ModalUi
       isModalOpen={isModalOpen}
-      handleOk={handleUpdate}
-      handleCancel={() => setIsModalOpen(false)}
-      title="✏️ Edit Soal"
+      handleOk={handleCreate}
+      handleCancel={handleCancel}
+      title="✨ Buat Soal Baru"
     >
       <div style={{ maxHeight: "70vh", overflowY: "auto", paddingRight: 8 }}>
-        <Form layout="vertical" onFinish={handleUpdate}>
+        <Form layout="vertical" onFinish={handleCreate}>
           {/* Section: Basic Info */}
           <div
             style={{
@@ -185,6 +184,7 @@ const ModalUpdateBankSoal = (props: PropTypes) => {
 
             <Form.Item
               label={<span style={{ fontWeight: 500 }}>Jenis Soal</span>}
+              required
               style={{ marginBottom: 16 }}
             >
               <Select
@@ -283,6 +283,7 @@ const ModalUpdateBankSoal = (props: PropTypes) => {
 
             <Form.Item
               label={<span style={{ fontWeight: 500 }}>Teks Soal</span>}
+              required
               style={{ marginBottom: 16 }}
             >
               <ReactQuill
@@ -311,7 +312,10 @@ const ModalUpdateBankSoal = (props: PropTypes) => {
           {/* Section: Options */}
           <div style={sectionStyle}>
             <div
-              style={{ ...sectionHeaderStyle, justifyContent: "space-between" }}
+              style={{
+                ...sectionHeaderStyle,
+                justifyContent: "space-between",
+              }}
             >
               <span>📝 Pilihan Jawaban</span>
               <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
@@ -353,6 +357,7 @@ const ModalUpdateBankSoal = (props: PropTypes) => {
 
                 <Form.Item
                   label={<span style={{ fontWeight: 500 }}>Jawaban Benar</span>}
+                  required
                 >
                   <Dropdown menu={menuProps}>
                     <Button
@@ -400,7 +405,7 @@ const ModalUpdateBankSoal = (props: PropTypes) => {
                 boxShadow: "0 4px 14px rgba(140, 89, 241, 0.3)",
               }}
             >
-              💾 Simpan Perubahan
+              ✨ Buat Soal
             </Button>
           </Form.Item>
         </Form>
@@ -409,4 +414,4 @@ const ModalUpdateBankSoal = (props: PropTypes) => {
   );
 };
 
-export default ModalUpdateBankSoal;
+export default ModalCreateBankSoal;
