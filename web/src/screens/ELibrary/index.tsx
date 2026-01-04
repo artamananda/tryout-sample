@@ -37,8 +37,8 @@ const ELibraryScreen = () => {
       <Navigation />
       <div
         style={{
-          padding: '40px 24px',
-          maxWidth: 1200,
+          padding: '40px 40px',
+          width: '100%',
           margin: '0 auto',
           marginTop: 80
         }}
@@ -54,7 +54,7 @@ const ELibraryScreen = () => {
           </Paragraph>
         </div>
 
-        <div style={{ maxWidth: 400, margin: '0 auto 32px auto' }}>
+        <div style={{ maxWidth: 600, margin: '0 auto 32px auto' }}>
           <Search
             placeholder="Cari judul atau penulis..."
             enterButton="Cari"

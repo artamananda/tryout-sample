@@ -3,6 +3,7 @@ package main
 import (
 	"github.com/artamananda/tryout-sample/internal/config"
 	"github.com/artamananda/tryout-sample/internal/controller"
+	"github.com/artamananda/tryout-sample/internal/cron"
 	"github.com/artamananda/tryout-sample/internal/exception"
 	"github.com/artamananda/tryout-sample/internal/model"
 	"github.com/artamananda/tryout-sample/internal/repository"
@@ -16,10 +17,10 @@ import (
 	_ "github.com/artamananda/tryout-sample/docs"
 )
 
-const APP_VERSION = "0.3.0"
+const APP_VERSION = "0.4.0"
 
 // @title Tryout Sample
-// @version 0.3.0
+// @version 0.4.0
 // @description API Documentation for Telisik Tryout
 // @termsOfService http://swagger.io/terms/
 // @contact.name Artamananda
@@ -56,6 +57,23 @@ func main() {
 	programRepository := repository.NewProgramRepository(db)
 	transactionProgramRepository := repository.NewTransactionProgramRepository(db)
 	ebookRepository := repository.NewEbookRepository(db)
+	bankSoalRepository := repository.NewBankSoalRepository(db)
+	chatLogRepository := repository.NewChatLogRepository(db)
+	dailyChallengeRepository := repository.NewDailyChallengeRepository(db)
+	questionStatisticsRepository := repository.NewQuestionStatisticsRepository(db)
+	aiExampleRepository := repository.NewAIExampleRepository(db)
+	chatArtifactRepository := repository.NewChatArtifactRepository(db)
+
+	// Cron Scheduler
+	scheduler := cron.NewScheduler(
+		initConfig,
+		&bankSoalRepository,
+		&chatLogRepository,
+		&dailyChallengeRepository,
+		&questionStatisticsRepository,
+	)
+	scheduler.Start()
+	defer scheduler.Stop()
 
 	userService := service.NewUserService(&userRepository, uploader)
 	tryoutService := service.NewTryoutService(&tryoutRepository)
@@ -66,6 +84,9 @@ func main() {
 	transactionProgramService := service.NewTransactionProgramService(&transactionProgramRepository, &programRepository)
 	registerProgramService := service.NewRegisterProgramService(&userService, &programService, &transactionProgramService, uploader)
 	ebookService := service.NewEbookService(&ebookRepository, uploader)
+	aiService := service.NewAIService(initConfig, &chatLogRepository, &aiExampleRepository, &chatArtifactRepository)
+	extractionService := service.NewExtractionService(initConfig)
+	bankSoalService := service.NewBankSoalService(&bankSoalRepository)
 
 	userController := controller.NewUserController(&userService, initConfig)
 	tryoutController := controller.NewTryoutController(&tryoutService, initConfig)
@@ -76,6 +97,8 @@ func main() {
 	transactionProgramController := controller.NewTransactionProgramController(&transactionProgramService, initConfig)
 	registerProgramController := controller.NewRegisterProgramController(&registerProgramService, initConfig)
 	ebookController := controller.NewEbookController(&ebookService, initConfig)
+	aiController := controller.NewAIController(&aiService, extractionService, initConfig)
+	bankSoalController := controller.NewBankSoalController(&bankSoalService, initConfig)
 
 	userController.Route(app)
 	tryoutController.Route(app)
@@ -86,6 +109,8 @@ func main() {
 	transactionProgramController.Route(app)
 	registerProgramController.Route(app)
 	ebookController.Route(app)
+	aiController.Route(app)
+	bankSoalController.Route(app)
 
 	app.Get("/", func(c *fiber.Ctx) error {
 		return c.Status(fiber.StatusCreated).JSON(model.GeneralResponse{

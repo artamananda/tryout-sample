@@ -17,6 +17,7 @@ import ELibraryScreen from '../screens/ELibrary';
 import ReadScreen from '../screens/ELibrary/Read';
 import ProgramScreen from '../screens/Program';
 import RegisterProgramScreen from '../screens/Program/Register';
+import BankSoalScreen from '../screens/BankSoal';
 
 const RootNavigator = () => {
   return (
@@ -77,6 +78,14 @@ const RootNavigator = () => {
         <Route path="/" element={<HomeScreen />} />
 
         <Route element={<AppLayout />}>
+          <Route
+            path="/bank-soal"
+            element={
+              <PrivateRoute loginPath="/login">
+                <BankSoalScreen />
+              </PrivateRoute>
+            }
+          />
           <Route
             path="/dashboard"
             element={

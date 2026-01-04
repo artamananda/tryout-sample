@@ -8,6 +8,9 @@ export interface QuestionProps {
   options: string[];
   correct_answer: string;
   points?: string;
+  difficulty?: string;
+  explanation?: string;
+  is_ai_generated?: boolean;
   created_at?: Date | string;
   updated_at?: Date | string;
 }
@@ -21,6 +24,9 @@ export interface CreateQuestionRequest {
   image_url?: string;
   correct_answer: string;
   points?: string;
+  difficulty?: string;
+  explanation?: string;
+  is_ai_generated?: boolean;
 }
 
 export interface UpdateQuestionRequest {
@@ -33,4 +39,6 @@ export interface UpdateQuestionRequest {
   options?: string[];
   correct_answer?: string;
   points?: string;
+  difficulty?: string;
+  explanation?: string;
 }

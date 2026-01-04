@@ -26,13 +26,20 @@ const RegisterForm = () => {
   const onFinishFailed = (errorInfo: any) => {};
 
   const handleResendOtp = async () => {
-    const formData = form.getFieldsValue(['email', 'username', 'name', 'password']);
+    const formData = form.getFieldsValue([
+      'email',
+      'username',
+      'name',
+      'password'
+    ]);
     const result = await doSendOtpEmail(formData);
     if (result !== 1) {
       setCountdown(59);
       setIsShowModal(true);
     }
   };
+
+  const handleFormSubmit = handleResendOtp;
 
   useEffect(() => {
     if (countdown > 0) {
@@ -53,7 +60,7 @@ const RegisterForm = () => {
         form={form}
         name="basic"
         layout="vertical"
-        onFinish={handleResendOtp}
+        onFinish={handleFormSubmit}
         onFinishFailed={onFinishFailed}
         autoComplete="off"
       >
@@ -137,10 +144,7 @@ const RegisterForm = () => {
           setIsShowModal(false);
         }}
       >
-        <Form
-          form={form}
-          onFinish={doRegister}
-        >
+        <Form form={form} onFinish={doRegister}>
           <div>
             <Text style={{ fontWeight: 'bold' }}>Email Verification</Text>
             <Divider style={{ marginTop: 10 }} />

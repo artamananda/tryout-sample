@@ -3,7 +3,8 @@ import {
   CalendarOutlined,
   UserOutlined,
   PoweroffOutlined,
-  ScheduleOutlined
+  ScheduleOutlined,
+  BookOutlined
 } from '@ant-design/icons';
 import type { MenuProps } from 'antd';
 import { Layout, Menu, Image, Spin, Modal } from 'antd';
@@ -42,6 +43,7 @@ const AppLayout = () => {
       getItem('Logout', '/logout', <PoweroffOutlined />)
     ]),
     getItem('Tryout', '/tryout', <CalendarOutlined />),
+    getItem('Bank Soal', '/bank-soal', <BookOutlined />),
     getItem('Program', '/program', <ScheduleOutlined />)
   ];
 

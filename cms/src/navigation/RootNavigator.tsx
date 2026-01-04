@@ -25,6 +25,8 @@ import ListUserScreen from "../screens/ListUser";
 import ListProgramScreen from "../screens/ListProgram";
 import ListProgramStudentScreen from "../screens/ListProgram/ListProgramStudent/ProgramStudent";
 import EditProgramScreen from "../screens/ListProgram/Edit";
+import BankSoalScreen from "../screens/BankSoal";
+import AIChatScreen from "../screens/AIChat";
 
 const RootNavigator = () => {
   return (
@@ -58,6 +60,24 @@ const RootNavigator = () => {
             element={
               <PrivateRoute loginPath="/login">
                 <DashboardScreen />
+              </PrivateRoute>
+            }
+          />
+
+          <Route
+            path="/bank-soal"
+            element={
+              <PrivateRoute loginPath="/login">
+                <BankSoalScreen />
+              </PrivateRoute>
+            }
+          />
+
+          <Route
+            path="/ai-generator"
+            element={
+              <PrivateRoute loginPath="/login">
+                <AIChatScreen />
               </PrivateRoute>
             }
           />
