@@ -5,8 +5,8 @@ CREATE TABLE IF NOT EXISTS question_statistics (
     correct_attempts INT DEFAULT 0,
     avg_time_seconds FLOAT,
     calculated_difficulty VARCHAR(20),
-    last_updated TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    last_updated TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP,
+    created_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP
 );
 
 CREATE INDEX idx_question_statistics_bank_soal ON question_statistics(bank_soal_id);

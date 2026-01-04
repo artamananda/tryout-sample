@@ -6,8 +6,8 @@ CREATE TABLE IF NOT EXISTS daily_challenges (
     description TEXT,
     bonus_points INT DEFAULT 10,
     status VARCHAR(20) DEFAULT 'active',
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    created_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP
 );
 
 CREATE INDEX idx_daily_challenges_date ON daily_challenges(challenge_date);
