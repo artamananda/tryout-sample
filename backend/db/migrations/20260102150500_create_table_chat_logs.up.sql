@@ -5,10 +5,10 @@ CREATE TABLE IF NOT EXISTS chat_logs (
     topic VARCHAR(255),
     messages JSONB NOT NULL,
     status VARCHAR(20) DEFAULT 'pending',
-    processed_at TIMESTAMP,
+    processed_at TIMESTAMPTZ,
     error_message TEXT,
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    created_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP
 );
 
 CREATE INDEX idx_chat_logs_status ON chat_logs(status);

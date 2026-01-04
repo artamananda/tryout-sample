@@ -6,9 +6,6 @@ import { InputOTP } from 'antd-input-otp';
 
 const { Text, Link } = Typography;
 
-// OTP Bypass mode - set to true to skip OTP verification
-const IS_OTP_BYPASS = true;
-
 const RegisterForm = () => {
   const [form] = Form.useForm();
   const { isAuthLoading, doSendOtpEmail, doRegister } = useAuthApp();
@@ -42,22 +39,7 @@ const RegisterForm = () => {
     }
   };
 
-  // Direct registration handler (bypasses OTP)
-  const handleDirectRegister = async () => {
-    const formData = form.getFieldsValue([
-      'email',
-      'username',
-      'name',
-      'password'
-    ]);
-    // Add dummy OTP for bypass mode
-    await doRegister({ ...formData, otp: '000000' });
-  };
-
-  // Choose handler based on bypass mode
-  const handleFormSubmit = IS_OTP_BYPASS
-    ? handleDirectRegister
-    : handleResendOtp;
+  const handleFormSubmit = handleResendOtp;
 
   useEffect(() => {
     if (countdown > 0) {

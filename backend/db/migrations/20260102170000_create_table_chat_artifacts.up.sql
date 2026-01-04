@@ -7,8 +7,8 @@ CREATE TABLE chat_artifacts (
     metadata JSONB,
     user_feedback TEXT,
     status VARCHAR(50) DEFAULT 'generated',
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    created_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP,
     CONSTRAINT fk_chat_log FOREIGN KEY (chat_log_id) REFERENCES chat_logs(chat_log_id) ON DELETE CASCADE
 );
 
