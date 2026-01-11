@@ -50,6 +50,7 @@ const RegisterProgramScreen = () => {
   const [isFetching, setIsFetching] = useState<boolean>(false);
   const [isSuccess, setIsSuccess] = useState<boolean>(false);
   const isOutdated = false;
+  const provinceWatch = Form.useWatch('province', form);
 
   const fetchProgram = async () => {
     try {
@@ -166,12 +167,14 @@ const RegisterProgramScreen = () => {
   }, [programId, user?.user_id]);
 
   useEffect(() => {
-    const selectedProvince = form.getFieldValue('province');
-    if (selectedProvince && provinceList.length > 0) {
+    if (provinceWatch && provinceList.length > 0) {
       const prov = provinceList.find(
-        (province) => province.name === selectedProvince
+        (province) => province.name === provinceWatch
       );
       if (prov) {
+        // Reset regency list before fetching new ones
+        setRegencyList([]);
+        form.setFieldValue('regency', undefined);
         fetch(
           `https://www.emsifa.com/api-wilayah-indonesia/api/regencies/${prov.id}.json`
         )
@@ -182,7 +185,7 @@ const RegisterProgramScreen = () => {
       setRegencyList([]);
       form.setFieldValue('regency', undefined);
     }
-  }, [form.getFieldValue('province'), provinceList]);
+  }, [provinceWatch, provinceList]);
   return isFetching ? (
     <Spin />
   ) : isOutdated ? (
@@ -273,9 +276,10 @@ const RegisterProgramScreen = () => {
           rules={[{ required: true, message: 'Mohon pilih asal provinsi!' }]}
         >
           <Select
-            onSelect={(value) => {
-              form.setFieldValue('province', value);
+            onChange={() => {
+              // Clear regency when province changes
               form.setFieldValue('regency', undefined);
+              setRegencyList([]);
             }}
           >
             {provinceList.map((province) => (
