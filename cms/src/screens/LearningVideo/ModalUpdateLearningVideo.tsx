@@ -1,10 +1,12 @@
 import React, { useState, useEffect } from "react";
-import { Modal, Form, Input, Button, Spin } from "antd";
+import { Modal, Form, Input, Button, Spin, Select } from "antd";
 import {
   apiUpdateLearningVideo,
   UpdateLearningVideoRequest,
   LearningVideoResponse,
 } from "../../api/learningVideo";
+import { ProgramProps } from "../../types/program.type";
+import useFetchList from "../../hooks/useFetchList";
 
 interface ModalUpdateLearningVideoProps {
   open: boolean;
@@ -21,6 +23,11 @@ const ModalUpdateLearningVideo: React.FC<ModalUpdateLearningVideoProps> = ({
 }) => {
   const [form] = Form.useForm();
   const [isLoading, setIsLoading] = useState(false);
+  const { data: programs, isLoading: loadingPrograms } =
+    useFetchList<ProgramProps>({
+      endpoint: "program",
+      fetchable: open,
+    });
 
   useEffect(() => {
     if (open && video) {
@@ -31,6 +38,12 @@ const ModalUpdateLearningVideo: React.FC<ModalUpdateLearningVideoProps> = ({
       });
     }
   }, [open, video, form]);
+
+  const validateYouTubeUrl = (url: string): boolean => {
+    const youtubeRegex =
+      /^(https?:\/\/)?(www\.)?(youtube|youtu|youtube-nocookie)\.(com|be)\//;
+    return youtubeRegex.test(url);
+  };
 
   const handleSubmit = async (values: UpdateLearningVideoRequest) => {
     setIsLoading(true);
@@ -81,22 +94,31 @@ const ModalUpdateLearningVideo: React.FC<ModalUpdateLearningVideoProps> = ({
             rules={[
               { required: true, message: "Please enter the video URL" },
               {
-                pattern: /^https?:\/\/.+/,
-                message: "Please enter a valid URL",
+                validator: (_, value) => {
+                  if (!value) return Promise.resolve();
+                  if (validateYouTubeUrl(value)) {
+                    return Promise.resolve();
+                  }
+                  return Promise.reject(
+                    new Error("Please enter a valid YouTube URL"),
+                  );
+                },
               },
             ]}
           >
             <Input placeholder="https://youtube.com/watch?v=..." />
           </Form.Item>
 
-          <Form.Item
-            label="Program ID (Optional)"
-            name="program_id"
-            rules={[
-              { min: 3, message: "Program ID must be at least 3 characters" },
-            ]}
-          >
-            <Input placeholder="Enter program ID (leave empty for no program)" />
+          <Form.Item label="Program (Optional)" name="program_id">
+            <Select
+              allowClear
+              placeholder="Select a program"
+              loading={loadingPrograms}
+              options={programs.map((program: any) => ({
+                label: `${program.name} (${program.program_id})`,
+                value: program.program_id,
+              }))}
+            />
           </Form.Item>
 
           <Form.Item>

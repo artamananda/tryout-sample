@@ -27,10 +27,34 @@ const LearningVideoScreen = () => {
   const [page, setPage] = useState(1);
   const [pageSize, setPageSize] = useState(9);
   const [total, setTotal] = useState(0);
+  const [selectedVideo, setSelectedVideo] = useState<LearningVideoResponse | null>(null);
 
   useEffect(() => {
     document.title = 'Learning Videos';
   }, []);
+
+  const getYouTubeEmbedUrl = (url: string): string | null => {
+    try {
+      const urlObj = new URL(url);
+      let videoId: string | null = null;
+
+      // Handle youtube.com URLs
+      if (urlObj.hostname.includes('youtube.com')) {
+        videoId = urlObj.searchParams.get('v');
+      }
+      // Handle youtu.be short URLs
+      else if (urlObj.hostname.includes('youtu.be')) {
+        videoId = urlObj.pathname.substring(1);
+      }
+
+      if (videoId) {
+        return `https://www.youtube.com/embed/${videoId}`;
+      }
+    } catch (error) {
+      console.error('Invalid URL:', url);
+    }
+    return null;
+  };
 
   const fetchVideos = async () => {
     setIsLoading(true);
@@ -110,80 +134,161 @@ const LearningVideoScreen = () => {
             style={{ marginTop: '60px' }}
           />
         ) : (
-          <Row gutter={[16, 16]} style={{ marginBottom: '24px' }}>
-            {videos?.map((video) => (
-              <Col key={video.id} xs={24} sm={24} md={8} lg={8}>
-                <Card
-                  hoverable
-                  style={{
-                    height: '100%',
-                    display: 'flex',
-                    flexDirection: 'column'
-                  }}
-                  cover={
-                    <div
+          <>
+            <Row gutter={[16, 16]} style={{ marginBottom: '24px' }}>
+              {videos?.map((video) => {
+                const embedUrl = getYouTubeEmbedUrl(video.url);
+                return (
+                  <Col key={video.id} xs={24} sm={24} md={8} lg={8}>
+                    <Card
+                      hoverable
                       style={{
-                        background: '#000',
-                        height: '200px',
+                        height: '100%',
                         display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                        position: 'relative'
+                        flexDirection: 'column',
+                        cursor: 'pointer'
                       }}
+                      onClick={() => setSelectedVideo(video)}
+                      cover={
+                        embedUrl ? (
+                          <div
+                            style={{
+                              background: '#000',
+                              height: '200px',
+                              overflow: 'hidden',
+                              position: 'relative'
+                            }}
+                          >
+                            <iframe
+                              width="100%"
+                              height="200"
+                              src={`${embedUrl}?controls=0`}
+                              title={video.title}
+                              style={{
+                                border: 'none',
+                                pointerEvents: 'none'
+                              }}
+                              allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                            ></iframe>
+                          </div>
+                        ) : (
+                          <div
+                            style={{
+                              background: '#000',
+                              height: '200px',
+                              display: 'flex',
+                              alignItems: 'center',
+                              justifyContent: 'center',
+                              position: 'relative'
+                            }}
+                          >
+                            <PlayCircleOutlined
+                              style={{
+                                fontSize: '48px',
+                                color: '#fff',
+                                opacity: 0.8
+                              }}
+                            />
+                          </div>
+                        )
+                      }
                     >
-                      <PlayCircleOutlined
+                      <div
                         style={{
-                          fontSize: '48px',
-                          color: '#fff',
-                          opacity: 0.8
+                          flex: 1,
+                          display: 'flex',
+                          flexDirection: 'column'
                         }}
-                      />
-                    </div>
-                  }
-                >
+                      >
+                        <Title
+                          level={4}
+                          style={{ marginBottom: '8px' }}
+                          ellipsis={{ rows: 2 }}
+                        >
+                          {video.title}
+                        </Title>
+
+                        {video.program_id && (
+                          <div style={{ marginBottom: '8px' }}>
+                            <Tag color="blue">{video.program_id}</Tag>
+                          </div>
+                        )}
+
+                        <Text
+                          type="secondary"
+                          style={{ fontSize: '12px', marginBottom: '12px' }}
+                        >
+                          {new Date(video.created_at).toLocaleDateString()}
+                        </Text>
+
+                        <div style={{ marginTop: 'auto' }}>
+                          <Button
+                            type="primary"
+                            block
+                            icon={<PlayCircleOutlined />}
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              setSelectedVideo(video);
+                            }}
+                          >
+                            Watch Now
+                          </Button>
+                        </div>
+                      </div>
+                    </Card>
+                  </Col>
+                );
+              })}
+            </Row>
+            {selectedVideo && (
+              <Card
+                title={selectedVideo.title}
+                style={{ marginTop: '24px' }}
+                extra={
+                  <Button
+                    type="text"
+                    onClick={() => setSelectedVideo(null)}
+                  >
+                    Close
+                  </Button>
+                }
+              >
+                {getYouTubeEmbedUrl(selectedVideo.url) ? (
                   <div
                     style={{
-                      flex: 1,
-                      display: 'flex',
-                      flexDirection: 'column'
+                      position: 'relative',
+                      paddingBottom: '56.25%',
+                      height: 0,
+                      overflow: 'hidden'
                     }}
                   >
-                    <Title
-                      level={4}
-                      style={{ marginBottom: '8px' }}
-                      ellipsis={{ rows: 2 }}
-                    >
-                      {video.title}
-                    </Title>
-
-                    {video.program_id && (
-                      <div style={{ marginBottom: '8px' }}>
-                        <Tag color="blue">{video.program_id}</Tag>
-                      </div>
-                    )}
-
-                    <Text
-                      type="secondary"
-                      style={{ fontSize: '12px', marginBottom: '12px' }}
-                    >
-                      {new Date(video.created_at).toLocaleDateString()}
-                    </Text>
-
-                    <div style={{ marginTop: 'auto' }}>
-                      <Button
-                        type="primary"
-                        block
-                        icon={<PlayCircleOutlined />}
-                        onClick={() => window.open(video.url, '_blank')}
-                      >
-                        Watch Now
-                      </Button>
-                    </div>
+                    <iframe
+                      style={{
+                        position: 'absolute',
+                        top: 0,
+                        left: 0,
+                        width: '100%',
+                        height: '100%',
+                        border: 'none'
+                      }}
+                      src={getYouTubeEmbedUrl(selectedVideo.url)!}
+                      title={selectedVideo.title}
+                      allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                      allowFullScreen
+                    ></iframe>
                   </div>
-                </Card>
-              </Col>
-            ))}
-          </Row>
+                ) : (
+                  <a
+                    href={selectedVideo.url}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                  >
+                    Open video in new window
+                  </a>
+                )}
+              </Card>
+            )}
+          </>
         )}
       </Spin>
 
