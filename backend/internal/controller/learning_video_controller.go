@@ -26,8 +26,8 @@ func (controller LearningVideoController) Route(app *fiber.App) {
 	app.Post("/v1/api/learning-video", middleware.AuthenticateJWT([]string{"admin"}, controller.Config), controller.Create)
 	app.Put("/v1/api/learning-video/:id", middleware.AuthenticateJWT([]string{"admin"}, controller.Config), controller.Update)
 	app.Delete("/v1/api/learning-video/:id", middleware.AuthenticateJWT([]string{"admin"}, controller.Config), controller.Delete)
-	app.Get("/v1/api/learning-video/:id", controller.FindByID)
-	app.Get("/v1/api/learning-video", controller.FindAll)
+	app.Get("/v1/api/learning-video/:id", middleware.AuthenticateJWT([]string{"admin", "user"}, controller.Config), controller.FindByID)
+	app.Get("/v1/api/learning-video", middleware.AuthenticateJWT([]string{"admin", "user"}, controller.Config), controller.FindAll)
 }
 
 // Create handles creation of a learning video.

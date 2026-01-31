@@ -64,6 +64,8 @@ func (repository *LearningVideoRepository) FindAll(ctx context.Context, search s
 
 	if programID != nil {
 		query = query.Where("program_id = ?", *programID)
+	} else {
+		query = query.Where("program_id IS NULL")
 	}
 
 	err := query.Model(&entity.LearningVideo{}).Count(&total).Error
