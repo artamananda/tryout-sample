@@ -26,7 +26,6 @@ const ModalUpdateLearningVideo: React.FC<ModalUpdateLearningVideoProps> = ({
   const { data: programs, isLoading: loadingPrograms } =
     useFetchList<ProgramProps>({
       endpoint: "program",
-      fetchable: open,
     });
 
   useEffect(() => {
@@ -115,7 +114,7 @@ const ModalUpdateLearningVideo: React.FC<ModalUpdateLearningVideoProps> = ({
               placeholder="Select a program"
               loading={loadingPrograms}
               options={programs.map((program: any) => ({
-                label: `${program.name} (${program.program_id})`,
+                label: `${program.name}`,
                 value: program.program_id,
               }))}
             />

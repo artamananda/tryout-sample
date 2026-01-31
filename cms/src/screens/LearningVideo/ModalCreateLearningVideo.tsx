@@ -23,7 +23,6 @@ const ModalCreateLearningVideo: React.FC<ModalCreateLearningVideoProps> = ({
   const { data: programs, isLoading: loadingPrograms } =
     useFetchList<ProgramProps>({
       endpoint: "program",
-      fetchable: open,
     });
 
   const validateYouTubeUrl = (url: string): boolean => {
