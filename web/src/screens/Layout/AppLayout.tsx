@@ -4,7 +4,8 @@ import {
   UserOutlined,
   PoweroffOutlined,
   ScheduleOutlined,
-  BookOutlined
+  BookOutlined,
+  PlayCircleOutlined
 } from '@ant-design/icons';
 import type { MenuProps } from 'antd';
 import { Layout, Menu, Image, Spin, Modal } from 'antd';
@@ -44,6 +45,7 @@ const AppLayout = () => {
     ]),
     getItem('Tryout', '/tryout', <CalendarOutlined />),
     getItem('Bank Soal', '/bank-soal', <BookOutlined />),
+    getItem('Learning Video', '/learning-video', <PlayCircleOutlined />),
     getItem('Program', '/program', <ScheduleOutlined />)
   ];
 

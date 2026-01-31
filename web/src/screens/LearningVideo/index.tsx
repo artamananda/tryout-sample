@@ -104,14 +104,14 @@ const LearningVideoScreen = () => {
 
       {/* Videos Grid */}
       <Spin spinning={isLoading} tip="Loading videos...">
-        {videos.length === 0 && !isLoading ? (
+        {videos?.length === 0 && !isLoading ? (
           <Empty
             description="No learning videos found"
             style={{ marginTop: '60px' }}
           />
         ) : (
           <Row gutter={[16, 16]} style={{ marginBottom: '24px' }}>
-            {videos.map((video) => (
+            {videos?.map((video) => (
               <Col key={video.id} xs={24} sm={24} md={8} lg={8}>
                 <Card
                   hoverable
@@ -188,7 +188,7 @@ const LearningVideoScreen = () => {
       </Spin>
 
       {/* Pagination */}
-      {videos.length > 0 && (
+      {videos?.length > 0 && (
         <Row justify="end" style={{ marginTop: '24px' }}>
           <Col>
             <Pagination

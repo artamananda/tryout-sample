@@ -8,6 +8,7 @@ import {
   ScheduleOutlined,
   BookOutlined,
   RobotOutlined,
+  PlayCircleOutlined,
 } from "@ant-design/icons";
 import type { MenuProps } from "antd";
 import { Layout, Menu, Image, Spin, Modal } from "antd";
@@ -24,7 +25,7 @@ function getItem(
   label: React.ReactNode,
   key: React.Key,
   icon?: React.ReactNode,
-  children?: MenuItem[]
+  children?: MenuItem[],
 ): MenuItem {
   return {
     key,
@@ -48,6 +49,7 @@ const AppLayout = () => {
     getItem("Tryout", "/tryout", <CalendarOutlined />),
     getItem("Tryout Result", "/tryout-result", <BarChartOutlined />),
     getItem("Bank Soal", "/bank-soal", <BookOutlined />),
+    getItem("Learning Video", "/learning-video", <PlayCircleOutlined />),
     getItem("AI Generator", "/ai-generator", <RobotOutlined />),
     getItem("Program", "/program", <ScheduleOutlined />),
     // getItem("Batch 5", "/program/batch5", <Html5Outlined />),

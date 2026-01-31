@@ -196,7 +196,7 @@ const LearningVideoScreen = () => {
       <Row gutter={[16, 16]}>
         <Col span={24}>
           <Card loading={isLoading}>
-            {videos.length === 0 && !isLoading ? (
+            {videos?.length === 0 && !isLoading ? (
               <Empty description="No learning videos found" />
             ) : (
               <>

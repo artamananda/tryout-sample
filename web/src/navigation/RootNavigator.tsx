@@ -18,6 +18,7 @@ import ReadScreen from '../screens/ELibrary/Read';
 import ProgramScreen from '../screens/Program';
 import RegisterProgramScreen from '../screens/Program/Register';
 import BankSoalScreen from '../screens/BankSoal';
+import LearningVideoScreen from '../screens/LearningVideo';
 
 const RootNavigator = () => {
   return (
@@ -118,6 +119,15 @@ const RootNavigator = () => {
             element={
               <PrivateRoute loginPath="/login">
                 <RegisterProgramScreen />
+              </PrivateRoute>
+            }
+          />
+
+          <Route
+            path="/learning-video"
+            element={
+              <PrivateRoute loginPath="/login">
+                <LearningVideoScreen />
               </PrivateRoute>
             }
           />
