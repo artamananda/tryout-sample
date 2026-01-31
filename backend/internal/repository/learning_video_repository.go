@@ -3,19 +3,20 @@ package repository
 import (
 	"context"
 	"errors"
+	"time"
 
 	"github.com/artamananda/tryout-sample/internal/entity"
 	"gorm.io/gorm"
 )
 
 type LearningVideoWithProgramName struct {
-	ID          int    `gorm:"column:id"`
-	Title       string `gorm:"column:title"`
-	URL         string `gorm:"column:url"`
-	ProgramID   *string `gorm:"column:program_id"`
-	ProgramName *string `gorm:"column:program_name"`
-	CreatedAt   string `gorm:"column:created_at"`
-	UpdatedAt   string `gorm:"column:updated_at"`
+	ID          int        `gorm:"column:id"`
+	Title       string     `gorm:"column:title"`
+	URL         string     `gorm:"column:url"`
+	ProgramID   *string    `gorm:"column:program_id"`
+	ProgramName *string    `gorm:"column:program_name"`
+	CreatedAt   time.Time  `gorm:"column:created_at"`
+	UpdatedAt   time.Time  `gorm:"column:updated_at"`
 }
 
 type LearningVideoRepository struct {
@@ -75,8 +76,8 @@ func (repository *LearningVideoRepository) FindAll(ctx context.Context, search s
 	if programID != nil {
 		query = query.Where("program_id = ?", *programID)
 	} else if !isAdmin {
-		// If user and no program_id, this shouldn't happen (validated in controller)
-		query = query.Where("program_id = ?", *programID)
+		// If user and no program_id, ensure empty result
+		query = query.Where("1 = 0")
 	}
 	// If admin and no programID, return all videos (no where clause needed)
 
@@ -117,12 +118,12 @@ func (repository *LearningVideoRepository) FindAllWithProgramName(ctx context.Co
 	if programID != nil {
 		query = query.Where("lv.program_id = ?", *programID)
 	} else if !isAdmin {
-		// If user and no program_id, this shouldn't happen (validated in controller)
-		query = query.Where("lv.program_id = ?", *programID)
+		// If user and no program_id, ensure empty result
+		query = query.Where("1 = 0")
 	}
 	// If admin and no programID, return all videos (no where clause needed)
 
-	err := query.Session(&gorm.Session{NewDB: true}).Count(&total).Error
+	err := query.Session(&gorm.Session{}).Count(&total).Error
 	if err != nil {
 		return []LearningVideoWithProgramName{}, 0, err
 	}

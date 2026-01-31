@@ -1,6 +1,7 @@
 package controller
 
 import (
+	"net/url"
 	"strconv"
 
 	"github.com/artamananda/tryout-sample/internal/config"
@@ -162,21 +163,21 @@ func (controller LearningVideoController) Delete(c *fiber.Ctx) error {
 // @Summary Find all learning videos
 // @Description Find all learning videos with optional search and filters
 // @Tags Learning Videos (if not provided, returns only videos with program_id = NULL)"
-// @Param page query int false "Page number" default(1)
-// @Param page_size query int false "Page size" default(10)
+// @Param offset query int false "Offset" default(0)
+// @Param limit query int false "Limit" default(25)
 // @Security JWT
 // @Success 200 {object} model.GeneralResponse
 // @Failure 401 {object} model.GeneralResponse
 // @Failure 500 {object} model.GeneralResponse
-// @Router /v1/apiage query int false "Page number" default(1)
-// @Param page_size query int false "Page size" default(10)
+// @Router /v1/apiage query int false "Offset" default(0)
+// @Param limit query int false "Limit" default(25)
 // @Success 200 {object} model.GeneralResponse
 // @Router /learning-video [get]
 func (controller LearningVideoController) FindAll(c *fiber.Ctx) error {
 	search := c.Query("search", "")
 	programID := c.Query("program_id")
-	page, _ := strconv.Atoi(c.Query("page", "1"))
-	pageSize, _ := strconv.Atoi(c.Query("page_size", "10"))
+	offset, _ := strconv.Atoi(c.Query("offset", "0"))
+	limit, _ := strconv.Atoi(c.Query("limit", "25"))
 
 	// Get user role from JWT
 	user := c.Locals("user").(*jwt.Token)
@@ -196,8 +197,8 @@ func (controller LearningVideoController) FindAll(c *fiber.Ctx) error {
 	request := model.FindAllLearningVideoRequest{
 		Search:    search,
 		ProgramID: programIDPtr,
-		Page:      page,
-		PageSize:  pageSize,
+		Offset:    offset,
+		Limit:     limit,
 		IsAdmin:   role == "admin",
 	}
 
@@ -206,10 +207,36 @@ func (controller LearningVideoController) FindAll(c *fiber.Ctx) error {
 		return fiber.NewError(fiber.StatusInternalServerError, err.Error())
 	}
 
+	buildPageURL := func(nextOffset int) string {
+		values := url.Values{}
+		values.Set("offset", strconv.Itoa(nextOffset))
+		values.Set("limit", strconv.Itoa(limit))
+		if search != "" {
+			values.Set("search", search)
+		}
+		if programID != "" {
+			values.Set("program_id", programID)
+		}
+		return "/v1/api/learning-video?" + values.Encode()
+	}
+
+	var next interface{} = nil
+	var prev interface{} = nil
+	if offset > 0 {
+		prevOffset := offset - limit
+		if prevOffset < 0 {
+			prevOffset = 0
+		}
+		prev = buildPageURL(prevOffset)
+	}
+	if int64(offset+limit) < total {
+		next = buildPageURL(offset + limit)
+	}
+
 	payload := map[string]interface{}{
 		"count":   total,
-		"next":    nil,
-		"prev":    nil,
+		"next":    next,
+		"prev":    prev,
 		"results": responses,
 	}
 

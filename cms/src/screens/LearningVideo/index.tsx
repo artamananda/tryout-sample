@@ -43,9 +43,11 @@ const LearningVideoScreen = () => {
     pagination,
     changePage,
     changeLimit,
+    setSearch,
     fetchList,
   } = useFetchList<LearningVideoResponse>({
     endpoint: "learning-video",
+    limit: 10,
   });
 
   useEffect(() => {
@@ -53,6 +55,7 @@ const LearningVideoScreen = () => {
   }, []);
 
   const handleSearch = (value: string) => {
+    setSearch(value);
     changePage(1, pagination.perPage);
   };
 

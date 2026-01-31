@@ -96,16 +96,14 @@ func (service *LearningVideoService) Delete(ctx context.Context, id int) error {
 }
 
 func (service *LearningVideoService) FindAll(ctx context.Context, request model.FindAllLearningVideoRequest) ([]model.LearningVideoResponse, int64, error) {
-	if request.Page < 1 {
-		request.Page = 1
+	if request.Offset < 0 {
+		request.Offset = 0
 	}
-	if request.PageSize < 1 {
-		request.PageSize = 10
+	if request.Limit < 1 {
+		request.Limit = 10
 	}
 
-	offset := (request.Page - 1) * request.PageSize
-
-	learningVideosWithProgram, total, err := service.LearningVideoRepository.FindAllWithProgramName(ctx, request.Search, request.ProgramID, offset, request.PageSize, request.IsAdmin)
+	learningVideosWithProgram, total, err := service.LearningVideoRepository.FindAllWithProgramName(ctx, request.Search, request.ProgramID, request.Offset, request.Limit, request.IsAdmin)
 	if err != nil {
 		return []model.LearningVideoResponse{}, 0, err
 	}
@@ -118,18 +116,13 @@ func (service *LearningVideoService) FindAll(ctx context.Context, request model.
 			URL:         lv.URL,
 			ProgramID:   lv.ProgramID,
 			ProgramName: lv.ProgramName,
-			CreatedAt:   stringToTime(lv.CreatedAt),
-			UpdatedAt:   stringToTime(lv.UpdatedAt),
+			CreatedAt:   lv.CreatedAt,
+			UpdatedAt:   lv.UpdatedAt,
 		}
 		responses = append(responses, response)
 	}
 
 	return responses, total, nil
-}
-
-func stringToTime(timeStr string) time.Time {
-	t, _ := time.Parse(time.RFC3339, timeStr)
-	return t
 }
 
 func (service *LearningVideoService) entityToResponse(learningVideo entity.LearningVideo) model.LearningVideoResponse {

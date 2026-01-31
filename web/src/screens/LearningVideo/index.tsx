@@ -37,9 +37,12 @@ const LearningVideoScreen = () => {
     isLoading: videosLoading,
     pagination,
     changePage,
-    setQuery
+    setQuery,
+    setSearch
   } = useFetchList<LearningVideoResponse>({
     endpoint: 'learning-video',
+    limit: 9,
+    fetchable: selectedProgramId !== null,
     initialQuery: {
       search: '',
       program_id: selectedProgramId
@@ -50,8 +53,10 @@ const LearningVideoScreen = () => {
     if (selectedProgramId !== null) {
       setQuery((prev) => ({
         ...prev,
-        program_id: selectedProgramId
+        program_id: selectedProgramId,
+        offset: 0
       }));
+      setSearch('');
     }
   }, [selectedProgramId]);
 
@@ -83,6 +88,7 @@ const LearningVideoScreen = () => {
   };
 
   const handleSearch = (value: string) => {
+    setSearch(value);
     changePage(1, pagination.perPage);
   };
 

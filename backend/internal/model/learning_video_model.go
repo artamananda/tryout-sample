@@ -19,8 +19,8 @@ type UpdateLearningVideoRequest struct {
 type FindAllLearningVideoRequest struct {
 	Search    string  `json:"search"`
 	ProgramID *string `json:"program_id"`
-	Page      int     `json:"page"`
-	PageSize  int     `json:"page_size"`
+	Offset    int     `json:"offset"`
+	Limit     int     `json:"limit"`
 	IsAdmin   bool    `json:"is_admin"`
 }
 
