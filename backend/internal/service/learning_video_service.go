@@ -105,17 +105,31 @@ func (service *LearningVideoService) FindAll(ctx context.Context, request model.
 
 	offset := (request.Page - 1) * request.PageSize
 
-	learningVideos, total, err := service.LearningVideoRepository.FindAll(ctx, request.Search, request.ProgramID, offset, request.PageSize)
+	learningVideosWithProgram, total, err := service.LearningVideoRepository.FindAllWithProgramName(ctx, request.Search, request.ProgramID, offset, request.PageSize, request.IsAdmin)
 	if err != nil {
 		return []model.LearningVideoResponse{}, 0, err
 	}
 
 	var responses []model.LearningVideoResponse
-	for _, learningVideo := range learningVideos {
-		responses = append(responses, service.entityToResponse(learningVideo))
+	for _, lv := range learningVideosWithProgram {
+		response := model.LearningVideoResponse{
+			ID:          lv.ID,
+			Title:       lv.Title,
+			URL:         lv.URL,
+			ProgramID:   lv.ProgramID,
+			ProgramName: lv.ProgramName,
+			CreatedAt:   stringToTime(lv.CreatedAt),
+			UpdatedAt:   stringToTime(lv.UpdatedAt),
+		}
+		responses = append(responses, response)
 	}
 
 	return responses, total, nil
+}
+
+func stringToTime(timeStr string) time.Time {
+	t, _ := time.Parse(time.RFC3339, timeStr)
+	return t
 }
 
 func (service *LearningVideoService) entityToResponse(learningVideo entity.LearningVideo) model.LearningVideoResponse {

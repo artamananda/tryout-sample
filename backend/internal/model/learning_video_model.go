@@ -21,13 +21,15 @@ type FindAllLearningVideoRequest struct {
 	ProgramID *string `json:"program_id"`
 	Page      int     `json:"page"`
 	PageSize  int     `json:"page_size"`
+	IsAdmin   bool    `json:"is_admin"`
 }
 
 type LearningVideoResponse struct {
-	ID        int       `json:"id"`
-	Title     string    `json:"title"`
-	URL       string    `json:"url"`
-	ProgramID *string   `json:"program_id"`
-	CreatedAt time.Time `json:"created_at"`
-	UpdatedAt time.Time `json:"updated_at"`
+	ID            int       `json:"id"`
+	Title         string    `json:"title"`
+	URL           string    `json:"url"`
+	ProgramID     *string   `json:"program_id"`
+	ProgramName   *string   `json:"program_name"`
+	CreatedAt     time.Time `json:"created_at"`
+	UpdatedAt     time.Time `json:"updated_at"`
 }

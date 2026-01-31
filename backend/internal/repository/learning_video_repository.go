@@ -8,6 +8,16 @@ import (
 	"gorm.io/gorm"
 )
 
+type LearningVideoWithProgramName struct {
+	ID          int    `gorm:"column:id"`
+	Title       string `gorm:"column:title"`
+	URL         string `gorm:"column:url"`
+	ProgramID   *string `gorm:"column:program_id"`
+	ProgramName *string `gorm:"column:program_name"`
+	CreatedAt   string `gorm:"column:created_at"`
+	UpdatedAt   string `gorm:"column:updated_at"`
+}
+
 type LearningVideoRepository struct {
 	*gorm.DB
 }
@@ -52,7 +62,7 @@ func (repository *LearningVideoRepository) Delete(ctx context.Context, id int) e
 	return nil
 }
 
-func (repository *LearningVideoRepository) FindAll(ctx context.Context, search string, programID *string, offset int, limit int) ([]entity.LearningVideo, int64, error) {
+func (repository *LearningVideoRepository) FindAll(ctx context.Context, search string, programID *string, offset int, limit int, isAdmin bool) ([]entity.LearningVideo, int64, error) {
 	var learningVideos []entity.LearningVideo
 	var total int64
 
@@ -64,9 +74,11 @@ func (repository *LearningVideoRepository) FindAll(ctx context.Context, search s
 
 	if programID != nil {
 		query = query.Where("program_id = ?", *programID)
-	} else {
-		query = query.Where("program_id IS NULL")
+	} else if !isAdmin {
+		// If user and no program_id, this shouldn't happen (validated in controller)
+		query = query.Where("program_id = ?", *programID)
 	}
+	// If admin and no programID, return all videos (no where clause needed)
 
 	err := query.Model(&entity.LearningVideo{}).Count(&total).Error
 	if err != nil {
@@ -76,6 +88,48 @@ func (repository *LearningVideoRepository) FindAll(ctx context.Context, search s
 	err = query.Offset(offset).Limit(limit).Order("created_at DESC").Find(&learningVideos).Error
 	if err != nil {
 		return []entity.LearningVideo{}, 0, err
+	}
+
+	return learningVideos, total, nil
+}
+
+func (repository *LearningVideoRepository) FindAllWithProgramName(ctx context.Context, search string, programID *string, offset int, limit int, isAdmin bool) ([]LearningVideoWithProgramName, int64, error) {
+	var learningVideos []LearningVideoWithProgramName
+	var total int64
+
+	query := repository.DB.WithContext(ctx).
+		Select(
+			"lv.id",
+			"lv.title",
+			"lv.url",
+			"lv.program_id",
+			"p.name as program_name",
+			"lv.created_at",
+			"lv.updated_at",
+		).
+		Table("learning_videos lv").
+		Joins("LEFT JOIN programs p ON lv.program_id = p.program_id")
+
+	if search != "" {
+		query = query.Where("lv.title ILIKE ?", "%"+search+"%")
+	}
+
+	if programID != nil {
+		query = query.Where("lv.program_id = ?", *programID)
+	} else if !isAdmin {
+		// If user and no program_id, this shouldn't happen (validated in controller)
+		query = query.Where("lv.program_id = ?", *programID)
+	}
+	// If admin and no programID, return all videos (no where clause needed)
+
+	err := query.Session(&gorm.Session{NewDB: true}).Count(&total).Error
+	if err != nil {
+		return []LearningVideoWithProgramName{}, 0, err
+	}
+
+	err = query.Offset(offset).Limit(limit).Order("lv.created_at DESC").Scan(&learningVideos).Error
+	if err != nil {
+		return []LearningVideoWithProgramName{}, 0, err
 	}
 
 	return learningVideos, total, nil

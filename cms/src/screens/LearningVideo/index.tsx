@@ -21,10 +21,10 @@ import {
   PlusOutlined,
 } from "@ant-design/icons";
 import {
-  apiGetLearningVideos,
   apiDeleteLearningVideo,
   LearningVideoResponse,
 } from "../../api/learningVideo";
+import useFetchList from "../../hooks/useFetchList";
 import ModalCreateLearningVideo from "./ModalCreateLearningVideo";
 import ModalUpdateLearningVideo from "./ModalUpdateLearningVideo";
 
@@ -32,44 +32,28 @@ const { Title, Text } = Typography;
 const { Search } = Input;
 
 const LearningVideoScreen = () => {
-  const [videos, setVideos] = useState<LearningVideoResponse[]>([]);
-  const [isLoading, setIsLoading] = useState(false);
-  const [search, setSearch] = useState("");
-  const [page, setPage] = useState(1);
-  const [pageSize, setPageSize] = useState(10);
-  const [total, setTotal] = useState(0);
-
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [currentEditingVideo, setCurrentEditingVideo] =
     useState<LearningVideoResponse | null>(null);
 
+  const {
+    data: videos,
+    isLoading,
+    pagination,
+    changePage,
+    changeLimit,
+    fetchList,
+  } = useFetchList<LearningVideoResponse>({
+    endpoint: "learning-video",
+  });
+
   useEffect(() => {
     document.title = "Learning Videos - CMS";
   }, []);
 
-  const fetchVideos = async () => {
-    setIsLoading(true);
-    try {
-      const res = await apiGetLearningVideos(page, pageSize, search);
-      if (res?.data?.payload) {
-        setVideos(res.data.payload.data);
-        setTotal(res.data.payload.total);
-      }
-    } catch (error) {
-      console.error("Error fetching learning videos:", error);
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  useEffect(() => {
-    fetchVideos();
-  }, [page, pageSize, search]);
-
   const handleSearch = (value: string) => {
-    setSearch(value);
-    setPage(1);
+    changePage(1, pagination.perPage);
   };
 
   const handleEdit = (video: LearningVideoResponse) => {
@@ -79,7 +63,7 @@ const LearningVideoScreen = () => {
 
   const handleDelete = async (id: number) => {
     await apiDeleteLearningVideo(id);
-    fetchVideos();
+    fetchList();
   };
 
   const columns = [
@@ -106,9 +90,9 @@ const LearningVideoScreen = () => {
       ),
     },
     {
-      title: "Program ID",
-      dataIndex: "program_id",
-      key: "program_id",
+      title: "Program",
+      dataIndex: "program_name",
+      key: "program_name",
       render: (text: string | null) =>
         text ? (
           <Tag color="blue">{text}</Tag>
@@ -208,12 +192,11 @@ const LearningVideoScreen = () => {
                   loading={isLoading}
                 />
                 <Pagination
-                  current={page}
-                  pageSize={pageSize}
-                  total={total}
+                  current={pagination.page}
+                  pageSize={pagination.perPage}
+                  total={pagination.totalData}
                   onChange={(p, size) => {
-                    setPage(p);
-                    setPageSize(size);
+                    changePage(p, size);
                   }}
                   style={{ marginTop: "16px", textAlign: "right" }}
                   showSizeChanger
@@ -229,8 +212,7 @@ const LearningVideoScreen = () => {
         onClose={() => setIsCreateModalOpen(false)}
         onSuccess={() => {
           setIsCreateModalOpen(false);
-          setPage(1);
-          fetchVideos();
+          fetchList();
         }}
       />
 
@@ -245,7 +227,7 @@ const LearningVideoScreen = () => {
           onSuccess={() => {
             setIsEditModalOpen(false);
             setCurrentEditingVideo(null);
-            fetchVideos();
+            fetchList();
           }}
         />
       )}

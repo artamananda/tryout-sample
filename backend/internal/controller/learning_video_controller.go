@@ -8,6 +8,7 @@ import (
 	"github.com/artamananda/tryout-sample/internal/model"
 	"github.com/artamananda/tryout-sample/internal/service"
 	"github.com/gofiber/fiber/v2"
+	"github.com/golang-jwt/jwt/v4"
 )
 
 type LearningVideoController struct {
@@ -177,9 +178,19 @@ func (controller LearningVideoController) FindAll(c *fiber.Ctx) error {
 	page, _ := strconv.Atoi(c.Query("page", "1"))
 	pageSize, _ := strconv.Atoi(c.Query("page_size", "10"))
 
+	// Get user role from JWT
+	user := c.Locals("user").(*jwt.Token)
+	claims := user.Claims.(jwt.MapClaims)
+	role := claims["roles"].(string)
+
 	var programIDPtr *string
 	if programID != "" {
 		programIDPtr = &programID
+	}
+
+	// If user and no program_id provided, return error
+	if role == "user" && programIDPtr == nil {
+		return fiber.NewError(fiber.StatusBadRequest, "program_id is required for users")
 	}
 
 	request := model.FindAllLearningVideoRequest{
@@ -187,6 +198,7 @@ func (controller LearningVideoController) FindAll(c *fiber.Ctx) error {
 		ProgramID: programIDPtr,
 		Page:      page,
 		PageSize:  pageSize,
+		IsAdmin:   role == "admin",
 	}
 
 	responses, total, err := controller.LearningVideoService.FindAll(c.Context(), request)
@@ -194,15 +206,16 @@ func (controller LearningVideoController) FindAll(c *fiber.Ctx) error {
 		return fiber.NewError(fiber.StatusInternalServerError, err.Error())
 	}
 
+	payload := map[string]interface{}{
+		"count":   total,
+		"next":    nil,
+		"prev":    nil,
+		"results": responses,
+	}
+
 	return c.Status(fiber.StatusOK).JSON(model.GeneralResponse{
 		Code:    fiber.StatusOK,
 		Message: "Learning videos retrieved successfully",
-		Data: map[string]interface{}{
-			"data":       responses,
-			"total":      total,
-			"page":       page,
-			"page_size":  pageSize,
-			"total_page": (total + int64(pageSize) - 1) / int64(pageSize),
-		},
+		Data:    payload,
 	})
 }

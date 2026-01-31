@@ -7,6 +7,7 @@ export interface LearningVideoResponse {
   title: string;
   url: string;
   program_id: string | null;
+  program_name: string | null;
   created_at: string;
   updated_at: string;
 }

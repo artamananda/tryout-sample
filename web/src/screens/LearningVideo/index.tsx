@@ -9,25 +9,51 @@ import {
   Empty,
   Pagination,
   Button,
-  Tag
+  Tag,
+  Select
 } from 'antd';
 import { PlayCircleOutlined, SearchOutlined } from '@ant-design/icons';
-import {
-  apiGetLearningVideos,
-  LearningVideoResponse
-} from '../../api/learningVideo';
+import { LearningVideoResponse } from '../../api/learningVideo';
+import { ProgramProps } from '../../types/program.type';
+import useFetchList from '../../hooks/useFetchList';
 
 const { Title, Text } = Typography;
 const { Search } = Input;
 
 const LearningVideoScreen = () => {
-  const [videos, setVideos] = useState<LearningVideoResponse[]>([]);
-  const [isLoading, setIsLoading] = useState(false);
-  const [search, setSearch] = useState('');
-  const [page, setPage] = useState(1);
-  const [pageSize, setPageSize] = useState(9);
-  const [total, setTotal] = useState(0);
-  const [selectedVideo, setSelectedVideo] = useState<LearningVideoResponse | null>(null);
+  const [selectedVideo, setSelectedVideo] =
+    useState<LearningVideoResponse | null>(null);
+  const [selectedProgramId, setSelectedProgramId] = useState<string | null>(
+    null
+  );
+
+  const { data: programs, isLoading: loadingPrograms } =
+    useFetchList<ProgramProps>({
+      endpoint: 'program'
+    });
+
+  const {
+    data: videos,
+    isLoading: videosLoading,
+    pagination,
+    changePage,
+    setQuery
+  } = useFetchList<LearningVideoResponse>({
+    endpoint: 'learning-video',
+    initialQuery: {
+      search: '',
+      program_id: selectedProgramId
+    }
+  });
+
+  useEffect(() => {
+    if (selectedProgramId !== null) {
+      setQuery((prev) => ({
+        ...prev,
+        program_id: selectedProgramId
+      }));
+    }
+  }, [selectedProgramId]);
 
   useEffect(() => {
     document.title = 'Learning Videos';
@@ -56,28 +82,8 @@ const LearningVideoScreen = () => {
     return null;
   };
 
-  const fetchVideos = async () => {
-    setIsLoading(true);
-    try {
-      const res = await apiGetLearningVideos(page, pageSize, search);
-      if (res?.data?.payload) {
-        setVideos(res.data.payload.data);
-        setTotal(res.data.payload.total);
-      }
-    } catch (error) {
-      console.error('Error fetching learning videos:', error);
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  useEffect(() => {
-    fetchVideos();
-  }, [page, pageSize, search]);
-
   const handleSearch = (value: string) => {
-    setSearch(value);
-    setPage(1);
+    changePage(1, pagination.perPage);
   };
 
   return (
@@ -113,196 +119,236 @@ const LearningVideoScreen = () => {
         </Col>
       </Row>
 
-      {/* Search */}
+      {/* Program Selector */}
       <Row gutter={[16, 16]} style={{ marginBottom: '24px' }}>
         <Col span={24}>
-          <Search
-            placeholder="Search videos by title..."
-            onSearch={handleSearch}
-            size="large"
-            prefix={<SearchOutlined />}
-            allowClear
-          />
+          <Card>
+            <Row gutter={[16, 16]} align="middle">
+              <Col>
+                <Text strong>Select Program:</Text>
+              </Col>
+              <Col flex="auto">
+                <Select
+                  placeholder="Choose a program to view learning videos"
+                  loading={loadingPrograms}
+                  value={selectedProgramId}
+                  onChange={(value) => {
+                    setSelectedProgramId(value);
+                  }}
+                  style={{ width: '100%' }}
+                  options={programs.map((program: ProgramProps) => ({
+                    label: `${program.name}`,
+                    value: program.program_id
+                  }))}
+                />
+              </Col>
+            </Row>
+          </Card>
         </Col>
       </Row>
 
+      {/* Search */}
+      {selectedProgramId && (
+        <Row gutter={[16, 16]} style={{ marginBottom: '24px' }}>
+          <Col span={24}>
+            <Search
+              placeholder="Search videos by title..."
+              onSearch={handleSearch}
+              size="large"
+              prefix={<SearchOutlined />}
+              allowClear
+            />
+          </Col>
+        </Row>
+      )}
+
+      {/* Show message when no program selected */}
+      {!selectedProgramId && (
+        <Row gutter={[16, 16]} style={{ marginBottom: '24px' }}>
+          <Col span={24}>
+            <Empty
+              description="Please select a program to view learning videos"
+              style={{ marginTop: '60px' }}
+            />
+          </Col>
+        </Row>
+      )}
+
       {/* Videos Grid */}
-      <Spin spinning={isLoading} tip="Loading videos...">
-        {videos?.length === 0 && !isLoading ? (
-          <Empty
-            description="No learning videos found"
-            style={{ marginTop: '60px' }}
-          />
-        ) : (
-          <>
-            <Row gutter={[16, 16]} style={{ marginBottom: '24px' }}>
-              {videos?.map((video) => {
-                const embedUrl = getYouTubeEmbedUrl(video.url);
-                return (
-                  <Col key={video.id} xs={24} sm={24} md={8} lg={8}>
-                    <Card
-                      hoverable
-                      style={{
-                        height: '100%',
-                        display: 'flex',
-                        flexDirection: 'column',
-                        cursor: 'pointer'
-                      }}
-                      onClick={() => setSelectedVideo(video)}
-                      cover={
-                        embedUrl ? (
-                          <div
-                            style={{
-                              background: '#000',
-                              height: '200px',
-                              overflow: 'hidden',
-                              position: 'relative'
-                            }}
-                          >
-                            <iframe
-                              width="100%"
-                              height="200"
-                              src={`${embedUrl}?controls=0`}
-                              title={video.title}
-                              style={{
-                                border: 'none',
-                                pointerEvents: 'none'
-                              }}
-                              allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-                            ></iframe>
-                          </div>
-                        ) : (
-                          <div
-                            style={{
-                              background: '#000',
-                              height: '200px',
-                              display: 'flex',
-                              alignItems: 'center',
-                              justifyContent: 'center',
-                              position: 'relative'
-                            }}
-                          >
-                            <PlayCircleOutlined
-                              style={{
-                                fontSize: '48px',
-                                color: '#fff',
-                                opacity: 0.8
-                              }}
-                            />
-                          </div>
-                        )
-                      }
-                    >
-                      <div
+      {selectedProgramId && (
+        <Spin spinning={videosLoading} tip="Loading videos...">
+          {videos?.length === 0 && !videosLoading ? (
+            <Empty
+              description="No learning videos found"
+              style={{ marginTop: '60px' }}
+            />
+          ) : (
+            <>
+              <Row gutter={[16, 16]} style={{ marginBottom: '24px' }}>
+                {videos?.map((video) => {
+                  const embedUrl = getYouTubeEmbedUrl(video.url);
+                  return (
+                    <Col key={video.id} xs={24} sm={24} md={8} lg={8}>
+                      <Card
+                        hoverable
                         style={{
-                          flex: 1,
+                          height: '100%',
                           display: 'flex',
-                          flexDirection: 'column'
+                          flexDirection: 'column',
+                          cursor: 'pointer'
                         }}
+                        onClick={() => setSelectedVideo(video)}
+                        cover={
+                          embedUrl ? (
+                            <div
+                              style={{
+                                background: '#000',
+                                height: '200px',
+                                overflow: 'hidden',
+                                position: 'relative'
+                              }}
+                            >
+                              <iframe
+                                width="100%"
+                                height="200"
+                                src={`${embedUrl}?controls=0`}
+                                title={video.title}
+                                style={{
+                                  border: 'none',
+                                  pointerEvents: 'none'
+                                }}
+                                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                              ></iframe>
+                            </div>
+                          ) : (
+                            <div
+                              style={{
+                                background: '#000',
+                                height: '200px',
+                                display: 'flex',
+                                alignItems: 'center',
+                                justifyContent: 'center',
+                                position: 'relative'
+                              }}
+                            >
+                              <PlayCircleOutlined
+                                style={{
+                                  fontSize: '48px',
+                                  color: '#fff',
+                                  opacity: 0.8
+                                }}
+                              />
+                            </div>
+                          )
+                        }
                       >
-                        <Title
-                          level={4}
-                          style={{ marginBottom: '8px' }}
-                          ellipsis={{ rows: 2 }}
+                        <div
+                          style={{
+                            flex: 1,
+                            display: 'flex',
+                            flexDirection: 'column'
+                          }}
                         >
-                          {video.title}
-                        </Title>
-
-                        {video.program_id && (
-                          <div style={{ marginBottom: '8px' }}>
-                            <Tag color="blue">{video.program_id}</Tag>
-                          </div>
-                        )}
-
-                        <Text
-                          type="secondary"
-                          style={{ fontSize: '12px', marginBottom: '12px' }}
-                        >
-                          {new Date(video.created_at).toLocaleDateString()}
-                        </Text>
-
-                        <div style={{ marginTop: 'auto' }}>
-                          <Button
-                            type="primary"
-                            block
-                            icon={<PlayCircleOutlined />}
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              setSelectedVideo(video);
-                            }}
+                          <Title
+                            level={4}
+                            style={{ marginBottom: '8px' }}
+                            ellipsis={{ rows: 2 }}
                           >
-                            Watch Now
-                          </Button>
+                            {video.title}
+                          </Title>
+
+                          {video.program_name && (
+                            <div style={{ marginBottom: '8px' }}>
+                              <Tag color="blue">{video.program_name}</Tag>
+                            </div>
+                          )}
+
+                          <Text
+                            type="secondary"
+                            style={{ fontSize: '12px', marginBottom: '12px' }}
+                          >
+                            {new Date(video.created_at).toLocaleDateString()}
+                          </Text>
+
+                          <div style={{ marginTop: 'auto' }}>
+                            <Button
+                              type="primary"
+                              block
+                              icon={<PlayCircleOutlined />}
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                setSelectedVideo(video);
+                              }}
+                            >
+                              Watch Now
+                            </Button>
+                          </div>
                         </div>
-                      </div>
-                    </Card>
-                  </Col>
-                );
-              })}
-            </Row>
-            {selectedVideo && (
-              <Card
-                title={selectedVideo.title}
-                style={{ marginTop: '24px' }}
-                extra={
-                  <Button
-                    type="text"
-                    onClick={() => setSelectedVideo(null)}
-                  >
-                    Close
-                  </Button>
-                }
-              >
-                {getYouTubeEmbedUrl(selectedVideo.url) ? (
-                  <div
-                    style={{
-                      position: 'relative',
-                      paddingBottom: '56.25%',
-                      height: 0,
-                      overflow: 'hidden'
-                    }}
-                  >
-                    <iframe
+                      </Card>
+                    </Col>
+                  );
+                })}
+              </Row>
+              {selectedVideo && (
+                <Card
+                  title={selectedVideo.title}
+                  style={{ marginTop: '24px' }}
+                  extra={
+                    <Button type="text" onClick={() => setSelectedVideo(null)}>
+                      Close
+                    </Button>
+                  }
+                >
+                  {getYouTubeEmbedUrl(selectedVideo.url) ? (
+                    <div
                       style={{
-                        position: 'absolute',
-                        top: 0,
-                        left: 0,
-                        width: '100%',
-                        height: '100%',
-                        border: 'none'
+                        position: 'relative',
+                        paddingBottom: '56.25%',
+                        height: 0,
+                        overflow: 'hidden'
                       }}
-                      src={getYouTubeEmbedUrl(selectedVideo.url)!}
-                      title={selectedVideo.title}
-                      allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-                      allowFullScreen
-                    ></iframe>
-                  </div>
-                ) : (
-                  <a
-                    href={selectedVideo.url}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                  >
-                    Open video in new window
-                  </a>
-                )}
-              </Card>
-            )}
-          </>
-        )}
-      </Spin>
+                    >
+                      <iframe
+                        style={{
+                          position: 'absolute',
+                          top: 0,
+                          left: 0,
+                          width: '100%',
+                          height: '100%',
+                          border: 'none'
+                        }}
+                        src={getYouTubeEmbedUrl(selectedVideo.url)!}
+                        title={selectedVideo.title}
+                        allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                        allowFullScreen
+                      ></iframe>
+                    </div>
+                  ) : (
+                    <a
+                      href={selectedVideo.url}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                    >
+                      Open video in new window
+                    </a>
+                  )}
+                </Card>
+              )}
+            </>
+          )}
+        </Spin>
+      )}
 
       {/* Pagination */}
-      {videos?.length > 0 && (
+      {selectedProgramId && videos?.length > 0 && (
         <Row justify="end" style={{ marginTop: '24px' }}>
           <Col>
             <Pagination
-              current={page}
-              pageSize={pageSize}
-              total={total}
+              current={pagination.page}
+              pageSize={pagination.perPage}
+              total={pagination.totalData}
               onChange={(p, size) => {
-                setPage(p);
-                setPageSize(size);
+                changePage(p, size);
               }}
               showSizeChanger
               pageSizeOptions={['9', '18', '27']}
