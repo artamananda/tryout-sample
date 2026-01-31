@@ -206,10 +206,10 @@ func (controller ProgramController) FindById(c *fiber.Ctx) error {
 // @Router /program [get]
 func (controller ProgramController) FindAll(c *fiber.Ctx) error {
 	var request model.FindAllProgramsRequest
-	err := c.QueryParser(&request)
-	if err != nil {
-		return err
-	}
+	request.Search = c.Query("search")
+	isPublished := c.QueryBool("is_published", true)
+	request.IsPublished = &isPublished
+	request.UserID = c.Query("user_id")
 
 	result, err := controller.ProgramService.FindAll(c.Context(), request)
 	if err != nil {

@@ -65,7 +65,7 @@ func (repository *ProgramRepository) FindAll(ctx context.Context, params model.F
 	}
 
 	if params.UserID != "" {
-		query = query.Joins("JOIN users_programs up ON programs.program_id = up.program_id").Where("up.user_id = ?", params.UserID)
+		query = query.Joins("JOIN transaction_programs tp ON programs.program_id = tp.program_id").Where("tp.user_id = ?", params.UserID)
 	}
 
 	query = query.Order("open_registration DESC")

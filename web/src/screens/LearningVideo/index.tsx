@@ -16,6 +16,7 @@ import { PlayCircleOutlined, SearchOutlined } from '@ant-design/icons';
 import { LearningVideoResponse } from '../../api/learningVideo';
 import { ProgramProps } from '../../types/program.type';
 import useFetchList from '../../hooks/useFetchList';
+import { useAuthUser } from 'react-auth-kit';
 
 const { Title, Text } = Typography;
 const { Search } = Input;
@@ -27,9 +28,15 @@ const LearningVideoScreen = () => {
     null
   );
 
+  const user = useAuthUser();
+
   const { data: programs, isLoading: loadingPrograms } =
     useFetchList<ProgramProps>({
-      endpoint: 'program'
+      endpoint: 'program',
+      fetchable: user()?.user_id !== null,
+      initialQuery: {
+        user_id: user()?.user_id || ''
+      }
     });
 
   const {
@@ -141,7 +148,7 @@ const LearningVideoScreen = () => {
                     setSelectedProgramId(value);
                   }}
                   style={{ width: '100%' }}
-                  options={programs.map((program: ProgramProps) => ({
+                  options={programs?.map((program: ProgramProps) => ({
                     label: `${program.name}`,
                     value: program.program_id
                   }))}
