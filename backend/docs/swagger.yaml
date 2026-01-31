@@ -539,7 +539,7 @@ info:
     url: http://www.apache.org/licenses/LICENSE-2.0.html
   termsOfService: http://swagger.io/terms/
   title: Tryout Sample
-  version: 0.4.0
+  version: 0.5.0
 paths:
   /ai/chat:
     post:
@@ -1005,25 +1005,23 @@ paths:
       - Users
   /learning-video:
     get:
-      description: Find all learning videos with optional search and filters
+      description: Retrieve a list of learning videos with optional search and pagination
       parameters:
-      - description: Search by title
+      - description: Search term
         in: query
         name: search
         type: string
-      - description: Filter by program ID
+      - description: Program ID
         in: query
         name: program_id
         type: string
-      - default: 1
-        description: Page number
+      - description: Offset for pagination
         in: query
-        name: page
+        name: offset
         type: integer
-      - default: 10
-        description: Page size
+      - description: Limit for pagination
         in: query
-        name: page_size
+        name: limit
         type: integer
       produces:
       - application/json
@@ -1032,6 +1030,16 @@ paths:
           description: OK
           schema:
             $ref: '#/definitions/model.GeneralResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/model.GeneralResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/model.GeneralResponse'
+      security:
+      - JWT: []
       summary: Find all learning videos
       tags:
       - Learning Videos
@@ -1053,6 +1061,14 @@ paths:
           description: Created
           schema:
             $ref: '#/definitions/model.GeneralResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/model.GeneralResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/model.GeneralResponse'
       security:
       - JWT: []
       summary: Create a learning video
@@ -1061,17 +1077,23 @@ paths:
   /learning-video/{id}:
     delete:
       description: Delete a learning video by ID
-      parameters:
-      - description: Learning Video ID
-        in: path
-        name: id
-        required: true
-        type: integer
       produces:
       - application/json
       responses:
         "200":
           description: OK
+          schema:
+            $ref: '#/definitions/model.GeneralResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/model.GeneralResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/model.GeneralResponse'
+        "500":
+          description: Internal Server Error
           schema:
             $ref: '#/definitions/model.GeneralResponse'
       security:
@@ -1094,6 +1116,16 @@ paths:
           description: OK
           schema:
             $ref: '#/definitions/model.GeneralResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/model.GeneralResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/model.GeneralResponse'
+      security:
+      - JWT: []
       summary: Find a learning video by ID
       tags:
       - Learning Videos
@@ -1118,6 +1150,18 @@ paths:
       responses:
         "200":
           description: OK
+          schema:
+            $ref: '#/definitions/model.GeneralResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/model.GeneralResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/model.GeneralResponse'
+        "500":
+          description: Internal Server Error
           schema:
             $ref: '#/definitions/model.GeneralResponse'
       security:

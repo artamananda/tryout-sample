@@ -43,7 +43,7 @@ func (controller LearningVideoController) Route(app *fiber.App) {
 // @Success 201 {object} model.GeneralResponse
 // @Failure 400 {object} model.GeneralResponse
 // @Failure 401 {object} model.GeneralResponse
-// @Router /v1/api/learning-video [post]
+// @Router /learning-video [post]
 func (controller LearningVideoController) Create(c *fiber.Ctx) error {
 	var request model.CreateLearningVideoRequest
 	err := c.BodyParser(&request)
@@ -73,7 +73,7 @@ func (controller LearningVideoController) Create(c *fiber.Ctx) error {
 // @Success 200 {object} model.GeneralResponse
 // @Failure 401 {object} model.GeneralResponse
 // @Failure 404 {object} model.GeneralResponse
-// @Router /v1/api/learning-video/{id} [get]
+// @Router /learning-video/{id} [get]
 func (controller LearningVideoController) FindByID(c *fiber.Ctx) error {
 	id, err := strconv.Atoi(c.Params("id"))
 	if err != nil {
@@ -105,7 +105,7 @@ func (controller LearningVideoController) FindByID(c *fiber.Ctx) error {
 // @Failure 400 {object} model.GeneralResponse
 // @Failure 401 {object} model.GeneralResponse
 // @Failure 500 {object} model.GeneralResponse
-// @Router /v1/api/learning-video/{id} [put]
+// @Router /learning-video/{id} [put]
 func (controller LearningVideoController) Update(c *fiber.Ctx) error {
 	id, err := strconv.Atoi(c.Params("id"))
 	if err != nil {
@@ -138,7 +138,6 @@ func (controller LearningVideoController) Update(c *fiber.Ctx) error {
 // @Failure 400 {object} model.GeneralResponse
 // @Failure 401 {object} model.GeneralResponse
 // @Failure 500 {object} model.GeneralResponse
-// @Router /v1/apid path int true "Learning Video ID"
 // @Security JWT
 // @Success 200 {object} model.GeneralResponse
 // @Router /learning-video/{id} [delete]
@@ -161,17 +160,17 @@ func (controller LearningVideoController) Delete(c *fiber.Ctx) error {
 
 // FindAll handles finding all learning videos with pagination and filters.
 // @Summary Find all learning videos
-// @Description Find all learning videos with optional search and filters
-// @Tags Learning Videos (if not provided, returns only videos with program_id = NULL)"
-// @Param offset query int false "Offset" default(0)
-// @Param limit query int false "Limit" default(25)
+// @Description Retrieve a list of learning videos with optional search and pagination
+// @Tags Learning Videos
+// @Produce json
+// @Param search query string false "Search term"
+// @Param program_id query string false "Program ID"
+// @Param offset query int false "Offset for pagination"
+// @Param limit query int false "Limit for pagination"
 // @Security JWT
 // @Success 200 {object} model.GeneralResponse
 // @Failure 401 {object} model.GeneralResponse
 // @Failure 500 {object} model.GeneralResponse
-// @Router /v1/apiage query int false "Offset" default(0)
-// @Param limit query int false "Limit" default(25)
-// @Success 200 {object} model.GeneralResponse
 // @Router /learning-video [get]
 func (controller LearningVideoController) FindAll(c *fiber.Ctx) error {
 	search := c.Query("search", "")
@@ -179,7 +178,6 @@ func (controller LearningVideoController) FindAll(c *fiber.Ctx) error {
 	offset, _ := strconv.Atoi(c.Query("offset", "0"))
 	limit, _ := strconv.Atoi(c.Query("limit", "25"))
 
-	// Get user role from JWT
 	user := c.Locals("user").(*jwt.Token)
 	claims := user.Claims.(jwt.MapClaims)
 	role := claims["roles"].(string)
@@ -189,7 +187,6 @@ func (controller LearningVideoController) FindAll(c *fiber.Ctx) error {
 		programIDPtr = &programID
 	}
 
-	// If user and no program_id provided, return error
 	if role == "user" && programIDPtr == nil {
 		return fiber.NewError(fiber.StatusBadRequest, "program_id is required for users")
 	}

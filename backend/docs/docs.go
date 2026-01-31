@@ -751,7 +751,12 @@ const docTemplate = `{
         },
         "/learning-video": {
             "get": {
-                "description": "Find all learning videos with optional search and filters",
+                "security": [
+                    {
+                        "JWT": []
+                    }
+                ],
+                "description": "Retrieve a list of learning videos with optional search and pagination",
                 "produces": [
                     "application/json"
                 ],
@@ -762,34 +767,44 @@ const docTemplate = `{
                 "parameters": [
                     {
                         "type": "string",
-                        "description": "Search by title",
+                        "description": "Search term",
                         "name": "search",
                         "in": "query"
                     },
                     {
                         "type": "string",
-                        "description": "Filter by program ID",
+                        "description": "Program ID",
                         "name": "program_id",
                         "in": "query"
                     },
                     {
                         "type": "integer",
-                        "default": 1,
-                        "description": "Page number",
-                        "name": "page",
+                        "description": "Offset for pagination",
+                        "name": "offset",
                         "in": "query"
                     },
                     {
                         "type": "integer",
-                        "default": 10,
-                        "description": "Page size",
-                        "name": "page_size",
+                        "description": "Limit for pagination",
+                        "name": "limit",
                         "in": "query"
                     }
                 ],
                 "responses": {
                     "200": {
                         "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/model.GeneralResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/model.GeneralResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
                         "schema": {
                             "$ref": "#/definitions/model.GeneralResponse"
                         }
@@ -830,12 +845,29 @@ const docTemplate = `{
                         "schema": {
                             "$ref": "#/definitions/model.GeneralResponse"
                         }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/model.GeneralResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/model.GeneralResponse"
+                        }
                     }
                 }
             }
         },
         "/learning-video/{id}": {
             "get": {
+                "security": [
+                    {
+                        "JWT": []
+                    }
+                ],
                 "description": "Find a learning video by its ID",
                 "produces": [
                     "application/json"
@@ -856,6 +888,18 @@ const docTemplate = `{
                 "responses": {
                     "200": {
                         "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/model.GeneralResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/model.GeneralResponse"
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found",
                         "schema": {
                             "$ref": "#/definitions/model.GeneralResponse"
                         }
@@ -903,6 +947,24 @@ const docTemplate = `{
                         "schema": {
                             "$ref": "#/definitions/model.GeneralResponse"
                         }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/model.GeneralResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/model.GeneralResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/model.GeneralResponse"
+                        }
                     }
                 }
             },
@@ -920,18 +982,27 @@ const docTemplate = `{
                     "Learning Videos"
                 ],
                 "summary": "Delete a learning video",
-                "parameters": [
-                    {
-                        "type": "integer",
-                        "description": "Learning Video ID",
-                        "name": "id",
-                        "in": "path",
-                        "required": true
-                    }
-                ],
                 "responses": {
                     "200": {
                         "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/model.GeneralResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/model.GeneralResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/model.GeneralResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
                         "schema": {
                             "$ref": "#/definitions/model.GeneralResponse"
                         }
@@ -3504,7 +3575,7 @@ const docTemplate = `{
 
 // SwaggerInfo holds exported Swagger Info so clients can modify it
 var SwaggerInfo = &swag.Spec{
-	Version:          "0.4.0",
+	Version:          "0.5.0",
 	Host:             "api.terasbelajarasik.web.id",
 	BasePath:         "/v1/api",
 	Schemes:          []string{},
