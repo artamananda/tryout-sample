@@ -39,7 +39,9 @@ func (controller LearningVideoController) Route(app *fiber.App) {
 // @Param request body model.CreateLearningVideoRequest true "Request Body"
 // @Security JWT
 // @Success 201 {object} model.GeneralResponse
-// @Router /learning-video [post]
+// @Failure 400 {object} model.GeneralResponse
+// @Failure 401 {object} model.GeneralResponse
+// @Router /v1/api/learning-video [post]
 func (controller LearningVideoController) Create(c *fiber.Ctx) error {
 	var request model.CreateLearningVideoRequest
 	err := c.BodyParser(&request)
@@ -65,8 +67,11 @@ func (controller LearningVideoController) Create(c *fiber.Ctx) error {
 // @Tags Learning Videos
 // @Produce json
 // @Param id path int true "Learning Video ID"
+// @Security JWT
 // @Success 200 {object} model.GeneralResponse
-// @Router /learning-video/{id} [get]
+// @Failure 401 {object} model.GeneralResponse
+// @Failure 404 {object} model.GeneralResponse
+// @Router /v1/api/learning-video/{id} [get]
 func (controller LearningVideoController) FindByID(c *fiber.Ctx) error {
 	id, err := strconv.Atoi(c.Params("id"))
 	if err != nil {
@@ -95,7 +100,10 @@ func (controller LearningVideoController) FindByID(c *fiber.Ctx) error {
 // @Param request body model.UpdateLearningVideoRequest true "Request Body"
 // @Security JWT
 // @Success 200 {object} model.GeneralResponse
-// @Router /learning-video/{id} [put]
+// @Failure 400 {object} model.GeneralResponse
+// @Failure 401 {object} model.GeneralResponse
+// @Failure 500 {object} model.GeneralResponse
+// @Router /v1/api/learning-video/{id} [put]
 func (controller LearningVideoController) Update(c *fiber.Ctx) error {
 	id, err := strconv.Atoi(c.Params("id"))
 	if err != nil {
@@ -125,7 +133,10 @@ func (controller LearningVideoController) Update(c *fiber.Ctx) error {
 // @Description Delete a learning video by ID
 // @Tags Learning Videos
 // @Produce json
-// @Param id path int true "Learning Video ID"
+// @Failure 400 {object} model.GeneralResponse
+// @Failure 401 {object} model.GeneralResponse
+// @Failure 500 {object} model.GeneralResponse
+// @Router /v1/apid path int true "Learning Video ID"
 // @Security JWT
 // @Success 200 {object} model.GeneralResponse
 // @Router /learning-video/{id} [delete]
@@ -149,11 +160,14 @@ func (controller LearningVideoController) Delete(c *fiber.Ctx) error {
 // FindAll handles finding all learning videos with pagination and filters.
 // @Summary Find all learning videos
 // @Description Find all learning videos with optional search and filters
-// @Tags Learning Videos
-// @Produce json
-// @Param search query string false "Search by title"
-// @Param program_id query string false "Filter by program ID"
+// @Tags Learning Videos (if not provided, returns only videos with program_id = NULL)"
 // @Param page query int false "Page number" default(1)
+// @Param page_size query int false "Page size" default(10)
+// @Security JWT
+// @Success 200 {object} model.GeneralResponse
+// @Failure 401 {object} model.GeneralResponse
+// @Failure 500 {object} model.GeneralResponse
+// @Router /v1/apiage query int false "Page number" default(1)
 // @Param page_size query int false "Page size" default(10)
 // @Success 200 {object} model.GeneralResponse
 // @Router /learning-video [get]
