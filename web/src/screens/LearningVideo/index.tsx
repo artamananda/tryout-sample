@@ -9,7 +9,6 @@ import {
   Empty,
   Pagination,
   Button,
-  Space,
   Tag
 } from 'antd';
 import { PlayCircleOutlined, SearchOutlined } from '@ant-design/icons';
@@ -18,7 +17,7 @@ import {
   LearningVideoResponse
 } from '../../api/learningVideo';
 
-const { Title, Text, Paragraph } = Typography;
+const { Title, Text } = Typography;
 const { Search } = Input;
 
 const LearningVideoScreen = () => {
