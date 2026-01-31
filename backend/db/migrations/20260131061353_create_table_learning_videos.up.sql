@@ -1,0 +1,8 @@
+CREATE TABLE learning_videos (
+    id SERIAL PRIMARY KEY,
+    title VARCHAR(255) NOT NULL,
+    url VARCHAR(512) NOT NULL,
+    program_id VARCHAR(36),
+    created_at TIMESTAMP WITHOUT TIME ZONE DEFAULT NOW(),
+    updated_at TIMESTAMP WITHOUT TIME ZONE DEFAULT NOW()
+);

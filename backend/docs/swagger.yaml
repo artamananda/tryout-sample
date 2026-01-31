@@ -1,11 +1,83 @@
 basePath: /v1/api
 definitions:
+  model.AIChatMessage:
+    properties:
+      artifact_ids:
+        items:
+          type: string
+        type: array
+      content:
+        description: message content
+        type: string
+      role:
+        description: '"user" or "assistant"'
+        type: string
+    type: object
+  model.AIChatRequest:
+    properties:
+      messages:
+        items:
+          $ref: '#/definitions/model.AIChatMessage'
+        type: array
+      mode:
+        type: string
+      question_format:
+        type: string
+      question_type:
+        type: string
+      session_id:
+        type: string
+      topic:
+        type: string
+    required:
+    - messages
+    type: object
   model.CheckByEmailRequest:
     properties:
       email:
         type: string
     required:
     - email
+    type: object
+  model.CreateBankSoalBatchRequest:
+    properties:
+      questions:
+        items:
+          $ref: '#/definitions/model.CreateBankSoalRequest'
+        type: array
+    required:
+    - questions
+    type: object
+  model.CreateBankSoalRequest:
+    properties:
+      correct_answer:
+        type: string
+      difficulty:
+        type: string
+      explanation:
+        type: string
+      image_url:
+        type: string
+      is_ai_generated:
+        type: boolean
+      is_options:
+        type: boolean
+      options:
+        items:
+          type: string
+        type: array
+      points:
+        type: integer
+      text:
+        type: string
+      topic:
+        type: string
+      type:
+        type: string
+    required:
+    - correct_answer
+    - text
+    - type
     type: object
   model.CreateEbookRequest:
     properties:
@@ -34,6 +106,18 @@ definitions:
     required:
     - author
     - title
+    type: object
+  model.CreateLearningVideoRequest:
+    properties:
+      program_id:
+        type: string
+      title:
+        type: string
+      url:
+        type: string
+    required:
+    - title
+    - url
     type: object
   model.CreateProgramRequest:
     properties:
@@ -153,6 +237,30 @@ definitions:
         type: string
       payload: {}
     type: object
+  model.GenerateQuestionsRequest:
+    properties:
+      context:
+        type: string
+      difficulty:
+        enum:
+        - easy
+        - medium
+        - hard
+        type: string
+      number_of_questions:
+        maximum: 20
+        minimum: 1
+        type: integer
+      question_type:
+        type: string
+      topic:
+        type: string
+    required:
+    - difficulty
+    - number_of_questions
+    - question_type
+    - topic
+    type: object
   model.LoginRequest:
     properties:
       email:
@@ -207,6 +315,19 @@ definitions:
     - email
     - new_password
     - otp
+    type: object
+  model.SaveChatLogRequest:
+    properties:
+      messages:
+        items:
+          $ref: '#/definitions/model.AIChatMessage'
+        type: array
+      question_type:
+        type: string
+      topic:
+        type: string
+    required:
+    - messages
     type: object
   model.SelfRegisterRequest:
     properties:
@@ -263,6 +384,15 @@ definitions:
         type: string
       total_pages:
         type: integer
+    type: object
+  model.UpdateLearningVideoRequest:
+    properties:
+      program_id:
+        type: string
+      title:
+        type: string
+      url:
+        type: string
     type: object
   model.UpdateProgramRequest:
     properties:
@@ -409,8 +539,236 @@ info:
     url: http://www.apache.org/licenses/LICENSE-2.0.html
   termsOfService: http://swagger.io/terms/
   title: Tryout Sample
-  version: 0.3.0
+  version: 0.4.0
 paths:
+  /ai/chat:
+    post:
+      consumes:
+      - application/json
+      description: Have a conversation with AI to discuss and generate questions
+      parameters:
+      - description: Request Body
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/model.AIChatRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/model.GeneralResponse'
+      security:
+      - JWT: []
+      summary: Chat with AI assistant
+      tags:
+      - AI
+  /ai/chat/log:
+    post:
+      consumes:
+      - application/json
+      description: Save the current chat conversation to be processed by background
+        jobs
+      parameters:
+      - description: Request Body
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/model.SaveChatLogRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/model.GeneralResponse'
+      security:
+      - JWT: []
+      summary: Save chat log for processing
+      tags:
+      - AI
+  /ai/generate-questions:
+    post:
+      consumes:
+      - application/json
+      description: Generate exam questions using OpenAI based on topic and parameters
+      parameters:
+      - description: Request Body
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/model.GenerateQuestionsRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/model.GeneralResponse'
+      security:
+      - JWT: []
+      summary: Generate questions using AI
+      tags:
+      - AI
+  /bank-soal:
+    get:
+      consumes:
+      - application/json
+      description: Retrieve a list of all bank soal questions, optionally filtered
+        by type
+      parameters:
+      - description: Question Type
+        in: query
+        name: type
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/model.GeneralResponse'
+      summary: Find all bank soal questions
+      tags:
+      - BankSoal
+    post:
+      consumes:
+      - application/json
+      description: Create a new question in the bank soal
+      parameters:
+      - description: Request Body
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/model.CreateBankSoalRequest'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            $ref: '#/definitions/model.GeneralResponse'
+      security:
+      - JWT: []
+      summary: Create a bank soal question
+      tags:
+      - BankSoal
+  /bank-soal/{id}:
+    delete:
+      consumes:
+      - application/json
+      description: Delete an existing bank soal question by its unique ID
+      parameters:
+      - description: Bank Soal ID
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/model.GeneralResponse'
+      security:
+      - JWT: []
+      summary: Delete a bank soal question by ID
+      tags:
+      - BankSoal
+    get:
+      consumes:
+      - application/json
+      description: Retrieve an existing bank soal question by its unique ID
+      parameters:
+      - description: Bank Soal ID
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/model.GeneralResponse'
+      summary: Find a bank soal question by ID
+      tags:
+      - BankSoal
+    put:
+      consumes:
+      - application/json
+      description: Update an existing bank soal question
+      parameters:
+      - description: Bank Soal ID
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: Request Body
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/model.CreateBankSoalRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/model.GeneralResponse'
+      security:
+      - JWT: []
+      summary: Update a bank soal question
+      tags:
+      - BankSoal
+  /bank-soal/batch:
+    post:
+      consumes:
+      - application/json
+      description: Create multiple questions in the bank soal at once
+      parameters:
+      - description: Request Body
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/model.CreateBankSoalBatchRequest'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            $ref: '#/definitions/model.GeneralResponse'
+      security:
+      - JWT: []
+      summary: Create multiple bank soal questions
+      tags:
+      - BankSoal
+  /bank-soal/types:
+    get:
+      consumes:
+      - application/json
+      description: Retrieve a list of all unique question types currently in the bank
+        soal
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/model.GeneralResponse'
+      summary: Get unique question types
+      tags:
+      - BankSoal
   /ebook:
     get:
       consumes:
@@ -645,6 +1003,128 @@ paths:
       summary: Send OTP for password reset
       tags:
       - Users
+  /learning-video:
+    get:
+      description: Find all learning videos with optional search and filters
+      parameters:
+      - description: Search by title
+        in: query
+        name: search
+        type: string
+      - description: Filter by program ID
+        in: query
+        name: program_id
+        type: string
+      - default: 1
+        description: Page number
+        in: query
+        name: page
+        type: integer
+      - default: 10
+        description: Page size
+        in: query
+        name: page_size
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/model.GeneralResponse'
+      summary: Find all learning videos
+      tags:
+      - Learning Videos
+    post:
+      consumes:
+      - application/json
+      description: Create a new learning video
+      parameters:
+      - description: Request Body
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/model.CreateLearningVideoRequest'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            $ref: '#/definitions/model.GeneralResponse'
+      security:
+      - JWT: []
+      summary: Create a learning video
+      tags:
+      - Learning Videos
+  /learning-video/{id}:
+    delete:
+      description: Delete a learning video by ID
+      parameters:
+      - description: Learning Video ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/model.GeneralResponse'
+      security:
+      - JWT: []
+      summary: Delete a learning video
+      tags:
+      - Learning Videos
+    get:
+      description: Find a learning video by its ID
+      parameters:
+      - description: Learning Video ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/model.GeneralResponse'
+      summary: Find a learning video by ID
+      tags:
+      - Learning Videos
+    put:
+      consumes:
+      - application/json
+      description: Update an existing learning video
+      parameters:
+      - description: Learning Video ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      - description: Request Body
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/model.UpdateLearningVideoRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/model.GeneralResponse'
+      security:
+      - JWT: []
+      summary: Update a learning video
+      tags:
+      - Learning Videos
   /login:
     post:
       consumes:
