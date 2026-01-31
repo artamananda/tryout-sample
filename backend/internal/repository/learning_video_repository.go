@@ -109,7 +109,7 @@ func (repository *LearningVideoRepository) FindAllWithProgramName(ctx context.Co
 			"lv.updated_at",
 		).
 		Table("learning_videos lv").
-		Joins("LEFT JOIN programs p ON lv.program_id = p.program_id")
+		Joins("LEFT JOIN programs p ON lv.program_id = p.program_id::text")
 
 	if search != "" {
 		query = query.Where("lv.title ILIKE ?", "%"+search+"%")

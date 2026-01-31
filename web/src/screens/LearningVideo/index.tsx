@@ -41,8 +41,8 @@ const LearningVideoScreen = () => {
     setSearch
   } = useFetchList<LearningVideoResponse>({
     endpoint: 'learning-video',
-    limit: 9,
     fetchable: selectedProgramId !== null,
+    limit: 25,
     initialQuery: {
       search: '',
       program_id: selectedProgramId
@@ -56,7 +56,6 @@ const LearningVideoScreen = () => {
         program_id: selectedProgramId,
         offset: 0
       }));
-      setSearch('');
     }
   }, [selectedProgramId]);
 
@@ -269,14 +268,7 @@ const LearningVideoScreen = () => {
                             </div>
                           )}
 
-                          <Text
-                            type="secondary"
-                            style={{ fontSize: '12px', marginBottom: '12px' }}
-                          >
-                            {new Date(video.created_at).toLocaleDateString()}
-                          </Text>
-
-                          <div style={{ marginTop: 'auto' }}>
+                          <div style={{ marginTop: 20 }}>
                             <Button
                               type="primary"
                               block
@@ -357,7 +349,7 @@ const LearningVideoScreen = () => {
                 changePage(p, size);
               }}
               showSizeChanger
-              pageSizeOptions={['9', '18', '27']}
+              pageSizeOptions={[10, 25, 50, 100]}
             />
           </Col>
         </Row>
