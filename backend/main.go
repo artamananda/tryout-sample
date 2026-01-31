@@ -17,10 +17,10 @@ import (
 	_ "github.com/artamananda/tryout-sample/docs"
 )
 
-const APP_VERSION = "0.4.0"
+const APP_VERSION = "0.5.0"
 
 // @title Tryout Sample
-// @version 0.4.0
+// @version 0.5.0
 // @description API Documentation for Telisik Tryout
 // @termsOfService http://swagger.io/terms/
 // @contact.name Artamananda
@@ -63,6 +63,7 @@ func main() {
 	questionStatisticsRepository := repository.NewQuestionStatisticsRepository(db)
 	aiExampleRepository := repository.NewAIExampleRepository(db)
 	chatArtifactRepository := repository.NewChatArtifactRepository(db)
+	learningVideoRepository := repository.NewLearningVideoRepository(db)
 
 	// Cron Scheduler
 	scheduler := cron.NewScheduler(
@@ -87,6 +88,7 @@ func main() {
 	aiService := service.NewAIService(initConfig, &chatLogRepository, &aiExampleRepository, &chatArtifactRepository)
 	extractionService := service.NewExtractionService(initConfig)
 	bankSoalService := service.NewBankSoalService(&bankSoalRepository)
+	learningVideoService := service.NewLearningVideoService(&learningVideoRepository)
 
 	userController := controller.NewUserController(&userService, initConfig)
 	tryoutController := controller.NewTryoutController(&tryoutService, initConfig)
@@ -99,6 +101,7 @@ func main() {
 	ebookController := controller.NewEbookController(&ebookService, initConfig)
 	aiController := controller.NewAIController(&aiService, extractionService, initConfig)
 	bankSoalController := controller.NewBankSoalController(&bankSoalService, initConfig)
+	learningVideoController := controller.NewLearningVideoController(&learningVideoService, initConfig)
 
 	userController.Route(app)
 	tryoutController.Route(app)
@@ -110,6 +113,7 @@ func main() {
 	registerProgramController.Route(app)
 	ebookController.Route(app)
 	aiController.Route(app)
+	learningVideoController.Route(app)
 	bankSoalController.Route(app)
 
 	app.Get("/", func(c *fiber.Ctx) error {

@@ -27,6 +27,7 @@ import ListProgramStudentScreen from "../screens/ListProgram/ListProgramStudent/
 import EditProgramScreen from "../screens/ListProgram/Edit";
 import BankSoalScreen from "../screens/BankSoal";
 import AIChatScreen from "../screens/AIChat";
+import LearningVideoScreen from "../screens/LearningVideo";
 
 const RootNavigator = () => {
   return (
@@ -243,6 +244,15 @@ const RootNavigator = () => {
             element={
               <PrivateRoute loginPath="/login">
                 <ListProgramStudentScreen />
+              </PrivateRoute>
+            }
+          />
+
+          <Route
+            path="/learning-video"
+            element={
+              <PrivateRoute loginPath="/login">
+                <LearningVideoScreen />
               </PrivateRoute>
             }
           />
