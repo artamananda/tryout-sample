@@ -12,7 +12,7 @@ import { BaseResponseProps } from "../types/config.type";
 export async function apiGetTryouts() {
   try {
     const res = await httpRequest.get<FetchAllTryoutsResponse>(
-      process.env.REACT_APP_BASE_URL + "/tryout"
+      import.meta.env.VITE_BASE_URL + "/tryout"
     );
     return res;
   } catch (err) {
@@ -24,7 +24,7 @@ export async function apiGetTryouts() {
 export async function apiGetTryout(tryoutId: string) {
   try {
     const res = await httpRequest.get<TryoutProps>(
-      process.env.REACT_APP_BASE_URL + "/tryout/" + tryoutId
+      import.meta.env.VITE_BASE_URL + "/tryout/" + tryoutId
     );
     return res;
   } catch (err) {
@@ -35,7 +35,7 @@ export async function apiGetTryout(tryoutId: string) {
 export async function apiCreateTryout(data: CreateTryoutRequest) {
   try {
     const res = await httpRequest.post<BaseResponseProps<TryoutProps>>(
-      process.env.REACT_APP_BASE_URL + "/tryout",
+      import.meta.env.VITE_BASE_URL + "/tryout",
       data
     );
     return res;
@@ -51,7 +51,7 @@ export async function apiUpdateTryout(
 ) {
   try {
     const res = await httpRequest.patch<BaseResponseProps<TryoutProps>>(
-      process.env.REACT_APP_BASE_URL + "/tryout/" + tryoutId,
+      import.meta.env.VITE_BASE_URL + "/tryout/" + tryoutId,
       data
     );
     return res;
@@ -64,7 +64,7 @@ export async function apiUpdateTryout(
 export async function apiDeleteTryout(tryoutId: string) {
   try {
     const res = await httpRequest.delete<BaseResponseProps<any>>(
-      process.env.REACT_APP_BASE_URL + "/tryout/" + tryoutId
+      import.meta.env.VITE_BASE_URL + "/tryout/" + tryoutId
     );
     return res;
   } catch (err) {

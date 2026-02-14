@@ -6,7 +6,7 @@ import { FetchAllUserAnswerResponse } from "../types/userAnswer.type";
 export async function apiGetUserAnswer() {
   try {
     const res = await httpRequest.get<FetchAllUserAnswerResponse>(
-      process.env.REACT_APP_BASE_URL + "/user-answer"
+      import.meta.env.VITE_BASE_URL + "/user-answer"
     );
     return res;
   } catch (err) {

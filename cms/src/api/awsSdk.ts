@@ -8,10 +8,10 @@ const bucketName = "telisik-bucket";
 
 const S3 = new S3Client({
   region: "auto",
-  endpoint: `https://${process.env.REACT_APP_S3_ACCOUNT_ID}.r2.cloudflarestorage.com`,
+  endpoint: `https://${import.meta.env.VITE_S3_ACCOUNT_ID}.r2.cloudflarestorage.com`,
   credentials: {
-    accessKeyId: process.env.REACT_APP_S3_ACCESS_ID || "",
-    secretAccessKey: process.env.REACT_APP_S3_SECRET_ID || "",
+    accessKeyId: import.meta.env.VITE_S3_ACCESS_ID || "",
+    secretAccessKey: import.meta.env.VITE_S3_SECRET_ID || "",
   },
 });
 

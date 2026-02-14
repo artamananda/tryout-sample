@@ -2,7 +2,7 @@ import { UserProperties, RoleList } from "../types/user.type";
 import { IHttpResponse } from "./pagination";
 import axios from "axios";
 
-export const APP_AUTH_TOKEN = process.env.REACT_APP_ID + "_auth";
+export const APP_AUTH_TOKEN = import.meta.env.VITE_APP_ID + "_auth";
 
 export function saveToken(token: string) {
   return localStorage.setItem(APP_AUTH_TOKEN, token);
@@ -40,7 +40,7 @@ export const getLoginData = async (token?: string) => {
     Authorization: "Bearer " + (token ? token : getToken()),
   };
   const resultUser = await axios.get<IHttpResponse<UserProperties>>(
-    process.env.REACT_APP_BASE_URL + "/users/me",
+    import.meta.env.VITE_BASE_URL + "/users/me",
     { headers }
   );
 

@@ -1,7 +1,7 @@
 import axios from 'axios';
 import { getToken } from './auth';
 
-axios.defaults.baseURL = process.env.REACT_APP_BASE_URL;
+axios.defaults.baseURL = import.meta.env.VITE_BASE_URL;
 axios.defaults.timeout = 300000;
 
 export const httpRequest = axios.create();

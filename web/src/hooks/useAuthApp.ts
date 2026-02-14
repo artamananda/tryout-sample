@@ -31,7 +31,7 @@ export default function useAuthApp(props?: Props) {
           user_id: string;
           role: string;
         }>
-      >(props?.apiLoginUrl || process.env.REACT_APP_BASE_URL + '/login', data);
+      >(props?.apiLoginUrl || import.meta.env.VITE_BASE_URL + '/login', data);
 
       if (!resultAuthLogin) {
         //
@@ -49,7 +49,7 @@ export default function useAuthApp(props?: Props) {
         }>
       >(
         props?.apiGetMyProfileUrl ||
-          process.env.REACT_APP_BASE_URL +
+          import.meta.env.VITE_BASE_URL +
             '/user/' +
             resultAuthLogin.data.payload.user_id,
         {
@@ -81,7 +81,7 @@ export default function useAuthApp(props?: Props) {
         } else {
           navigate('/dashboard', { replace: true });
         }
-        message.success('Welcome to ' + process.env.REACT_APP_WEBSITE_NAME);
+        message.success('Welcome to ' + import.meta.env.VITE_WEBSITE_NAME);
       } else {
         message.error('Login failed.');
         //Throw error
@@ -100,7 +100,7 @@ export default function useAuthApp(props?: Props) {
         BaseResponseProps<{
           email: string;
         }>
-      >(process.env.REACT_APP_BASE_URL + '/email/send-otp', data);
+      >(import.meta.env.VITE_BASE_URL + '/email/send-otp', data);
     } catch (err) {
       message.error('Email/Username is already in use by another user.');
       setIsAuthLoading(false);
@@ -125,7 +125,7 @@ export default function useAuthApp(props?: Props) {
         BaseResponseProps<{
           email: string;
         }>
-      >(process.env.REACT_APP_BASE_URL + '/register', data);
+      >(import.meta.env.VITE_BASE_URL + '/register', data);
 
       if (!result) {
         message.error('Register failed. Empty response.');

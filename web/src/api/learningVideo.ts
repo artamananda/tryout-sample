@@ -37,7 +37,7 @@ export async function apiGetLearningVideos(
 
     const res = await httpRequest.get<
       BaseResponseProps<LearningVideoListResponse>
-    >(process.env.REACT_APP_BASE_URL + '/learning-video?' + params.toString());
+    >(import.meta.env.VITE_BASE_URL + '/learning-video?' + params.toString());
     return res;
   } catch (err) {
     const error = err instanceof Error ? err.message : 'An error occurred';
@@ -48,7 +48,7 @@ export async function apiGetLearningVideos(
 export async function apiGetLearningVideoById(id: number) {
   try {
     const res = await httpRequest.get<BaseResponseProps<LearningVideoResponse>>(
-      process.env.REACT_APP_BASE_URL + '/learning-video/' + id
+      import.meta.env.VITE_BASE_URL + '/learning-video/' + id
     );
     return res;
   } catch (err) {

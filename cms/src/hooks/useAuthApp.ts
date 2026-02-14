@@ -31,7 +31,7 @@ export default function useAuthApp(props?: Props) {
           user_id: string;
           role: string;
         }>
-      >(props?.apiLoginUrl || process.env.REACT_APP_BASE_URL + "/login", data);
+      >(props?.apiLoginUrl || import.meta.env.VITE_BASE_URL + "/login", data);
 
       if (!resultAuthLogin) {
         //
@@ -55,7 +55,7 @@ export default function useAuthApp(props?: Props) {
         }>
       >(
         props?.apiGetMyProfileUrl ||
-          process.env.REACT_APP_BASE_URL +
+          import.meta.env.VITE_BASE_URL +
             "/user/" +
             resultAuthLogin.data.payload.user_id,
         {
@@ -87,7 +87,7 @@ export default function useAuthApp(props?: Props) {
         } else {
           navigate("/dashboard", { replace: true });
         }
-        message.success("Welcome to " + process.env.REACT_APP_WEBSITE_NAME);
+        message.success("Welcome to " + import.meta.env.VITE_WEBSITE_NAME);
       } else {
         message.error("Login failed.");
         //Throw error

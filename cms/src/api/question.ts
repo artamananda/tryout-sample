@@ -7,7 +7,7 @@ import { CreateQuestionRequest, QuestionProps } from "../types/question";
 export async function apiCreateQuestion(data: CreateQuestionRequest) {
   try {
     const res = await httpRequest.post<BaseResponseProps<QuestionProps>>(
-      process.env.REACT_APP_BASE_URL + "/question/" + data.tryout_id,
+      import.meta.env.VITE_BASE_URL + "/question/" + data.tryout_id,
       data
     );
     return res;
@@ -21,7 +21,7 @@ export async function apiCreateQuestion(data: CreateQuestionRequest) {
 export async function apiUpdateQuestion(data: QuestionProps) {
   try {
     const res = await httpRequest.put<BaseResponseProps<QuestionProps>>(
-      process.env.REACT_APP_BASE_URL + "/question/" + data.question_id,
+      import.meta.env.VITE_BASE_URL + "/question/" + data.question_id,
       data
     );
     return res;
@@ -52,7 +52,7 @@ export async function doCreateQuestions(data: CreateQuestionRequest[]) {
 
 export async function fetchQuestions(tryoutId: string, questionType: string) {
   try {
-    const url = `${process.env.REACT_APP_BASE_URL}/question?tryoutId=${tryoutId}`;
+    const url = `${import.meta.env.VITE_BASE_URL}/question?tryoutId=${tryoutId}`;
     const res = await httpRequest.get<BaseResponseProps<any>>(url);
     const questions = res.data.payload?.results?.filter(
       (q: any) => q.type === questionType
@@ -69,7 +69,7 @@ export async function fetchQuestions(tryoutId: string, questionType: string) {
 export async function imageUpload(questionId: string, data: FormData) {
   try {
     const res = await httpRequest.put(
-      process.env.REACT_APP_BASE_URL +
+      import.meta.env.VITE_BASE_URL +
         "/question/" +
         questionId +
         "/upload-image",

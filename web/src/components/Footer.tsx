@@ -6,7 +6,7 @@ const FooterCopyright = () => {
   const currentYear = new Date().getFullYear();
   return (
     <Text>
-      {`Copyright © ${currentYear} ${process.env.REACT_APP_WEBSITE_NAME} v${process.env.REACT_APP_VERSION_NAME} All rights reserved`}
+      {`Copyright © ${currentYear} ${import.meta.env.VITE_WEBSITE_NAME} v${import.meta.env.VITE_VERSION_NAME} All rights reserved`}
     </Text>
   );
 };

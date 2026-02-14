@@ -9,7 +9,7 @@ export const sendAnswer = async (data: {
 }) => {
   try {
     const res = await httpRequest.post<BaseResponseProps<any>>(
-      process.env.REACT_APP_BASE_URL + '/user-answer',
+      import.meta.env.VITE_BASE_URL + '/user-answer',
       data
     );
     if (res) {
@@ -29,7 +29,7 @@ export const putAnswer = async (
 ) => {
   try {
     const res = await httpRequest.put<BaseResponseProps<any>>(
-      process.env.REACT_APP_BASE_URL + '/user-answer/' + user_answer_id,
+      import.meta.env.VITE_BASE_URL + '/user-answer/' + user_answer_id,
       data
     );
     if (res) {
