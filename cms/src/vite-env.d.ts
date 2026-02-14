@@ -1,0 +1,15 @@
+/// <reference types="vite/client" />
+
+interface ImportMetaEnv {
+  readonly VITE_APP_ID: string;
+  readonly VITE_WEBSITE_NAME: string;
+  readonly VITE_VERSION_NAME: string;
+  readonly VITE_BASE_URL: string;
+  readonly VITE_S3_ACCOUNT_ID: string;
+  readonly VITE_S3_ACCESS_ID: string;
+  readonly VITE_S3_SECRET_ID: string;
+}
+
+interface ImportMeta {
+  readonly env: ImportMetaEnv;
+}

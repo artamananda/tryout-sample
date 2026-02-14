@@ -7,7 +7,7 @@ export async function apiGetUsers() {
   try {
     const res = await httpRequest.get<
       BaseResponsePaginationProps<{ user_id: string; name: string }>
-    >(process.env.REACT_APP_BASE_URL + "/user");
+    >(import.meta.env.VITE_BASE_URL + "/user");
     return res;
   } catch (err) {
     const error = getErrorMessage(err);

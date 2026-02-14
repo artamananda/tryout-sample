@@ -142,7 +142,7 @@ const AppLayout = () => {
             right: 0,
             fontSize: 10,
           }}
-        >{`${process.env.REACT_APP_WEBSITE_NAME} v${process.env.REACT_APP_VERSION_NAME}`}</div>
+        >{`${import.meta.env.VITE_WEBSITE_NAME} v${import.meta.env.VITE_VERSION_NAME}`}</div>
       </Sider>
       <Layout style={{ marginLeft: 200 }}>
         <Content style={{ margin: 20, overflowY: "auto" }}>

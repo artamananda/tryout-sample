@@ -21,7 +21,7 @@ export async function apiGenerateQuestions(
   try {
     const res = await httpRequest.post<
       BaseResponseProps<GenerateQuestionsResponse>
-    >(process.env.REACT_APP_BASE_URL + "/ai/generate-questions", data);
+    >(import.meta.env.VITE_BASE_URL + "/ai/generate-questions", data);
     return res.data.payload;
   } catch (err) {
     const error = getErrorMessage(err);
@@ -35,7 +35,7 @@ export async function apiChat(
 ): Promise<AIChatResponse | undefined> {
   try {
     const res = await httpRequest.post<BaseResponseProps<AIChatResponse>>(
-      process.env.REACT_APP_BASE_URL + "/ai/chat",
+      import.meta.env.VITE_BASE_URL + "/ai/chat",
       data
     );
     return res.data.payload;
@@ -51,7 +51,7 @@ export async function apiSaveChatLog(
 ): Promise<boolean> {
   try {
     await httpRequest.post<BaseResponseProps<null>>(
-      process.env.REACT_APP_BASE_URL + "/ai/chat/log",
+      import.meta.env.VITE_BASE_URL + "/ai/chat/log",
       data
     );
     return true;
@@ -67,7 +67,7 @@ export async function apiSaveToBankSoal(
 ): Promise<BankSoalResponse[] | undefined> {
   try {
     const res = await httpRequest.post<BaseResponseProps<BankSoalResponse[]>>(
-      process.env.REACT_APP_BASE_URL + "/bank-soal/batch",
+      import.meta.env.VITE_BASE_URL + "/bank-soal/batch",
       data
     );
     return res.data.payload;
@@ -81,7 +81,7 @@ export async function apiSaveToBankSoal(
 export async function apiUpdateBankSoal(id: string, data: any): Promise<BankSoalResponse | undefined> {
   try {
     const res = await httpRequest.put<BaseResponseProps<BankSoalResponse>>(
-      process.env.REACT_APP_BASE_URL + `/bank-soal/${id}`,
+      import.meta.env.VITE_BASE_URL + `/bank-soal/${id}`,
       data
     );
     return res.data.payload;
@@ -95,7 +95,7 @@ export async function apiUpdateBankSoal(id: string, data: any): Promise<BankSoal
 export async function apiGetHistory(): Promise<ChatLog[] | undefined> {
   try {
     const res = await httpRequest.get<BaseResponseProps<ChatLog[]>>(
-      process.env.REACT_APP_BASE_URL + "/ai/chat/history"
+      import.meta.env.VITE_BASE_URL + "/ai/chat/history"
     );
     return res.data.payload;
   } catch (err) {
@@ -108,7 +108,7 @@ export async function apiGetHistory(): Promise<ChatLog[] | undefined> {
 export async function apiGetSession(id: string): Promise<ChatLog | undefined> {
   try {
     const res = await httpRequest.get<BaseResponseProps<ChatLog>>(
-      process.env.REACT_APP_BASE_URL + `/ai/chat/history/${id}`
+      import.meta.env.VITE_BASE_URL + `/ai/chat/history/${id}`
     );
     return res.data.payload;
   } catch (err) {
@@ -121,7 +121,7 @@ export async function apiGetSession(id: string): Promise<ChatLog | undefined> {
 export async function apiDeleteSession(id: string): Promise<boolean> {
   try {
     await httpRequest.delete<BaseResponseProps<null>>(
-      process.env.REACT_APP_BASE_URL + `/ai/chat/history/${id}`
+      import.meta.env.VITE_BASE_URL + `/ai/chat/history/${id}`
     );
     return true;
   } catch (err) {
@@ -134,7 +134,7 @@ export async function apiDeleteSession(id: string): Promise<boolean> {
 export async function apiUpdateSession(id: string, topic: string): Promise<boolean> {
   try {
     await httpRequest.put<BaseResponseProps<null>>(
-      process.env.REACT_APP_BASE_URL + `/ai/chat/history/${id}`,
+      import.meta.env.VITE_BASE_URL + `/ai/chat/history/${id}`,
       { topic }
     );
     return true;
@@ -148,7 +148,7 @@ export async function apiUpdateSession(id: string, topic: string): Promise<boole
 export async function apiGetSessionArtifacts(sessionId: string): Promise<ChatArtifact[]> {
   try {
     const res = await httpRequest.get<BaseResponseProps<ChatArtifact[]>>(
-      process.env.REACT_APP_BASE_URL + `/ai/chat/history/${sessionId}/artifacts`
+      import.meta.env.VITE_BASE_URL + `/ai/chat/history/${sessionId}/artifacts`
     );
     return res.data.payload || [];
   } catch (err) {
@@ -161,7 +161,7 @@ export async function apiUploadContext(file: File): Promise<{ text: string; file
     const formData = new FormData();
     formData.append("file", file);
     const res = await httpRequest.post<BaseResponseProps<{ text: string; filename: string }>>(
-      process.env.REACT_APP_BASE_URL + "/ai/upload-context",
+      import.meta.env.VITE_BASE_URL + "/ai/upload-context",
       formData,
       {
          headers: {
@@ -180,7 +180,7 @@ export async function apiUploadContext(file: File): Promise<{ text: string; file
 export async function apiRefineArtifact(id: string, instruction: string): Promise<ChatArtifact | undefined> {
   try {
     const res = await httpRequest.post<BaseResponseProps<ChatArtifact>>(
-      process.env.REACT_APP_BASE_URL + `/ai/artifacts/${id}/refine`,
+      import.meta.env.VITE_BASE_URL + `/ai/artifacts/${id}/refine`,
       { instruction }
     );
     return res.data.payload;
@@ -194,7 +194,7 @@ export async function apiRefineArtifact(id: string, instruction: string): Promis
 export async function apiUpdateArtifact(id: string, content: GeneratedQuestion): Promise<ChatArtifact | undefined> {
   try {
     const res = await httpRequest.put<BaseResponseProps<ChatArtifact>>(
-      process.env.REACT_APP_BASE_URL + `/ai/artifacts/${id}`,
+      import.meta.env.VITE_BASE_URL + `/ai/artifacts/${id}`,
       content
     );
     return res.data.payload;
@@ -208,7 +208,7 @@ export async function apiUpdateArtifact(id: string, content: GeneratedQuestion):
 export async function apiDeleteArtifact(id: string): Promise<boolean> {
   try {
     await httpRequest.delete<BaseResponseProps<null>>(
-      process.env.REACT_APP_BASE_URL + `/ai/artifacts/${id}`
+      import.meta.env.VITE_BASE_URL + `/ai/artifacts/${id}`
     );
     return true;
   } catch (err) {
@@ -221,7 +221,7 @@ export async function apiDeleteArtifact(id: string): Promise<boolean> {
 export async function apiApproveArtifact(id: string): Promise<boolean> {
   try {
     await httpRequest.post<BaseResponseProps<null>>(
-      process.env.REACT_APP_BASE_URL + `/ai/artifacts/${id}/approve`,
+      import.meta.env.VITE_BASE_URL + `/ai/artifacts/${id}/approve`,
       {}
     );
     return true;
@@ -235,7 +235,7 @@ export async function apiApproveArtifact(id: string): Promise<boolean> {
 export async function apiSaveExample(topic: string, content: string): Promise<boolean> {
   try {
     await httpRequest.post<BaseResponseProps<null>>(
-      process.env.REACT_APP_BASE_URL + "/ai/examples",
+      import.meta.env.VITE_BASE_URL + "/ai/examples",
       { topic, content }
     );
     return true;
@@ -249,7 +249,7 @@ export async function apiSaveExample(topic: string, content: string): Promise<bo
 export async function apiGetBankSoalTypes(): Promise<string[]> {
   try {
     const res = await httpRequest.get<BaseResponseProps<string[]>>(
-      process.env.REACT_APP_BASE_URL + "/bank-soal/types"
+      import.meta.env.VITE_BASE_URL + "/bank-soal/types"
     );
     return res.data.payload || [];
   } catch (err) {

@@ -41,7 +41,7 @@ export const Header = (props: any) => {
 
           <div className="header-image">
             <img
-              src={process.env.PUBLIC_URL + '/img/model.png'}
+              src={'/img/model.png'}
               alt="Vector Telisik"
               className="responsive-img"
             />

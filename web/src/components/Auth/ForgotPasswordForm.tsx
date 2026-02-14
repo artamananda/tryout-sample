@@ -18,7 +18,7 @@ const ForgotPasswordForm = () => {
     setLoading(true);
     try {
       const response = await axios.post(
-        `${process.env.REACT_APP_BASE_URL}/forgot-password/send-otp`,
+        `${import.meta.env.VITE_BASE_URL}/forgot-password/send-otp`,
         { email: values.email }
       );
 
@@ -50,7 +50,7 @@ const ForgotPasswordForm = () => {
     try {
       const otpString = values.otp.join('');
       const response = await axios.post(
-        `${process.env.REACT_APP_BASE_URL}/forgot-password/reset`,
+        `${import.meta.env.VITE_BASE_URL}/forgot-password/reset`,
         {
           email: email,
           otp: otpString,

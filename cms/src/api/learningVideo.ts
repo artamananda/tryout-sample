@@ -49,7 +49,7 @@ export async function apiGetLearningVideos(
 
     const res = await httpRequest.get<
       BaseResponseProps<LearningVideoListResponse>
-    >(process.env.REACT_APP_BASE_URL + "/learning-video?" + params.toString());
+    >(import.meta.env.VITE_BASE_URL + "/learning-video?" + params.toString());
     return res;
   } catch (err) {
     const error = err instanceof Error ? err.message : "An error occurred";
@@ -60,7 +60,7 @@ export async function apiGetLearningVideos(
 export async function apiGetLearningVideoById(id: number) {
   try {
     const res = await httpRequest.get<BaseResponseProps<LearningVideoResponse>>(
-      process.env.REACT_APP_BASE_URL + "/learning-video/" + id,
+      import.meta.env.VITE_BASE_URL + "/learning-video/" + id,
     );
     return res;
   } catch (err) {
@@ -73,7 +73,7 @@ export async function apiCreateLearningVideo(data: CreateLearningVideoRequest) {
   try {
     const res = await httpRequest.post<
       BaseResponseProps<LearningVideoResponse>
-    >(process.env.REACT_APP_BASE_URL + "/learning-video", data);
+    >(import.meta.env.VITE_BASE_URL + "/learning-video", data);
 
     if (res) {
       message.success("Learning video created successfully");
@@ -91,7 +91,7 @@ export async function apiUpdateLearningVideo(
 ) {
   try {
     const res = await httpRequest.put<BaseResponseProps<LearningVideoResponse>>(
-      process.env.REACT_APP_BASE_URL + "/learning-video/" + id,
+      import.meta.env.VITE_BASE_URL + "/learning-video/" + id,
       data,
     );
 
@@ -108,7 +108,7 @@ export async function apiUpdateLearningVideo(
 export async function apiDeleteLearningVideo(id: number) {
   try {
     const res = await httpRequest.delete<BaseResponseProps<null>>(
-      process.env.REACT_APP_BASE_URL + "/learning-video/" + id,
+      import.meta.env.VITE_BASE_URL + "/learning-video/" + id,
     );
 
     if (res) {

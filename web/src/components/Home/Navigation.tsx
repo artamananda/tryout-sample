@@ -68,7 +68,7 @@ export const Navigation = (props: any) => {
           </button>
           <a className=" page-scroll" href="#header">
             <img
-              src={process.env.PUBLIC_URL + '/img/logo.png'}
+              src={'/img/logo.png'}
               style={{
                 height: 50
               }}
