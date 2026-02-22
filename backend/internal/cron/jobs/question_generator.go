@@ -299,19 +299,26 @@ KETENTUAN PENTING:
 5. Soal harus UNIK dan tidak boleh mirip dengan soal yang sudah ada
 6. Gunakan konteks yang relevan dengan kehidupan sehari-hari atau isu terkini Indonesia
 7. Tingkat kesulitan "%s": %s
+8. PENTING: Jika soal memerlukan wacana/teks bacaan/stimulus/tabel/data, 
+   WAJIB sertakan wacana LENGKAP di field "text" SETIAP soal (bukan hanya di soal pertama).
+   Setiap soal harus bisa dipahami secara mandiri tanpa perlu melihat soal lain.
+   Gunakan HTML untuk format: <p><b>Bacalah teks berikut!</b></p><p>[wacana lengkap]</p><p><b>Pertanyaan:</b> [pertanyaan]</p>
 %s
 
 Format JSON yang HARUS diikuti:
 {
   "questions": [
     {
-      "text": "Teks soal lengkap di sini",
+      "text": "<p><b>Bacalah teks berikut!</b></p><p>[ISI WACANA/STIMULUS LENGKAP DI SINI - jangan dipotong]</p><p><b>Pertanyaan:</b> Teks pertanyaan spesifik di sini?</p>",
       "options": ["A. Pilihan 1", "B. Pilihan 2", "C. Pilihan 3", "D. Pilihan 4", "E. Pilihan 5"],
       "correct_answer": "A",
       "explanation": "Penjelasan lengkap mengapa jawaban A benar dan mengapa pilihan lain salah"
     }
   ]
-}`,
+}
+
+CATATAN: Untuk soal yang TIDAK memerlukan wacana (misalnya soal matematika langsung), 
+field "text" cukup berisi pertanyaan saja tanpa format wacana.`,
 		QUESTIONS_PER_BATCH,
 		typeName,
 		typeCode,
@@ -368,6 +375,19 @@ ATURAN FORMAT:
 - Setiap soal HARUS memiliki tepat 5 pilihan jawaban (A, B, C, D, E)
 - correct_answer harus berupa huruf tunggal (A, B, C, D, atau E)
 - Respon HANYA dalam format JSON yang valid, tanpa markdown blocks
+
+ATURAN WACANA/TEKS BACAAN (SANGAT PENTING - WAJIB DIPATUHI):
+- Jika soal memerlukan wacana, teks bacaan, stimulus, tabel, grafik, atau konteks apa pun, 
+  maka teks tersebut HARUS disertakan LENGKAP di dalam field "text" pada SETIAP soal yang merujuk wacana itu.
+- JANGAN pernah menulis wacana hanya di satu soal dan merujuknya dari soal lain 
+  (misalnya "Berdasarkan teks di atas..." tanpa menyertakan teksnya).
+- Setiap soal harus BERDIRI SENDIRI (self-contained) karena soal ditampilkan SATU PER SATU dan BISA DIACAK.
+- Wacana/teks TIDAK BOLEH dipotong, disingkat, dihilangkan, atau ditulis "..." - harus LENGKAP.
+- Gunakan format HTML di dalam field "text" agar tampilan rapi:
+  <p><b>Bacalah teks berikut!</b></p><p>[seluruh isi wacana lengkap tanpa dipotong]</p><p><b>Pertanyaan:</b> [pertanyaan]</p>
+- Boleh ada beberapa soal yang berbagi wacana yang sama - tapi SETIAP soal tersebut HARUS 
+  menyertakan wacana lengkap yang sama di field "text"-nya masing-masing.
+- Field "text" boleh panjang. JANGAN khawatir tentang panjang teks.
 `
 
 	// Add type-specific instructions
@@ -378,7 +398,7 @@ KHUSUS PENALARAN UMUM:
 - Soal harus menguji kemampuan penalaran logis, analitis, dan kritis
 - Gunakan pola silogisme, analogi, deret, dan pengelompokan
 - Sertakan soal yang memerlukan analisis argumen dan penarikan kesimpulan
-- Buat stimulus/bacaan singkat sebelum pertanyaan jika diperlukan
+- Jika soal memerlukan stimulus/bacaan, masukkan stimulus LENGKAP di field "text" setiap soal
 - Contoh gaya soal: "Jika semua X adalah Y, dan sebagian Y adalah Z, maka..."
 `
 	case "ppu":
@@ -389,15 +409,18 @@ KHUSUS PENGETAHUAN DAN PEMAHAMAN UMUM:
 - Sertakan soal tentang isu terkini Indonesia yang relevan
 - Gunakan fakta-fakta yang akurat dan dapat diverifikasi
 - Integrasikan pengetahuan lintas bidang (sains, sosial, budaya)
+- Jika soal merujuk pada teks/kutipan/data, sertakan LENGKAP di setiap soal
 `
 	case "pbm":
 		basePrompt += `
 KHUSUS PEMAHAMAN BACAAN DAN MENULIS:
-- Sertakan teks bacaan/stimulus sebelum pertanyaan (200-400 kata)
-- Teks bacaan harus bervariasi: ilmiah populer, editorial, narasi, eksposisi
+- Buat teks bacaan/stimulus (200-400 kata) yang bervariasi: ilmiah populer, editorial, narasi, eksposisi
+- WAJIB: Sertakan teks bacaan LENGKAP di field "text" SETIAP soal. JANGAN pisahkan wacana dari soal.
 - Soal harus menguji pemahaman literal, inferensial, dan evaluatif
 - Sertakan soal tentang EYD/PUEBI, kalimat efektif, dan kepaduan paragraf
 - Gunakan bahasa Indonesia yang baku dan benar
+- Format field "text" setiap soal: 
+  <p><b>Bacalah teks berikut!</b></p><p>[TEKS BACAAN LENGKAP 200-400 KATA - JANGAN DIPOTONG]</p><p><b>Pertanyaan:</b> [pertanyaan spesifik]</p>
 `
 	case "pku":
 		basePrompt += `
@@ -405,28 +428,33 @@ KHUSUS PENGETAHUAN KUANTITATIF:
 - Soal harus menguji kemampuan numerik dan kuantitatif
 - Gunakan konteks kehidupan sehari-hari (belanja, perjalanan, data statistik)
 - Sertakan soal tentang perbandingan, persentase, rata-rata, dan proporsi
-- Buat soal yang memerlukan interpretasi tabel, grafik, atau diagram
+- Jika soal memerlukan tabel/grafik/data, sertakan data LENGKAP di setiap soal (gunakan HTML table)
 - Pastikan perhitungan dan jawaban benar secara matematis
 `
 	case "ind":
 		basePrompt += `
 KHUSUS LITERASI BAHASA INDONESIA:
-- Sertakan teks bacaan/stimulus yang substansial (300-500 kata)
+- Buat teks bacaan/stimulus yang substansial (300-500 kata)
 - Teks harus mencakup berbagai genre: berita, opini, ilmiah, sastra
+- WAJIB: Sertakan teks bacaan LENGKAP di field "text" SETIAP soal. JANGAN pisahkan wacana dari soal.
 - Soal harus menguji kemampuan memahami isi tersurat dan tersirat
 - Sertakan soal tentang struktur teks, koherensi, dan kohesi
 - Gunakan teks yang relevan dengan konteks Indonesia terkini
 - Uji kemampuan menganalisis argumen dan mengevaluasi informasi
+- Format field "text" setiap soal:
+  <p><b>Bacalah teks berikut dengan saksama!</b></p><p>[TEKS BACAAN LENGKAP 300-500 KATA - JANGAN DIPOTONG]</p><p><b>Pertanyaan:</b> [pertanyaan spesifik]</p>
 `
 	case "ing":
 		basePrompt += `
 KHUSUS LITERASI BAHASA INGGRIS:
 - SOAL dan TEKS BACAAN dalam Bahasa Inggris (ini pengecualian dari aturan Bahasa Indonesia)
-- Sertakan reading passage sebelum pertanyaan (200-400 kata)
-- Gunakan teks akademik dan ilmiah populer berbahasa Inggris
+- Buat reading passage (200-400 kata) menggunakan teks akademik dan ilmiah populer
+- WAJIB: Sertakan reading passage LENGKAP di field "text" SETIAP soal. JANGAN pisahkan passage dari soal.
 - Soal harus menguji reading comprehension, vocabulary in context, dan inference
 - Sertakan soal grammar dan error recognition
 - Level bahasa setara CEFR B2-C1
+- Format field "text" setiap soal:
+  <p><b>Read the following passage carefully!</b></p><p>[FULL READING PASSAGE 200-400 WORDS - DO NOT TRUNCATE]</p><p><b>Question:</b> [specific question]</p>
 `
 	case "mtk":
 		basePrompt += `
@@ -437,6 +465,7 @@ KHUSUS PENALARAN MATEMATIKA:
 - Pastikan semua perhitungan dan jawaban 100% benar secara matematis
 - Sertakan langkah-langkah penyelesaian dalam penjelasan
 - Gunakan notasi matematika yang benar
+- Jika soal merujuk pada tabel/grafik/data, sertakan data LENGKAP di setiap soal
 `
 	}
 

@@ -91,7 +91,7 @@ func (j *BatchExtractor) processLog(ctx context.Context, chatLog entity.ChatLog)
 		Messages: []common.AIMessage{
 			{
 				Role:    "system",
-				Content: "Kamu adalah ahli dalam mengekstrak soal ujian terstruktur dari percakapan. Ekstrak semua soal yang dibahas dan format sebagai JSON. Semua soal harus dalam Bahasa Indonesia (kecuali untuk Literasi Bahasa Inggris) dan berkualitas setara UTBK resmi. Setiap soal harus memiliki 5 pilihan jawaban (A-E).",
+				Content: "Kamu adalah ahli dalam mengekstrak soal ujian terstruktur dari percakapan. Ekstrak semua soal yang dibahas dan format sebagai JSON. Semua soal harus dalam Bahasa Indonesia (kecuali untuk Literasi Bahasa Inggris) dan berkualitas setara UTBK resmi. Setiap soal harus memiliki 5 pilihan jawaban (A-E). PENTING: Jika soal memerlukan wacana/teks bacaan, sertakan wacana LENGKAP di field text SETIAP soal menggunakan format HTML. Setiap soal harus berdiri sendiri.",
 			},
 			{
 				Role:    "user",
@@ -160,11 +160,16 @@ Buatkan soal pilihan ganda berdasarkan topik yang dibahas.
 Semua soal HARUS dalam Bahasa Indonesia (kecuali untuk Literasi Bahasa Inggris).
 Setiap soal harus memiliki tepat 5 pilihan jawaban (A, B, C, D, E).
 
+PENTING - ATURAN WACANA:
+- Jika soal memerlukan wacana/teks bacaan/stimulus, sertakan wacana LENGKAP di field "text" SETIAP soal.
+- Jangan pisahkan wacana dari pertanyaan. Setiap soal harus berdiri sendiri.
+- Gunakan HTML: <p><b>Bacalah teks berikut!</b></p><p>[wacana lengkap]</p><p><b>Pertanyaan:</b> [pertanyaan]</p>
+
 Respon dengan format JSON ini:
 {
   "questions": [
     {
-      "text": "Teks soal di sini?",
+      "text": "<p><b>Bacalah teks berikut!</b></p><p>[wacana jika diperlukan]</p><p><b>Pertanyaan:</b> Teks soal di sini?</p>",
       "options": ["A. Pilihan 1", "B. Pilihan 2", "C. Pilihan 3", "D. Pilihan 4", "E. Pilihan 5"],
       "correct_answer": "A",
       "explanation": "Penjelasan singkat"

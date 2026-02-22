@@ -62,7 +62,15 @@ Semua soal WAJIB dalam Bahasa Indonesia (kecuali untuk Literasi Bahasa Inggris).
 Setiap soal harus memiliki tepat 5 pilihan jawaban (A, B, C, D, E).
 correct_answer harus berupa huruf tunggal (A, B, C, D, atau E).
 Sertakan penjelasan lengkap untuk setiap jawaban.
-Respon HANYA dengan JSON yang valid, tanpa markdown blocks.`,
+Respon HANYA dengan JSON yang valid, tanpa markdown blocks.
+
+ATURAN WACANA/TEKS BACAAN (SANGAT PENTING):
+- Jika soal memerlukan wacana/teks bacaan/stimulus/tabel/data, 
+  sertakan teks tersebut LENGKAP di field "text" SETIAP soal.
+- JANGAN pernah menulis wacana hanya di satu soal lalu merujuknya dari soal lain.
+- Setiap soal harus BERDIRI SENDIRI karena soal ditampilkan satu per satu dan bisa diacak.
+- Wacana TIDAK BOLEH dipotong atau disingkat. Field "text" boleh panjang.
+- Gunakan format HTML: <p><b>Bacalah teks berikut!</b></p><p>[wacana lengkap]</p><p><b>Pertanyaan:</b> [pertanyaan]</p>`,
 			},
 			{
 				Role:    "user",
@@ -117,6 +125,9 @@ KETENTUAN:
 - Setiap pilihan jawaban harus masuk akal (plausible distractors)
 - Sertakan penjelasan lengkap mengapa jawaban tersebut benar
 - Gunakan konteks yang relevan dengan Indonesia
+- PENTING: Jika soal memerlukan wacana/teks bacaan, sertakan wacana LENGKAP 
+  di field "text" SETIAP soal. Jangan pisahkan wacana dari soal.
+  Gunakan HTML: <p><b>Bacalah teks berikut!</b></p><p>[wacana]</p><p><b>Pertanyaan:</b> [pertanyaan]</p>
 
 %s
 
@@ -124,7 +135,7 @@ Format JSON:
 {
   "questions": [
     {
-      "text": "Teks soal lengkap di sini",
+      "text": "<p><b>Bacalah teks berikut!</b></p><p>[wacana lengkap jika diperlukan]</p><p><b>Pertanyaan:</b> Teks pertanyaan di sini?</p>",
       "options": ["A. Pilihan 1", "B. Pilihan 2", "C. Pilihan 3", "D. Pilihan 4", "E. Pilihan 5"],
       "correct_answer": "A",
       "explanation": "Penjelasan lengkap mengapa A benar"
@@ -200,6 +211,10 @@ Ketika menerima permintaan untuk membuat soal:
 3. Soal harus setara kualitas UTBK resmi dari SNPMB
 4. Gunakan konteks yang relevan dengan Indonesia
 5. Setiap pilihan jawaban harus masuk akal (plausible distractors)
+6. PENTING - ATURAN WACANA: Jika soal memerlukan wacana/teks bacaan/stimulus,
+   sertakan wacana LENGKAP di field "text" SETIAP soal. Jangan pisahkan wacana dari pertanyaan.
+   Setiap soal harus berdiri sendiri karena ditampilkan satu per satu dan bisa diacak.
+   Gunakan format HTML: <p><b>Bacalah teks berikut!</b></p><p>[wacana lengkap]</p><p><b>Pertanyaan:</b> [pertanyaan]</p>
 
 Kembalikan respons JSON seperti ini:
 {
@@ -207,7 +222,7 @@ Kembalikan respons JSON seperti ini:
   "is_generating": true,
   "questions": [
     {
-      "text": "Teks soal?",
+      "text": "<p><b>Bacalah teks berikut!</b></p><p>[wacana lengkap jika diperlukan]</p><p><b>Pertanyaan:</b> Teks pertanyaan?</p>",
       "options": ["A. Pilihan 1", "B. Pilihan 2", "C. Pilihan 3", "D. Pilihan 4", "E. Pilihan 5"],
       "correct_answer": "A",
       "explanation": "Penjelasan lengkap mengapa A benar",
