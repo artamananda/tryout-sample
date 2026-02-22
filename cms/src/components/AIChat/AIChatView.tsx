@@ -106,15 +106,15 @@ const AIChatView = ({
   const [saving, setSaving] = useState(false);
   const [savingLog, setSavingLog] = useState(false);
   const [selectedQuestions, setSelectedQuestions] = useState<Set<number>>(
-    new Set()
+    new Set(),
   );
   const [saveToBankSoal, setSaveToBankSoal] = useState(true);
   const [pendingQuestions, setPendingQuestions] = useState<GeneratedQuestion[]>(
-    []
+    [],
   );
   const [topic, setTopic] = useState("");
   const [activeQuestionType, setActiveQuestionType] = useState(
-    initialQuestionType || "kpu"
+    initialQuestionType || "kpu",
   );
   const [availableTypes, setAvailableTypes] = useState<
     { value: string; label: string }[]
@@ -164,7 +164,7 @@ const AIChatView = ({
 
   const updateDiffCount = (
     diff: keyof typeof diffDistribution,
-    delta: number
+    delta: number,
   ) => {
     setDiffDistribution((prev) => ({
       ...prev,
@@ -189,7 +189,7 @@ const AIChatView = ({
 
   const filteredSessions = history
     .filter((h) =>
-      (h.topic || "").toLowerCase().includes(sessionSearch.toLowerCase())
+      (h.topic || "").toLowerCase().includes(sessionSearch.toLowerCase()),
     )
     .sort((a, b) => {
       if (sessionSort === "newest")
@@ -205,16 +205,57 @@ const AIChatView = ({
 
   const paginatedSessions = filteredSessions.slice(
     (sessionPage - 1) * SESSION_PAGE_SIZE,
-    sessionPage * SESSION_PAGE_SIZE
+    sessionPage * SESSION_PAGE_SIZE,
   );
 
   const [refineArtifactId, setRefineArtifactId] = useState<string | null>(null);
   const [refineInstruction, setRefineInstruction] = useState("");
   const [refineLoading, setRefineLoading] = useState(false);
 
+  // Loading Progress State
+  const [loadingStep, setLoadingStep] = useState<string>("");
+  const [loadingElapsed, setLoadingElapsed] = useState(0);
+  const loadingTimerRef = useRef<ReturnType<typeof setInterval> | null>(null);
+
+  // Start/stop loading timer
+  useEffect(() => {
+    if (loading) {
+      setLoadingElapsed(0);
+      loadingTimerRef.current = setInterval(() => {
+        setLoadingElapsed((prev) => prev + 1);
+      }, 1000);
+    } else {
+      if (loadingTimerRef.current) {
+        clearInterval(loadingTimerRef.current);
+        loadingTimerRef.current = null;
+      }
+      setLoadingElapsed(0);
+      setLoadingStep("");
+    }
+    return () => {
+      if (loadingTimerRef.current) clearInterval(loadingTimerRef.current);
+    };
+  }, [loading]);
+
+  // Update loading step messages based on elapsed time
+  useEffect(() => {
+    if (!loading) return;
+    if (loadingElapsed < 3) {
+      setLoadingStep("Mengirim permintaan ke AI...");
+    } else if (loadingElapsed < 8) {
+      setLoadingStep("AI sedang menganalisis dan membuat soal...");
+    } else if (loadingElapsed < 15) {
+      setLoadingStep("Masih memproses... soal sedang disusun...");
+    } else if (loadingElapsed < 25) {
+      setLoadingStep("Hampir selesai... menyempurnakan hasil...");
+    } else {
+      setLoadingStep("Proses memakan waktu lebih lama dari biasa...");
+    }
+  }, [loadingElapsed, loading]);
+
   // Edit Artifact State
   const [editingArtifactId, setEditingArtifactId] = useState<string | null>(
-    null
+    null,
   );
   const [actionLoading, setActionLoading] = useState<string | null>(null);
   const [selectedFormat, setSelectedFormat] =
@@ -265,7 +306,7 @@ const AIChatView = ({
 
   const paginatedArtifacts = filteredArtifacts.slice(
     (artifactPage - 1) * ARTIFACT_PAGE_SIZE,
-    artifactPage * ARTIFACT_PAGE_SIZE
+    artifactPage * ARTIFACT_PAGE_SIZE,
   );
 
   const messagesEndRef = useRef<HTMLDivElement>(null);
@@ -280,7 +321,7 @@ const AIChatView = ({
       setMessages([
         {
           role: "assistant",
-          content: `Halo! Saya AI Assistant. 🎓\n\n1. **Ngobrol** - Diskusikan topik\n2. **Generate Soal** - Ketik "buat soal tentang [topik]"\n\nSilakan mulai!`,
+          content: `Halo! Saya AI Assistant pembuat soal UTBK. 🎓\n\n**Apa yang bisa saya lakukan:**\n1. 💬 **Ngobrol** - Diskusikan topik dan strategi soal\n2. 📝 **Generate Soal** - Ketik "buat soal tentang [topik]"\n3. ✨ **Refine** - Perbaiki soal yang sudah dibuat\n\n**💡 Tips:** Pilih jenis soal & format di toolbar bawah, lalu ketik topik yang diinginkan.\n**🔄 Auto-Generate:** Sistem otomatis membuat soal UTBK setiap 10 menit untuk semua jenis soal secara terus-menerus.\n\nSilakan mulai!`,
           timestamp: new Date(),
         },
       ]);
@@ -343,7 +384,7 @@ const AIChatView = ({
     setMessages([
       {
         role: "assistant",
-        content: `Halo! Saya AI Assistant. 🎓\n\n1. **Ngobrol** - Diskusikan topik\n2. **Generate Soal** - Ketik "buat soal tentang [topik]"\n\nSilakan mulai!`,
+        content: `Halo! Saya AI Assistant pembuat soal UTBK. 🎓\n\n**Apa yang bisa saya lakukan:**\n1. 💬 **Ngobrol** - Diskusikan topik dan strategi soal\n2. 📝 **Generate Soal** - Ketik "buat soal tentang [topik]"\n3. ✨ **Refine** - Perbaiki soal yang sudah dibuat\n\n**💡 Tips:** Pilih jenis soal & format di toolbar bawah, lalu ketik topik yang diinginkan.\n**🔄 Auto-Generate:** Sistem otomatis membuat soal UTBK setiap 10 menit untuk semua jenis soal secara terus-menerus.\n\nSilakan mulai!`,
         timestamp: new Date(),
       },
     ]);
@@ -352,7 +393,7 @@ const AIChatView = ({
   const handleEditSession = (
     e: React.MouseEvent,
     id: string,
-    currentTitle: string
+    currentTitle: string,
   ) => {
     e.stopPropagation();
     setEditingSessionId(id);
@@ -387,7 +428,7 @@ const AIChatView = ({
     if (editingArtifactId && dataToSave) {
       const updated = await apiUpdateArtifact(editingArtifactId, dataToSave);
       if (updated) {
-        message.success("Artifact Updated");
+        message.success("Soal berhasil diperbarui");
         if (sessionId) {
           const arts = await apiGetSessionArtifacts(sessionId);
           if (arts) setArtifacts(arts);
@@ -419,7 +460,7 @@ const AIChatView = ({
     if (!exampleTopic || !exampleContent) return;
     const ok = await apiSaveExample(exampleTopic, exampleContent);
     if (ok) {
-      message.success("Prompt saved to dataset");
+      message.success("Prompt berhasil disimpan ke dataset");
       setIsSaveExampleModalVisible(false);
       setExampleTopic("");
       setExampleContent("");
@@ -437,11 +478,11 @@ const AIChatView = ({
     setRefineLoading(true);
     const updated = await apiRefineArtifact(
       refineArtifactId,
-      refineInstruction
+      refineInstruction,
     );
     setRefineLoading(false);
     if (updated) {
-      message.success("Artifact Refined");
+      message.success("Soal berhasil disempurnakan oleh AI");
       setIsRefineModalVisible(false);
       // Refresh artifacts
       if (sessionId) {
@@ -453,12 +494,15 @@ const AIChatView = ({
 
   const handleDeleteArtifact = async (id: string) => {
     Modal.confirm({
-      title: "Delete Artifact",
-      content: "Are you sure you want to delete this generated item?",
+      title: "Hapus Soal",
+      content: "Apakah Anda yakin ingin menghapus soal ini?",
+      okText: "Hapus",
+      cancelText: "Batal",
+      okButtonProps: { danger: true },
       onOk: async () => {
         const success = await apiDeleteArtifact(id);
         if (success) {
-          message.success("Deleted");
+          message.success("Berhasil dihapus");
           if (sessionId) {
             const arts = await apiGetSessionArtifacts(sessionId);
             if (arts) setArtifacts(arts);
@@ -495,7 +539,7 @@ const AIChatView = ({
     const res = await apiSaveToBankSoal({ questions: [bankData] });
     if (res) {
       await apiApproveArtifact(art.id);
-      message.success("Saved to Bank Soal");
+      message.success("Berhasil disimpan ke Bank Soal");
       // Refresh
       const arts = await apiGetSessionArtifacts(sessionId);
       if (arts) setArtifacts(arts);
@@ -566,7 +610,7 @@ const AIChatView = ({
           setReviewDrawer({
             visible: true,
             mode: "pending",
-            title: "Review Generated Questions",
+            title: "Review Soal",
             data: response.questions,
           });
           const topicMatch = inputValue.match(/tentang\s+(.+)/i);
@@ -580,7 +624,9 @@ const AIChatView = ({
         }
       }
     } catch (error) {
-      message.error("Gagal berkomunikasi dengan AI");
+      message.error(
+        "Gagal berkomunikasi dengan AI. Silakan coba lagi dalam beberapa saat.",
+      );
     } finally {
       setLoading(false);
     }
@@ -605,8 +651,8 @@ const AIChatView = ({
 
     setInputValue(
       `Buat ${diffPrompt} tentang ${topicText} untuk ${getQuestionTypeName(
-        activeQuestionType
-      )}`
+        activeQuestionType,
+      )}`,
     );
   };
 
@@ -624,7 +670,9 @@ const AIChatView = ({
         messages: chatMessages,
       });
       if (success) {
-        message.success("Tersimpan untuk proses background");
+        message.success(
+          "✅ Percakapan disimpan! Soal akan diekstrak otomatis oleh sistem (cron job jam 01:00 WIB). Soal yang diekstrak akan muncul di Bank Soal dengan status Draft.",
+        );
         if (onClose) onClose();
       }
     } finally {
@@ -637,7 +685,7 @@ const AIChatView = ({
     setSaving(true);
     try {
       const selectedQs = pendingQuestions.filter((_, i) =>
-        selectedQuestions.has(i)
+        selectedQuestions.has(i),
       );
       let savedToBank = 0;
       let savedToTryout = 0;
@@ -675,7 +723,7 @@ const AIChatView = ({
       }
 
       message.success(
-        `Tersimpan: ${savedToTryout} Tryout, ${savedToBank} Bank Soal`
+        `Tersimpan: ${savedToTryout} Tryout, ${savedToBank} Bank Soal`,
       );
       setPendingQuestions([]);
       setSelectedQuestions(new Set());
@@ -899,7 +947,7 @@ const AIChatView = ({
                               day: "numeric",
                               hour: "2-digit",
                               minute: "2-digit",
-                            }
+                            },
                           )}
                         </div>
                       </div>
@@ -1047,20 +1095,20 @@ const AIChatView = ({
                           onClick={() => {
                             const trimmed = newTypeName.trim();
                             if (trimmed) {
-                              import(
-                                "../../screens/BankSoal/questionTypes"
-                              ).then((m) => {
-                                m.saveCustomType(trimmed);
-                                const newOptions = m.formatTypeOptions(
-                                  availableTypes.map((t) => t.value)
-                                );
-                                setAvailableTypes(newOptions);
-                                setActiveQuestionType(trimmed);
-                                setNewTypeName("");
-                                message.success(
-                                  `Jenis soal "${trimmed}" ditambahkan!`
-                                );
-                              });
+                              import("../../screens/BankSoal/questionTypes").then(
+                                (m) => {
+                                  m.saveCustomType(trimmed);
+                                  const newOptions = m.formatTypeOptions(
+                                    availableTypes.map((t) => t.value),
+                                  );
+                                  setAvailableTypes(newOptions);
+                                  setActiveQuestionType(trimmed);
+                                  setNewTypeName("");
+                                  message.success(
+                                    `Jenis soal "${trimmed}" ditambahkan!`,
+                                  );
+                                },
+                              );
                             }
                           }}
                         >
@@ -1088,7 +1136,7 @@ const AIChatView = ({
                   setReviewDrawer({
                     visible: true,
                     mode: "pending",
-                    title: "Review Generated Questions",
+                    title: "Review Soal",
                     data: pendingQuestions,
                   })
                 }
@@ -1101,7 +1149,7 @@ const AIChatView = ({
               icon={<HistoryOutlined />}
               onClick={() => setIsArtifactDrawerVisible(true)}
             >
-              History Generasi
+              Riwayat Generasi
             </Button>
           </div>
         </div>
@@ -1186,7 +1234,7 @@ const AIChatView = ({
                         fontWeight: 500,
                       }}
                     >
-                      <HistoryOutlined /> Generated Questions (Checkpoint)
+                      <HistoryOutlined /> Soal Tersimpan (Checkpoint)
                     </div>
                     <Button
                       type="dashed"
@@ -1204,12 +1252,11 @@ const AIChatView = ({
                           msg.artifact_ids &&
                           msg.artifact_ids.length > 0
                         ) {
-                          const allArtifacts = await apiGetSessionArtifacts(
-                            sessionId
-                          );
+                          const allArtifacts =
+                            await apiGetSessionArtifacts(sessionId);
                           if (allArtifacts) {
                             checkpointData = allArtifacts.filter((art) =>
-                              msg.artifact_ids?.includes(art.id)
+                              msg.artifact_ids?.includes(art.id),
                             );
                           }
                         }
@@ -1225,13 +1272,13 @@ const AIChatView = ({
                         setReviewDrawer({
                           visible: true,
                           mode: "checkpoint",
-                          title: "Checkpoint Review",
+                          title: "Review Checkpoint Soal",
                           data: normalized as GeneratedQuestion[],
                           originalArtifacts: checkpointData,
                         });
                       }}
                     >
-                      View {msg.artifact_ids.length} Saved Questions
+                      Lihat {msg.artifact_ids.length} Soal Tersimpan
                     </Button>
                   </div>
                 ) : (
@@ -1251,12 +1298,12 @@ const AIChatView = ({
                           setReviewDrawer({
                             visible: true,
                             mode: "pending",
-                            title: "Review Generated Questions",
+                            title: "Review Soal",
                             data: msg.questions || [],
                           });
                         }}
                       >
-                        View {msg.questions.length} Generated Questions
+                        Lihat {msg.questions.length} Soal Hasil Generate
                       </Button>
                     </div>
                   )
@@ -1307,22 +1354,107 @@ const AIChatView = ({
 
           {loading && (
             <div
-              style={{ display: "flex", alignItems: "center", marginLeft: 8 }}
+              style={{
+                display: "flex",
+                flexDirection: "column",
+                alignItems: "flex-start",
+                marginLeft: 8,
+                padding: "16px 20px",
+                backgroundColor: "white",
+                borderRadius: "20px 20px 20px 4px",
+                border: "1px solid #f0e6ff",
+                boxShadow: "0 4px 12px rgba(140, 89, 241, 0.08)",
+                maxWidth: "75%",
+                animation: "fadeIn 0.3s ease",
+              }}
             >
-              <Spin
-                indicator={
-                  <RobotOutlined
-                    style={{ fontSize: 24, color: "#8C59F1" }}
-                    spin
-                  />
-                }
-              />
-              <Text
-                type="secondary"
-                style={{ marginLeft: 16, fontStyle: "italic" }}
+              <div
+                style={{
+                  display: "flex",
+                  alignItems: "center",
+                  gap: 12,
+                  marginBottom: 8,
+                }}
               >
-                Sedang mengetik...
+                <div
+                  style={{
+                    width: 36,
+                    height: 36,
+                    borderRadius: "50%",
+                    background:
+                      "linear-gradient(135deg, #8C59F1 0%, #b37feb 100%)",
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    animation: "pulse 1.5s ease-in-out infinite",
+                  }}
+                >
+                  <RobotOutlined style={{ color: "white", fontSize: 18 }} />
+                </div>
+                <div>
+                  <Text strong style={{ fontSize: 14, color: "#333" }}>
+                    AI sedang bekerja
+                  </Text>
+                  <div style={{ fontSize: 11, color: "#999" }}>
+                    {loadingElapsed}s berlalu
+                  </div>
+                </div>
+              </div>
+
+              {/* Progress Steps */}
+              <div style={{ width: "100%", marginBottom: 8 }}>
+                <div
+                  style={{
+                    height: 3,
+                    backgroundColor: "#f0e6ff",
+                    borderRadius: 2,
+                    overflow: "hidden",
+                  }}
+                >
+                  <div
+                    style={{
+                      height: "100%",
+                      background:
+                        "linear-gradient(90deg, #8C59F1, #b37feb, #8C59F1)",
+                      borderRadius: 2,
+                      animation: "shimmer 2s ease-in-out infinite",
+                      width:
+                        loadingElapsed < 8
+                          ? "40%"
+                          : loadingElapsed < 15
+                            ? "65%"
+                            : loadingElapsed < 25
+                              ? "85%"
+                              : "95%",
+                      transition: "width 1s ease",
+                    }}
+                  />
+                </div>
+              </div>
+
+              <Text
+                style={{
+                  fontSize: 13,
+                  color: "#8C59F1",
+                  fontWeight: 500,
+                  display: "flex",
+                  alignItems: "center",
+                  gap: 8,
+                }}
+              >
+                <LoadingOutlined spin style={{ fontSize: 14 }} />
+                {loadingStep}
               </Text>
+
+              {loadingElapsed >= 15 && (
+                <Text
+                  type="secondary"
+                  style={{ fontSize: 11, marginTop: 4, fontStyle: "italic" }}
+                >
+                  💡 Pembuatan soal berkualitas membutuhkan waktu. AI sedang
+                  menyusun soal yang setara UTBK.
+                </Text>
+              )}
             </div>
           )}
           <div ref={messagesEndRef} />
@@ -1359,8 +1491,16 @@ const AIChatView = ({
                 border: "1px solid #d9d9d9",
               }}
               onClick={handleSaveLog}
+              title="Simpan percakapan ini agar soal diekstrak otomatis oleh sistem di latar belakang (cron job berjalan setiap jam 01:00 WIB)"
             >
-              {savingLog ? "Menyimpan..." : "Proses Background"}
+              {savingLog ? (
+                <>
+                  <LoadingOutlined spin style={{ marginRight: 4 }} />{" "}
+                  Menyimpan...
+                </>
+              ) : (
+                "📋 Simpan & Ekstrak Otomatis"
+              )}
             </Tag>
 
             <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
@@ -1398,20 +1538,20 @@ const AIChatView = ({
                           onClick={() => {
                             const trimmed = newTypeName.trim();
                             if (trimmed) {
-                              import(
-                                "../../screens/BankSoal/questionTypes"
-                              ).then((m) => {
-                                m.saveCustomType(trimmed);
-                                const newOptions = m.formatTypeOptions(
-                                  availableTypes.map((t) => t.value)
-                                );
-                                setAvailableTypes(newOptions);
-                                setActiveQuestionType(trimmed);
-                                setNewTypeName("");
-                                message.success(
-                                  `Jenis soal "${trimmed}" ditambahkan!`
-                                );
-                              });
+                              import("../../screens/BankSoal/questionTypes").then(
+                                (m) => {
+                                  m.saveCustomType(trimmed);
+                                  const newOptions = m.formatTypeOptions(
+                                    availableTypes.map((t) => t.value),
+                                  );
+                                  setAvailableTypes(newOptions);
+                                  setActiveQuestionType(trimmed);
+                                  setNewTypeName("");
+                                  message.success(
+                                    `Jenis soal "${trimmed}" ditambahkan!`,
+                                  );
+                                },
+                              );
                             }
                           }}
                         >
@@ -1589,7 +1729,7 @@ const AIChatView = ({
                   const res = await apiUploadContext(file);
                   if (res) {
                     setFileContext({ text: res.text, name: res.filename });
-                    message.success("Context loaded");
+                    message.success("File konteks berhasil dimuat");
                   }
                 }
               }}
@@ -1606,7 +1746,11 @@ const AIChatView = ({
             <Input.TextArea
               value={inputValue}
               onChange={(e) => setInputValue(e.target.value)}
-              placeholder="Ketik pesan atau topik soal..."
+              placeholder={
+                loading
+                  ? "⏳ AI sedang memproses permintaan Anda..."
+                  : "Ketik pesan atau topik soal... (contoh: buat 5 soal tentang Teorema Pythagoras)"
+              }
               autoSize={{ minRows: 1, maxRows: 6 }}
               bordered={false}
               style={{
@@ -1616,6 +1760,7 @@ const AIChatView = ({
                 fontSize: 15,
                 backgroundColor: "transparent",
                 lineHeight: 1.5,
+                opacity: loading ? 0.6 : 1,
               }}
               onKeyDown={(e) => {
                 if (e.key === "Enter" && !e.shiftKey) {
@@ -1703,8 +1848,8 @@ const AIChatView = ({
                 </span>
                 <span style={{ fontWeight: 400, fontSize: 12, color: "#999" }}>
                   {reviewDrawer.mode === "checkpoint"
-                    ? "Review and manage saved questions"
-                    : "Select and refine pending generations"}
+                    ? "Kelola dan review soal yang tersimpan"
+                    : "Pilih dan sempurnakan soal yang baru digenerate"}
                 </span>
               </div>
             </div>
@@ -1864,7 +2009,7 @@ const AIChatView = ({
                       }}
                     >
                       <RobotOutlined style={{ fontSize: 13 }} />
-                      <span>Synthesized by AI</span>
+                      <span>Dibuat oleh AI</span>
                     </div>
                   </div>
                 ))}
@@ -1977,7 +2122,7 @@ const AIChatView = ({
                           fontWeight: 700,
                         }}
                       >
-                        Correct Answer
+                        Jawaban Benar
                       </div>
                       <div
                         style={{
@@ -2019,12 +2164,12 @@ const AIChatView = ({
                         {q.metadata.source === "ai_generated" ? (
                           <>
                             <RobotOutlined style={{ fontSize: 14 }} />
-                            <span>Synthesized by AI</span>
+                            <span>Dibuat oleh AI</span>
                           </>
                         ) : (
                           <>
                             <BookOutlined style={{ fontSize: 14 }} />
-                            <span>Source: {q.metadata.source}</span>
+                            <span>Sumber: {q.metadata.source}</span>
                           </>
                         )}
                       </div>
@@ -2048,12 +2193,12 @@ const AIChatView = ({
                             reviewDrawer.originalArtifacts[i]
                           ) {
                             handleEditArtifact(
-                              reviewDrawer.originalArtifacts[i]
+                              reviewDrawer.originalArtifacts[i],
                             );
                           }
                         }}
                       >
-                        Edit / Detail
+                        Edit / Lihat Detail
                       </Button>
                     </div>
                   </div>
@@ -2069,9 +2214,7 @@ const AIChatView = ({
           onSave={handleSaveQuestion}
           zIndex={2000}
           title={
-            editingArtifactId
-              ? "Edit Generated Question"
-              : "Edit Pending Question"
+            editingArtifactId ? "Edit Soal Hasil Generate" : "Edit Soal Pending"
           }
         />
 
@@ -2107,21 +2250,53 @@ const AIChatView = ({
         </Modal>
 
         <Modal
-          title="Refine Generated Question"
+          title="Perbaiki Soal dengan AI"
           open={isRefineModalVisible}
           onOk={handleRefineSubmit}
           confirmLoading={refineLoading}
+          okText={refineLoading ? "AI sedang memperbaiki..." : "Perbaiki Soal"}
+          cancelText="Batal"
           onCancel={() => setIsRefineModalVisible(false)}
           zIndex={2000}
         >
+          {refineLoading && (
+            <div
+              style={{
+                padding: "12px 16px",
+                backgroundColor: "#f9f0ff",
+                borderRadius: 12,
+                marginBottom: 16,
+                border: "1px solid #e9d5ff",
+                display: "flex",
+                alignItems: "center",
+                gap: 12,
+              }}
+            >
+              <LoadingOutlined
+                spin
+                style={{ color: "#8C59F1", fontSize: 18 }}
+              />
+              <div>
+                <Text strong style={{ color: "#8C59F1", fontSize: 13 }}>
+                  AI sedang memperbaiki soal...
+                </Text>
+                <div style={{ fontSize: 11, color: "#999" }}>
+                  Proses ini membutuhkan waktu 10-30 detik
+                </div>
+              </div>
+            </div>
+          )}
           <Typography.Paragraph type="secondary">
-            Provide instructions to AI on how to improve this question.
+            Berikan instruksi ke AI untuk memperbaiki soal ini. Contoh:
+            &quot;Buat lebih mirip soal UTBK 2024&quot; atau &quot;Perbaiki
+            perhitungan di penjelasan&quot;.
           </Typography.Paragraph>
           <Input.TextArea
             rows={4}
-            placeholder="e.g. Make it closer to UTBK 2024 style, or fix the calculation error..."
+            placeholder="Contoh: Buat soal lebih sulit, perbaiki opsi jawaban agar lebih masuk akal, sesuaikan gaya soal UTBK..."
             value={refineInstruction}
             onChange={(e) => setRefineInstruction(e.target.value)}
+            disabled={refineLoading}
           />
         </Modal>
 
@@ -2148,7 +2323,7 @@ const AIChatView = ({
                   Riwayat Generasi
                 </span>
                 <span style={{ fontWeight: 400, fontSize: 12, color: "#999" }}>
-                  Tracking all generated questions in this session
+                  Soal yang sudah digenerate dalam sesi ini
                 </span>
               </div>
             </div>
@@ -2213,8 +2388,11 @@ const AIChatView = ({
                 onChange={setArtifactFilter}
                 options={[
                   { label: "Semua Status", value: "all" },
-                  { label: "Pending", value: "pending" },
-                  { label: "Approved", value: "approved" },
+                  { label: "Menunggu", value: "pending" },
+                  { label: "Disetujui", value: "approved" },
+                  { label: "Disempurnakan", value: "refined" },
+                  { label: "Diedit", value: "edited" },
+                  { label: "Digenerate", value: "generated" },
                 ]}
                 dropdownStyle={{ borderRadius: 12 }}
               />
@@ -2333,12 +2511,12 @@ const AIChatView = ({
                       {art.metadata.source === "ai_generated" ? (
                         <>
                           <RobotOutlined style={{ fontSize: 14 }} />
-                          <span>Synthesized by AI</span>
+                          <span>Dibuat oleh AI</span>
                         </>
                       ) : (
                         <>
                           <BookOutlined style={{ fontSize: 14 }} />
-                          <span>Source: {art.metadata.source}</span>
+                          <span>Sumber: {art.metadata.source}</span>
                         </>
                       )}
                     </div>
@@ -2404,7 +2582,7 @@ const AIChatView = ({
                           fontWeight: 600,
                         }}
                       >
-                        <CheckCircleOutlined /> Saved
+                        <CheckCircleOutlined /> Tersimpan
                       </div>
                     ) : (
                       <Button
@@ -2428,7 +2606,7 @@ const AIChatView = ({
                           boxShadow: "0 4px 10px rgba(140, 89, 241, 0.2)",
                         }}
                       >
-                        {actionLoading === art.id ? "Saving..." : "Save"}
+                        {actionLoading === art.id ? "Menyimpan..." : "Simpan"}
                       </Button>
                     )}
 

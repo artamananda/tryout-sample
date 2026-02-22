@@ -79,7 +79,13 @@ func (service *AIService) GenerateQuestions(ctx context.Context, request model.G
 		Messages: []openAIMessage{
 			{
 				Role:    "system",
-				Content: "You are an expert exam question creator. Generate high-quality multiple choice questions in JSON format. Each question must have exactly 4 options labeled A, B, C, D. The correct_answer should be the letter (A, B, C, or D). Always respond with valid JSON only.",
+				Content: `Kamu adalah pembuat soal UTBK (Ujian Tulis Berbasis Komputer) profesional Indonesia.
+Buat soal berkualitas tinggi setara soal UTBK resmi dari SNPMB.
+Semua soal WAJIB dalam Bahasa Indonesia (kecuali untuk Literasi Bahasa Inggris).
+Setiap soal harus memiliki tepat 5 pilihan jawaban (A, B, C, D, E).
+correct_answer harus berupa huruf tunggal (A, B, C, D, atau E).
+Sertakan penjelasan lengkap untuk setiap jawaban.
+Respon HANYA dengan JSON yang valid, tanpa markdown blocks.`,
 			},
 			{
 				Role:    "user",
@@ -153,29 +159,41 @@ func (service *AIService) GenerateQuestions(ctx context.Context, request model.G
 func buildPrompt(request model.GenerateQuestionsRequest) string {
 	questionTypeName := getQuestionTypeName(request.QuestionType)
 
-	prompt := fmt.Sprintf(`Generate %d %s difficulty multiple choice questions about "%s" for a %s exam.
+	difficultyDesc := map[string]string{
+		"easy":   "mudah - menguji pemahaman dasar, satu langkah penyelesaian",
+		"medium": "sedang - menguji penerapan konsep, 2-3 langkah penyelesaian",
+		"hard":   "sulit - menguji analisis tingkat tinggi, multi-langkah",
+	}
+	diffText := difficultyDesc[request.Difficulty]
+	if diffText == "" {
+		diffText = request.Difficulty
+	}
 
-Requirements:
-- Each question must have exactly 4 options (A, B, C, D)
-- Questions should be clear and unambiguous
-- Options should be plausible but only one correct
-- Include a brief explanation for the correct answer
+	prompt := fmt.Sprintf(`Buatkan %d soal UTBK dengan tingkat kesulitan %s tentang "%s" untuk kategori %s.
+
+KETENTUAN:
+- Semua soal WAJIB dalam Bahasa Indonesia (kecuali untuk Literasi Bahasa Inggris)
+- Setiap soal harus memiliki tepat 5 pilihan jawaban (A, B, C, D, E)
+- Soal harus berkualitas tinggi, setara dengan soal UTBK resmi
+- Setiap pilihan jawaban harus masuk akal (plausible distractors)
+- Sertakan penjelasan lengkap mengapa jawaban tersebut benar
+- Gunakan konteks yang relevan dengan Indonesia
 
 %s
 
-Respond with this exact JSON format:
+Format JSON:
 {
   "questions": [
     {
-      "text": "Question text here?",
-      "options": ["A. Option 1", "B. Option 2", "C. Option 3", "D. Option 4"],
+      "text": "Teks soal lengkap di sini",
+      "options": ["A. Pilihan 1", "B. Pilihan 2", "C. Pilihan 3", "D. Pilihan 4", "E. Pilihan 5"],
       "correct_answer": "A",
-      "explanation": "Brief explanation why A is correct"
+      "explanation": "Penjelasan lengkap mengapa A benar"
     }
   ]
 }`,
 		request.NumberOfQuestions,
-		request.Difficulty,
+		diffText,
 		request.Topic,
 		questionTypeName,
 		getContextSection(request.Context),
@@ -226,57 +244,64 @@ func (service *AIService) Chat(ctx context.Context, request model.AIChatRequest,
 	// Build system message based on mode
 	var systemMessage string
 	if request.Mode == "generate" {
-		formatInstruction := "Provide 5 options (Multiple Choice). 'correct_answer' is a single letter (e.g. 'A')."
+		formatInstruction := "Sediakan 5 pilihan jawaban (Pilihan Ganda A-E). 'correct_answer' berupa satu huruf (misal 'A')."
 		if request.QuestionFormat == "essay" {
-			formatInstruction = "Provide NO options (leave empty array). 'correct_answer' field should contain the model answer or grading rubric."
+			formatInstruction = "JANGAN sediakan pilihan (array kosong). 'correct_answer' berisi jawaban model atau rubrik penilaian."
 		} else if request.QuestionFormat == "multiple_answer" {
-			formatInstruction = "Provide 5 options. 'correct_answer' should list all correct options (e.g. 'A, C')."
+			formatInstruction = "Sediakan 5 pilihan jawaban. 'correct_answer' berisi semua huruf jawaban benar (misal 'A, C')."
 		} else if request.QuestionFormat == "short_answer" {
-			formatInstruction = "Provide NO options (leave empty array). 'correct_answer' is the short answer key."
+			formatInstruction = "JANGAN sediakan pilihan (array kosong). 'correct_answer' berisi kunci jawaban singkat."
 		}
 
-		systemMessage = `You are an expert exam question creator assistant.
+		systemMessage = `Kamu adalah pembuat soal UTBK (Ujian Tulis Berbasis Komputer) profesional Indonesia.
+Kamu memiliki keahlian dalam membuat soal seleksi masuk perguruan tinggi negeri yang berkualitas tinggi.
 
-When you receive a request to generate questions:
-1. Generate the questions in the format requested: ` + formatInstruction + `
-2. Return a JSON response like this:
+Ketika menerima permintaan untuk membuat soal:
+1. Buat soal sesuai format: ` + formatInstruction + `
+2. Semua soal WAJIB dalam Bahasa Indonesia (kecuali Literasi Bahasa Inggris)
+3. Soal harus setara kualitas UTBK resmi dari SNPMB
+4. Gunakan konteks yang relevan dengan Indonesia
+5. Setiap pilihan jawaban harus masuk akal (plausible distractors)
+
+Kembalikan respons JSON seperti ini:
 {
-  "message": "I've generated N questions about [topic].",
+  "message": "Saya telah membuat N soal tentang [topik].",
   "is_generating": true,
   "questions": [
     {
-      "text": "Question text?",
-      "options": ["A. Option 1", "B. Option 2", "C. Option 3", "D. Option 4"],
+      "text": "Teks soal?",
+      "options": ["A. Pilihan 1", "B. Pilihan 2", "C. Pilihan 3", "D. Pilihan 4", "E. Pilihan 5"],
       "correct_answer": "A",
-      "explanation": "Why A is correct",
+      "explanation": "Penjelasan lengkap mengapa A benar",
       "type": "` + request.QuestionFormat + `"
     }
   ]
 }
 
-Always respond with valid JSON only. Do not wrap code in markdown blocks.`
+SELALU respon dengan JSON yang valid saja. Jangan gunakan markdown blocks.`
 	} else {
-		systemMessage = `You are a helpful AI assistant for creating exam questions. You help teachers and admins prepare questions.
+		systemMessage = `Kamu adalah asisten AI yang membantu guru dan admin dalam membuat soal UTBK (Ujian Tulis Berbasis Komputer) berkualitas tinggi.
 
-You can:
-1. Discuss topics and help refine question ideas
-2. Suggest question types and difficulty levels
-3. When asked to generate questions, guide the user on what information you need
+Kemampuanmu:
+1. Mendiskusikan topik dan membantu menyempurnakan ide soal
+2. Menyarankan jenis soal dan tingkat kesulitan yang sesuai
+3. Membantu merumuskan soal yang setara dengan UTBK resmi
+4. Memberikan saran perbaikan untuk soal yang sudah ada
 
-When chatting, respond in this JSON format:
+Ketika bercakap, respon dalam format JSON:
 {
-  "message": "Your conversational response here",
+  "message": "Respon percakapanmu di sini (dalam Bahasa Indonesia)",
   "is_generating": false,
-  "suggestion": "Optional suggestion for what to do next"
+  "suggestion": "Saran opsional untuk langkah selanjutnya"
 }
 
-If the user wants to generate questions, ask them to provide:
-- Topic/subject matter
-- Number of questions
-- Difficulty level (easy/medium/hard)
-- Question type if not specified
+Jika pengguna ingin membuat soal, minta mereka memberikan:
+- Topik/materi soal
+- Jumlah soal yang diinginkan
+- Tingkat kesulitan (mudah/sedang/sulit)
+- Jenis soal jika belum ditentukan
 
-Always respond with valid JSON only.`
+SELALU respon dalam Bahasa Indonesia. SELALU respon dengan JSON yang valid saja.`
 	}
 
 	// Inject examples if Topic is available
@@ -650,7 +675,7 @@ func (service *AIService) includeContext(ctx context.Context, topic string) (str
 	}
 
 	var contextMsg string
-	contextMsg += "\n\nReferensi contoh soal/dataset yang relevan (gunakan gaya serupa):\n"
+	contextMsg += "\n\nReferensi contoh soal/dataset UTBK yang relevan (gunakan gaya dan tingkat kesulitan serupa, pastikan soal dalam Bahasa Indonesia):\n"
 	for _, example := range examples {
 		contextMsg += fmt.Sprintf("- %s\n", example.Content)
 	}
@@ -682,8 +707,8 @@ func (service *AIService) RefineArtifact(ctx context.Context, artifactID string,
 	}
 
 	// Build Prompt
-	systemPrompt := "You are an expert exam question editor. Update the following question based on the user's instruction. Output ONLY the updated question in JSON format."
-	userPrompt := fmt.Sprintf("Original Question JSON: %s\n\nInstruction: %s\n\nOutput JSON:", artifact.Content, instruction)
+	systemPrompt := "Kamu adalah editor soal UTBK profesional. Perbarui soal berikut berdasarkan instruksi pengguna. Pastikan soal tetap dalam Bahasa Indonesia (kecuali untuk Literasi Bahasa Inggris) dan berkualitas setara soal UTBK resmi. Output HANYA soal yang sudah diperbarui dalam format JSON."
+	userPrompt := fmt.Sprintf("JSON Soal Asli: %s\n\nInstruksi: %s\n\nOutput JSON:", artifact.Content, instruction)
 
 	// Call OpenAI (Copy logic from Chat or make helper? Copy for speed)
 	req := model.OpenAIChatRequest{

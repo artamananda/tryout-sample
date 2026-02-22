@@ -64,19 +64,24 @@ func (j *AutoTagger) Run() error {
 }
 
 func (j *AutoTagger) processQuestion(ctx context.Context, question entity.BankSoal, apiKey string) error {
-	prompt := fmt.Sprintf(`Analyze this exam question and determine:
-1. The appropriate difficulty level (easy, medium, hard)
-2. The category/subject tags
+	prompt := fmt.Sprintf(`Analisis soal ujian UTBK berikut dan tentukan:
+1. Tingkat kesulitan yang sesuai (easy, medium, hard)
+2. Kategori/tag subjek
 
-Question: %s
-Options: %v
-Correct Answer: %s
-Current Topic: %s
-Current Type: %s
+Kriteria tingkat kesulitan UTBK:
+- easy: pemahaman dasar, satu langkah penyelesaian
+- medium: penerapan konsep, 2-3 langkah penyelesaian
+- hard: analisis tingkat tinggi, multi-langkah, sintesis
 
-Respond with this exact JSON format:
+Soal: %s
+Pilihan: %v
+Jawaban Benar: %s
+Topik Saat Ini: %s
+Jenis Saat Ini: %s
+
+Respon dengan format JSON ini:
 {
-  "category": "main_category",
+  "category": "kategori_utama",
   "difficulty": "easy|medium|hard",
   "tags": ["tag1", "tag2"]
 }`, question.Text, question.Options, question.CorrectAnswer, question.Topic, question.Type)
@@ -86,7 +91,7 @@ Respond with this exact JSON format:
 		Messages: []openAIMessage{
 			{
 				Role:    "system",
-				Content: "You are an expert at categorizing and rating exam question difficulty. Always respond with valid JSON only.",
+				Content: "Kamu adalah ahli dalam mengkategorikan dan menilai tingkat kesulitan soal ujian UTBK Indonesia. Selalu respon dengan JSON yang valid saja.",
 			},
 			{
 				Role:    "user",

@@ -102,8 +102,25 @@ func (s *Scheduler) Start() {
 		}
 	})
 
+	// Job 7: Question Generator - Every 10 minutes (generates UTBK questions continuously)
+	questionGenerator := jobs.NewQuestionGenerator(s.config, s.bankSoalRepo)
+	s.cronRunner.AddFunc("*/10 * * * *", func() {
+		log.Println("[Cron] Running Question Generator...")
+		if err := questionGenerator.Run(); err != nil {
+			log.Printf("[Cron] Question Generator error: %v", err)
+		}
+	})
+
 	s.cronRunner.Start()
-	log.Println("Cron scheduler started with 6 jobs")
+	log.Println("Cron scheduler started with 7 jobs")
+
+	// Run Question Generator immediately on startup in background
+	go func() {
+		log.Println("[Cron] Running initial Question Generator on startup...")
+		if err := questionGenerator.Run(); err != nil {
+			log.Printf("[Cron] Initial Question Generator error: %v", err)
+		}
+	}()
 }
 
 func (s *Scheduler) Stop() {
@@ -134,4 +151,8 @@ func (s *Scheduler) TriggerChallengeGenerator() error {
 
 func (s *Scheduler) TriggerDifficultyCalibrator() error {
 	return jobs.NewDifficultyCalibrator(s.bankSoalRepo, s.questionStatisticsRepo).Run()
+}
+
+func (s *Scheduler) TriggerQuestionGenerator() error {
+	return jobs.NewQuestionGenerator(s.config, s.bankSoalRepo).Run()
 }

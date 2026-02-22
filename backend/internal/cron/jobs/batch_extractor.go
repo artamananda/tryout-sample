@@ -114,7 +114,7 @@ func (j *BatchExtractor) processLog(ctx context.Context, chatLog entity.ChatLog)
 		Messages: []openAIMessage{
 			{
 				Role:    "system",
-				Content: "You are an expert at extracting structured exam questions from conversations. Extract all questions discussed and format them as JSON.",
+				Content: "Kamu adalah ahli dalam mengekstrak soal ujian terstruktur dari percakapan. Ekstrak semua soal yang dibahas dan format sebagai JSON. Semua soal harus dalam Bahasa Indonesia (kecuali untuk Literasi Bahasa Inggris) dan berkualitas setara UTBK resmi. Setiap soal harus memiliki 5 pilihan jawaban (A-E).",
 			},
 			{
 				Role:    "user",
@@ -209,21 +209,23 @@ func buildExtractionPrompt(topic, questionType string, messages []entity.ChatMes
 		conversationText += fmt.Sprintf("%s: %s\n", msg.Role, msg.Content)
 	}
 
-	return fmt.Sprintf(`From the following conversation about "%s" for a %s exam, extract and create structured exam questions.
+	return fmt.Sprintf(`Dari percakapan berikut tentang "%s" untuk ujian %s, ekstrak dan buat soal ujian terstruktur.
 
-Conversation:
+Percakapan:
 %s
 
-Please generate multiple choice questions based on the topics discussed.
+Buatkan soal pilihan ganda berdasarkan topik yang dibahas.
+Semua soal HARUS dalam Bahasa Indonesia (kecuali untuk Literasi Bahasa Inggris).
+Setiap soal harus memiliki tepat 5 pilihan jawaban (A, B, C, D, E).
 
-Respond with this exact JSON format:
+Respon dengan format JSON ini:
 {
   "questions": [
     {
-      "text": "Question text here?",
-      "options": ["A. Option 1", "B. Option 2", "C. Option 3", "D. Option 4"],
+      "text": "Teks soal di sini?",
+      "options": ["A. Pilihan 1", "B. Pilihan 2", "C. Pilihan 3", "D. Pilihan 4", "E. Pilihan 5"],
       "correct_answer": "A",
-      "explanation": "Brief explanation"
+      "explanation": "Penjelasan singkat"
     }
   ]
 }`, topic, questionType, conversationText)
