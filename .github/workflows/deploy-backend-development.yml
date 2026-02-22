@@ -51,6 +51,8 @@ jobs:
           echo "JWT_EXPIRE_MINUTES_COUNT=${{ secrets.JWT_EXPIRE_MINUTES_COUNT }}" >> ./backend/.env
           echo "IS_TRYOUT_BYPASS=${{ secrets.IS_TRYOUT_BYPASS }}" >> ./backend/.env
           echo "OPENAI_API_KEY=${{ secrets.OPENAI_API_KEY }}" >> ./backend/.env
+          echo "GEMINI_API_KEY=${{ secrets.GEMINI_API_KEY }}" >> ./backend/.env
+          echo "AI_PROVIDER=${{ secrets.AI_PROVIDER }}" >> ./backend/.env
           cat ./backend/.env
 
       - uses: superfly/flyctl-actions/setup-flyctl@master
