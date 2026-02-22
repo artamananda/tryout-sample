@@ -160,6 +160,10 @@ type utbkTypeConfig struct {
 }
 
 const QUESTIONS_PER_BATCH = 5
+const TYPES_PER_RUN = 1 // Process only 1 type per run to stay within free tier RPD limits (Gemini free: ~20 RPD)
+
+// runIndex tracks which types to process next (rotates through all types)
+var runIndex int
 
 func (j *QuestionGenerator) Run() error {
 	ctx := context.Background()
@@ -167,12 +171,29 @@ func (j *QuestionGenerator) Run() error {
 		return fmt.Errorf("AI provider not configured: API key missing")
 	}
 
-	log.Println("[QuestionGenerator] Starting continuous question generation for all UTBK types...")
+	// Build a stable ordered list of type codes
+	typeCodes := make([]string, 0, len(utbkQuestionTypes))
+	for code := range utbkQuestionTypes {
+		typeCodes = append(typeCodes, code)
+	}
+	// Sort for deterministic rotation order
+	sortStrings(typeCodes)
+
+	// Pick TYPES_PER_RUN types starting from current runIndex
+	selectedCodes := make([]string, 0, TYPES_PER_RUN)
+	for i := 0; i < TYPES_PER_RUN && i < len(typeCodes); i++ {
+		idx := (runIndex + i) % len(typeCodes)
+		selectedCodes = append(selectedCodes, typeCodes[idx])
+	}
+	runIndex = (runIndex + TYPES_PER_RUN) % len(typeCodes)
+
+	log.Printf("[QuestionGenerator] Processing %d/%d types this run: %v", len(selectedCodes), len(typeCodes), selectedCodes)
 
 	totalGenerated := 0
 	totalFailed := 0
 
-	for typeCode, typeConfig := range utbkQuestionTypes {
+	for _, typeCode := range selectedCodes {
+		typeConfig := utbkQuestionTypes[typeCode]
 		// Get existing questions count for this type to avoid duplicates
 		existing, err := j.bankSoalRepo.FindByType(ctx, typeCode)
 		if err != nil {
@@ -234,8 +255,17 @@ func (j *QuestionGenerator) Run() error {
 	}
 
 	log.Printf("[QuestionGenerator] Completed: Generated %d questions across %d types (%d failures)",
-		totalGenerated, len(utbkQuestionTypes), totalFailed)
+		totalGenerated, len(selectedCodes), totalFailed)
 	return nil
+}
+
+// sortStrings sorts a string slice in-place (simple insertion sort to avoid importing sort package)
+func sortStrings(s []string) {
+	for i := 1; i < len(s); i++ {
+		for j := i; j > 0 && s[j] < s[j-1]; j-- {
+			s[j], s[j-1] = s[j-1], s[j]
+		}
+	}
 }
 
 func (j *QuestionGenerator) generateQuestions(ctx context.Context, typeCode, typeName, topic, difficulty string, existingTexts []string) ([]GeneratedQuestion, error) {

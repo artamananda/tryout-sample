@@ -33,6 +33,8 @@ type TagResponse struct {
 	Tags       []string `json:"tags"`
 }
 
+const MAX_TAGS_PER_RUN = 3 // Limit per run to stay within free tier RPD (Gemini free: ~20 RPD)
+
 func (j *AutoTagger) Run() error {
 	ctx := context.Background()
 
@@ -47,13 +49,19 @@ func (j *AutoTagger) Run() error {
 		return nil
 	}
 
-	log.Printf("[AutoTagger] Processing %d draft questions", len(drafts))
-
 	if !j.aiClient.IsConfigured() {
 		return fmt.Errorf("AI provider not configured: API key missing")
 	}
 
-	for _, question := range drafts {
+	// Limit batch size to avoid hitting RPD
+	toProcess := drafts
+	if len(toProcess) > MAX_TAGS_PER_RUN {
+		toProcess = toProcess[:MAX_TAGS_PER_RUN]
+	}
+
+	log.Printf("[AutoTagger] Processing %d/%d draft questions (limited per run)", len(toProcess), len(drafts))
+
+	for _, question := range toProcess {
 		if err := j.processQuestion(ctx, question); err != nil {
 			log.Printf("[AutoTagger] Error processing question %s: %v", question.BankSoalID, err)
 		}

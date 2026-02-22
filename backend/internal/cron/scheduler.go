@@ -57,9 +57,9 @@ func (s *Scheduler) Start() {
 		}
 	})
 
-	// Job 2: Auto Tagger - Every hour
+	// Job 2: Auto Tagger - Every 4 hours (limited to stay within free tier RPD)
 	autoTagger := jobs.NewAutoTagger(s.config, s.bankSoalRepo)
-	s.cronRunner.AddFunc("0 * * * *", func() {
+	s.cronRunner.AddFunc("0 */4 * * *", func() {
 		log.Println("[Cron] Running Auto Tagger...")
 		if err := autoTagger.Run(); err != nil {
 			log.Printf("[Cron] Auto Tagger error: %v", err)
@@ -102,9 +102,9 @@ func (s *Scheduler) Start() {
 		}
 	})
 
-	// Job 7: Question Generator - Every 10 minutes (generates UTBK questions continuously)
+	// Job 7: Question Generator - Every 4 hours (1 type per run, rotates through all types)
 	questionGenerator := jobs.NewQuestionGenerator(s.config, s.bankSoalRepo)
-	s.cronRunner.AddFunc("*/10 * * * *", func() {
+	s.cronRunner.AddFunc("0 */4 * * *", func() {
 		log.Println("[Cron] Running Question Generator...")
 		if err := questionGenerator.Run(); err != nil {
 			log.Printf("[Cron] Question Generator error: %v", err)
