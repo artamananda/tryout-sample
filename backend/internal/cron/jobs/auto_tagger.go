@@ -1,15 +1,13 @@
 package jobs
 
 import (
-	"bytes"
 	"context"
 	"encoding/json"
 	"fmt"
-	"io"
 	"log"
-	"net/http"
 	"time"
 
+	"github.com/artamananda/tryout-sample/internal/common"
 	"github.com/artamananda/tryout-sample/internal/config"
 	"github.com/artamananda/tryout-sample/internal/entity"
 	"github.com/artamananda/tryout-sample/internal/repository"
@@ -17,12 +15,14 @@ import (
 
 type AutoTagger struct {
 	config       config.Config
+	aiClient     *common.AIClient
 	bankSoalRepo *repository.BankSoalRepository
 }
 
 func NewAutoTagger(cfg config.Config, bankSoalRepo *repository.BankSoalRepository) *AutoTagger {
 	return &AutoTagger{
 		config:       cfg,
+		aiClient:     common.NewAIClient(cfg.Get),
 		bankSoalRepo: bankSoalRepo,
 	}
 }
@@ -49,13 +49,12 @@ func (j *AutoTagger) Run() error {
 
 	log.Printf("[AutoTagger] Processing %d draft questions", len(drafts))
 
-	apiKey := j.config.Get("OPENAI_API_KEY")
-	if apiKey == "" {
-		return fmt.Errorf("OpenAI API key not configured")
+	if !j.aiClient.IsConfigured() {
+		return fmt.Errorf("AI provider not configured: API key missing")
 	}
 
 	for _, question := range drafts {
-		if err := j.processQuestion(ctx, question, apiKey); err != nil {
+		if err := j.processQuestion(ctx, question); err != nil {
 			log.Printf("[AutoTagger] Error processing question %s: %v", question.BankSoalID, err)
 		}
 	}
@@ -63,7 +62,7 @@ func (j *AutoTagger) Run() error {
 	return nil
 }
 
-func (j *AutoTagger) processQuestion(ctx context.Context, question entity.BankSoal, apiKey string) error {
+func (j *AutoTagger) processQuestion(ctx context.Context, question entity.BankSoal) error {
 	prompt := fmt.Sprintf(`Analisis soal ujian UTBK berikut dan tentukan:
 1. Tingkat kesulitan yang sesuai (easy, medium, hard)
 2. Kategori/tag subjek
@@ -86,9 +85,8 @@ Respon dengan format JSON ini:
   "tags": ["tag1", "tag2"]
 }`, question.Text, question.Options, question.CorrectAnswer, question.Topic, question.Type)
 
-	openAIReq := openAIRequest{
-		Model: "gpt-4o-mini",
-		Messages: []openAIMessage{
+	aiResp, err := j.aiClient.Chat(ctx, common.AIRequest{
+		Messages: []common.AIMessage{
 			{
 				Role:    "system",
 				Content: "Kamu adalah ahli dalam mengkategorikan dan menilai tingkat kesulitan soal ujian UTBK Indonesia. Selalu respon dengan JSON yang valid saja.",
@@ -98,43 +96,12 @@ Respon dengan format JSON ini:
 				Content: prompt,
 			},
 		},
-	}
-
-	reqBody, err := json.Marshal(openAIReq)
+	})
 	if err != nil {
-		return err
+		return fmt.Errorf("AI request failed: %w", err)
 	}
 
-	httpReq, err := http.NewRequestWithContext(ctx, "POST", "https://api.openai.com/v1/chat/completions", bytes.NewBuffer(reqBody))
-	if err != nil {
-		return err
-	}
-
-	httpReq.Header.Set("Content-Type", "application/json")
-	httpReq.Header.Set("Authorization", "Bearer "+apiKey)
-
-	client := &http.Client{Timeout: 30 * time.Second}
-	resp, err := client.Do(httpReq)
-	if err != nil {
-		return err
-	}
-	defer resp.Body.Close()
-
-	body, err := io.ReadAll(resp.Body)
-	if err != nil {
-		return err
-	}
-
-	var openAIResp openAIResponse
-	if err := json.Unmarshal(body, &openAIResp); err != nil {
-		return err
-	}
-
-	if len(openAIResp.Choices) == 0 {
-		return fmt.Errorf("no response from OpenAI")
-	}
-
-	content := openAIResp.Choices[0].Message.Content
+	content := common.CleanJSONContent(aiResp.Content)
 
 	var tagResp TagResponse
 	if err := json.Unmarshal([]byte(content), &tagResp); err != nil {

@@ -2,27 +2,28 @@ package service
 
 import (
 	"bytes"
+	"context"
 	"encoding/base64"
-	"encoding/json"
 	"errors"
 	"io"
 	"mime/multipart"
-	"net/http"
 	"path/filepath"
 	"strings"
 
+	"github.com/artamananda/tryout-sample/internal/common"
 	"github.com/artamananda/tryout-sample/internal/config"
-	"github.com/artamananda/tryout-sample/internal/model"
 	"github.com/ledongthuc/pdf"
 )
 
 type ExtractionService struct {
-	Config config.Config
+	Config   config.Config
+	AIClient *common.AIClient
 }
 
 func NewExtractionService(cfg config.Config) *ExtractionService {
 	return &ExtractionService{
-		Config: cfg,
+		Config:   cfg,
+		AIClient: common.NewAIClient(cfg.Get),
 	}
 }
 
@@ -86,9 +87,8 @@ func (s *ExtractionService) extractPDF(r io.ReaderAt, size int64) (string, error
 }
 
 func (s *ExtractionService) extractImage(fileBytes []byte, ext string) (string, error) {
-	apiKey := s.Config.Get("OPENAI_API_KEY")
-	if apiKey == "" {
-		return "", errors.New("OpenAI API key not configured")
+	if !s.AIClient.IsConfigured() {
+		return "", errors.New("AI provider not configured: API key missing")
 	}
 
 	mimeType := "image/jpeg"
@@ -98,58 +98,29 @@ func (s *ExtractionService) extractImage(fileBytes []byte, ext string) (string, 
 
 	encoded := base64.StdEncoding.EncodeToString(fileBytes)
 
-	reqVal := model.OpenAIChatRequest{
-		Model: "gpt-4o", // Supports vision
-		Messages: []model.OpenAIMessage{
-			{
-				Role: "user",
-				Content: []map[string]interface{}{
-					{
-						"type": "text",
-						"text": "Transcribe ALL text from this image exactly as it appears. If there are tables, try to represent them clearly.",
-					},
-					{
-						"type": "image_url",
-						"image_url": map[string]string{
-							"url": "data:" + mimeType + ";base64," + encoded,
-						},
+	messages := []map[string]interface{}{
+		{
+			"role": "user",
+			"content": []map[string]interface{}{
+				{
+					"type": "text",
+					"text": "Transcribe ALL text from this image exactly as it appears. If there are tables, try to represent them clearly.",
+				},
+				{
+					"type": "image_url",
+					"image_url": map[string]string{
+						"url": "data:" + mimeType + ";base64," + encoded,
 					},
 				},
 			},
 		},
 	}
 
-	reqBody, err := json.Marshal(reqVal)
+	ctx := context.Background()
+	aiResp, err := s.AIClient.ChatWithVision(ctx, messages, 0)
 	if err != nil {
 		return "", err
 	}
 
-	httpReq, err := http.NewRequest("POST", "https://api.openai.com/v1/chat/completions", bytes.NewBuffer(reqBody))
-	if err != nil {
-		return "", err
-	}
-	httpReq.Header.Set("Content-Type", "application/json")
-	httpReq.Header.Set("Authorization", "Bearer "+apiKey)
-
-	client := &http.Client{}
-	resp, err := client.Do(httpReq)
-	if err != nil {
-		return "", err
-	}
-	defer resp.Body.Close()
-
-	var openAIResp model.OpenAIChatResponse
-	if err := json.NewDecoder(resp.Body).Decode(&openAIResp); err != nil {
-		return "", err
-	}
-	if len(openAIResp.Choices) == 0 {
-		return "", errors.New("no response from AI")
-	}
-
-	content := openAIResp.Choices[0].Message.Content
-	// Assert string
-	if str, ok := content.(string); ok {
-		return str, nil
-	}
-	return "", errors.New("unexpected non-string response from AI")
+	return aiResp.Content, nil
 }

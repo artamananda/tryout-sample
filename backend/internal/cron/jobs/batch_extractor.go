@@ -1,15 +1,13 @@
 package jobs
 
 import (
-	"bytes"
 	"context"
 	"encoding/json"
 	"fmt"
-	"io"
 	"log"
-	"net/http"
 	"time"
 
+	"github.com/artamananda/tryout-sample/internal/common"
 	"github.com/artamananda/tryout-sample/internal/config"
 	"github.com/artamananda/tryout-sample/internal/entity"
 	"github.com/artamananda/tryout-sample/internal/repository"
@@ -18,6 +16,7 @@ import (
 
 type BatchExtractor struct {
 	config       config.Config
+	aiClient     *common.AIClient
 	chatLogRepo  *repository.ChatLogRepository
 	bankSoalRepo *repository.BankSoalRepository
 }
@@ -29,30 +28,10 @@ func NewBatchExtractor(
 ) *BatchExtractor {
 	return &BatchExtractor{
 		config:       cfg,
+		aiClient:     common.NewAIClient(cfg.Get),
 		chatLogRepo:  chatLogRepo,
 		bankSoalRepo: bankSoalRepo,
 	}
-}
-
-type openAIRequest struct {
-	Model    string          `json:"model"`
-	Messages []openAIMessage `json:"messages"`
-}
-
-type openAIMessage struct {
-	Role    string `json:"role"`
-	Content string `json:"content"`
-}
-
-type openAIResponse struct {
-	Choices []struct {
-		Message struct {
-			Content string `json:"content"`
-		} `json:"message"`
-	} `json:"choices"`
-	Error *struct {
-		Message string `json:"message"`
-	} `json:"error"`
 }
 
 type GeneratedQuestion struct {
@@ -95,9 +74,8 @@ func (j *BatchExtractor) Run() error {
 }
 
 func (j *BatchExtractor) processLog(ctx context.Context, chatLog entity.ChatLog) error {
-	apiKey := j.config.Get("OPENAI_API_KEY")
-	if apiKey == "" {
-		return fmt.Errorf("OpenAI API key not configured")
+	if !j.aiClient.IsConfigured() {
+		return fmt.Errorf("AI provider not configured: API key missing")
 	}
 
 	// Parse messages from chat log
@@ -109,9 +87,8 @@ func (j *BatchExtractor) processLog(ctx context.Context, chatLog entity.ChatLog)
 	// Build prompt to extract questions from conversation
 	prompt := buildExtractionPrompt(chatLog.Topic, chatLog.QuestionType, messages)
 
-	openAIReq := openAIRequest{
-		Model: "gpt-4o-mini",
-		Messages: []openAIMessage{
+	aiResp, err := j.aiClient.Chat(ctx, common.AIRequest{
+		Messages: []common.AIMessage{
 			{
 				Role:    "system",
 				Content: "Kamu adalah ahli dalam mengekstrak soal ujian terstruktur dari percakapan. Ekstrak semua soal yang dibahas dan format sebagai JSON. Semua soal harus dalam Bahasa Indonesia (kecuali untuk Literasi Bahasa Inggris) dan berkualitas setara UTBK resmi. Setiap soal harus memiliki 5 pilihan jawaban (A-E).",
@@ -121,47 +98,12 @@ func (j *BatchExtractor) processLog(ctx context.Context, chatLog entity.ChatLog)
 				Content: prompt,
 			},
 		},
-	}
-
-	reqBody, err := json.Marshal(openAIReq)
+	})
 	if err != nil {
-		return err
+		return fmt.Errorf("AI request failed: %w", err)
 	}
 
-	httpReq, err := http.NewRequestWithContext(ctx, "POST", "https://api.openai.com/v1/chat/completions", bytes.NewBuffer(reqBody))
-	if err != nil {
-		return err
-	}
-
-	httpReq.Header.Set("Content-Type", "application/json")
-	httpReq.Header.Set("Authorization", "Bearer "+apiKey)
-
-	client := &http.Client{Timeout: 120 * time.Second}
-	resp, err := client.Do(httpReq)
-	if err != nil {
-		return fmt.Errorf("API request failed: %w", err)
-	}
-	defer resp.Body.Close()
-
-	body, err := io.ReadAll(resp.Body)
-	if err != nil {
-		return err
-	}
-
-	var openAIResp openAIResponse
-	if err := json.Unmarshal(body, &openAIResp); err != nil {
-		return err
-	}
-
-	if openAIResp.Error != nil {
-		return fmt.Errorf("OpenAI error: %s", openAIResp.Error.Message)
-	}
-
-	if len(openAIResp.Choices) == 0 {
-		return fmt.Errorf("no response from OpenAI")
-	}
-
-	content := openAIResp.Choices[0].Message.Content
+	content := common.CleanJSONContent(aiResp.Content)
 
 	var result GenerateResponse
 	if err := json.Unmarshal([]byte(content), &result); err != nil {

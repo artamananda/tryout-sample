@@ -1,13 +1,9 @@
 package service
 
 import (
-	"bytes"
 	"context"
 	"encoding/json"
-	"errors"
 	"fmt"
-	"io"
-	"net/http"
 	"strings"
 	"time"
 
@@ -22,6 +18,7 @@ import (
 
 type AIService struct {
 	Config                 config.Config
+	AIClient               *common.AIClient
 	ChatLogRepository      *repository.ChatLogRepository
 	AIExampleRepository    *repository.AIExampleRepository
 	ChatArtifactRepository *repository.ChatArtifactRepository
@@ -30,32 +27,14 @@ type AIService struct {
 func NewAIService(cfg config.Config, chatLogRepo *repository.ChatLogRepository, aiExampleRepo *repository.AIExampleRepository, chatArtifactRepo *repository.ChatArtifactRepository) AIService {
 	return AIService{
 		Config:                 cfg,
+		AIClient:               common.NewAIClient(cfg.Get),
 		ChatLogRepository:      chatLogRepo,
 		AIExampleRepository:    aiExampleRepo,
 		ChatArtifactRepository: chatArtifactRepo,
 	}
 }
 
-type openAIRequest struct {
-	Model    string          `json:"model"`
-	Messages []openAIMessage `json:"messages"`
-}
-
-type openAIMessage struct {
-	Role    string `json:"role"`
-	Content string `json:"content"`
-}
-
-type openAIResponse struct {
-	Choices []struct {
-		Message struct {
-			Content string `json:"content"`
-		} `json:"message"`
-	} `json:"choices"`
-	Error *struct {
-		Message string `json:"message"`
-	} `json:"error"`
-}
+// AI types are now handled by common.AIClient
 
 func (service *AIService) GenerateQuestions(ctx context.Context, request model.GenerateQuestionsRequest) (model.GenerateQuestionsResponse, error) {
 	err := common.Validate(request)
@@ -65,20 +44,18 @@ func (service *AIService) GenerateQuestions(ctx context.Context, request model.G
 		}
 	}
 
-	apiKey := service.Config.Get("OPENAI_API_KEY")
-	if apiKey == "" {
+	if !service.AIClient.IsConfigured() {
 		return model.GenerateQuestionsResponse{}, exception.ValidationError{
-			Message: "OpenAI API key not configured",
+			Message: "AI provider not configured: API key missing",
 		}
 	}
 
 	prompt := buildPrompt(request)
 
-	openAIReq := openAIRequest{
-		Model: "gpt-4o-mini",
-		Messages: []openAIMessage{
+	aiResp, err := service.AIClient.Chat(ctx, common.AIRequest{
+		Messages: []common.AIMessage{
 			{
-				Role:    "system",
+				Role: "system",
 				Content: `Kamu adalah pembuat soal UTBK (Ujian Tulis Berbasis Komputer) profesional Indonesia.
 Buat soal berkualitas tinggi setara soal UTBK resmi dari SNPMB.
 Semua soal WAJIB dalam Bahasa Indonesia (kecuali untuk Literasi Bahasa Inggris).
@@ -92,52 +69,14 @@ Respon HANYA dengan JSON yang valid, tanpa markdown blocks.`,
 				Content: prompt,
 			},
 		},
-	}
-
-	reqBody, err := json.Marshal(openAIReq)
+	})
 	if err != nil {
-		return model.GenerateQuestionsResponse{}, err
-	}
-
-	httpReq, err := http.NewRequestWithContext(ctx, "POST", "https://api.openai.com/v1/chat/completions", bytes.NewBuffer(reqBody))
-	if err != nil {
-		return model.GenerateQuestionsResponse{}, err
-	}
-
-	httpReq.Header.Set("Content-Type", "application/json")
-	httpReq.Header.Set("Authorization", "Bearer "+apiKey)
-
-	client := &http.Client{}
-	resp, err := client.Do(httpReq)
-	if err != nil {
-		return model.GenerateQuestionsResponse{}, err
-	}
-	defer resp.Body.Close()
-
-	body, err := io.ReadAll(resp.Body)
-	if err != nil {
-		return model.GenerateQuestionsResponse{}, err
-	}
-
-	var openAIResp openAIResponse
-	err = json.Unmarshal(body, &openAIResp)
-	if err != nil {
-		return model.GenerateQuestionsResponse{}, err
-	}
-
-	if openAIResp.Error != nil {
 		return model.GenerateQuestionsResponse{}, exception.ValidationError{
-			Message: "OpenAI API error: " + openAIResp.Error.Message,
+			Message: "AI API error: " + err.Error(),
 		}
 	}
 
-	if len(openAIResp.Choices) == 0 {
-		return model.GenerateQuestionsResponse{}, exception.ValidationError{
-			Message: "No response from OpenAI",
-		}
-	}
-
-	content := openAIResp.Choices[0].Message.Content
+	content := common.CleanJSONContent(aiResp.Content)
 
 	var result model.GenerateQuestionsResponse
 	err = json.Unmarshal([]byte(content), &result)
@@ -234,10 +173,9 @@ func (service *AIService) Chat(ctx context.Context, request model.AIChatRequest,
 		}
 	}
 
-	apiKey := service.Config.Get("OPENAI_API_KEY")
-	if apiKey == "" {
+	if !service.AIClient.IsConfigured() {
 		return model.AIChatResponse{}, exception.ValidationError{
-			Message: "OpenAI API key not configured",
+			Message: "AI provider not configured: API key missing",
 		}
 	}
 
@@ -314,69 +252,30 @@ SELALU respon dalam Bahasa Indonesia. SELALU respon dengan JSON yang valid saja.
 		}
 	}
 
-	// Convert messages to OpenAI format
-	var openAIMessages []openAIMessage
-	openAIMessages = append(openAIMessages, openAIMessage{
+	// Convert messages to AI client format
+	var aiMessages []common.AIMessage
+	aiMessages = append(aiMessages, common.AIMessage{
 		Role:    "system",
 		Content: systemMessage,
 	})
 
 	for _, msg := range request.Messages {
-		openAIMessages = append(openAIMessages, openAIMessage{
+		aiMessages = append(aiMessages, common.AIMessage{
 			Role:    msg.Role,
 			Content: msg.Content,
 		})
 	}
 
-	openAIReq := openAIRequest{
-		Model:    "gpt-4o-mini",
-		Messages: openAIMessages,
-	}
-
-	reqBody, err := json.Marshal(openAIReq)
+	aiResp, err := service.AIClient.Chat(ctx, common.AIRequest{
+		Messages: aiMessages,
+	})
 	if err != nil {
-		return model.AIChatResponse{}, err
-	}
-
-	httpReq, err := http.NewRequestWithContext(ctx, "POST", "https://api.openai.com/v1/chat/completions", bytes.NewBuffer(reqBody))
-	if err != nil {
-		return model.AIChatResponse{}, err
-	}
-
-	httpReq.Header.Set("Content-Type", "application/json")
-	httpReq.Header.Set("Authorization", "Bearer "+apiKey)
-
-	client := &http.Client{}
-	resp, err := client.Do(httpReq)
-	if err != nil {
-		return model.AIChatResponse{}, err
-	}
-	defer resp.Body.Close()
-
-	body, err := io.ReadAll(resp.Body)
-	if err != nil {
-		return model.AIChatResponse{}, err
-	}
-
-	var openAIResp openAIResponse
-	err = json.Unmarshal(body, &openAIResp)
-	if err != nil {
-		return model.AIChatResponse{}, err
-	}
-
-	if openAIResp.Error != nil {
 		return model.AIChatResponse{}, exception.ValidationError{
-			Message: "OpenAI API error: " + openAIResp.Error.Message,
+			Message: "AI API error: " + err.Error(),
 		}
 	}
 
-	if len(openAIResp.Choices) == 0 {
-		return model.AIChatResponse{}, exception.ValidationError{
-			Message: "No response from OpenAI",
-		}
-	}
-
-	content := openAIResp.Choices[0].Message.Content
+	content := aiResp.Content
 
 	// Extract and clean JSON
 	cleanContent := service.extractJSON(content)
@@ -710,46 +609,20 @@ func (service *AIService) RefineArtifact(ctx context.Context, artifactID string,
 	systemPrompt := "Kamu adalah editor soal UTBK profesional. Perbarui soal berikut berdasarkan instruksi pengguna. Pastikan soal tetap dalam Bahasa Indonesia (kecuali untuk Literasi Bahasa Inggris) dan berkualitas setara soal UTBK resmi. Output HANYA soal yang sudah diperbarui dalam format JSON."
 	userPrompt := fmt.Sprintf("JSON Soal Asli: %s\n\nInstruksi: %s\n\nOutput JSON:", artifact.Content, instruction)
 
-	// Call OpenAI (Copy logic from Chat or make helper? Copy for speed)
-	req := model.OpenAIChatRequest{
-		Model: "gpt-4o", // Use high quality
-		Messages: []model.OpenAIMessage{
+	// Call AI using the shared client (uses vision model for higher quality on refine)
+	aiResp, err := service.AIClient.Chat(ctx, common.AIRequest{
+		Messages: []common.AIMessage{
 			{Role: "system", Content: systemPrompt},
 			{Role: "user", Content: userPrompt},
 		},
 		Temperature: 0.7,
-	}
-
-	reqBody, _ := json.Marshal(req)
-	client := &http.Client{Timeout: 60 * time.Second}
-	openAIReq, _ := http.NewRequest("POST", "https://api.openai.com/v1/chat/completions", bytes.NewBuffer(reqBody))
-	openAIReq.Header.Set("Content-Type", "application/json")
-	openAIReq.Header.Set("Authorization", "Bearer "+service.Config.Get("OPENAI_API_KEY"))
-
-	resp, err := client.Do(openAIReq)
+		UseVision:   true, // Use higher-quality model for refine
+	})
 	if err != nil {
 		return nil, err
 	}
-	defer resp.Body.Close()
 
-	var openAIResp model.OpenAIChatResponse
-	if err := json.NewDecoder(resp.Body).Decode(&openAIResp); err != nil {
-		return nil, err
-	}
-	if len(openAIResp.Choices) == 0 {
-		return nil, errors.New("no response from AI")
-	}
-
-	// Parse content (interface{} -> string)
-	var contentStr string
-	if cStr, ok := openAIResp.Choices[0].Message.Content.(string); ok {
-		contentStr = cStr
-	} else {
-		// Handle unexpected content (unlikely for gpt-4o text generation, but safety check)
-		return nil, errors.New("unexpected content format from AI")
-	}
-
-	jsonContent := service.extractJSON(contentStr)
+	jsonContent := service.extractJSON(aiResp.Content)
 
 	// Update Artifact
 	// Store old content in metadata?

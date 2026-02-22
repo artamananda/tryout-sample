@@ -1,17 +1,14 @@
 package jobs
 
 import (
-	"bytes"
 	"context"
 	"encoding/json"
 	"fmt"
-	"io"
 	"log"
 	"math/rand"
-	"net/http"
-	"strings"
 	"time"
 
+	"github.com/artamananda/tryout-sample/internal/common"
 	"github.com/artamananda/tryout-sample/internal/config"
 	"github.com/artamananda/tryout-sample/internal/entity"
 	"github.com/artamananda/tryout-sample/internal/repository"
@@ -20,12 +17,14 @@ import (
 
 type QuestionGenerator struct {
 	config       config.Config
+	aiClient     *common.AIClient
 	bankSoalRepo *repository.BankSoalRepository
 }
 
 func NewQuestionGenerator(cfg config.Config, bankSoalRepo *repository.BankSoalRepository) *QuestionGenerator {
 	return &QuestionGenerator{
 		config:       cfg,
+		aiClient:     common.NewAIClient(cfg.Get),
 		bankSoalRepo: bankSoalRepo,
 	}
 }
@@ -164,9 +163,8 @@ const QUESTIONS_PER_BATCH = 5
 
 func (j *QuestionGenerator) Run() error {
 	ctx := context.Background()
-	apiKey := j.config.Get("OPENAI_API_KEY")
-	if apiKey == "" {
-		return fmt.Errorf("OpenAI API key not configured")
+	if !j.aiClient.IsConfigured() {
+		return fmt.Errorf("AI provider not configured: API key missing")
 	}
 
 	log.Println("[QuestionGenerator] Starting continuous question generation for all UTBK types...")
@@ -194,7 +192,7 @@ func (j *QuestionGenerator) Run() error {
 		// Build existing question texts for uniqueness check
 		existingTexts := j.getExistingTexts(existing, selectedTopic)
 
-		questions, err := j.generateQuestions(ctx, apiKey, typeCode, typeConfig.Name, selectedTopic, selectedDifficulty, existingTexts)
+		questions, err := j.generateQuestions(ctx, typeCode, typeConfig.Name, selectedTopic, selectedDifficulty, existingTexts)
 		if err != nil {
 			log.Printf("[QuestionGenerator] Error generating questions for %s: %v", typeCode, err)
 			totalFailed++
@@ -240,7 +238,7 @@ func (j *QuestionGenerator) Run() error {
 	return nil
 }
 
-func (j *QuestionGenerator) generateQuestions(ctx context.Context, apiKey, typeCode, typeName, topic, difficulty string, existingTexts []string) ([]GeneratedQuestion, error) {
+func (j *QuestionGenerator) generateQuestions(ctx context.Context, typeCode, typeName, topic, difficulty string, existingTexts []string) ([]GeneratedQuestion, error) {
 	// Build uniqueness context
 	var uniquenessInstruction string
 	if len(existingTexts) > 0 {
@@ -294,63 +292,17 @@ Format JSON yang HARUS diikuti:
 		uniquenessInstruction,
 	)
 
-	openAIReq := openAIRequest{
-		Model: "gpt-4o-mini",
-		Messages: []openAIMessage{
+	aiResp, err := j.aiClient.Chat(ctx, common.AIRequest{
+		Messages: []common.AIMessage{
 			{Role: "system", Content: systemPrompt},
 			{Role: "user", Content: userPrompt},
 		},
-	}
-
-	reqBody, err := json.Marshal(openAIReq)
+	})
 	if err != nil {
 		return nil, err
 	}
 
-	httpReq, err := http.NewRequestWithContext(ctx, "POST", "https://api.openai.com/v1/chat/completions", bytes.NewBuffer(reqBody))
-	if err != nil {
-		return nil, err
-	}
-
-	httpReq.Header.Set("Content-Type", "application/json")
-	httpReq.Header.Set("Authorization", "Bearer "+apiKey)
-
-	client := &http.Client{Timeout: 120 * time.Second}
-	resp, err := client.Do(httpReq)
-	if err != nil {
-		return nil, fmt.Errorf("API request failed: %w", err)
-	}
-	defer resp.Body.Close()
-
-	body, err := io.ReadAll(resp.Body)
-	if err != nil {
-		return nil, err
-	}
-
-	var openAIResp openAIResponse
-	if err := json.Unmarshal(body, &openAIResp); err != nil {
-		return nil, fmt.Errorf("failed to parse response: %w", err)
-	}
-
-	if openAIResp.Error != nil {
-		return nil, fmt.Errorf("OpenAI error: %s", openAIResp.Error.Message)
-	}
-
-	if len(openAIResp.Choices) == 0 {
-		return nil, fmt.Errorf("no response from OpenAI")
-	}
-
-	content := openAIResp.Choices[0].Message.Content
-
-	// Clean JSON
-	content = strings.TrimSpace(content)
-	if start := strings.Index(content, "{"); start != -1 {
-		if end := strings.LastIndex(content, "}"); end != -1 {
-			content = content[start : end+1]
-		}
-	}
-	content = strings.ReplaceAll(content, "```json", "")
-	content = strings.ReplaceAll(content, "```", "")
+	content := common.CleanJSONContent(aiResp.Content)
 
 	var result GenerateResponse
 	if err := json.Unmarshal([]byte(content), &result); err != nil {
@@ -358,7 +310,11 @@ Format JSON yang HARUS diikuti:
 		if jsonErr := json.Unmarshal([]byte(content), &questions); jsonErr == nil {
 			result.Questions = questions
 		} else {
-			return nil, fmt.Errorf("failed to parse AI response: %w (content: %s)", err, content[:min(200, len(content))])
+			truncated := content
+			if len(truncated) > 200 {
+				truncated = truncated[:200]
+			}
+			return nil, fmt.Errorf("failed to parse AI response: %w (content: %s)", err, truncated)
 		}
 	}
 
