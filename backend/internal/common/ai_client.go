@@ -106,11 +106,11 @@ func NewAIClient(configGet func(string) string) *AIClient {
 		client.apiKey = configGet("GEMINI_API_KEY")
 		client.model = configGet("AI_MODEL")
 		if client.model == "" {
-			client.model = "gemini-2.0-flash" // 2.0-flash has higher free tier RPD than 2.5
+			client.model = "gemini-2.5-flash" // 2.0-flash has higher free tier RPD than 2.5
 		}
 		client.modelVision = configGet("AI_MODEL_VISION")
 		if client.modelVision == "" {
-			client.modelVision = "gemini-2.0-flash"
+			client.modelVision = "gemini-2.5-flash"
 		}
 		// Gemini supports OpenAI-compatible endpoint
 		client.baseURL = "https://generativelanguage.googleapis.com/v1beta/openai"
@@ -140,8 +140,8 @@ func NewAIClient(configGet func(string) string) *AIClient {
 		log.Printf("[AIClient] Unknown provider '%s', falling back to gemini", provider)
 		client.provider = "gemini"
 		client.apiKey = configGet("GEMINI_API_KEY")
-		client.model = "gemini-2.0-flash"
-		client.modelVision = "gemini-2.0-flash"
+		client.model = "gemini-2.5-flash"
+		client.modelVision = "gemini-2.5-flash"
 		client.baseURL = "https://generativelanguage.googleapis.com/v1beta/openai"
 		client.minDelay = 15 * time.Second
 		client.dailyLimit = 50
