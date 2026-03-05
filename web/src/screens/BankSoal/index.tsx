@@ -103,6 +103,14 @@ const BankSoalScreen = () => {
     return options;
   }, [questions]);
 
+  const typeCounts = useMemo(() => {
+    const counts: Record<string, number> = {};
+    questions.forEach((q) => {
+      if (q.type) counts[q.type] = (counts[q.type] || 0) + 1;
+    });
+    return counts;
+  }, [questions]);
+
   const filteredQuestions = useMemo(() => {
     return questions
       .filter((q) => {
@@ -138,44 +146,35 @@ const BankSoalScreen = () => {
         paddingBottom: 60
       }}
     >
-      {/* Hero Section */}
-      <div
-        style={{
-          background: 'linear-gradient(135deg, #8C59F1 0%, #6d39d1 100%)',
-          padding: '32px 24px 48px',
-          color: 'white',
-          textAlign: 'center',
-          borderRadius: '0 0 32px 32px',
-          boxShadow: '0 8px 24px rgba(140, 89, 241, 0.15)'
-        }}
-      >
-        <div style={{ width: '100%', padding: '0 40px', margin: '0 auto' }}>
-          <Title
-            level={2}
+      {/* Hero Section - unified with Learning Video style */}
+      <Row gutter={[16, 16]} style={{ marginBottom: '24px', padding: '24px' }}>
+        <Col span={24}>
+          <Card
             style={{
-              color: 'white',
-              marginBottom: 8,
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              gap: 12
+              textAlign: 'center',
+              background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+              color: 'white'
             }}
           >
-            <RocketOutlined /> Bank Soal Telisik
-          </Title>
-          <Paragraph
-            style={{
-              color: 'rgba(255,255,255,0.85)',
-              fontSize: 15,
-              maxWidth: 600,
-              margin: '0 auto'
-            }}
-          >
-            Koleksi soal latihan terbaik untuk persiapan ujian yang lebih
-            maksimal.
-          </Paragraph>
-        </div>
-      </div>
+            <div style={{ padding: '20px 0' }}>
+              <Title level={2} style={{ color: 'white', margin: 0 }}>
+                <RocketOutlined style={{ marginRight: '12px' }} /> Bank Soal
+                Telisik
+              </Title>
+              <Paragraph
+                style={{
+                  color: 'rgba(255,255,255,0.8)',
+                  fontSize: 15,
+                  margin: 0
+                }}
+              >
+                Koleksi soal latihan terbaik untuk persiapan ujian yang lebih
+                maksimal.
+              </Paragraph>
+            </div>
+          </Card>
+        </Col>
+      </Row>
 
       <div
         style={{
@@ -229,83 +228,138 @@ const BankSoalScreen = () => {
               />
             </Col>
           </Row>
-        </Card>
 
-        {/* Stats Row */}
-        <Row gutter={[16, 16]} style={{ marginBottom: 32 }}>
-          <Col xs={12} sm={6}>
-            <div
-              style={{
-                padding: 16,
-                backgroundColor: 'white',
-                borderRadius: 16,
-                boxShadow: '0 4px 12px rgba(0,0,0,0.04)',
-                textAlign: 'center'
-              }}
-            >
-              <Text type="secondary" style={{ fontSize: 12, display: 'block' }}>
-                TOTAL SOAL
-              </Text>
-              <Title level={2} style={{ margin: 0, color: '#8C59F1' }}>
-                {filteredQuestions.length}
-              </Title>
-            </div>
-          </Col>
-          <Col xs={12} sm={6}>
-            <div
-              style={{
-                padding: 16,
-                backgroundColor: 'white',
-                borderRadius: 16,
-                boxShadow: '0 4px 12px rgba(0,0,0,0.04)',
-                textAlign: 'center'
-              }}
-            >
-              <Text type="secondary" style={{ fontSize: 12, display: 'block' }}>
-                DISKUSI AKTIF
-              </Text>
-              <Title level={2} style={{ margin: 0, color: '#52c41a' }}>
-                120+
-              </Title>
-            </div>
-          </Col>
-          <Col xs={12} sm={6}>
-            <div
-              style={{
-                padding: 16,
-                backgroundColor: 'white',
-                borderRadius: 16,
-                boxShadow: '0 4px 12px rgba(0,0,0,0.04)',
-                textAlign: 'center'
-              }}
-            >
-              <Text type="secondary" style={{ fontSize: 12, display: 'block' }}>
-                JENIS SOAL
-              </Text>
-              <Title level={2} style={{ margin: 0, color: '#fa8c16' }}>
-                {dynamicFilterOptions.length - 1}
-              </Title>
-            </div>
-          </Col>
-          <Col xs={12} sm={6}>
-            <div
-              style={{
-                padding: 16,
-                backgroundColor: 'white',
-                borderRadius: 16,
-                boxShadow: '0 4px 12px rgba(0,0,0,0.04)',
-                textAlign: 'center'
-              }}
-            >
-              <Text type="secondary" style={{ fontSize: 12, display: 'block' }}>
-                AKSES
-              </Text>
-              <Title level={2} style={{ margin: 0, color: '#1890ff' }}>
-                Gratis
-              </Title>
-            </div>
-          </Col>
-        </Row>
+          <Row gutter={[16, 16]} style={{ marginTop: 20, marginBottom: 16 }}>
+            <Col xs={12} sm={8}>
+              <div
+                style={{
+                  padding: 16,
+                  backgroundColor: 'white',
+                  borderRadius: 16,
+                  boxShadow: '0 4px 12px rgba(0,0,0,0.04)',
+                  textAlign: 'center'
+                }}
+              >
+                <Text
+                  type="secondary"
+                  style={{ fontSize: 12, display: 'block' }}
+                >
+                  TOTAL SOAL
+                </Text>
+                <Title level={2} style={{ margin: 0, color: '#8C59F1' }}>
+                  {filteredQuestions.length}
+                </Title>
+              </div>
+            </Col>
+
+            <Col xs={12} sm={8}>
+              <div
+                style={{
+                  padding: 16,
+                  backgroundColor: 'white',
+                  borderRadius: 16,
+                  boxShadow: '0 4px 12px rgba(0,0,0,0.04)',
+                  textAlign: 'center'
+                }}
+              >
+                <Text
+                  type="secondary"
+                  style={{ fontSize: 12, display: 'block' }}
+                >
+                  JENIS SOAL
+                </Text>
+                <Title level={2} style={{ margin: 0, color: '#fa8c16' }}>
+                  {dynamicFilterOptions.length - 1}
+                </Title>
+              </div>
+            </Col>
+
+            <Col xs={12} sm={8}>
+              <div
+                style={{
+                  padding: 16,
+                  backgroundColor: 'white',
+                  borderRadius: 16,
+                  boxShadow: '0 4px 12px rgba(0,0,0,0.04)',
+                  textAlign: 'center'
+                }}
+              >
+                <Text
+                  type="secondary"
+                  style={{ fontSize: 12, display: 'block' }}
+                >
+                  AKSES
+                </Text>
+                <Title level={2} style={{ margin: 0, color: '#1890ff' }}>
+                  Gratis
+                </Title>
+              </div>
+            </Col>
+          </Row>
+
+          {/* Per-subtest counts */}
+          <Row
+            gutter={[12, 12]}
+            style={{ marginBottom: 32, justifyContent: 'center' }}
+          >
+            {Array.from(
+              new Set([
+                ...Object.keys(KNOWN_TYPE_LABELS),
+                ...Object.keys(typeCounts)
+              ])
+            ).map((type) => (
+              <Col key={type} xs={12} sm={3}>
+                <div
+                  style={{
+                    padding: '8px 10px',
+                    backgroundColor: 'white',
+                    borderRadius: 10,
+                    boxShadow: '0 4px 12px rgba(0,0,0,0.04)',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: 10
+                  }}
+                >
+                  <div
+                    style={{
+                      width: 36,
+                      height: 36,
+                      borderRadius: 8,
+                      backgroundColor: getTypeColor(type),
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      color: '#fff',
+                      fontWeight: 700,
+                      flexShrink: 0,
+                      fontSize: 12
+                    }}
+                  >
+                    {type.toUpperCase()}
+                  </div>
+                  <div style={{ overflow: 'hidden' }}>
+                    <Text
+                      type="secondary"
+                      style={{
+                        fontSize: 12,
+                        display: 'block',
+                        maxWidth: 160,
+                        overflow: 'hidden',
+                        textOverflow: 'ellipsis',
+                        whiteSpace: 'nowrap'
+                      }}
+                    >
+                      {KNOWN_TYPE_LABELS[type] || ''}
+                    </Text>
+                    <Text strong style={{ fontSize: 14, color: '#262626' }}>
+                      {typeCounts[type] || 0} soal
+                    </Text>
+                  </div>
+                </div>
+              </Col>
+            ))}
+          </Row>
+        </Card>
 
         {/* Questions List */}
         {isLoading ? (
