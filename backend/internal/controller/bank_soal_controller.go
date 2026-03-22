@@ -25,6 +25,7 @@ func (controller BankSoalController) Route(app *fiber.App) {
 	app.Post("/v1/api/bank-soal", middleware.AuthenticateJWT([]string{"admin"}, controller.Config), controller.Create)
 	app.Post("/v1/api/bank-soal/batch", middleware.AuthenticateJWT([]string{"admin"}, controller.Config), controller.CreateBatch)
 	app.Put("/v1/api/bank-soal/:id", middleware.AuthenticateJWT([]string{"admin"}, controller.Config), controller.Update)
+	app.Get("/v1/api/public/bank-soal", controller.FindPreview)
 	app.Get("/v1/api/bank-soal/types", controller.GetUniqueTypes)
 	app.Get("/v1/api/bank-soal/:id", controller.FindById)
 	app.Get("/v1/api/bank-soal", controller.FindAll)
@@ -230,5 +231,44 @@ func (controller BankSoalController) GetUniqueTypes(c *fiber.Ctx) error {
 		Code:    200,
 		Message: "Success",
 		Data:    result,
+	})
+}
+
+// FindPreview handles finding a limited public bank soal preview.
+// @Summary Find public bank soal preview
+// @Description Retrieve a limited public preview of bank soal, optionally filtered by type
+// @Tags BankSoal
+// @Accept json
+// @Produce json
+// @Param type query string false "Question Type"
+// @Param limit query int false "Preview Limit (default: 5)"
+// @Success 200 {object} model.GeneralResponse
+// @Router /public/bank-soal [get]
+func (controller BankSoalController) FindPreview(c *fiber.Ctx) error {
+	questionType := c.Query("type")
+	limit := c.QueryInt("limit", 5)
+	if limit <= 0 {
+		limit = 5
+	}
+	if limit > 20 {
+		limit = 20
+	}
+
+	result, err := controller.BankSoalService.FindPreview(c.Context(), questionType, limit)
+	if err != nil {
+		return err
+	}
+
+	payload := map[string]interface{}{
+		"count":         len(result),
+		"results":       result,
+		"preview_limit": limit,
+		"is_preview":    true,
+	}
+
+	return c.Status(fiber.StatusOK).JSON(model.GeneralResponse{
+		Code:    200,
+		Message: "Success",
+		Data:    payload,
 	})
 }

@@ -27,8 +27,7 @@ const RegisterScreen = () => {
       </div>
       <RegisterForm />
       <Text>
-        Already have an account?{' '}
-        <Link onClick={() => navigate('/login')}>Login</Link>
+        Sudah punya akun? <Link onClick={() => navigate('/login')}>Masuk</Link>
       </Text>
       <div
         style={{

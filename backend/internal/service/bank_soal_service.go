@@ -223,3 +223,21 @@ func (service *BankSoalService) Update(ctx context.Context, id string, request m
 func (service *BankSoalService) GetUniqueTypes(ctx context.Context) ([]string, error) {
 	return service.BankSoalRepository.GetUniqueTypes(ctx)
 }
+
+func (service *BankSoalService) FindPreview(ctx context.Context, questionType string, limit int) ([]model.BankSoalResponse, error) {
+	bankSoals, err := service.BankSoalRepository.FindPreview(ctx, questionType, limit)
+	if err != nil {
+		return nil, err
+	}
+
+	responses := make([]model.BankSoalResponse, 0, len(bankSoals))
+	for _, bs := range bankSoals {
+		responses = append(responses, toResponse(bs))
+	}
+
+	if len(bankSoals) == 0 {
+		return []model.BankSoalResponse{}, nil
+	}
+
+	return responses, nil
+}

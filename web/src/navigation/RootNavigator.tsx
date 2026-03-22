@@ -79,14 +79,7 @@ const RootNavigator = () => {
         <Route path="/" element={<HomeScreen />} />
 
         <Route element={<AppLayout />}>
-          <Route
-            path="/bank-soal"
-            element={
-              <PrivateRoute loginPath="/login">
-                <BankSoalScreen />
-              </PrivateRoute>
-            }
-          />
+          <Route path="/bank-soal" element={<BankSoalScreen />} />
           <Route
             path="/dashboard"
             element={

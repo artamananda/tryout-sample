@@ -20,8 +20,12 @@ import {
   BulbOutlined,
   SearchOutlined,
   RobotOutlined,
-  RocketOutlined
+  RocketOutlined,
+  LoginOutlined,
+  UserAddOutlined
 } from '@ant-design/icons';
+import { useIsAuthenticated } from 'react-auth-kit';
+import { useNavigate } from 'react-router-dom';
 import useFetchList from '../../hooks/useFetchList';
 import { QuestionProps } from '../../types/question';
 import renderTextWithMath from '../../components/RenderTextWithMath';
@@ -56,7 +60,19 @@ const getTypeColor = (type: string) => {
   return colors[type] || 'default';
 };
 
+type BankSoalItem = QuestionProps & {
+  bank_soal_id?: string;
+};
+
+const getQuestionId = (question: BankSoalItem) => {
+  return question.question_id || question.bank_soal_id || '';
+};
+
 const BankSoalScreen = () => {
+  const isAuthenticated = useIsAuthenticated();
+  const navigate = useNavigate();
+  const isGuestPreview = !isAuthenticated();
+
   const [selectedType, setSelectedType] = useState<string>('');
   const [expandedQuestion, setExpandedQuestion] = useState<string | null>(null);
   const [showAnswer, setShowAnswer] = useState<Record<string, boolean>>({});
@@ -69,8 +85,9 @@ const BankSoalScreen = () => {
     setSearch,
     isLoading,
     search
-  } = useFetchList<QuestionProps>({
-    endpoint: 'bank-soal'
+  } = useFetchList<BankSoalItem>({
+    endpoint: isGuestPreview ? 'public/bank-soal' : 'bank-soal',
+    limit: isGuestPreview ? 5 : undefined
   });
 
   useEffect(() => {
@@ -123,10 +140,12 @@ const BankSoalScreen = () => {
       });
   }, [questions, selectedType, sortBy]);
 
-  const paginatedQuestions = filteredQuestions.slice(
-    (currentPage - 1) * pageSize,
-    currentPage * pageSize
-  );
+  const paginatedQuestions = isGuestPreview
+    ? filteredQuestions
+    : filteredQuestions.slice(
+        (currentPage - 1) * pageSize,
+        currentPage * pageSize
+      );
 
   const toggleAnswer = (questionId: string) => {
     setShowAnswer((prev) => ({
@@ -165,8 +184,9 @@ const BankSoalScreen = () => {
                   margin: 0
                 }}
               >
-                Koleksi soal latihan terbaik untuk persiapan ujian yang lebih
-                maksimal.
+                {isGuestPreview
+                  ? 'Coba gratis 5 soal pertama tanpa login. Lanjutkan akses penuh dengan daftar atau masuk gratis.'
+                  : 'Koleksi soal latihan terbaik untuk persiapan ujian yang lebih maksimal.'}
               </Paragraph>
             </div>
           </Card>
@@ -189,6 +209,41 @@ const BankSoalScreen = () => {
             border: 'none'
           }}
         >
+          {isGuestPreview && (
+            <Card
+              style={{
+                marginBottom: 20,
+                borderRadius: 16,
+                background: '#fffbe6',
+                border: '1px solid #ffe58f'
+              }}
+            >
+              <Title level={5} style={{ marginTop: 0, marginBottom: 8 }}>
+                Preview Gratis Bank Soal
+              </Title>
+              <Paragraph style={{ marginBottom: 16 }}>
+                Kamu sedang melihat 5 soal preview. Untuk membuka lebih banyak
+                soal, silakan daftar atau masuk. Tenang, proses login dan
+                register 100% gratis.
+              </Paragraph>
+              <div style={{ display: 'flex', gap: 12, flexWrap: 'wrap' }}>
+                <Button
+                  type="primary"
+                  icon={<UserAddOutlined />}
+                  onClick={() => navigate('/register')}
+                >
+                  Daftar Gratis
+                </Button>
+                <Button
+                  icon={<LoginOutlined />}
+                  onClick={() => navigate('/login')}
+                >
+                  Masuk
+                </Button>
+              </div>
+            </Card>
+          )}
+
           <Row gutter={[24, 24]} align="middle">
             <Col xs={24} lg={12}>
               <Input
@@ -288,7 +343,7 @@ const BankSoalScreen = () => {
                   AKSES
                 </Text>
                 <Title level={2} style={{ margin: 0, color: '#1890ff' }}>
-                  Gratis
+                  {isGuestPreview ? 'Preview Gratis' : 'Gratis'}
                 </Title>
               </div>
             </Col>
@@ -379,7 +434,7 @@ const BankSoalScreen = () => {
             <div style={{ display: 'flex', flexDirection: 'column', gap: 24 }}>
               {paginatedQuestions.map((question, index) => (
                 <Card
-                  key={question.question_id}
+                  key={getQuestionId(question)}
                   style={{
                     borderRadius: 24,
                     boxShadow: '0 10px 30px rgba(0,0,0,0.04)',
@@ -478,7 +533,8 @@ const BankSoalScreen = () => {
                             );
                             const isCorrect =
                               question.correct_answer === optionLetter;
-                            const isOpen = showAnswer[question.question_id];
+                            const questionId = getQuestionId(question);
+                            const isOpen = showAnswer[questionId];
 
                             return (
                               <div
@@ -547,7 +603,7 @@ const BankSoalScreen = () => {
                     )}
 
                     {/* Explanation Section */}
-                    {showAnswer[question.question_id] &&
+                    {showAnswer[getQuestionId(question)] &&
                       question.explanation && (
                         <div
                           style={{
@@ -590,18 +646,18 @@ const BankSoalScreen = () => {
                         type="link"
                         onClick={(e) => {
                           e.stopPropagation();
-                          toggleAnswer(question.question_id);
+                          toggleAnswer(getQuestionId(question));
                         }}
                         style={{
                           padding: 0,
                           height: 'auto',
                           fontWeight: 600,
-                          color: showAnswer[question.question_id]
+                          color: showAnswer[getQuestionId(question)]
                             ? '#52c41a'
                             : '#8C59F1'
                         }}
                       >
-                        {showAnswer[question.question_id] ? (
+                        {showAnswer[getQuestionId(question)] ? (
                           <span
                             style={{
                               display: 'flex',
@@ -654,19 +710,60 @@ const BankSoalScreen = () => {
             </div>
 
             {/* Pagination */}
-            <div style={{ marginTop: 40, textAlign: 'center' }}>
-              <Pagination
-                current={currentPage}
-                pageSize={pageSize}
-                total={filteredQuestions.length}
-                onChange={(page, size) => {
-                  setCurrentPage(page);
-                  setPageSize(size);
+            {isGuestPreview ? (
+              <Card
+                style={{
+                  marginTop: 24,
+                  borderRadius: 16,
+                  border: '1px dashed #d9d9d9',
+                  textAlign: 'center'
                 }}
-                showSizeChanger
-                showTotal={(total) => `Total ${total} soal`}
-              />
-            </div>
+              >
+                <Title level={5} style={{ marginBottom: 8 }}>
+                  Ingin akses semua soal?
+                </Title>
+                <Paragraph style={{ marginBottom: 16 }}>
+                  Lanjutkan belajar dengan akun gratis untuk membuka seluruh
+                  bank soal, tryout, dan fitur belajar lainnya.
+                </Paragraph>
+                <div
+                  style={{
+                    display: 'flex',
+                    justifyContent: 'center',
+                    gap: 12,
+                    flexWrap: 'wrap'
+                  }}
+                >
+                  <Button
+                    type="primary"
+                    icon={<UserAddOutlined />}
+                    onClick={() => navigate('/register')}
+                  >
+                    Daftar Gratis
+                  </Button>
+                  <Button
+                    icon={<LoginOutlined />}
+                    onClick={() => navigate('/login')}
+                  >
+                    Masuk
+                  </Button>
+                </div>
+              </Card>
+            ) : (
+              <div style={{ marginTop: 40, textAlign: 'center' }}>
+                <Pagination
+                  current={currentPage}
+                  pageSize={pageSize}
+                  total={filteredQuestions.length}
+                  onChange={(page, size) => {
+                    setCurrentPage(page);
+                    setPageSize(size);
+                  }}
+                  showSizeChanger
+                  showTotal={(total) => `Total ${total} soal`}
+                />
+              </div>
+            )}
           </>
         )}
       </div>

@@ -11,7 +11,7 @@ import type { MenuProps } from 'antd';
 import { Layout, Menu, Image, Spin, Modal } from 'antd';
 import logo from '../../assets/logo-yellow.png';
 import { Outlet, useNavigate } from 'react-router-dom';
-import { useAuthUser, useSignOut } from 'react-auth-kit';
+import { useAuthUser, useIsAuthenticated, useSignOut } from 'react-auth-kit';
 import FooterCopyright from '../../components/Footer';
 
 const { Content, Footer, Sider } = Layout;
@@ -36,18 +36,26 @@ const AppLayout = () => {
   const [collapsed, setCollapsed] = useState(false);
   const navigate = useNavigate();
   const signOut = useSignOut();
+  const isAuthenticated = useIsAuthenticated();
   const userAuth = useAuthUser();
-  const name = userAuth() ? userAuth()?.name : 'User';
+  const loggedIn = isAuthenticated();
+  const name = loggedIn && userAuth() ? userAuth()?.name : 'Pengunjung';
 
-  const items: MenuItem[] = [
-    getItem(name, '/user', <UserOutlined />, [
-      getItem('Logout', '/logout', <PoweroffOutlined />)
-    ]),
-    getItem('Tryout', '/tryout', <CalendarOutlined />),
-    getItem('Bank Soal', '/bank-soal', <BookOutlined />),
-    getItem('Learning Video', '/learning-video', <PlayCircleOutlined />),
-    getItem('Program', '/program', <ScheduleOutlined />)
-  ];
+  const items: MenuItem[] = loggedIn
+    ? [
+        getItem(name, '/user', <UserOutlined />, [
+          getItem('Keluar', '/logout', <PoweroffOutlined />)
+        ]),
+        getItem('Tryout', '/tryout', <CalendarOutlined />),
+        getItem('Bank Soal', '/bank-soal', <BookOutlined />),
+        getItem('Learning Video', '/learning-video', <PlayCircleOutlined />),
+        getItem('Program', '/program', <ScheduleOutlined />)
+      ]
+    : [
+        getItem('Bank Soal', '/bank-soal', <BookOutlined />),
+        getItem('Masuk', '/login', <UserOutlined />),
+        getItem('Daftar', '/register', <CalendarOutlined />)
+      ];
 
   return (
     <Layout style={{ minHeight: '100vh' }}>
@@ -99,10 +107,10 @@ const AppLayout = () => {
           onClick={({ key }) => {
             if (key === '/logout') {
               Modal.confirm({
-                title: 'Confirm Logout',
-                content: 'Are you sure you want to logout?',
-                okText: 'Yes',
-                cancelText: 'No',
+                title: 'Konfirmasi Keluar',
+                content: 'Apakah Anda yakin ingin keluar dari akun?',
+                okText: 'Ya',
+                cancelText: 'Tidak',
                 onOk: () => {
                   signOut();
                   navigate('/login');

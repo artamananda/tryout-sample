@@ -70,6 +70,25 @@ func (repository *BankSoalRepository) FindByType(ctx context.Context, questionTy
 	return bankSoals, nil
 }
 
+func (repository *BankSoalRepository) FindPreview(ctx context.Context, questionType string, limit int) ([]entity.BankSoal, error) {
+	var bankSoals []entity.BankSoal
+
+	query := repository.DB.WithContext(ctx).Order("created_at DESC")
+	if questionType != "" {
+		query = query.Where("type = ?", questionType)
+	}
+	if limit > 0 {
+		query = query.Limit(limit)
+	}
+
+	err := query.Find(&bankSoals).Error
+	if err != nil {
+		return nil, err
+	}
+
+	return bankSoals, nil
+}
+
 func (repository *BankSoalRepository) Update(ctx context.Context, bankSoal entity.BankSoal) (entity.BankSoal, error) {
 	err := repository.DB.WithContext(ctx).Save(&bankSoal).Error
 	if err != nil {

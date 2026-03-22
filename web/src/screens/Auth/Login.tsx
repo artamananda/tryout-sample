@@ -27,11 +27,13 @@ const LoginScreen = () => {
       </div>
       <LoginForm />
       <Text>
-        Don't have an account?{' '}
-        <Link onClick={() => navigate('/register')}>Register</Link>
+        Belum punya akun?{' '}
+        <Link onClick={() => navigate('/register')}>Daftar</Link>
       </Text>
       <Text style={{ marginTop: 8 }}>
-        <Link onClick={() => navigate('/forgot-password')}>Forgot Password?</Link>
+        <Link onClick={() => navigate('/forgot-password')}>
+          Lupa kata sandi?
+        </Link>
       </Text>
       <div
         style={{
