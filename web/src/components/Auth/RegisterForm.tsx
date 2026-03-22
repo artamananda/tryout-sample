@@ -19,11 +19,9 @@ const RegisterForm = () => {
       return Promise.resolve();
     }
     return Promise.reject(
-      'Username should only contain letters, numbers, or underscores.'
+      'Username hanya boleh huruf, angka, atau underscore.'
     );
   };
-
-  const onFinishFailed = (errorInfo: any) => {};
 
   const handleResendOtp = async () => {
     const formData = form.getFieldsValue([
@@ -54,42 +52,46 @@ const RegisterForm = () => {
   useEffect(() => {
     form.setFieldValue('otp', otp?.join('') || '');
   }, [otp]);
+
   return (
-    <div style={{ width: '100%', maxWidth: '600px', padding: '0 16px' }}>
+    <div>
       <Form
         form={form}
         name="basic"
+        className="register-form"
         layout="vertical"
+        requiredMark={false}
         onFinish={handleFormSubmit}
-        onFinishFailed={onFinishFailed}
         autoComplete="off"
       >
         <Form.Item
           name="email"
           label="Email"
           rules={[
-            { required: true, message: 'Please input your email!' },
+            { required: true, message: 'Email wajib diisi.' },
             {
               type: 'email',
-              message: 'The input is not valid email!'
+              message: 'Format email tidak valid.'
             }
           ]}
         >
           <Input
+            size="large"
             prefix={<UserOutlined className="site-form-item-icon" />}
             type="email"
-            placeholder="Email"
+            placeholder="contoh@email.com"
           />
         </Form.Item>
         <Form.Item
           name="name"
-          label="Name"
-          rules={[{ required: true, message: 'Please input your name!' }]}
+          label="Nama"
+          rules={[{ required: true, message: 'Nama wajib diisi.' }]}
         >
           <Input
+            size="large"
             prefix={<UserOutlined className="site-form-item-icon" />}
             type="name"
-            placeholder="Name"
+            placeholder="Nama lengkap"
           />
         </Form.Item>
         <Form.Item
@@ -98,7 +100,7 @@ const RegisterForm = () => {
           rules={[
             {
               required: true,
-              message: 'Please input your username!'
+              message: 'Username wajib diisi.'
             },
             {
               validator: validateUsername
@@ -106,36 +108,41 @@ const RegisterForm = () => {
           ]}
         >
           <Input
+            size="large"
             prefix={<UserOutlined className="site-form-item-icon" />}
             type="username"
-            placeholder="Username"
+            placeholder="username_kamu"
           />
         </Form.Item>
         <Form.Item
           name="password"
-          label="Password"
-          rules={[{ required: true, message: 'Please input your password!' }]}
+          label="Kata sandi"
+          rules={[{ required: true, message: 'Kata sandi wajib diisi.' }]}
         >
           <Input.Password
+            size="large"
             prefix={<LockOutlined className="site-form-item-icon" />}
-            placeholder="Password"
+            placeholder="Masukkan kata sandi"
           />
         </Form.Item>
 
         <Form.Item>
           <Button
-            style={{ width: '100%' }}
+            className="register-submit-btn"
             type="primary"
             htmlType="submit"
             loading={isAuthLoading}
+            size="large"
+            block
           >
-            Register
+            Daftar
           </Button>
         </Form.Item>
       </Form>
 
       <Modal
         open={isShowModal}
+        wrapClassName="register-otp-modal"
         footer={false}
         width="90%"
         style={{ maxWidth: '500px' }}
@@ -146,11 +153,11 @@ const RegisterForm = () => {
       >
         <Form form={form} onFinish={doRegister}>
           <div>
-            <Text style={{ fontWeight: 'bold' }}>Email Verification</Text>
+            <Text className="register-otp-modal-title">Verifikasi Email</Text>
             <Divider style={{ marginTop: 10 }} />
             <div style={{ paddingInline: '5%', textAlign: 'center' }}>
               <Text>
-                Check your inbox. We've sent you the OTP verification code to{' '}
+                Cek inbox kamu. Kode OTP sudah dikirim ke{' '}
                 <Link>{form.getFieldValue('email')}</Link>
               </Text>
             </div>
@@ -168,32 +175,26 @@ const RegisterForm = () => {
             </div>
             <div style={{ textAlign: 'center' }}>
               <Text>
-                Please wait{' '}
+                Tunggu{' '}
                 <span style={{ fontWeight: 'bold' }}>{`00:${
                   countdown < 10 ? '0' + countdown : countdown
                 }`}</span>{' '}
-                before resend another OTP
+                sebelum kirim ulang OTP
               </Text>
             </div>
           </div>
           <Divider />
-          <div
-            style={{
-              display: 'flex',
-              flexDirection: 'row',
-              justifyContent: 'space-between'
-            }}
-          >
+          <div className="register-otp-actions">
             <Button
               onClick={handleResendOtp}
               type="link"
               disabled={countdown > 0}
             >
-              Resend OTP
+              Kirim Ulang OTP
             </Button>
             <Form.Item>
               <Button htmlType="submit" type="primary" loading={isAuthLoading}>
-                Submit OTP
+                Verifikasi OTP
               </Button>
             </Form.Item>
           </div>

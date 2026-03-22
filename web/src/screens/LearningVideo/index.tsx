@@ -103,7 +103,7 @@ const LearningVideoScreen = () => {
       style={{
         padding: '24px',
         minHeight: '100vh',
-        backgroundColor: '#f5f5f5'
+        backgroundColor: '#f8fbff'
       }}
     >
       {/* Header */}
@@ -112,7 +112,8 @@ const LearningVideoScreen = () => {
           <Card
             style={{
               textAlign: 'center',
-              background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+              background:
+                'linear-gradient(130deg, #154ab1 0%, #2f67cb 58%, #ffd238 100%)',
               color: 'white'
             }}
           >
