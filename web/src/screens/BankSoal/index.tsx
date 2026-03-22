@@ -158,7 +158,7 @@ const BankSoalScreen = () => {
     <div
       style={{
         minHeight: '100%',
-        backgroundColor: '#fdfbfe',
+        backgroundColor: '#f8fbff',
         paddingBottom: 60
       }}
     >
@@ -168,7 +168,8 @@ const BankSoalScreen = () => {
           <Card
             style={{
               textAlign: 'center',
-              background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+              background:
+                'linear-gradient(130deg, #154ab1 0%, #2f67cb 58%, #ffd238 100%)',
               color: 'white'
             }}
           >
@@ -251,7 +252,7 @@ const BankSoalScreen = () => {
                 size="large"
                 allowClear
                 onChange={(e) => setSearch(e.target.value)}
-                prefix={<SearchOutlined style={{ color: '#8C59F1' }} />}
+                prefix={<SearchOutlined style={{ color: '#1d4da8' }} />}
                 style={{ borderRadius: 12, height: 50 }}
               />
             </Col>
@@ -263,7 +264,7 @@ const BankSoalScreen = () => {
                 onChange={handleTypeChange}
                 options={dynamicFilterOptions}
                 placeholder="Filter Jenis"
-                suffixIcon={<FilterOutlined style={{ color: '#8C59F1' }} />}
+                suffixIcon={<FilterOutlined style={{ color: '#1d4da8' }} />}
               />
             </Col>
             <Col xs={24} sm={12} lg={6}>

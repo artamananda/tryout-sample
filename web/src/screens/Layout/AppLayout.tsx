@@ -5,16 +5,20 @@ import {
   PoweroffOutlined,
   ScheduleOutlined,
   BookOutlined,
-  PlayCircleOutlined
+  PlayCircleOutlined,
+  MenuFoldOutlined,
+  MenuUnfoldOutlined
 } from '@ant-design/icons';
 import type { MenuProps } from 'antd';
-import { Layout, Menu, Image, Spin, Modal } from 'antd';
+import { Layout, Menu, Image, Spin, Modal, Button, Grid } from 'antd';
 import logo from '../../assets/logo-yellow.png';
-import { Outlet, useNavigate } from 'react-router-dom';
+import { Outlet, useLocation, useNavigate } from 'react-router-dom';
 import { useAuthUser, useIsAuthenticated, useSignOut } from 'react-auth-kit';
 import FooterCopyright from '../../components/Footer';
+import './AppLayout.css';
 
-const { Content, Footer, Sider } = Layout;
+const { Content, Header, Sider } = Layout;
+const { useBreakpoint } = Grid;
 
 type MenuItem = Required<MenuProps>['items'][number];
 
@@ -33,8 +37,11 @@ function getItem(
 }
 
 const AppLayout = () => {
+  const screens = useBreakpoint();
+  const isMobile = !screens.lg;
   const [collapsed, setCollapsed] = useState(false);
   const navigate = useNavigate();
+  const location = useLocation();
   const signOut = useSignOut();
   const isAuthenticated = useIsAuthenticated();
   const userAuth = useAuthUser();
@@ -57,87 +64,110 @@ const AppLayout = () => {
         getItem('Daftar', '/register', <CalendarOutlined />)
       ];
 
+  const selectedKey =
+    items?.find(
+      (item) =>
+        typeof item?.key === 'string' && location.pathname.startsWith(item.key)
+    )?.key || '/bank-soal';
+
+  const handleMenuClick = (key: string) => {
+    if (key === '/logout') {
+      Modal.confirm({
+        title: 'Konfirmasi Keluar',
+        content: 'Apakah Anda yakin ingin keluar dari akun?',
+        okText: 'Ya',
+        cancelText: 'Tidak',
+        onOk: () => {
+          signOut();
+          navigate('/login');
+        }
+      });
+      return;
+    }
+
+    navigate(key);
+    if (isMobile) {
+      setCollapsed(true);
+    }
+  };
+
+  const generatePathName = (path: string) => {
+    path = path.replace(/^\//, '');
+    return path
+      .split('-')
+      .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
+      .join(' ');
+  };
+
   return (
-    <Layout style={{ minHeight: '100vh' }}>
+    <Layout className="app-shell">
       <Sider
-        collapsible
+        className="app-sidebar"
+        trigger={null}
+        width={268}
+        collapsedWidth={isMobile ? 0 : 80}
         collapsed={collapsed}
         onCollapse={(value) => setCollapsed(value)}
+        breakpoint="lg"
+        onBreakpoint={(broken) => setCollapsed(broken)}
       >
-        {collapsed ? (
-          <div
-            style={{
-              height: 32,
-              margin: 16,
-              display: 'flex',
-              justifyContent: 'center',
-              alignItems: 'center'
-            }}
-          >
+        <div className={`app-sidebar-brand ${collapsed ? 'is-collapsed' : ''}`}>
+          {collapsed ? (
             <Image
               src={logo}
               alt="Logo"
               preview={false}
-              style={{ maxHeight: 32 }}
+              style={{ maxHeight: 30 }}
             />
-          </div>
-        ) : (
-          <div
-            style={{
-              height: 64,
-              margin: 16,
-              display: 'flex',
-              justifyContent: 'center',
-              alignItems: 'center'
-            }}
-          >
+          ) : (
             <Image
               src={logo}
               alt="Logo"
               preview={false}
-              style={{ maxHeight: 150 }}
+              style={{ maxHeight: 42 }}
             />
-          </div>
-        )}
+          )}
+        </div>
+
         <Menu
+          className="app-sidebar-menu"
           theme="dark"
-          defaultSelectedKeys={['tryout']}
+          selectedKeys={[String(selectedKey)]}
           mode="inline"
           items={items}
-          onClick={({ key }) => {
-            if (key === '/logout') {
-              Modal.confirm({
-                title: 'Konfirmasi Keluar',
-                content: 'Apakah Anda yakin ingin keluar dari akun?',
-                okText: 'Ya',
-                cancelText: 'Tidak',
-                onOk: () => {
-                  signOut();
-                  navigate('/login');
-                }
-              });
-            } else {
-              navigate(key);
-            }
-          }}
+          onClick={({ key }) => handleMenuClick(key)}
         />
-        <div
-          style={{
-            color: '#fff',
-            position: 'absolute',
-            textAlign: 'center',
-            bottom: 60,
-            left: 0,
-            right: 0,
-            fontSize: 10
-          }}
-        >{`${import.meta.env.VITE_WEBSITE_NAME} v${import.meta.env.VITE_VERSION_NAME}`}</div>
+
+        {!collapsed && (
+          <div className="app-sidebar-version">
+            <FooterCopyright />
+          </div>
+        )}
       </Sider>
-      <Layout>
-        <Content style={{ margin: 20 }}>
+
+      <Layout className="app-main-layout">
+        <Header className="app-topbar">
+          <Button
+            className="app-menu-toggle"
+            type="text"
+            icon={collapsed ? <MenuUnfoldOutlined /> : <MenuFoldOutlined />}
+            onClick={() => setCollapsed((prev) => !prev)}
+            aria-label="Toggle navigation menu"
+          />
+          <div className="app-topbar-title">
+            {generatePathName(location.pathname)}
+          </div>
+        </Header>
+
+        <Content className="app-main-content">
           <Suspense fallback={<Spin spinning={true} />}>
-            <Outlet />
+            <div className="app-content-card">
+              <Outlet />
+            </div>
           </Suspense>
+          {/* <div className="app-main-footer">
+            <FooterCopyright />
+          </div> */}
         </Content>
       </Layout>
     </Layout>

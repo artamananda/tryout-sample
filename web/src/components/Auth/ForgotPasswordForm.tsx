@@ -75,26 +75,20 @@ const ForgotPasswordForm = () => {
   };
 
   return (
-    <div
-      style={{
-        width: '100%',
-        maxWidth: 400,
-        padding: 20,
-        backgroundColor: '#fff',
-        borderRadius: 8,
-        boxShadow: '0 4px 12px rgba(0, 0, 0, 0.1)'
-      }}
-    >
-      <Title level={3} style={{ textAlign: 'center', marginBottom: 10 }}>
-        Forgot Password
+    <div className="forgot-form">
+      <Title
+        level={3}
+        style={{ textAlign: 'center', marginBottom: 10, color: '#153c88' }}
+      >
+        Lupa Password
       </Title>
       <Text
         type="secondary"
         style={{ display: 'block', textAlign: 'center', marginBottom: 24 }}
       >
         {currentStep === 0
-          ? 'Enter your email to receive OTP'
-          : 'Enter OTP and new password'}
+          ? 'Masukkan email untuk menerima OTP'
+          : 'Masukkan OTP dan password baru'}
       </Text>
 
       <Steps
@@ -105,17 +99,22 @@ const ForgotPasswordForm = () => {
       />
 
       {currentStep === 0 ? (
-        <Form form={form} onFinish={handleSendOtp} layout="vertical">
+        <Form
+          form={form}
+          onFinish={handleSendOtp}
+          layout="vertical"
+          requiredMark={false}
+        >
           <Form.Item
             name="email"
             rules={[
-              { required: true, message: 'Please input your email!' },
-              { type: 'email', message: 'Please enter a valid email!' }
+              { required: true, message: 'Email wajib diisi.' },
+              { type: 'email', message: 'Format email tidak valid.' }
             ]}
           >
             <Input
               prefix={<MailOutlined />}
-              placeholder="Email"
+              placeholder="contoh@email.com"
               size="large"
               disabled={loading}
             />
@@ -123,23 +122,29 @@ const ForgotPasswordForm = () => {
 
           <Form.Item>
             <Button
+              className="forgot-primary-btn"
               type="primary"
               htmlType="submit"
               size="large"
               block
               loading={loading}
             >
-              Send OTP
+              Kirim OTP
             </Button>
           </Form.Item>
         </Form>
       ) : (
-        <Form form={form} onFinish={handleResetPassword} layout="vertical">
+        <Form
+          form={form}
+          onFinish={handleResetPassword}
+          layout="vertical"
+          requiredMark={false}
+        >
           <Form.Item
             name="otp"
-            label="Enter OTP"
+            label="Masukkan OTP"
             rules={[
-              { required: true, message: 'Please enter the OTP!' },
+              { required: true, message: 'OTP wajib diisi.' },
               {
                 validator: (_, value) => {
                   if (
@@ -149,7 +154,7 @@ const ForgotPasswordForm = () => {
                   ) {
                     return Promise.resolve();
                   }
-                  return Promise.reject('Please enter a valid 6-digit OTP');
+                  return Promise.reject('Masukkan OTP 6 digit yang valid.');
                 }
               }
             ]}
@@ -159,15 +164,15 @@ const ForgotPasswordForm = () => {
 
           <Form.Item
             name="new_password"
-            label="New Password"
+            label="Password Baru"
             rules={[
-              { required: true, message: 'Please input your new password!' },
-              { min: 6, message: 'Password must be at least 6 characters!' }
+              { required: true, message: 'Password baru wajib diisi.' },
+              { min: 6, message: 'Password minimal 6 karakter.' }
             ]}
           >
             <Input.Password
               prefix={<LockOutlined />}
-              placeholder="New Password"
+              placeholder="Masukkan password baru"
               size="large"
               disabled={loading}
             />
@@ -175,23 +180,23 @@ const ForgotPasswordForm = () => {
 
           <Form.Item
             name="confirm_password"
-            label="Confirm Password"
+            label="Konfirmasi Password"
             dependencies={['new_password']}
             rules={[
-              { required: true, message: 'Please confirm your password!' },
+              { required: true, message: 'Konfirmasi password wajib diisi.' },
               ({ getFieldValue }) => ({
                 validator(_, value) {
                   if (!value || getFieldValue('new_password') === value) {
                     return Promise.resolve();
                   }
-                  return Promise.reject('Passwords do not match!');
+                  return Promise.reject('Konfirmasi password tidak sama.');
                 }
               })
             ]}
           >
             <Input.Password
               prefix={<LockOutlined />}
-              placeholder="Confirm Password"
+              placeholder="Ulangi password baru"
               size="large"
               disabled={loading}
             />
@@ -199,6 +204,7 @@ const ForgotPasswordForm = () => {
 
           <Form.Item>
             <Button
+              className="forgot-primary-btn"
               type="primary"
               htmlType="submit"
               size="large"
@@ -217,7 +223,7 @@ const ForgotPasswordForm = () => {
               onClick={() => setCurrentStep(0)}
               disabled={loading}
             >
-              Resend OTP
+              Kirim Ulang OTP
             </Button>
           </Form.Item>
         </Form>
