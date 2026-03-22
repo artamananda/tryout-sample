@@ -119,6 +119,23 @@ hr {
 #menu.navbar-default .navbar-nav > li > a:hover:after {
   width: 100%;
 }
+#menu .nav-menu-trigger {
+  display: inline-flex;
+  align-items: center;
+  cursor: pointer;
+}
+
+#menu .home-nav-dropdown .ant-dropdown-menu-item > a {
+  font-family: 'Lato', sans-serif;
+  text-transform: uppercase;
+  color: #555;
+  font-size: 13px;
+}
+
+#menu .home-nav-dropdown .ant-dropdown-menu-item > a:hover {
+  color: var(--primary-color-start);
+}
+
 .navbar-default .navbar-nav > .active > a,
 .navbar-default .navbar-nav > .active > a:hover,
 .navbar-default .navbar-nav > .active > a:focus {

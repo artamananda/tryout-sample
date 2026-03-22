@@ -1,4 +1,4 @@
-import { Dropdown, Button, MenuProps, message } from 'antd';
+import { Dropdown, MenuProps, message } from 'antd';
 import React from 'react';
 import { useSignOut, useAuthUser } from 'react-auth-kit';
 import { useNavigate } from 'react-router-dom';
@@ -14,6 +14,21 @@ export const Navigation = (props: any) => {
   const userAuth = useAuthUser();
   const authName = userAuth() ? userAuth()?.name : null;
   const navigate = useNavigate();
+
+  const secondaryMenuItems: MenuProps['items'] = [
+    {
+      key: 'portfolio',
+      label: <a href="/#portfolio">Galeri</a>
+    },
+    {
+      key: 'testimonials',
+      label: <a href="/#testimonials">Testimoni</a>
+    },
+    {
+      key: 'team',
+      label: <a href="/#team">Tim</a>
+    }
+  ];
 
   const items: MenuProps['items'] = [
     {
@@ -98,11 +113,6 @@ export const Navigation = (props: any) => {
               </a>
             </li>
             <li>
-              <a href="/#portfolio" className="page-scroll">
-                Galeri
-              </a>
-            </li>
-            <li>
               <a href="/library" className="page-scroll">
                 Perpustakaan Digital
               </a>
@@ -113,14 +123,19 @@ export const Navigation = (props: any) => {
               </a>
             </li>
             <li>
-              <a href="/#testimonials" className="page-scroll">
-                Testimoni
-              </a>
-            </li>
-            <li>
-              <a href="/#team" className="page-scroll">
-                Tim
-              </a>
+              <Dropdown
+                menu={{ items: secondaryMenuItems }}
+                placement="bottomLeft"
+                trigger={['click']}
+                overlayClassName="home-nav-dropdown"
+              >
+                <a
+                  className="page-scroll nav-menu-trigger"
+                  onClick={(event) => event.preventDefault()}
+                >
+                  Lainnya <DownOutlined style={{ marginLeft: 6 }} />
+                </a>
+              </Dropdown>
             </li>
             <li>
               <a href="/#contact" className="page-scroll">
