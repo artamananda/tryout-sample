@@ -10,6 +10,7 @@ import (
 type Question struct {
 	QuestionID    uuid.UUID      `gorm:"primaryKey" json:"question_id"`
 	TryoutID      uuid.UUID      `json:"tryout_id"`
+	BankSoalID    *uuid.UUID     `json:"bank_soal_id"`
 	LocalID       int            `json:"local_id"`
 	Type          string         `json:"type"`
 	Text          string         `json:"text"`

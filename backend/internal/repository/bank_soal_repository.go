@@ -52,31 +52,62 @@ func (repository *BankSoalRepository) FindByID(ctx context.Context, id uuid.UUID
 	return bankSoal, nil
 }
 
-func (repository *BankSoalRepository) FindAll(ctx context.Context) ([]entity.BankSoal, error) {
+func (repository *BankSoalRepository) FindAll(ctx context.Context, includeUsed bool) ([]entity.BankSoal, error) {
 	var bankSoals []entity.BankSoal
-	err := repository.DB.WithContext(ctx).Order("created_at DESC").Find(&bankSoals).Error
+	query := repository.DB.WithContext(ctx).Order("created_at DESC")
+	if !includeUsed {
+		query = query.Where("NOT EXISTS (SELECT 1 FROM questions q WHERE q.bank_soal_id = bank_soals.bank_soal_id)")
+	}
+	err := query.Find(&bankSoals).Error
 	if err != nil {
 		return nil, err
 	}
 	return bankSoals, nil
 }
 
-func (repository *BankSoalRepository) FindByType(ctx context.Context, questionType string) ([]entity.BankSoal, error) {
+func (repository *BankSoalRepository) FindByType(ctx context.Context, questionType string, includeUsed bool) ([]entity.BankSoal, error) {
 	var bankSoals []entity.BankSoal
-	err := repository.DB.WithContext(ctx).Where("type = ?", questionType).Order("created_at DESC").Find(&bankSoals).Error
+	query := repository.DB.WithContext(ctx).Where("type = ?", questionType).Order("created_at DESC")
+	if !includeUsed {
+		query = query.Where("NOT EXISTS (SELECT 1 FROM questions q WHERE q.bank_soal_id = bank_soals.bank_soal_id)")
+	}
+	err := query.Find(&bankSoals).Error
 	if err != nil {
 		return nil, err
 	}
 	return bankSoals, nil
 }
 
-func (repository *BankSoalRepository) FindPreview(ctx context.Context, questionType string, limit int) ([]entity.BankSoal, error) {
+func (repository *BankSoalRepository) FindPreview(ctx context.Context, questionType string, limit int, includeUsed bool) ([]entity.BankSoal, error) {
 	var bankSoals []entity.BankSoal
 
 	query := repository.DB.WithContext(ctx).Order("created_at DESC")
+	if !includeUsed {
+		query = query.Where("NOT EXISTS (SELECT 1 FROM questions q WHERE q.bank_soal_id = bank_soals.bank_soal_id)")
+	}
 	if questionType != "" {
 		query = query.Where("type = ?", questionType)
 	}
+	if limit > 0 {
+		query = query.Limit(limit)
+	}
+
+	err := query.Find(&bankSoals).Error
+	if err != nil {
+		return nil, err
+	}
+
+	return bankSoals, nil
+}
+
+func (repository *BankSoalRepository) FindRandomAvailableByType(ctx context.Context, questionType string, limit int) ([]entity.BankSoal, error) {
+	var bankSoals []entity.BankSoal
+
+	query := repository.DB.WithContext(ctx).
+		Where("type = ?", questionType).
+		Where("NOT EXISTS (SELECT 1 FROM questions q WHERE q.bank_soal_id = bank_soals.bank_soal_id)").
+		Order("RANDOM()")
+
 	if limit > 0 {
 		query = query.Limit(limit)
 	}
@@ -205,4 +236,29 @@ func (repository *BankSoalRepository) GetUniqueTypes(ctx context.Context) ([]str
 		return nil, err
 	}
 	return types, nil
+}
+
+func (repository *BankSoalRepository) MigrateCorrectAnswers(ctx context.Context) (int64, error) {
+	query := `
+		UPDATE bank_soals
+		SET correct_answer = CASE UPPER(TRIM(correct_answer))
+			WHEN 'A' THEN options[1]
+			WHEN 'B' THEN options[2]
+			WHEN 'C' THEN options[3]
+			WHEN 'D' THEN options[4]
+			WHEN 'E' THEN options[5]
+			ELSE correct_answer
+		END,
+		updated_at = NOW()
+		WHERE UPPER(TRIM(correct_answer)) IN ('A', 'B', 'C', 'D', 'E')
+		AND options IS NOT NULL
+		AND array_length(options, 1) >= 1;
+	`
+
+	result := repository.DB.WithContext(ctx).Exec(query)
+	if result.Error != nil {
+		return 0, result.Error
+	}
+
+	return result.RowsAffected, nil
 }

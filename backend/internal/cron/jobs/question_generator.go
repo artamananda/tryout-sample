@@ -195,7 +195,7 @@ func (j *QuestionGenerator) Run() error {
 	for _, typeCode := range selectedCodes {
 		typeConfig := utbkQuestionTypes[typeCode]
 		// Get existing questions count for this type to avoid duplicates
-		existing, err := j.bankSoalRepo.FindByType(ctx, typeCode)
+		existing, err := j.bankSoalRepo.FindByType(ctx, typeCode, true)
 		if err != nil {
 			log.Printf("[QuestionGenerator] Error fetching existing questions for %s: %v", typeCode, err)
 			continue

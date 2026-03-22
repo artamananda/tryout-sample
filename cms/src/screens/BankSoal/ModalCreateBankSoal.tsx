@@ -101,6 +101,19 @@ const ModalCreateBankSoal = (props: PropTypes) => {
       message.error("Silakan masukkan minimal 2 opsi jawaban");
       return;
     }
+
+    const normalizedOptions = isOptions ? options.map((o) => o.trim()) : [];
+    const answerIndex = optLabels.indexOf(answer);
+    const resolvedCorrectAnswer =
+      isOptions && answerIndex >= 0
+        ? normalizedOptions[answerIndex] || ""
+        : answer.trim();
+
+    if (!resolvedCorrectAnswer) {
+      message.error("Silakan pilih jawaban benar yang valid");
+      return;
+    }
+
     setIsLoading(true);
     try {
       const payload = {
@@ -108,8 +121,8 @@ const ModalCreateBankSoal = (props: PropTypes) => {
           {
             type: questionType,
             text: questionText,
-            options: isOptions ? options.filter((o) => o.trim()) : [],
-            correct_answer: answer,
+            options: isOptions ? normalizedOptions.filter((o) => o) : [],
+            correct_answer: resolvedCorrectAnswer,
             explanation: explanation,
             difficulty: difficulty,
             topic: topic,
@@ -215,7 +228,7 @@ const ModalCreateBankSoal = (props: PropTypes) => {
                               saveCustomType(newTypeName.trim());
                               setQuestionType(newTypeName.trim());
                               message.success(
-                                `Jenis soal "${newTypeName.trim()}" ditambahkan!`
+                                `Jenis soal "${newTypeName.trim()}" ditambahkan!`,
                               );
                               setNewTypeName("");
                             }
@@ -232,7 +245,7 @@ const ModalCreateBankSoal = (props: PropTypes) => {
                               saveCustomType(newTypeName.trim());
                               setQuestionType(newTypeName.trim());
                               message.success(
-                                `Jenis soal "${newTypeName.trim()}" ditambahkan!`
+                                `Jenis soal "${newTypeName.trim()}" ditambahkan!`,
                               );
                               setNewTypeName("");
                             }

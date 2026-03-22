@@ -36,6 +36,7 @@ func (service *QuestionService) Create(ctx context.Context, request model.Create
 
 	question := entity.Question{
 		TryoutID:      uuid.MustParse(tryoutID),
+		BankSoalID:    request.BankSoalID,
 		LocalID:       request.LocalID,
 		Type:          request.Type,
 		Text:          request.Text,
@@ -55,6 +56,7 @@ func (service *QuestionService) Create(ctx context.Context, request model.Create
 	return model.QuestionResponse{
 		QuestionID:    question.QuestionID,
 		TryoutID:      question.TryoutID,
+		BankSoalID:    question.BankSoalID,
 		LocalID:       question.LocalID,
 		Type:          question.Type,
 		Text:          question.Text,
@@ -80,6 +82,7 @@ func (service *QuestionService) Update(ctx context.Context, request model.Update
 	}
 
 	question.LocalID = request.LocalID
+	question.BankSoalID = request.BankSoalID
 	question.Type = request.Type
 	question.Text = request.Text
 	question.ImageUrl = request.ImageUrl
@@ -100,6 +103,7 @@ func (service *QuestionService) Update(ctx context.Context, request model.Update
 	return model.QuestionResponse{
 		QuestionID:    question.QuestionID,
 		TryoutID:      question.TryoutID,
+		BankSoalID:    question.BankSoalID,
 		LocalID:       question.LocalID,
 		Type:          question.Type,
 		Text:          question.Text,
@@ -144,6 +148,7 @@ func (service *QuestionService) UpdateImage(ctx context.Context, request model.U
 	return model.QuestionResponse{
 		QuestionID:    question.QuestionID,
 		TryoutID:      question.TryoutID,
+		BankSoalID:    question.BankSoalID,
 		LocalID:       question.LocalID,
 		Type:          question.Type,
 		Text:          question.Text,
@@ -172,6 +177,7 @@ func (service *QuestionService) FindByID(ctx context.Context, questionID string)
 	return model.QuestionResponse{
 		QuestionID:    question.QuestionID,
 		TryoutID:      question.TryoutID,
+		BankSoalID:    question.BankSoalID,
 		LocalID:       question.LocalID,
 		Type:          question.Type,
 		Text:          question.Text,
@@ -194,6 +200,7 @@ func (service *QuestionService) FindByTryoutID(ctx context.Context, tryoutID str
 		questionResponses = append(questionResponses, model.QuestionResponse{
 			QuestionID:    question.QuestionID,
 			TryoutID:      question.TryoutID,
+			BankSoalID:    question.BankSoalID,
 			LocalID:       question.LocalID,
 			Type:          question.Type,
 			Text:          question.Text,
@@ -222,6 +229,7 @@ func (service *QuestionService) FindAll(ctx context.Context) ([]model.QuestionRe
 			model.QuestionResponse{
 				QuestionID:    question.QuestionID,
 				TryoutID:      question.TryoutID,
+				BankSoalID:    question.BankSoalID,
 				LocalID:       question.LocalID,
 				Type:          question.Type,
 				Text:          question.Text,

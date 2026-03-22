@@ -5,14 +5,18 @@ import {
   Form,
   Input,
   InputNumber,
+  Space,
   message,
   Modal,
+  Typography,
 } from "antd";
 import Title from "antd/es/typography/Title";
 import SwitchButton from "../../Ui/SwitchButton";
 import { RangePickerProps } from "antd/es/date-picker";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { apiCreateTryout } from "../../../api/tryout";
+import { apiGetBankSoalTypes } from "../../../api/ai";
+const { Text } = Typography;
 
 type PropTypes = {
   showModal: boolean;
@@ -20,7 +24,7 @@ type PropTypes = {
   onFinishFailed: (errorInfo: any) => void;
   onChange: (
     value: DatePickerProps["value"] | RangePickerProps["value"],
-    dateString: [string, string] | string
+    dateString: [string, string] | string,
   ) => void;
   onOk: (value: DatePickerProps["value"] | RangePickerProps["value"]) => void;
   fetchList: () => void;
@@ -30,23 +34,68 @@ const ModalCreateTryout = (props: PropTypes) => {
   const { showModal, setShowModal, onFinishFailed, onChange, onOk, fetchList } =
     props;
   const [isPublished, setIsPublished] = useState(false);
+  const [generateFromBankSoal, setGenerateFromBankSoal] = useState(false);
+  const [bankSoalTypes, setBankSoalTypes] = useState<string[]>([]);
+  const [distributionMap, setDistributionMap] = useState<
+    Record<string, number>
+  >({});
   const [form] = Form.useForm();
 
+  useEffect(() => {
+    const fetchTypes = async () => {
+      const types = await apiGetBankSoalTypes();
+      setBankSoalTypes(types || []);
+    };
+
+    if (showModal) {
+      fetchTypes();
+    }
+  }, [showModal]);
+
+  const setTypeCount = (type: string, count: number | null) => {
+    setDistributionMap((prev) => ({
+      ...prev,
+      [type]: count || 0,
+    }));
+  };
+
   const handleCreate = async (data: any) => {
+    const bankSoalDistribution = Object.entries(distributionMap)
+      .filter(([, count]) => Number(count) > 0)
+      .map(([type, count]) => ({
+        type,
+        count: Number(count),
+      }));
+
+    if (generateFromBankSoal && bankSoalDistribution.length === 0) {
+      message.error("Pilih minimal 1 tipe soal dan jumlah soal untuk generate");
+      return;
+    }
+
     const newData = {
       ...data,
       is_published: isPublished,
+      generate_from_bank_soal: generateFromBankSoal,
+      bank_soal_distribution: bankSoalDistribution,
     };
 
     const res = await apiCreateTryout(newData);
     if (res) {
       setShowModal(false);
+      setGenerateFromBankSoal(false);
+      setDistributionMap({});
+      form.resetFields();
       fetchList();
       message.success("Create Tryout Success");
     }
   };
   return (
-    <Modal open={showModal} onCancel={() => setShowModal(false)} footer={false}>
+    <Modal
+      open={showModal}
+      onCancel={() => setShowModal(false)}
+      footer={false}
+      width={700}
+    >
       <Title level={3} style={{ fontWeight: "bold" }}>
         Create Tryout
       </Title>
@@ -110,6 +159,48 @@ const ModalCreateTryout = (props: PropTypes) => {
             }}
           />
         </Form.Item>
+
+        <Form.Item label="Generate Soal dari Bank Soal">
+          <Space direction="vertical" style={{ width: "100%" }}>
+            <SwitchButton
+              defaultChecked={generateFromBankSoal}
+              onChange={(checked) => setGenerateFromBankSoal(checked)}
+            />
+            <Text type="secondary">
+              Aktifkan untuk langsung membuat soal tryout dari bank soal.
+            </Text>
+          </Space>
+        </Form.Item>
+
+        {generateFromBankSoal && (
+          <Form.Item label="Distribusi Soal per Tipe">
+            <Space direction="vertical" style={{ width: "100%" }} size={12}>
+              {bankSoalTypes.length === 0 && (
+                <Text type="secondary">Tidak ada tipe bank soal tersedia.</Text>
+              )}
+              {bankSoalTypes.map((type) => (
+                <div
+                  key={type}
+                  style={{
+                    display: "flex",
+                    justifyContent: "space-between",
+                    gap: 12,
+                  }}
+                >
+                  <Text style={{ minWidth: 120, textTransform: "uppercase" }}>
+                    {type}
+                  </Text>
+                  <InputNumber
+                    min={0}
+                    value={distributionMap[type] || 0}
+                    onChange={(value) => setTypeCount(type, value)}
+                    style={{ width: 160 }}
+                  />
+                </div>
+              ))}
+            </Space>
+          </Form.Item>
+        )}
 
         <Form.Item>
           <Button type="primary" htmlType="submit" style={{ width: "100%" }}>

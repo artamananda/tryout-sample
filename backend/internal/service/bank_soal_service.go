@@ -2,6 +2,7 @@ package service
 
 import (
 	"context"
+	"strings"
 	"time"
 
 	"github.com/artamananda/tryout-sample/internal/common"
@@ -35,13 +36,15 @@ func (service *BankSoalService) Create(ctx context.Context, request model.Create
 		isOptions = *request.IsOptions
 	}
 
+	correctAnswer := normalizeCorrectAnswer(request.CorrectAnswer, request.Options)
+
 	bankSoal := entity.BankSoal{
 		Type:          request.Type,
 		Text:          request.Text,
 		ImageUrl:      request.ImageUrl,
 		IsOptions:     &isOptions,
 		Options:       request.Options,
-		CorrectAnswer: request.CorrectAnswer,
+		CorrectAnswer: correctAnswer,
 		Explanation:   request.Explanation,
 		Difficulty:    request.Difficulty,
 		Topic:         request.Topic,
@@ -75,13 +78,15 @@ func (service *BankSoalService) CreateBatch(ctx context.Context, request model.C
 			isOptions = *q.IsOptions
 		}
 
+		correctAnswer := normalizeCorrectAnswer(q.CorrectAnswer, q.Options)
+
 		bankSoals = append(bankSoals, entity.BankSoal{
 			Type:          q.Type,
 			Text:          q.Text,
 			ImageUrl:      q.ImageUrl,
 			IsOptions:     &isOptions,
 			Options:       q.Options,
-			CorrectAnswer: q.CorrectAnswer,
+			CorrectAnswer: correctAnswer,
 			Explanation:   q.Explanation,
 			Difficulty:    q.Difficulty,
 			Topic:         q.Topic,
@@ -116,8 +121,8 @@ func (service *BankSoalService) FindByID(ctx context.Context, id string) (model.
 	return toResponse(bankSoal), nil
 }
 
-func (service *BankSoalService) FindAll(ctx context.Context) ([]model.BankSoalResponse, error) {
-	bankSoals, err := service.BankSoalRepository.FindAll(ctx)
+func (service *BankSoalService) FindAll(ctx context.Context, includeUsed bool) ([]model.BankSoalResponse, error) {
+	bankSoals, err := service.BankSoalRepository.FindAll(ctx, includeUsed)
 	if err != nil {
 		return nil, err
 	}
@@ -134,8 +139,8 @@ func (service *BankSoalService) FindAll(ctx context.Context) ([]model.BankSoalRe
 	return responses, nil
 }
 
-func (service *BankSoalService) FindByType(ctx context.Context, questionType string) ([]model.BankSoalResponse, error) {
-	bankSoals, err := service.BankSoalRepository.FindByType(ctx, questionType)
+func (service *BankSoalService) FindByType(ctx context.Context, questionType string, includeUsed bool) ([]model.BankSoalResponse, error) {
+	bankSoals, err := service.BankSoalRepository.FindByType(ctx, questionType, includeUsed)
 	if err != nil {
 		return nil, err
 	}
@@ -200,12 +205,14 @@ func (service *BankSoalService) Update(ctx context.Context, id string, request m
 		isOptions = *request.IsOptions
 	}
 
+	correctAnswer := normalizeCorrectAnswer(request.CorrectAnswer, request.Options)
+
 	bankSoal.Type = request.Type
 	bankSoal.Text = request.Text
 	bankSoal.ImageUrl = request.ImageUrl
 	bankSoal.IsOptions = &isOptions
 	bankSoal.Options = request.Options
-	bankSoal.CorrectAnswer = request.CorrectAnswer
+	bankSoal.CorrectAnswer = correctAnswer
 	bankSoal.Explanation = request.Explanation
 	bankSoal.Difficulty = request.Difficulty
 	bankSoal.Topic = request.Topic
@@ -224,8 +231,8 @@ func (service *BankSoalService) GetUniqueTypes(ctx context.Context) ([]string, e
 	return service.BankSoalRepository.GetUniqueTypes(ctx)
 }
 
-func (service *BankSoalService) FindPreview(ctx context.Context, questionType string, limit int) ([]model.BankSoalResponse, error) {
-	bankSoals, err := service.BankSoalRepository.FindPreview(ctx, questionType, limit)
+func (service *BankSoalService) FindPreview(ctx context.Context, questionType string, limit int, includeUsed bool) ([]model.BankSoalResponse, error) {
+	bankSoals, err := service.BankSoalRepository.FindPreview(ctx, questionType, limit, includeUsed)
 	if err != nil {
 		return nil, err
 	}
@@ -240,4 +247,34 @@ func (service *BankSoalService) FindPreview(ctx context.Context, questionType st
 	}
 
 	return responses, nil
+}
+
+func (service *BankSoalService) MigrateCorrectAnswers(ctx context.Context) (int64, error) {
+	return service.BankSoalRepository.MigrateCorrectAnswers(ctx)
+}
+
+func normalizeCorrectAnswer(correctAnswer string, options []string) string {
+	normalized := strings.TrimSpace(correctAnswer)
+	if normalized == "" {
+		return normalized
+	}
+
+	if len(options) == 0 {
+		return normalized
+	}
+
+	if len(normalized) == 1 {
+		optionIndex := int(strings.ToUpper(normalized)[0] - 'A')
+		if optionIndex >= 0 && optionIndex < len(options) {
+			return strings.TrimSpace(options[optionIndex])
+		}
+	}
+
+	for _, option := range options {
+		if strings.EqualFold(strings.TrimSpace(option), normalized) {
+			return strings.TrimSpace(option)
+		}
+	}
+
+	return normalized
 }
