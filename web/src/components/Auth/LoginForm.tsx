@@ -6,49 +6,50 @@ import useAuthApp from '../../hooks/useAuthApp';
 const LoginForm = () => {
   const { isAuthLoading, doLogin } = useAuthApp();
 
-  const onFinishFailed = (errorInfo: any) => {};
-
   return (
     <Form
       name="basic"
+      className="login-form"
       layout="vertical"
-      labelCol={{ span: 8 }}
-      wrapperCol={{ span: 24 }}
-      initialValues={{ remember: true }}
+      requiredMark={false}
       onFinish={doLogin}
-      onFinishFailed={onFinishFailed}
       autoComplete="off"
     >
       <Form.Item
         name="email"
         label="Email"
-        rules={[{ required: true, message: 'Please input your email!' }]}
+        rules={[{ required: true, message: 'Email wajib diisi.' }]}
       >
         <Input
+          size="large"
           prefix={<UserOutlined className="site-form-item-icon" />}
           type="email"
-          placeholder="Email"
+          placeholder="contoh@email.com"
         />
       </Form.Item>
 
       <Form.Item
         name="password"
-        label="Password"
-        rules={[{ required: true, message: 'Please input your password!' }]}
+        label="Kata sandi"
+        rules={[{ required: true, message: 'Kata sandi wajib diisi.' }]}
       >
         <Input.Password
+          size="large"
           prefix={<LockOutlined className="site-form-item-icon" />}
-          placeholder="Password"
+          placeholder="Masukkan kata sandi"
         />
       </Form.Item>
 
-      {/* <Form.Item name="remember" valuePropName="checked">
-        <Checkbox>Remember me</Checkbox>
-      </Form.Item> */}
-
-      <Form.Item wrapperCol={{ offset: 8, span: 16 }}>
-        <Button type="primary" htmlType="submit" loading={isAuthLoading}>
-          Login
+      <Form.Item>
+        <Button
+          className="login-submit-btn"
+          type="primary"
+          htmlType="submit"
+          loading={isAuthLoading}
+          size="large"
+          block
+        >
+          Masuk
         </Button>
       </Form.Item>
     </Form>
