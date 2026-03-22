@@ -1,5 +1,6 @@
 .app-shell {
-  min-height: 100vh;
+  height: 100vh;
+  overflow: hidden;
   background:
     radial-gradient(circle at 8% -12%, #dbe8ff 0%, rgba(219, 232, 255, 0) 45%),
     radial-gradient(circle at 100% 18%, #fff2b8 0%, rgba(255, 242, 184, 0) 38%),
@@ -9,6 +10,7 @@
 .app-sidebar.ant-layout-sider {
   background: linear-gradient(180deg, #0f2f78 0%, #12459f 56%, #1b5fc5 100%);
   box-shadow: 10px 0 32px rgba(14, 47, 119, 0.24);
+  height: 100vh;
   overflow: hidden;
 }
 
@@ -39,10 +41,10 @@
 
 .app-sidebar-menu.ant-menu {
   flex: 1;
-  margin: 8px 10px 0;
+  margin: 8px 8px 0 10px;
   border-inline-end: none;
   background: transparent;
-  padding-inline: 4px;
+  padding: 0 6px 0 0;
   overflow-x: hidden;
 }
 
@@ -50,7 +52,7 @@
 .app-sidebar-menu.ant-menu .ant-menu-submenu-title {
   border-radius: 10px;
   margin: 4px 0;
-  width: 100%;
+  /* width: calc(100% - 2px); */
   color: rgba(241, 253, 255, 0.86);
 }
 
@@ -84,6 +86,8 @@
 
 .app-main-layout {
   background: transparent;
+  height: 100vh;
+  overflow: hidden;
 }
 
 .app-topbar {
@@ -120,11 +124,15 @@
 }
 
 .app-main-content {
-  margin: 0 18px 18px;
+  padding: 0 18px 18px;
+  height: calc(100vh - 72px);
+  overflow-y: auto;
+  overflow-x: hidden;
+  /* padding-right: 2px; */
 }
 
 .app-content-card {
-  min-height: calc(100vh - 152px);
+  min-height: calc(100vh - 166px);
   border: 1px solid #dce9f4;
   border-radius: 18px;
   background: rgba(255, 255, 255, 0.9);
@@ -146,6 +154,7 @@
 
   .app-main-content {
     margin: 0 12px 14px;
+    height: calc(100vh - 64px);
   }
 
   .app-content-card {
