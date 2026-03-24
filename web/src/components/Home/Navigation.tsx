@@ -12,7 +12,7 @@ export const Navigation = (props: any) => {
   const [isNavOpen, setIsNavOpen] = React.useState(false);
   const signOut = useSignOut();
   const userAuth = useAuthUser();
-  const authName = userAuth() ? userAuth()?.name : null;
+  const authName: string = userAuth() ? userAuth()?.name : null;
   const navigate = useNavigate();
 
   const secondaryMenuItems: MenuProps['items'] = [
@@ -27,6 +27,10 @@ export const Navigation = (props: any) => {
     {
       key: 'team',
       label: <a href="/#team">Tim</a>
+    },
+    {
+      key: 'contact',
+      label: <a href="/#contact">Kontak</a>
     }
   ];
 
@@ -138,17 +142,13 @@ export const Navigation = (props: any) => {
               </Dropdown>
             </li>
             <li>
-              <a href="/#contact" className="page-scroll">
-                Kontak
-              </a>
-            </li>
-            <li>
               {authName ? (
                 <a className="page-scroll">
                   <Dropdown menu={{ items }} placement="bottomLeft">
                     <div>
                       <UserOutlined style={{ marginRight: 5 }} />
-                      {authName} <DownOutlined style={{ marginLeft: 10 }} />
+                      {authName?.slice(0, 12)}{' '}
+                      <DownOutlined style={{ marginLeft: 10 }} />
                     </div>
                   </Dropdown>
                 </a>
