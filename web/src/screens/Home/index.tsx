@@ -29,7 +29,7 @@ const HomeScreen = () => {
       <ScrollToHash />
       <Navigation />
       <Header data={landingPageData.Header} />
-      <Features targetDate="2025-12-20 09:00:00" />
+      {/* <Features targetDate="2025-12-20 09:00:00" /> */}
       <About data={landingPageData.About} />
       <Services data={landingPageData.Services} />
       <Gallery data={landingPageData.Gallery} />
