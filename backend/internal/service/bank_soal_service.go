@@ -2,6 +2,7 @@ package service
 
 import (
 	"context"
+	"regexp"
 	"strings"
 	"time"
 
@@ -16,6 +17,8 @@ import (
 type BankSoalService struct {
 	BankSoalRepository *repository.BankSoalRepository
 }
+
+var optionLabelPrefixPattern = regexp.MustCompile(`(?i)^[A-E]\.\s*`)
 
 func NewBankSoalService(bankSoalRepository *repository.BankSoalRepository) BankSoalService {
 	return BankSoalService{
@@ -36,14 +39,15 @@ func (service *BankSoalService) Create(ctx context.Context, request model.Create
 		isOptions = *request.IsOptions
 	}
 
-	correctAnswer := normalizeCorrectAnswer(request.CorrectAnswer, request.Options)
+	normalizedOptions := normalizeOptions(request.Options)
+	correctAnswer := normalizeCorrectAnswer(request.CorrectAnswer, normalizedOptions)
 
 	bankSoal := entity.BankSoal{
 		Type:          request.Type,
 		Text:          request.Text,
 		ImageUrl:      request.ImageUrl,
 		IsOptions:     &isOptions,
-		Options:       request.Options,
+		Options:       normalizedOptions,
 		CorrectAnswer: correctAnswer,
 		Explanation:   request.Explanation,
 		Difficulty:    request.Difficulty,
@@ -78,14 +82,15 @@ func (service *BankSoalService) CreateBatch(ctx context.Context, request model.C
 			isOptions = *q.IsOptions
 		}
 
-		correctAnswer := normalizeCorrectAnswer(q.CorrectAnswer, q.Options)
+		normalizedOptions := normalizeOptions(q.Options)
+		correctAnswer := normalizeCorrectAnswer(q.CorrectAnswer, normalizedOptions)
 
 		bankSoals = append(bankSoals, entity.BankSoal{
 			Type:          q.Type,
 			Text:          q.Text,
 			ImageUrl:      q.ImageUrl,
 			IsOptions:     &isOptions,
-			Options:       q.Options,
+			Options:       normalizedOptions,
 			CorrectAnswer: correctAnswer,
 			Explanation:   q.Explanation,
 			Difficulty:    q.Difficulty,
@@ -205,13 +210,14 @@ func (service *BankSoalService) Update(ctx context.Context, id string, request m
 		isOptions = *request.IsOptions
 	}
 
-	correctAnswer := normalizeCorrectAnswer(request.CorrectAnswer, request.Options)
+	normalizedOptions := normalizeOptions(request.Options)
+	correctAnswer := normalizeCorrectAnswer(request.CorrectAnswer, normalizedOptions)
 
 	bankSoal.Type = request.Type
 	bankSoal.Text = request.Text
 	bankSoal.ImageUrl = request.ImageUrl
 	bankSoal.IsOptions = &isOptions
-	bankSoal.Options = request.Options
+	bankSoal.Options = normalizedOptions
 	bankSoal.CorrectAnswer = correctAnswer
 	bankSoal.Explanation = request.Explanation
 	bankSoal.Difficulty = request.Difficulty
@@ -249,12 +255,8 @@ func (service *BankSoalService) FindPreview(ctx context.Context, questionType st
 	return responses, nil
 }
 
-func (service *BankSoalService) MigrateCorrectAnswers(ctx context.Context) (int64, error) {
-	return service.BankSoalRepository.MigrateCorrectAnswers(ctx)
-}
-
 func normalizeCorrectAnswer(correctAnswer string, options []string) string {
-	normalized := strings.TrimSpace(correctAnswer)
+	normalized := normalizeOptionText(correctAnswer)
 	if normalized == "" {
 		return normalized
 	}
@@ -266,15 +268,30 @@ func normalizeCorrectAnswer(correctAnswer string, options []string) string {
 	if len(normalized) == 1 {
 		optionIndex := int(strings.ToUpper(normalized)[0] - 'A')
 		if optionIndex >= 0 && optionIndex < len(options) {
-			return strings.TrimSpace(options[optionIndex])
+			return normalizeOptionText(options[optionIndex])
 		}
 	}
 
 	for _, option := range options {
-		if strings.EqualFold(strings.TrimSpace(option), normalized) {
-			return strings.TrimSpace(option)
+		normalizedOption := normalizeOptionText(option)
+		if strings.EqualFold(normalizedOption, normalized) {
+			return normalizedOption
 		}
 	}
 
 	return normalized
+}
+
+func normalizeOptions(options []string) []string {
+	normalized := make([]string, len(options))
+	for i, option := range options {
+		normalized[i] = normalizeOptionText(option)
+	}
+
+	return normalized
+}
+
+func normalizeOptionText(text string) string {
+	trimmed := strings.TrimSpace(text)
+	return optionLabelPrefixPattern.ReplaceAllString(trimmed, "")
 }

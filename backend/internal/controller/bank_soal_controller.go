@@ -26,7 +26,6 @@ func NewBankSoalController(bankSoalService *service.BankSoalService, config conf
 func (controller BankSoalController) Route(app *fiber.App) {
 	app.Post("/v1/api/bank-soal", middleware.AuthenticateJWT([]string{"admin"}, controller.Config), controller.Create)
 	app.Post("/v1/api/bank-soal/batch", middleware.AuthenticateJWT([]string{"admin"}, controller.Config), controller.CreateBatch)
-	app.Post("/v1/api/bank-soal/migrate-correct-answer", middleware.AuthenticateJWT([]string{"admin"}, controller.Config), controller.MigrateCorrectAnswer)
 	app.Put("/v1/api/bank-soal/:id", middleware.AuthenticateJWT([]string{"admin"}, controller.Config), controller.Update)
 	app.Get("/v1/api/public/bank-soal", controller.FindPreview)
 	app.Get("/v1/api/bank-soal/types", controller.GetUniqueTypes)
@@ -275,20 +274,5 @@ func (controller BankSoalController) FindPreview(c *fiber.Ctx) error {
 		Code:    200,
 		Message: "Success",
 		Data:    payload,
-	})
-}
-
-func (controller BankSoalController) MigrateCorrectAnswer(c *fiber.Ctx) error {
-	rowsAffected, err := controller.BankSoalService.MigrateCorrectAnswers(c.Context())
-	if err != nil {
-		return err
-	}
-
-	return c.Status(fiber.StatusOK).JSON(model.GeneralResponse{
-		Code:    200,
-		Message: "Success",
-		Data: map[string]interface{}{
-			"rows_affected": rowsAffected,
-		},
 	})
 }

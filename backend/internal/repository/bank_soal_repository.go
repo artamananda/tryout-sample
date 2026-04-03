@@ -2,6 +2,8 @@ package repository
 
 import (
 	"context"
+	"regexp"
+	"strings"
 	"time"
 
 	"github.com/artamananda/tryout-sample/internal/entity"
@@ -13,11 +15,14 @@ type BankSoalRepository struct {
 	*gorm.DB
 }
 
+var bankSoalOptionLabelPrefixPattern = regexp.MustCompile(`(?i)^[A-E]\.\s*`)
+
 func NewBankSoalRepository(db *gorm.DB) BankSoalRepository {
 	return BankSoalRepository{DB: db}
 }
 
 func (repository *BankSoalRepository) Create(ctx context.Context, bankSoal entity.BankSoal) (entity.BankSoal, error) {
+	normalizeBankSoalForPersist(&bankSoal)
 	bankSoal.BankSoalID = uuid.New()
 	if bankSoal.Status == "" {
 		bankSoal.Status = entity.BankSoalStatusDraft
@@ -31,6 +36,7 @@ func (repository *BankSoalRepository) Create(ctx context.Context, bankSoal entit
 
 func (repository *BankSoalRepository) CreateBatch(ctx context.Context, bankSoals []entity.BankSoal) ([]entity.BankSoal, error) {
 	for i := range bankSoals {
+		normalizeBankSoalForPersist(&bankSoals[i])
 		bankSoals[i].BankSoalID = uuid.New()
 		if bankSoals[i].Status == "" {
 			bankSoals[i].Status = entity.BankSoalStatusDraft
@@ -121,11 +127,59 @@ func (repository *BankSoalRepository) FindRandomAvailableByType(ctx context.Cont
 }
 
 func (repository *BankSoalRepository) Update(ctx context.Context, bankSoal entity.BankSoal) (entity.BankSoal, error) {
+	normalizeBankSoalForPersist(&bankSoal)
 	err := repository.DB.WithContext(ctx).Save(&bankSoal).Error
 	if err != nil {
 		return entity.BankSoal{}, err
 	}
 	return bankSoal, nil
+}
+
+func normalizeBankSoalForPersist(bankSoal *entity.BankSoal) {
+	normalizedOptions := normalizeBankSoalOptions(bankSoal.Options)
+	bankSoal.Options = normalizedOptions
+	bankSoal.CorrectAnswer = normalizeBankSoalCorrectAnswer(bankSoal.CorrectAnswer, normalizedOptions)
+}
+
+func normalizeBankSoalOptions(options []string) []string {
+	normalized := make([]string, len(options))
+	for i, option := range options {
+		normalized[i] = normalizeBankSoalOptionText(option)
+	}
+
+	return normalized
+}
+
+func normalizeBankSoalCorrectAnswer(correctAnswer string, options []string) string {
+	normalized := normalizeBankSoalOptionText(correctAnswer)
+	if normalized == "" {
+		return normalized
+	}
+
+	if len(options) == 0 {
+		return normalized
+	}
+
+	if len(normalized) == 1 {
+		optionIndex := int(strings.ToUpper(normalized)[0] - 'A')
+		if optionIndex >= 0 && optionIndex < len(options) {
+			return normalizeBankSoalOptionText(options[optionIndex])
+		}
+	}
+
+	for _, option := range options {
+		normalizedOption := normalizeBankSoalOptionText(option)
+		if strings.EqualFold(normalizedOption, normalized) {
+			return normalizedOption
+		}
+	}
+
+	return normalized
+}
+
+func normalizeBankSoalOptionText(text string) string {
+	trimmed := strings.TrimSpace(text)
+	return bankSoalOptionLabelPrefixPattern.ReplaceAllString(trimmed, "")
 }
 
 func (repository *BankSoalRepository) Delete(ctx context.Context, id uuid.UUID) error {
@@ -236,29 +290,4 @@ func (repository *BankSoalRepository) GetUniqueTypes(ctx context.Context) ([]str
 		return nil, err
 	}
 	return types, nil
-}
-
-func (repository *BankSoalRepository) MigrateCorrectAnswers(ctx context.Context) (int64, error) {
-	query := `
-		UPDATE bank_soals
-		SET correct_answer = CASE UPPER(TRIM(correct_answer))
-			WHEN 'A' THEN options[1]
-			WHEN 'B' THEN options[2]
-			WHEN 'C' THEN options[3]
-			WHEN 'D' THEN options[4]
-			WHEN 'E' THEN options[5]
-			ELSE correct_answer
-		END,
-		updated_at = NOW()
-		WHERE UPPER(TRIM(correct_answer)) IN ('A', 'B', 'C', 'D', 'E')
-		AND options IS NOT NULL
-		AND array_length(options, 1) >= 1;
-	`
-
-	result := repository.DB.WithContext(ctx).Exec(query)
-	if result.Error != nil {
-		return 0, result.Error
-	}
-
-	return result.RowsAffected, nil
 }
