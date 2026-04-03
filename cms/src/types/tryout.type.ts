@@ -1,4 +1,4 @@
-import { BaseResponsePaginationProps } from './config.type';
+import { BaseResponsePaginationProps } from "./config.type";
 
 export interface TryoutProps {
   tryout_id: string;
@@ -18,6 +18,11 @@ export interface CreateTryoutRequest {
   start_time: Date | string;
   end_time: Date | string;
   is_published: boolean;
+  generate_from_bank_soal?: boolean;
+  bank_soal_distribution?: Array<{
+    type: string;
+    count: number;
+  }>;
 }
 
 export interface UpdateTryoutRequest {

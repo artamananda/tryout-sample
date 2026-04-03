@@ -2,6 +2,8 @@ package service
 
 import (
 	"context"
+	"regexp"
+	"strings"
 	"time"
 
 	"github.com/artamananda/tryout-sample/internal/common"
@@ -15,6 +17,8 @@ import (
 type BankSoalService struct {
 	BankSoalRepository *repository.BankSoalRepository
 }
+
+var optionLabelPrefixPattern = regexp.MustCompile(`(?i)^[A-E]\.\s*`)
 
 func NewBankSoalService(bankSoalRepository *repository.BankSoalRepository) BankSoalService {
 	return BankSoalService{
@@ -35,13 +39,16 @@ func (service *BankSoalService) Create(ctx context.Context, request model.Create
 		isOptions = *request.IsOptions
 	}
 
+	normalizedOptions := normalizeOptions(request.Options)
+	correctAnswer := normalizeCorrectAnswer(request.CorrectAnswer, normalizedOptions)
+
 	bankSoal := entity.BankSoal{
 		Type:          request.Type,
 		Text:          request.Text,
 		ImageUrl:      request.ImageUrl,
 		IsOptions:     &isOptions,
-		Options:       request.Options,
-		CorrectAnswer: request.CorrectAnswer,
+		Options:       normalizedOptions,
+		CorrectAnswer: correctAnswer,
 		Explanation:   request.Explanation,
 		Difficulty:    request.Difficulty,
 		Topic:         request.Topic,
@@ -75,13 +82,16 @@ func (service *BankSoalService) CreateBatch(ctx context.Context, request model.C
 			isOptions = *q.IsOptions
 		}
 
+		normalizedOptions := normalizeOptions(q.Options)
+		correctAnswer := normalizeCorrectAnswer(q.CorrectAnswer, normalizedOptions)
+
 		bankSoals = append(bankSoals, entity.BankSoal{
 			Type:          q.Type,
 			Text:          q.Text,
 			ImageUrl:      q.ImageUrl,
 			IsOptions:     &isOptions,
-			Options:       q.Options,
-			CorrectAnswer: q.CorrectAnswer,
+			Options:       normalizedOptions,
+			CorrectAnswer: correctAnswer,
 			Explanation:   q.Explanation,
 			Difficulty:    q.Difficulty,
 			Topic:         q.Topic,
@@ -116,8 +126,8 @@ func (service *BankSoalService) FindByID(ctx context.Context, id string) (model.
 	return toResponse(bankSoal), nil
 }
 
-func (service *BankSoalService) FindAll(ctx context.Context) ([]model.BankSoalResponse, error) {
-	bankSoals, err := service.BankSoalRepository.FindAll(ctx)
+func (service *BankSoalService) FindAll(ctx context.Context, includeUsed bool) ([]model.BankSoalResponse, error) {
+	bankSoals, err := service.BankSoalRepository.FindAll(ctx, includeUsed)
 	if err != nil {
 		return nil, err
 	}
@@ -134,8 +144,8 @@ func (service *BankSoalService) FindAll(ctx context.Context) ([]model.BankSoalRe
 	return responses, nil
 }
 
-func (service *BankSoalService) FindByType(ctx context.Context, questionType string) ([]model.BankSoalResponse, error) {
-	bankSoals, err := service.BankSoalRepository.FindByType(ctx, questionType)
+func (service *BankSoalService) FindByType(ctx context.Context, questionType string, includeUsed bool) ([]model.BankSoalResponse, error) {
+	bankSoals, err := service.BankSoalRepository.FindByType(ctx, questionType, includeUsed)
 	if err != nil {
 		return nil, err
 	}
@@ -200,12 +210,15 @@ func (service *BankSoalService) Update(ctx context.Context, id string, request m
 		isOptions = *request.IsOptions
 	}
 
+	normalizedOptions := normalizeOptions(request.Options)
+	correctAnswer := normalizeCorrectAnswer(request.CorrectAnswer, normalizedOptions)
+
 	bankSoal.Type = request.Type
 	bankSoal.Text = request.Text
 	bankSoal.ImageUrl = request.ImageUrl
 	bankSoal.IsOptions = &isOptions
-	bankSoal.Options = request.Options
-	bankSoal.CorrectAnswer = request.CorrectAnswer
+	bankSoal.Options = normalizedOptions
+	bankSoal.CorrectAnswer = correctAnswer
 	bankSoal.Explanation = request.Explanation
 	bankSoal.Difficulty = request.Difficulty
 	bankSoal.Topic = request.Topic
@@ -224,8 +237,8 @@ func (service *BankSoalService) GetUniqueTypes(ctx context.Context) ([]string, e
 	return service.BankSoalRepository.GetUniqueTypes(ctx)
 }
 
-func (service *BankSoalService) FindPreview(ctx context.Context, questionType string, limit int) ([]model.BankSoalResponse, error) {
-	bankSoals, err := service.BankSoalRepository.FindPreview(ctx, questionType, limit)
+func (service *BankSoalService) FindPreview(ctx context.Context, questionType string, limit int, includeUsed bool) ([]model.BankSoalResponse, error) {
+	bankSoals, err := service.BankSoalRepository.FindPreview(ctx, questionType, limit, includeUsed)
 	if err != nil {
 		return nil, err
 	}
@@ -240,4 +253,45 @@ func (service *BankSoalService) FindPreview(ctx context.Context, questionType st
 	}
 
 	return responses, nil
+}
+
+func normalizeCorrectAnswer(correctAnswer string, options []string) string {
+	normalized := normalizeOptionText(correctAnswer)
+	if normalized == "" {
+		return normalized
+	}
+
+	if len(options) == 0 {
+		return normalized
+	}
+
+	if len(normalized) == 1 {
+		optionIndex := int(strings.ToUpper(normalized)[0] - 'A')
+		if optionIndex >= 0 && optionIndex < len(options) {
+			return normalizeOptionText(options[optionIndex])
+		}
+	}
+
+	for _, option := range options {
+		normalizedOption := normalizeOptionText(option)
+		if strings.EqualFold(normalizedOption, normalized) {
+			return normalizedOption
+		}
+	}
+
+	return normalized
+}
+
+func normalizeOptions(options []string) []string {
+	normalized := make([]string, len(options))
+	for i, option := range options {
+		normalized[i] = normalizeOptionText(option)
+	}
+
+	return normalized
+}
+
+func normalizeOptionText(text string) string {
+	trimmed := strings.TrimSpace(text)
+	return optionLabelPrefixPattern.ReplaceAllString(trimmed, "")
 }

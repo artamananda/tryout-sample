@@ -2,6 +2,8 @@ package repository
 
 import (
 	"context"
+	"regexp"
+	"strings"
 	"time"
 
 	"github.com/artamananda/tryout-sample/internal/entity"
@@ -13,11 +15,14 @@ type BankSoalRepository struct {
 	*gorm.DB
 }
 
+var bankSoalOptionLabelPrefixPattern = regexp.MustCompile(`(?i)^[A-E]\.\s*`)
+
 func NewBankSoalRepository(db *gorm.DB) BankSoalRepository {
 	return BankSoalRepository{DB: db}
 }
 
 func (repository *BankSoalRepository) Create(ctx context.Context, bankSoal entity.BankSoal) (entity.BankSoal, error) {
+	normalizeBankSoalForPersist(&bankSoal)
 	bankSoal.BankSoalID = uuid.New()
 	if bankSoal.Status == "" {
 		bankSoal.Status = entity.BankSoalStatusDraft
@@ -31,6 +36,7 @@ func (repository *BankSoalRepository) Create(ctx context.Context, bankSoal entit
 
 func (repository *BankSoalRepository) CreateBatch(ctx context.Context, bankSoals []entity.BankSoal) ([]entity.BankSoal, error) {
 	for i := range bankSoals {
+		normalizeBankSoalForPersist(&bankSoals[i])
 		bankSoals[i].BankSoalID = uuid.New()
 		if bankSoals[i].Status == "" {
 			bankSoals[i].Status = entity.BankSoalStatusDraft
@@ -52,28 +58,39 @@ func (repository *BankSoalRepository) FindByID(ctx context.Context, id uuid.UUID
 	return bankSoal, nil
 }
 
-func (repository *BankSoalRepository) FindAll(ctx context.Context) ([]entity.BankSoal, error) {
+func (repository *BankSoalRepository) FindAll(ctx context.Context, includeUsed bool) ([]entity.BankSoal, error) {
 	var bankSoals []entity.BankSoal
-	err := repository.DB.WithContext(ctx).Order("created_at DESC").Find(&bankSoals).Error
+	query := repository.DB.WithContext(ctx).Order("created_at DESC")
+	if !includeUsed {
+		query = query.Where("NOT EXISTS (SELECT 1 FROM questions q WHERE q.bank_soal_id = bank_soals.bank_soal_id)")
+	}
+	err := query.Find(&bankSoals).Error
 	if err != nil {
 		return nil, err
 	}
 	return bankSoals, nil
 }
 
-func (repository *BankSoalRepository) FindByType(ctx context.Context, questionType string) ([]entity.BankSoal, error) {
+func (repository *BankSoalRepository) FindByType(ctx context.Context, questionType string, includeUsed bool) ([]entity.BankSoal, error) {
 	var bankSoals []entity.BankSoal
-	err := repository.DB.WithContext(ctx).Where("type = ?", questionType).Order("created_at DESC").Find(&bankSoals).Error
+	query := repository.DB.WithContext(ctx).Where("type = ?", questionType).Order("created_at DESC")
+	if !includeUsed {
+		query = query.Where("NOT EXISTS (SELECT 1 FROM questions q WHERE q.bank_soal_id = bank_soals.bank_soal_id)")
+	}
+	err := query.Find(&bankSoals).Error
 	if err != nil {
 		return nil, err
 	}
 	return bankSoals, nil
 }
 
-func (repository *BankSoalRepository) FindPreview(ctx context.Context, questionType string, limit int) ([]entity.BankSoal, error) {
+func (repository *BankSoalRepository) FindPreview(ctx context.Context, questionType string, limit int, includeUsed bool) ([]entity.BankSoal, error) {
 	var bankSoals []entity.BankSoal
 
 	query := repository.DB.WithContext(ctx).Order("created_at DESC")
+	if !includeUsed {
+		query = query.Where("NOT EXISTS (SELECT 1 FROM questions q WHERE q.bank_soal_id = bank_soals.bank_soal_id)")
+	}
 	if questionType != "" {
 		query = query.Where("type = ?", questionType)
 	}
@@ -89,12 +106,80 @@ func (repository *BankSoalRepository) FindPreview(ctx context.Context, questionT
 	return bankSoals, nil
 }
 
+func (repository *BankSoalRepository) FindRandomAvailableByType(ctx context.Context, questionType string, limit int) ([]entity.BankSoal, error) {
+	var bankSoals []entity.BankSoal
+
+	query := repository.DB.WithContext(ctx).
+		Where("type = ?", questionType).
+		Where("NOT EXISTS (SELECT 1 FROM questions q WHERE q.bank_soal_id = bank_soals.bank_soal_id)").
+		Order("RANDOM()")
+
+	if limit > 0 {
+		query = query.Limit(limit)
+	}
+
+	err := query.Find(&bankSoals).Error
+	if err != nil {
+		return nil, err
+	}
+
+	return bankSoals, nil
+}
+
 func (repository *BankSoalRepository) Update(ctx context.Context, bankSoal entity.BankSoal) (entity.BankSoal, error) {
+	normalizeBankSoalForPersist(&bankSoal)
 	err := repository.DB.WithContext(ctx).Save(&bankSoal).Error
 	if err != nil {
 		return entity.BankSoal{}, err
 	}
 	return bankSoal, nil
+}
+
+func normalizeBankSoalForPersist(bankSoal *entity.BankSoal) {
+	normalizedOptions := normalizeBankSoalOptions(bankSoal.Options)
+	bankSoal.Options = normalizedOptions
+	bankSoal.CorrectAnswer = normalizeBankSoalCorrectAnswer(bankSoal.CorrectAnswer, normalizedOptions)
+}
+
+func normalizeBankSoalOptions(options []string) []string {
+	normalized := make([]string, len(options))
+	for i, option := range options {
+		normalized[i] = normalizeBankSoalOptionText(option)
+	}
+
+	return normalized
+}
+
+func normalizeBankSoalCorrectAnswer(correctAnswer string, options []string) string {
+	normalized := normalizeBankSoalOptionText(correctAnswer)
+	if normalized == "" {
+		return normalized
+	}
+
+	if len(options) == 0 {
+		return normalized
+	}
+
+	if len(normalized) == 1 {
+		optionIndex := int(strings.ToUpper(normalized)[0] - 'A')
+		if optionIndex >= 0 && optionIndex < len(options) {
+			return normalizeBankSoalOptionText(options[optionIndex])
+		}
+	}
+
+	for _, option := range options {
+		normalizedOption := normalizeBankSoalOptionText(option)
+		if strings.EqualFold(normalizedOption, normalized) {
+			return normalizedOption
+		}
+	}
+
+	return normalized
+}
+
+func normalizeBankSoalOptionText(text string) string {
+	trimmed := strings.TrimSpace(text)
+	return bankSoalOptionLabelPrefixPattern.ReplaceAllString(trimmed, "")
 }
 
 func (repository *BankSoalRepository) Delete(ctx context.Context, id uuid.UUID) error {

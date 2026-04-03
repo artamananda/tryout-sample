@@ -34,25 +34,25 @@ const ModalUpdateBankSoal = (props: PropTypes) => {
   const { setIsModalOpen, isModalOpen, questionData, onSuccess } = props;
 
   const [questionText, setQuestionText] = useState<string>(
-    questionData?.text || ""
+    questionData?.text || "",
   );
   const [options, setOptions] = useState<string[]>(
-    questionData?.options || Array.from({ length: 5 }, () => "")
+    questionData?.options || Array.from({ length: 5 }, () => ""),
   );
   const [answer, setAnswer] = useState<string>(
-    questionData?.correct_answer || ""
+    questionData?.correct_answer || "",
   );
   const [explanation, setExplanation] = useState<string>(
-    questionData?.explanation || ""
+    questionData?.explanation || "",
   );
   const [isOptions, setIsOptions] = useState<boolean>(
-    questionData?.is_options ?? true
+    questionData?.is_options ?? true,
   );
   const [questionType, setQuestionType] = useState<string>(
-    questionData?.type || "kpu"
+    questionData?.type || "kpu",
   );
   const [difficulty, setDifficulty] = useState<string>(
-    questionData?.difficulty || "medium"
+    questionData?.difficulty || "medium",
   );
   const [topic, setTopic] = useState<string>(questionData?.topic || "");
   const [newTypeName, setNewTypeName] = useState<string>("");
@@ -61,8 +61,25 @@ const ModalUpdateBankSoal = (props: PropTypes) => {
   useEffect(() => {
     if (isModalOpen && questionData) {
       setQuestionText(questionData.text || "");
-      setOptions(questionData.options || Array.from({ length: 5 }, () => ""));
-      setAnswer(questionData.correct_answer || "");
+      const nextOptions =
+        questionData.options || Array.from({ length: 5 }, () => "");
+      setOptions(nextOptions);
+
+      const rawAnswer = String(questionData.correct_answer || "").trim();
+      const answerIndex = nextOptions.findIndex(
+        (option: string) => String(option || "").trim() === rawAnswer,
+      );
+      if (answerIndex >= 0 && answerIndex < optLabels.length) {
+        setAnswer(optLabels[answerIndex]);
+      } else {
+        const answerUpper = rawAnswer.toUpperCase();
+        if (optLabels.includes(answerUpper)) {
+          setAnswer(answerUpper);
+        } else {
+          setAnswer("");
+        }
+      }
+
       setExplanation(questionData.explanation || "");
       setIsOptions(questionData.is_options ?? true);
       setQuestionType(questionData.type || "kpu");
@@ -110,11 +127,26 @@ const ModalUpdateBankSoal = (props: PropTypes) => {
   const handleUpdate = async () => {
     setIsLoading(true);
     try {
+      const normalizedOptions = isOptions ? options.map((o) => o.trim()) : [];
+      const answerIndex = optLabels.indexOf(answer);
+      const resolvedCorrectAnswer =
+        isOptions && answerIndex >= 0
+          ? normalizedOptions[answerIndex] || ""
+          : answer.trim();
+
+      if (!resolvedCorrectAnswer) {
+        message.error("Silakan pilih jawaban benar yang valid");
+        return;
+      }
+
       const payload: CreateBankSoalRequest = {
         type: questionType,
         text: questionText,
-        options: isOptions && options.every((o) => o !== "") ? options : [],
-        correct_answer: answer,
+        options:
+          isOptions && normalizedOptions.every((o) => o !== "")
+            ? normalizedOptions
+            : [],
+        correct_answer: resolvedCorrectAnswer,
         explanation: explanation,
         difficulty: difficulty,
         topic: topic,
@@ -125,7 +157,7 @@ const ModalUpdateBankSoal = (props: PropTypes) => {
       };
       const res = await apiUpdateBankSoal(
         questionData.bank_soal_id || questionData.question_id,
-        payload
+        payload,
       );
       if (res) {
         message.success("Soal berhasil diperbarui!");
@@ -215,7 +247,7 @@ const ModalUpdateBankSoal = (props: PropTypes) => {
                               saveCustomType(newTypeName.trim());
                               setQuestionType(newTypeName.trim());
                               message.success(
-                                `Jenis soal "${newTypeName.trim()}" ditambahkan!`
+                                `Jenis soal "${newTypeName.trim()}" ditambahkan!`,
                               );
                               setNewTypeName("");
                             }
@@ -232,7 +264,7 @@ const ModalUpdateBankSoal = (props: PropTypes) => {
                               saveCustomType(newTypeName.trim());
                               setQuestionType(newTypeName.trim());
                               message.success(
-                                `Jenis soal "${newTypeName.trim()}" ditambahkan!`
+                                `Jenis soal "${newTypeName.trim()}" ditambahkan!`,
                               );
                               setNewTypeName("");
                             }

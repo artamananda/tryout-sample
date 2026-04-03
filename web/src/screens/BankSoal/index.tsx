@@ -532,8 +532,20 @@ const BankSoalScreen = () => {
                             const optionLetter = String.fromCharCode(
                               65 + optIndex
                             );
+                            const normalizedCorrect = String(
+                              question.correct_answer || ''
+                            )
+                              .trim()
+                              .toLowerCase();
+                            const normalizedOption = String(option || '')
+                              .trim()
+                              .toLowerCase();
+                            const isLegacyLabel =
+                              normalizedCorrect.length === 1 &&
+                              normalizedCorrect === optionLetter.toLowerCase();
                             const isCorrect =
-                              question.correct_answer === optionLetter;
+                              normalizedOption === normalizedCorrect ||
+                              isLegacyLabel;
                             const questionId = getQuestionId(question);
                             const isOpen = showAnswer[questionId];
 

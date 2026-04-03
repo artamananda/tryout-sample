@@ -27,22 +27,36 @@ func (repository *QuestionRepository) Create(ctx context.Context, question entit
 	return question, nil
 }
 
+func (repository *QuestionRepository) CreateBatch(ctx context.Context, questions []entity.Question) ([]entity.Question, error) {
+	for i := range questions {
+		questions[i].QuestionID = uuid.New()
+	}
+
+	err := repository.DB.WithContext(ctx).Create(&questions).Error
+	if err != nil {
+		return nil, err
+	}
+
+	return questions, nil
+}
+
 func (repository *QuestionRepository) Update(ctx context.Context, question entity.Question) (entity.Question, error) {
 	query := `
         UPDATE questions
         SET tryout_id = $1,
-            local_id = $2,
-            type = $3,
-            text = $4,
-            image_url = $5,
-			is_options = $6,
-            options = $7,
-            correct_answer = $8,
-            points = $9,
-            updated_at = $10
-        WHERE question_id = $11
+			bank_soal_id = $2,
+			local_id = $3,
+			type = $4,
+			text = $5,
+			image_url = $6,
+			is_options = $7,
+			options = $8,
+			correct_answer = $9,
+			points = $10,
+			updated_at = $11
+		WHERE question_id = $12
     `
-	err := repository.DB.WithContext(ctx).Where("question_id = ?", question.QuestionID).Exec(query, question.TryoutID, question.LocalID, question.Type, question.Text,
+	err := repository.DB.WithContext(ctx).Where("question_id = ?", question.QuestionID).Exec(query, question.TryoutID, question.BankSoalID, question.LocalID, question.Type, question.Text,
 		question.ImageUrl, question.IsOptions, pq.Array(question.Options), question.CorrectAnswer,
 		question.Points, question.UpdatedAt, question.QuestionID)
 	if err.Error != nil {

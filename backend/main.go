@@ -77,7 +77,7 @@ func main() {
 	defer scheduler.Stop()
 
 	userService := service.NewUserService(&userRepository, uploader)
-	tryoutService := service.NewTryoutService(&tryoutRepository)
+	tryoutService := service.NewTryoutService(&tryoutRepository, &questionRepository, &bankSoalRepository)
 	questionService := service.NewQuestionService(&questionRepository, uploader)
 	userAnswerService := service.NewUserAnswerService(&userAnswerRepository)
 	transactionTryoutService := service.NewTransactionTryoutService(&transactionRepository)

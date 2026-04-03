@@ -91,7 +91,7 @@ const BankSoalScreen = () => {
     const customTypes = getCustomTypes().map((t) => t.value);
     const allTypesArray = [...knownTypes, ...typesFromData, ...customTypes];
     const uniqueTypes = allTypesArray.filter(
-      (type, index, self) => self.indexOf(type) === index
+      (type, index, self) => self.indexOf(type) === index,
     );
     const options = [{ value: "", label: "Semua Jenis" }];
     uniqueTypes.forEach((type) => {
@@ -122,7 +122,7 @@ const BankSoalScreen = () => {
 
   const paginatedQuestions = filteredQuestions.slice(
     (currentPage - 1) * pageSize,
-    currentPage * pageSize
+    currentPage * pageSize,
   );
 
   const toggleAnswer = (questionId: string) => {
@@ -449,9 +449,20 @@ const BankSoalScreen = () => {
                           >
                             {q.options?.map((opt: string, i: number) => {
                               const char = String.fromCharCode(65 + i);
+                              const normalizedCorrect = String(
+                                q.correct_answer || "",
+                              )
+                                .trim()
+                                .toLowerCase();
+                              const normalizedOption = String(opt || "")
+                                .trim()
+                                .toLowerCase();
+                              const isLegacyLabel =
+                                normalizedCorrect.length === 1 &&
+                                normalizedCorrect === char.toLowerCase();
                               const isCor =
-                                char === q.correct_answer ||
-                                opt.startsWith(q.correct_answer);
+                                normalizedOption === normalizedCorrect ||
+                                isLegacyLabel;
                               return (
                                 <div
                                   key={i}

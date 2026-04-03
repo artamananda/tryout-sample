@@ -1,6 +1,8 @@
 package controller
 
 import (
+	"strconv"
+
 	"github.com/artamananda/tryout-sample/internal/config"
 	"github.com/artamananda/tryout-sample/internal/middleware"
 	"github.com/artamananda/tryout-sample/internal/model"
@@ -135,11 +137,12 @@ func (controller BankSoalController) FindAll(c *fiber.Ctx) error {
 	var result []model.BankSoalResponse
 	var err error
 	questionType := c.Query("type")
+	includeUsed, _ := strconv.ParseBool(c.Query("include_used", "false"))
 
 	if questionType != "" {
-		result, err = controller.BankSoalService.FindByType(c.Context(), questionType)
+		result, err = controller.BankSoalService.FindByType(c.Context(), questionType, includeUsed)
 	} else {
-		result, err = controller.BankSoalService.FindAll(c.Context())
+		result, err = controller.BankSoalService.FindAll(c.Context(), includeUsed)
 	}
 
 	if err != nil {
@@ -246,6 +249,7 @@ func (controller BankSoalController) GetUniqueTypes(c *fiber.Ctx) error {
 // @Router /public/bank-soal [get]
 func (controller BankSoalController) FindPreview(c *fiber.Ctx) error {
 	questionType := c.Query("type")
+	includeUsed, _ := strconv.ParseBool(c.Query("include_used", "false"))
 	limit := c.QueryInt("limit", 5)
 	if limit <= 0 {
 		limit = 5
@@ -254,7 +258,7 @@ func (controller BankSoalController) FindPreview(c *fiber.Ctx) error {
 		limit = 20
 	}
 
-	result, err := controller.BankSoalService.FindPreview(c.Context(), questionType, limit)
+	result, err := controller.BankSoalService.FindPreview(c.Context(), questionType, limit, includeUsed)
 	if err != nil {
 		return err
 	}
