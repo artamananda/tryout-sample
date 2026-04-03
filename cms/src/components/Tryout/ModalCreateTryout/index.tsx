@@ -18,6 +18,16 @@ import { apiCreateTryout } from "../../../api/tryout";
 import { apiGetBankSoalTypes } from "../../../api/ai";
 const { Text } = Typography;
 
+const DEFAULT_DISTRIBUTION_BY_TYPE: Record<string, number> = {
+  kpu: 30,
+  ppu: 20,
+  pbm: 20,
+  pku: 15,
+  ind: 30,
+  ing: 20,
+  mtk: 20,
+};
+
 type PropTypes = {
   showModal: boolean;
   setShowModal: any;
@@ -41,10 +51,20 @@ const ModalCreateTryout = (props: PropTypes) => {
   >({});
   const [form] = Form.useForm();
 
+  const buildDefaultDistributionMap = (types: string[]) => {
+    return types.reduce<Record<string, number>>((acc, type) => {
+      const normalizedType = String(type).toLowerCase();
+      acc[type] = DEFAULT_DISTRIBUTION_BY_TYPE[normalizedType] || 0;
+      return acc;
+    }, {});
+  };
+
   useEffect(() => {
     const fetchTypes = async () => {
       const types = await apiGetBankSoalTypes();
-      setBankSoalTypes(types || []);
+      const resolvedTypes = types || [];
+      setBankSoalTypes(resolvedTypes);
+      setDistributionMap(buildDefaultDistributionMap(resolvedTypes));
     };
 
     if (showModal) {
