@@ -51,10 +51,20 @@ func (repository *UserAnswerRepository) FindById(ctx context.Context, user_answe
 	return user_answer, nil
 }
 
-func (repository *UserAnswerRepository) FindByUserId(ctx context.Context, user_id string) ([]entity.UserAnswer) {
+func (repository *UserAnswerRepository) FindByUserId(ctx context.Context, user_id string) []entity.UserAnswer {
 	var user_answers []entity.UserAnswer
 	repository.DB.WithContext(ctx).Unscoped().Where("user_id = ?", user_id).Find(&user_answers)
 	return user_answers
+}
+
+func (repository *UserAnswerRepository) FindByTryoutId(ctx context.Context, tryoutID string) ([]entity.UserAnswer, error) {
+	var userAnswers []entity.UserAnswer
+	err := repository.DB.WithContext(ctx).Where("tryout_id = ?", tryoutID).Find(&userAnswers).Error
+	if err != nil {
+		return nil, err
+	}
+
+	return userAnswers, nil
 }
 
 func (repository *UserAnswerRepository) FindAll(ctx context.Context) []entity.UserAnswer {

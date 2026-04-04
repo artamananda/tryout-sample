@@ -7,7 +7,7 @@ import logo from '../../assets/logo-yellow.png';
 import { Typography } from 'antd';
 import useFetchList from '../../hooks/useFetchList';
 import { QuestionProps } from '../../types/question';
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { putAnswer, sendAnswer } from '../../api/userAnswer';
 import { useAuthUser } from 'react-auth-kit';
@@ -35,7 +35,7 @@ const Tryout = () => {
   const navigate = useNavigate();
   const splitLink = window.location.href.split('/');
   const tryoutId = splitLink[splitLink.length - 3];
-  const questionType = splitLink[splitLink.length - 2];
+  const questionType = (splitLink[splitLink.length - 2] || '').toLowerCase();
   const questionNumber = splitLink.pop();
   const [questionData, setQuestionData] = useState<QuestionProps[]>([]);
   const [initialTime, setInitialTime] = useState<Date | string>();
@@ -61,51 +61,95 @@ const Tryout = () => {
       endpoint: 'user-answer/user/' + auth()?.user_id
     });
 
-  const plusData: { [key: string]: number } = {
-    kpu: 0,
-    ppu: 30,
-    pbm: 50,
-    pku: 70,
-    ind: 85,
-    ing: 115,
-    mtk: 135
+  const typeDisplayNameMap: Record<string, string> = {
+    kpu: 'Penalaran Umum',
+    ppu: 'Pengetahuan dan Pemahaman Umum',
+    pbm: 'Pemahaman Bacaan dan Menulis',
+    pku: 'Pengetahuan Kuantitatif',
+    ind: 'Literasi Bahasa Indonesia',
+    ing: 'Literasi Bahasa Inggris',
+    mtk: 'Penalaran Matematika'
   };
 
   const [answer, setAnswer] = useState('');
   const [answerIdx, setAnswerIdx] = useState<number>();
   const [answerId, setAnswerId] = useState<string>();
 
-  const handleNext = async () => {
-    if (answer) {
-      const data = {
-        user_id: auth()?.user_id,
-        tryout_id: tryoutId,
-        question_id:
-          questionData?.[plusData[questionType] + Number(questionNumber) - 1]
-            ?.question_id,
-        user_answer: answer
-      };
-      if (answerIdx !== undefined && answerId) {
-        await putAnswer(answerId, data);
-      } else {
-        await sendAnswer(data);
+  const typeOrderPreference = ['kpu', 'ppu', 'pbm', 'pku', 'ind', 'ing', 'mtk'];
+
+  const groupedQuestions = useMemo(() => {
+    const grouped: Record<string, QuestionProps[]> = {};
+    questionData.forEach((question) => {
+      const type = (question.type || '').toLowerCase();
+      if (!grouped[type]) {
+        grouped[type] = [];
       }
-      fetchAnswerData();
+      grouped[type].push(question);
+    });
+
+    Object.keys(grouped).forEach((type) => {
+      grouped[type] = grouped[type]
+        .slice()
+        .sort((a, b) => a.local_id - b.local_id);
+    });
+
+    return grouped;
+  }, [questionData]);
+
+  const orderedTypes = useMemo(() => {
+    const existingTypes = Object.keys(groupedQuestions).filter(
+      (type) => groupedQuestions[type] && groupedQuestions[type].length > 0
+    );
+    const preferredTypes = typeOrderPreference.filter((type) =>
+      existingTypes.includes(type)
+    );
+    const nonPreferredTypes = existingTypes
+      .filter((type) => !typeOrderPreference.includes(type))
+      .sort();
+
+    return [...preferredTypes, ...nonPreferredTypes];
+  }, [groupedQuestions]);
+
+  const currentTypeQuestions = groupedQuestions[questionType] || [];
+  const currentQuestionIndex = Math.max(Number(questionNumber || 1) - 1, 0);
+  const currentQuestion = currentTypeQuestions[currentQuestionIndex];
+
+  const isLastQuestionInType =
+    currentTypeQuestions.length > 0 &&
+    currentQuestionIndex >= currentTypeQuestions.length - 1;
+  const currentTypeIndex = orderedTypes.indexOf(questionType);
+  const nextType =
+    currentTypeIndex >= 0 && currentTypeIndex + 1 < orderedTypes.length
+      ? orderedTypes[currentTypeIndex + 1]
+      : '';
+  const isLastQuestionGlobal = isLastQuestionInType && !nextType;
+
+  const persistCurrentAnswer = async () => {
+    if (!answer || !currentQuestion) {
+      return;
     }
+
+    const data = {
+      user_id: auth()?.user_id,
+      tryout_id: tryoutId,
+      question_id: currentQuestion.question_id,
+      user_answer: answer
+    };
+
+    if (answerIdx !== undefined && answerId) {
+      await putAnswer(answerId, data);
+    } else {
+      await sendAnswer(data);
+    }
+    fetchAnswerData();
+  };
+
+  const handleNext = async () => {
+    await persistCurrentAnswer();
+
     setAnswer('');
-    if (questionType === 'kpu' && Number(questionNumber) === 30) {
-      navigate(`/tryout/${tryoutId}/ppu/1`);
-    } else if (questionType === 'ppu' && Number(questionNumber) === 20) {
-      navigate(`/tryout/${tryoutId}/pbm/1`);
-    } else if (questionType === 'pbm' && Number(questionNumber) === 20) {
-      navigate(`/tryout/${tryoutId}/pku/1`);
-    } else if (questionType === 'pku' && Number(questionNumber) === 15) {
-      navigate(`/tryout/${tryoutId}/ind/1`);
-    } else if (questionType === 'ind' && Number(questionNumber) === 30) {
-      navigate(`/tryout/${tryoutId}/ing/1`);
-    } else if (questionType === 'ing' && Number(questionNumber) === 20) {
-      navigate(`/tryout/${tryoutId}/mtk/1`);
-    } else if (questionType === 'mtk' && Number(questionNumber) === 20) {
+
+    if (isLastQuestionGlobal) {
       Modal.confirm({
         title: 'Menyelesaikan Tryout',
         content: 'Apakah anda yakin sudah menyelesaikan tryout ini?',
@@ -117,6 +161,11 @@ const Tryout = () => {
           navigate(`/tryout`);
         }
       });
+      return;
+    }
+
+    if (isLastQuestionInType && nextType) {
+      navigate(`/tryout/${tryoutId}/${nextType}/1`);
     } else {
       navigate(
         `/tryout/${tryoutId}/${questionType}/${Number(questionNumber) + 1}`
@@ -125,23 +174,24 @@ const Tryout = () => {
   };
 
   const handlePrev = async () => {
-    if (answer) {
-      const data = {
-        user_id: auth()?.user_id,
-        tryout_id: tryoutId,
-        question_id:
-          questionData?.[plusData[questionType] + Number(questionNumber) - 1]
-            ?.question_id,
-        user_answer: answer
-      };
-      if (answerIdx !== undefined && answerId) {
-        await putAnswer(answerId, data);
-      } else {
-        await sendAnswer(data);
-      }
-      fetchAnswerData();
-    }
+    await persistCurrentAnswer();
+
     setAnswer('');
+
+    if (Number(questionNumber) > 1) {
+      navigate(
+        `/tryout/${tryoutId}/${questionType}/${Number(questionNumber) - 1}`
+      );
+      return;
+    }
+
+    if (currentTypeIndex > 0) {
+      const prevType = orderedTypes[currentTypeIndex - 1];
+      const prevTypeCount = groupedQuestions[prevType]?.length || 1;
+      navigate(`/tryout/${tryoutId}/${prevType}/${prevTypeCount}`);
+      return;
+    }
+
     navigate(
       `/tryout/${tryoutId}/${questionType}/${
         Number(questionNumber) - 1 > 0 ? Number(questionNumber) - 1 : 1
@@ -162,8 +212,7 @@ const Tryout = () => {
   }, [questionDataFetch]);
 
   useEffect(() => {
-    const currentQuestion =
-      questionData?.[plusData[questionType] + Number(questionNumber) - 1];
+    const currentQuestion = currentTypeQuestions?.[Number(questionNumber) - 1];
 
     if (currentQuestion) {
       const answerIndex = answerData.findIndex(
@@ -183,7 +232,43 @@ const Tryout = () => {
       }
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [questionData, answerData, questionNumber, questionType]);
+  }, [currentTypeQuestions, answerData, questionNumber]);
+
+  useEffect(() => {
+    if (!orderedTypes.length) {
+      return;
+    }
+
+    const typeExists = orderedTypes.includes(questionType);
+    if (!typeExists) {
+      navigate(`/tryout/${tryoutId}/${orderedTypes[0]}/1`, { replace: true });
+      return;
+    }
+
+    const totalInType = groupedQuestions[questionType]?.length || 0;
+    if (totalInType === 0) {
+      const fallbackType = orderedTypes.find(
+        (type) => (groupedQuestions[type] || []).length > 0
+      );
+      if (fallbackType) {
+        navigate(`/tryout/${tryoutId}/${fallbackType}/1`, { replace: true });
+      }
+      return;
+    }
+
+    if (Number(questionNumber) > totalInType) {
+      navigate(`/tryout/${tryoutId}/${questionType}/${totalInType}`, {
+        replace: true
+      });
+    }
+  }, [
+    orderedTypes,
+    groupedQuestions,
+    questionType,
+    questionNumber,
+    navigate,
+    tryoutId
+  ]);
 
   useEffect(() => {
     if (transactionData?.[0]?.start_time) {
@@ -209,21 +294,7 @@ const Tryout = () => {
         <Header style={headerStyle}>
           <Image src={logo} width={120} preview={false} />
           <div>
-            {questionType === 'kpu'
-              ? 'Penalaran Umum'
-              : questionType === 'ppu'
-              ? 'Pengetahuan dan Pemahaman Umum'
-              : questionType === 'pbm'
-              ? 'Pemahaman Bacaan dan Menulis'
-              : questionType === 'pku'
-              ? 'Pengetahuan Kuantitatif'
-              : questionType === 'ind'
-              ? 'Literasi Bahasa Indonesia'
-              : questionType === 'ing'
-              ? 'Literasi Bahasa Inggris'
-              : questionType === 'mtk'
-              ? 'Penalaran Matematika'
-              : 'Literasi'}
+            {typeDisplayNameMap[questionType] || questionType.toUpperCase()}
           </div>
           {initialTime && duration ? (
             <Timer startTime={initialTime} duration={duration} />
@@ -235,25 +306,13 @@ const Tryout = () => {
           <Text style={{ fontSize: 30 }}>{`Soal No. ${questionNumber}`}</Text>
           <div>
             <Question
-              text={
-                questionData?.[
-                  plusData[questionType] + Number(questionNumber) - 1
-                ]?.text
-              }
-              imageUrl={
-                questionData?.[
-                  plusData[questionType] + Number(questionNumber) - 1
-                ]?.image_url
-              }
+              text={currentQuestion?.text}
+              imageUrl={currentQuestion?.image_url}
             />
           </div>
           <Option
             setAnswer={setAnswer}
-            options={
-              questionData?.[
-                plusData[questionType] + Number(questionNumber) - 1
-              ]?.options
-            }
+            options={currentQuestion?.options}
             initialAnswer={answerIdx}
           />
         </Content>
@@ -283,9 +342,7 @@ const Tryout = () => {
           }}
           onClick={handleNext}
         >
-          {questionType === 'mtk' && Number(questionNumber) === 20
-            ? 'Selesai'
-            : 'Soal Selanjutnya >>>'}
+          {isLastQuestionGlobal ? 'Selesai' : 'Soal Selanjutnya >>>'}
         </Button>
         <Footer style={{ textAlign: 'center' }}>
           <FooterCopyright />

@@ -9,9 +9,11 @@ import {
   Modal,
 } from "antd";
 import Title from "antd/es/typography/Title";
+import SwitchButton from "../../Ui/SwitchButton";
 import { RangePickerProps } from "antd/es/date-picker";
 import dayjs from "dayjs";
 import { useEffect } from "react";
+import { useState } from "react";
 import { apiUpdateTryout } from "../../../api/tryout";
 import { UpdateTryoutRequest } from "../../../types/tryout.type";
 
@@ -21,7 +23,7 @@ type PropTypes = {
   onFinishFailed: (errorInfo: any) => void;
   onChange: (
     value: DatePickerProps["value"] | RangePickerProps["value"],
-    dateString: [string, string] | string
+    dateString: [string, string] | string,
   ) => void;
   onOk: (value: DatePickerProps["value"] | RangePickerProps["value"]) => void;
   fetchList: () => void;
@@ -37,9 +39,11 @@ const ModalUpdateTryout = (props: PropTypes) => {
     fetchList,
   } = props;
   const [updateForm] = Form.useForm();
+  const [showScore, setShowScore] = useState(false);
 
   useEffect(() => {
     if (showModalUpdate.status) {
+      setShowScore(Boolean(showModalUpdate.data.show_score));
       updateForm.setFieldsValue({
         ...showModalUpdate.data,
         start_time: dayjs(showModalUpdate.data.start_time),
@@ -54,6 +58,7 @@ const ModalUpdateTryout = (props: PropTypes) => {
       const data: UpdateTryoutRequest = {
         ...values,
         is_published: showModalUpdate.data.is_published,
+        show_score: showScore,
       };
       const res = await apiUpdateTryout(showModalUpdate.data.tryout_id, data);
       if (res) {
@@ -132,6 +137,13 @@ const ModalUpdateTryout = (props: PropTypes) => {
             onChange={onChange}
             onOk={onOk}
             defaultValue={dayjs(showModalUpdate?.data?.end_time)}
+          />
+        </Form.Item>
+
+        <Form.Item label="Show Score to User" name="show_score">
+          <SwitchButton
+            defaultChecked={showScore}
+            onChange={(checked) => setShowScore(checked)}
           />
         </Form.Item>
 

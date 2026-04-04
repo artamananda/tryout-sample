@@ -44,6 +44,7 @@ const ModalCreateTryout = (props: PropTypes) => {
   const { showModal, setShowModal, onFinishFailed, onChange, onOk, fetchList } =
     props;
   const [isPublished, setIsPublished] = useState(false);
+  const [showScore, setShowScore] = useState(false);
   const [generateFromBankSoal, setGenerateFromBankSoal] = useState(false);
   const [bankSoalTypes, setBankSoalTypes] = useState<string[]>([]);
   const [distributionMap, setDistributionMap] = useState<
@@ -95,6 +96,7 @@ const ModalCreateTryout = (props: PropTypes) => {
     const newData = {
       ...data,
       is_published: isPublished,
+      show_score: showScore,
       generate_from_bank_soal: generateFromBankSoal,
       bank_soal_distribution: bankSoalDistribution,
     };
@@ -103,6 +105,7 @@ const ModalCreateTryout = (props: PropTypes) => {
     if (res) {
       setShowModal(false);
       setGenerateFromBankSoal(false);
+      setShowScore(false);
       setDistributionMap({});
       form.resetFields();
       fetchList();
@@ -176,6 +179,15 @@ const ModalCreateTryout = (props: PropTypes) => {
             defaultChecked={isPublished}
             onChange={(checked) => {
               setIsPublished(checked);
+            }}
+          />
+        </Form.Item>
+
+        <Form.Item label="Show Score to User" name="show_score">
+          <SwitchButton
+            defaultChecked={showScore}
+            onChange={(checked) => {
+              setShowScore(checked);
             }}
           />
         </Form.Item>

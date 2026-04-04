@@ -123,3 +123,17 @@ func (repository *UserRepository) FindByEmail(ctx context.Context, email string)
 	}
 	return user, nil
 }
+
+func (repository *UserRepository) FindByIDs(ctx context.Context, userIDs []uuid.UUID) ([]entity.User, error) {
+	if len(userIDs) == 0 {
+		return []entity.User{}, nil
+	}
+
+	var users []entity.User
+	err := repository.DB.WithContext(ctx).Where("user_id IN ?", userIDs).Find(&users).Error
+	if err != nil {
+		return nil, err
+	}
+
+	return users, nil
+}

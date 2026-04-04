@@ -1,20 +1,11 @@
 import { Button, Table } from "antd";
 import { Excel } from "antd-table-saveas-excel";
 import { useEffect, useState } from "react";
-import { apiGetUserAnswer } from "../../api/userAnswer";
-import { UserAnswerProps } from "../../types/userAnswer.type";
-import { apiGetUsers } from "../../api/user";
-import useFetchList from "../../hooks/useFetchList";
-import { QuestionProps } from "../../types/question";
+import { apiGetTryoutResult } from "../../api/tryoutResult";
+import { TryoutResultPayload } from "../../types/tryoutResult.type";
 
 interface TableRowData {
   [key: string]: string | number;
-  question_id: string;
-  subtest: string;
-}
-
-interface Score {
-  point: number;
   question_id: string;
   subtest: string;
 }
@@ -23,83 +14,33 @@ type FixedType = "left" | "right" | boolean;
 
 const ResultScore = () => {
   const tryoutId = window.location.href.split("/").pop();
-  const [userAnswers, setUserAnswers] = useState<UserAnswerProps[]>([]);
-  const [users, setUsers] = useState<{ user_id: string; name: string }[]>([]);
-  const [uniqueUserIds, setUniqueUserIds] = useState<string[]>([]);
-  const [user, setUser] = useState<{ [key: string]: string }>({});
-  const [scores, setScores] = useState<Score[]>([]);
-  const [oldDataSource, setOldDataSource] = useState<TableRowData[]>([]);
+  const [resultData, setResultData] = useState<TryoutResultPayload | null>(
+    null,
+  );
   const [newDataSource, setNewDataSource] = useState<TableRowData[]>([]);
   const [isLoading, setIsLoading] = useState(true);
-  const [answers, setAnswers] = useState<{ [key: string]: string }>({});
-  const [questionTypes, setQuestionTypes] = useState<{ [key: string]: string }>(
-    {}
-  );
 
   const minScore = 350;
-  const maxScore = 1000;
-
-  const { data: questionData } = useFetchList<QuestionProps>({
-    endpoint: "question",
-    initialQuery: {
-      tryoutId: tryoutId,
-    },
-  });
 
   useEffect(() => {
-    const fetchUser = async () => {
-      const res = await apiGetUsers();
-      if (res) {
-        const resultTmp = res.data.payload.results.filter(
-          (item) => item.name.split(" ")?.[0] !== "Test"
-        );
-        setUsers(resultTmp);
+    const fetchTryoutResult = async () => {
+      if (!tryoutId) {
+        setIsLoading(false);
+        return;
       }
+
+      const res = await apiGetTryoutResult(tryoutId);
+      if (res?.data?.payload?.results?.[0]) {
+        setResultData(res.data.payload.results[0]);
+      }
+      setIsLoading(false);
     };
 
-    fetchUser();
-  }, []);
+    fetchTryoutResult();
+  }, [tryoutId]);
 
-  useEffect(() => {
-    const fetchAnswer = async () => {
-      const res = await apiGetUserAnswer();
-      if (res && users) {
-        const answersTmp = res.data.payload.results.filter(
-          (item) => item.tryout_id === tryoutId
-        );
-        setUserAnswers(answersTmp);
+  const participants = resultData?.participants || [];
 
-        const newUser: { [key: string]: string } = {};
-        users.forEach((item) => {
-          newUser[item.user_id] = item.name;
-        });
-        setUser(newUser);
-
-        const newIds = answersTmp
-          .map((item) => item.user_id)
-          .filter(
-            (id, index, self) =>
-              self.indexOf(id) === index &&
-              users.find((item) => item.user_id === id)
-          );
-        setUniqueUserIds(newIds);
-      }
-    };
-    fetchAnswer();
-  }, [users]);
-
-  useEffect(() => {
-    const ans: { [key: string]: string } = {};
-    const qType: { [key: string]: string } = {};
-    questionData.forEach((item) => {
-      ans[item.question_id] = item.correct_answer;
-      qType[item.question_id] = item.type;
-    });
-    setAnswers(ans);
-    setQuestionTypes(qType);
-  }, [questionData]);
-
-  // Menyiapkan kolom-kolom tabel
   const columns = [
     {
       title: "Subtest",
@@ -112,11 +53,10 @@ const ResultScore = () => {
         </div>
       ),
     },
-    // Menambahkan kolom untuk setiap user ID yang unik
-    ...uniqueUserIds.map((userId) => ({
-      title: user[userId],
-      dataIndex: userId,
-      key: userId,
+    ...participants.map((participant) => ({
+      title: participant.name,
+      dataIndex: participant.user_id,
+      key: participant.user_id,
       render: (value: string | number) => (
         <div
           style={{
@@ -124,146 +64,20 @@ const ResultScore = () => {
             textAlign: "center",
           }}
         >
-          {value.toString() || ""}
+          {value?.toString() || ""}
         </div>
       ),
     })),
   ];
 
-  // Menyiapkan data untuk tabel
   useEffect(() => {
-    let dataSource: TableRowData[] = [];
-    userAnswers.forEach((answer) => {
-      const existingRow = dataSource.find(
-        (row) => row.question_id === answer.question_id
-      );
-      if (existingRow) {
-        existingRow[answer.user_id] =
-          answer.user_answer === answers[answer.question_id] ? 1 : 0;
-      } else {
-        const newRow: TableRowData = {
-          question_id: answer.question_id,
-          subtest: questionTypes[answer.question_id],
-          [answer.user_id]:
-            answer.user_answer === answers[answer.question_id] ? 1 : 0,
-        };
-        dataSource.push(newRow);
-      }
-    });
-
-    setOldDataSource(dataSource);
-  }, [userAnswers]);
-
-  useEffect(() => {
-    let scoreArr: any = [];
-    oldDataSource.map((item) => {
-      let countTrue = 0;
-      let countTotal = 0;
-      uniqueUserIds.forEach((userId) => {
-        if (Number(item[userId]) === 1) {
-          countTrue++;
-        }
-        countTotal++;
-      });
-      const scoreRes = countScore(countTrue, countTotal, item.subtest);
-      const newScore: Score = {
-        question_id: item.question_id,
-        subtest: item.subtest,
-        point: scoreRes,
-      };
-      scoreArr.push(newScore);
-    });
-    setScores(scoreArr);
-  }, [oldDataSource]);
-
-  const countScore = (
-    countTrue: number,
-    countTotal: number,
-    subtest: string
-  ): number => {
-    if (countTotal === 0) return 0;
-
-    const ratio = countTrue / countTotal;
-
-    const maxWeight = maxScore / 2.5;
-
-    const maxScoreMap: { [key: string]: number } = {
-      kpu: maxWeight / 30,
-      ind: maxWeight / 30,
-      ppu: maxWeight / 20,
-      pbm: maxWeight / 20,
-      ing: maxWeight / 20,
-      mtk: maxWeight / 20,
-      pku: maxWeight / 15,
-    };
-
-    const baseScore = maxScoreMap[subtest] || 0;
-    const difficultyWeight = 0.75 + (1 - ratio); // makin sedikit yang benar, makin susah → skor naik
-    const score = baseScore * difficultyWeight;
-
-    return score;
-  };
-
-  useEffect(() => {
-    userAnswers.forEach((answer) => {
-      const existingRow = oldDataSource.find(
-        (row) => row.question_id === answer.question_id
-      );
-      if (existingRow) {
-        existingRow[answer.user_id] =
-          answer.user_answer === answers[answer.question_id]
-            ? scores.find((item) => item.question_id === answer.question_id)
-                ?.point || 0
-            : 0;
-      } else {
-        const newRow: TableRowData = {
-          question_id: answer.question_id,
-          subtest: questionTypes[answer.question_id],
-          [answer.user_id]:
-            answer.user_answer === answers[answer.question_id]
-              ? scores.find((item) => item.question_id === answer.question_id)
-                  ?.point || 0
-              : 0,
-        };
-        oldDataSource.push(newRow);
-      }
-    });
-
-    const typeOrder = ["kpu", "ppu", "pbm", "pku", "ind", "ing", "mtk"];
-    const newSortedDataSource: TableRowData[] = [];
-    const totalScore = (subtestTyped: string) => {
-      uniqueUserIds.map((userId) => {
-        const subtestType = subtestTyped;
-        let userScore = minScore;
-        oldDataSource.map((oldDataItem) =>
-          oldDataItem.subtest === subtestType && oldDataItem[userId]
-            ? (userScore += Number(oldDataItem[userId]))
-            : (userScore += 0)
-        );
-        const existingRow = newSortedDataSource.find(
-          (row) => row.question_id === subtestType
-        );
-        if (existingRow) {
-          existingRow[userId] = Math.round(userScore);
-        } else {
-          const newRowData: TableRowData = {
-            question_id: subtestType,
-            subtest: subtestType,
-            [userId]: Math.round(userScore),
-          };
-          newSortedDataSource.push(newRowData);
-        }
-      });
-    };
-    typeOrder.forEach((item) => totalScore(item));
-    setNewDataSource(newSortedDataSource);
-  }, [scores]);
-
-  useEffect(() => {
-    if (newDataSource.length !== 0) {
-      setIsLoading(false);
-    }
-  }, [newDataSource]);
+    const rows = (resultData?.score_rows || []).map((row) => ({
+      question_id: row.subtest,
+      subtest: row.subtest,
+      ...row.scores,
+    }));
+    setNewDataSource(rows);
+  }, [resultData]);
 
   const handlePrint = () => {
     const excel = new Excel();

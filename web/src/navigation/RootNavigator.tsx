@@ -19,6 +19,7 @@ import ProgramScreen from '../screens/Program';
 import RegisterProgramScreen from '../screens/Program/Register';
 import BankSoalScreen from '../screens/BankSoal';
 import LearningVideoScreen from '../screens/LearningVideo';
+import MyTryoutScoreScreen from '../screens/Tryout/MyScore';
 
 const RootNavigator = () => {
   return (
@@ -132,6 +133,15 @@ const RootNavigator = () => {
             <TryoutRoute loginPath="/tryout">
               <TryoutScreen />
             </TryoutRoute>
+          }
+        />
+
+        <Route
+          path="/tryout/:id/my-score"
+          element={
+            <PrivateRoute loginPath="/login">
+              <MyTryoutScoreScreen />
+            </PrivateRoute>
           }
         />
       </Routes>

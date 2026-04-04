@@ -41,12 +41,14 @@ func (service *TryoutService) Create(ctx context.Context, request model.CreateTr
 	}
 
 	tryout := entity.Tryout{
+		ProgramID:   request.ProgramID,
 		Title:       request.Title,
 		Duration:    request.Duration,
 		StartTime:   request.StartTime,
 		EndTime:     request.EndTime,
 		Token:       helper.GenerateOTP(6),
 		IsPublished: request.IsPublished,
+		ShowScore:   request.ShowScore,
 	}
 
 	tryout = service.TryoutRepository.Create(ctx, tryout)
@@ -61,12 +63,14 @@ func (service *TryoutService) Create(ctx context.Context, request model.CreateTr
 
 	return model.TryoutResponse{
 		TryoutID:               tryout.TryoutID,
+		ProgramID:              tryout.ProgramID,
 		Title:                  tryout.Title,
 		Duration:               tryout.Duration,
 		StartTime:              tryout.StartTime,
 		EndTime:                tryout.EndTime,
 		Token:                  tryout.Token,
 		IsPublished:            tryout.IsPublished,
+		ShowScore:              tryout.ShowScore,
 		GeneratedQuestionCount: generatedQuestionCount,
 	}, nil
 }
@@ -86,23 +90,46 @@ func (service *TryoutService) Update(ctx context.Context, request model.UpdateTr
 		}
 	}
 
-	tryout.Title = request.Title
-	tryout.Duration = request.Duration
-	tryout.StartTime = request.StartTime
-	tryout.EndTime = request.EndTime
-	tryout.Token = helper.GenerateOTP(6)
-	tryout.IsPublished = request.IsPublished
+	if request.Title != nil {
+		tryout.Title = *request.Title
+	}
+
+	if request.ProgramID != nil {
+		tryout.ProgramID = request.ProgramID
+	}
+
+	if request.Duration != nil {
+		tryout.Duration = *request.Duration
+	}
+
+	if request.StartTime != nil {
+		tryout.StartTime = *request.StartTime
+	}
+
+	if request.EndTime != nil {
+		tryout.EndTime = *request.EndTime
+	}
+
+	if request.IsPublished != nil {
+		tryout.IsPublished = *request.IsPublished
+	}
+
+	if request.ShowScore != nil {
+		tryout.ShowScore = *request.ShowScore
+	}
 
 	tryout = service.TryoutRepository.Update(ctx, tryout)
 
 	return model.TryoutResponse{
 		TryoutID:    tryout.TryoutID,
+		ProgramID:   tryout.ProgramID,
 		Title:       tryout.Title,
 		Duration:    tryout.Duration,
 		StartTime:   tryout.StartTime,
 		EndTime:     tryout.EndTime,
 		Token:       tryout.Token,
 		IsPublished: tryout.IsPublished,
+		ShowScore:   tryout.ShowScore,
 	}, nil
 }
 
@@ -127,11 +154,13 @@ func (service *TryoutService) FindByID(ctx context.Context, tryoutID string) (mo
 
 	return model.TryoutResponse{
 		TryoutID:    tryout.TryoutID,
+		ProgramID:   tryout.ProgramID,
 		Title:       tryout.Title,
 		Duration:    tryout.Duration,
 		StartTime:   tryout.StartTime,
 		EndTime:     tryout.EndTime,
 		IsPublished: tryout.IsPublished,
+		ShowScore:   tryout.ShowScore,
 	}, nil
 }
 
@@ -143,11 +172,13 @@ func (service *TryoutService) FindAll(ctx context.Context, params model.FindAllT
 		tryoutResponses = append(tryoutResponses,
 			model.TryoutResponse{
 				TryoutID:    tryout.TryoutID,
+				ProgramID:   tryout.ProgramID,
 				Title:       tryout.Title,
 				Duration:    tryout.Duration,
 				StartTime:   tryout.StartTime,
 				EndTime:     tryout.EndTime,
 				IsPublished: tryout.IsPublished,
+				ShowScore:   tryout.ShowScore,
 			},
 		)
 	}
@@ -165,12 +196,14 @@ func (service *TryoutService) FindAllAsAdmin(ctx context.Context, params model.F
 		tryoutResponses = append(tryoutResponses,
 			model.TryoutResponse{
 				TryoutID:    tryout.TryoutID,
+				ProgramID:   tryout.ProgramID,
 				Title:       tryout.Title,
 				Duration:    tryout.Duration,
 				StartTime:   tryout.StartTime,
 				EndTime:     tryout.EndTime,
 				Token:       tryout.Token,
 				IsPublished: tryout.IsPublished,
+				ShowScore:   tryout.ShowScore,
 			},
 		)
 	}

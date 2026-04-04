@@ -56,7 +56,7 @@ func (repository *TransactionProgramRepository) FindAll(ctx context.Context, par
 	var transactionPrograms []entity.TransactionProgram
 	query := repository.DB.WithContext(ctx)
 
-	if(params.Search != "") {
+	if params.Search != "" {
 		query = query.Joins("JOIN users AS u ON u.user_id = transaction_programs.user_id").
 			Where("u.name ILIKE ? OR u.school ILIKE ?", "%"+params.Search+"%", "%"+params.Search+"%")
 	}
@@ -71,4 +71,14 @@ func (repository *TransactionProgramRepository) FindAll(ctx context.Context, par
 
 	query.Order("created_at DESC").Preload("User").Preload("Program").Find(&transactionPrograms)
 	return transactionPrograms
+}
+
+func (repository *TransactionProgramRepository) HasPaidAccess(ctx context.Context, userID string, programID string) bool {
+	var total int64
+	repository.DB.WithContext(ctx).
+		Model(&entity.TransactionProgram{}).
+		Where("user_id = ? AND program_id = ? AND status = ?", userID, programID, "PAID").
+		Count(&total)
+
+	return total > 0
 }

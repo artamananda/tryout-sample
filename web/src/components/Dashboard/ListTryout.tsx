@@ -90,7 +90,11 @@ const ListTryout = () => {
               record.end_time
             );
             if (tryoutStatus === 'FINISHED') {
-              message.error('Waktu tryout sudah lewat!');
+              if (record.show_score) {
+                navigate('/tryout/' + record.tryout_id + '/my-score');
+              } else {
+                message.error('Hasil tryout belum dipublikasikan.');
+              }
             } else if (
               tryoutStatus === 'IN COMING' ||
               tryoutStatus === 'UNKNOWN'
