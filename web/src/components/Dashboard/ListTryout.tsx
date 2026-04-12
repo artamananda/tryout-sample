@@ -1,5 +1,14 @@
 import React, { useEffect, useState } from 'react';
-import { Table, Tag, Typography, Modal, Form, Input, message } from 'antd';
+import {
+  Table,
+  Tag,
+  Typography,
+  Modal,
+  Form,
+  Input,
+  message,
+  Alert
+} from 'antd';
 import type { TableProps } from 'antd';
 import useFetchList from '../../hooks/useFetchList';
 import { TryoutProps } from '../../types/tryout.type';
@@ -206,6 +215,58 @@ const ListTryout = () => {
           >
             <Input />
           </Form.Item>
+          <Alert
+            type="warning"
+            showIcon
+            message="Petunjuk Tryout"
+            description={
+              <>
+                <ol
+                  style={{
+                    margin: 0,
+                    paddingLeft: 20,
+                    listStyleType: 'decimal',
+                    listStylePosition: 'outside'
+                  }}
+                >
+                  <li>Tryout akan langsung dimulai setelah token dikirim.</li>
+                  <li>
+                    Pastikan koneksi internet stabil sebelum menekan tombol
+                    mulai.
+                  </li>
+                  <li>
+                    Tryout ini hanya bisa dikerjakan satu kali dalam satu waktu.
+                    Jika terjadi kendala atau otomatis logout, segera login
+                    kembali lalu masuk ke tryout yang sama.
+                  </li>
+                  <li>
+                    Waktu tetap berjalan dan tidak berhenti saat Anda keluar
+                    dari halaman.
+                  </li>
+                  <li>
+                    Pastikan Anda berada di tempat yang tenang dan bebas dari
+                    gangguan selama tryout berlangsung.
+                  </li>
+                  <li>
+                    Dilarang mencontek, membuka catatan, atau meminta bantuan
+                    pihak lain selama tryout.
+                  </li>
+                  <li>
+                    Dilarang berdiskusi, berbagi soal, atau membagikan jawaban
+                    kepada peserta lain.
+                  </li>
+                  <li>
+                    Jawablah dengan jujur agar skor mencerminkan kemampuan dan
+                    proses belajar Anda yang sebenarnya.
+                  </li>
+                  <li>
+                    Dengan melanjutkan, Anda dianggap memahami dan menyetujui
+                    seluruh ketentuan di atas.
+                  </li>
+                </ol>
+              </>
+            }
+          />
         </Form>
       </Modal>
     </div>
