@@ -29,8 +29,8 @@ func (controller BankSoalController) Route(app *fiber.App) {
 	app.Put("/v1/api/bank-soal/:id", middleware.AuthenticateJWT([]string{"admin"}, controller.Config), controller.Update)
 	app.Get("/v1/api/public/bank-soal", controller.FindPreview)
 	app.Get("/v1/api/bank-soal/types", controller.GetUniqueTypes)
-	app.Get("/v1/api/bank-soal/:id", controller.FindById)
-	app.Get("/v1/api/bank-soal", controller.FindAll)
+	app.Get("/v1/api/bank-soal/:id", controller.FindById, middleware.AuthenticateJWT([]string{"admin", "user"}, controller.Config))
+	app.Get("/v1/api/bank-soal", controller.FindAll, middleware.AuthenticateJWT([]string{"admin", "user"}, controller.Config))
 	app.Delete("/v1/api/bank-soal/:id", middleware.AuthenticateJWT([]string{"admin"}, controller.Config), controller.Delete)
 }
 
