@@ -135,6 +135,15 @@ func (repository *BankSoalRepository) Update(ctx context.Context, bankSoal entit
 	return bankSoal, nil
 }
 
+func (repository *BankSoalRepository) CountAll(ctx context.Context) (int, error) {
+	var count int64
+	err := repository.DB.WithContext(ctx).Model(&entity.BankSoal{}).Count(&count).Error
+	if err != nil {
+		return 0, err
+	}
+	return int(count), nil
+}
+
 func normalizeBankSoalForPersist(bankSoal *entity.BankSoal) {
 	normalizedOptions := normalizeBankSoalOptions(bankSoal.Options)
 	bankSoal.Options = normalizedOptions

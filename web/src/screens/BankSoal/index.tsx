@@ -84,7 +84,7 @@ const BankSoalScreen = () => {
     data: questions,
     setSearch,
     isLoading,
-    search
+    pagination
   } = useFetchList<BankSoalItem>({
     endpoint: isGuestPreview ? 'public/bank-soal' : 'bank-soal',
     limit: isGuestPreview ? 5 : undefined
@@ -300,7 +300,7 @@ const BankSoalScreen = () => {
                   TOTAL SOAL
                 </Text>
                 <Title level={2} style={{ margin: 0, color: '#8C59F1' }}>
-                  {filteredQuestions.length}
+                  {pagination.totalData}
                 </Title>
               </div>
             </Col>

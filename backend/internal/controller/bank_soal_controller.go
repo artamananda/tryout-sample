@@ -29,8 +29,8 @@ func (controller BankSoalController) Route(app *fiber.App) {
 	app.Put("/v1/api/bank-soal/:id", middleware.AuthenticateJWT([]string{"admin"}, controller.Config), controller.Update)
 	app.Get("/v1/api/public/bank-soal", controller.FindPreview)
 	app.Get("/v1/api/bank-soal/types", controller.GetUniqueTypes)
-	app.Get("/v1/api/bank-soal/:id", controller.FindById, middleware.AuthenticateJWT([]string{"admin", "user"}, controller.Config))
-	app.Get("/v1/api/bank-soal", controller.FindAll, middleware.AuthenticateJWT([]string{"admin", "user"}, controller.Config))
+	app.Get("/v1/api/bank-soal/:id", middleware.AuthenticateJWT([]string{"admin", "user"}, controller.Config), controller.FindById)
+	app.Get("/v1/api/bank-soal",  middleware.AuthenticateJWT([]string{"admin", "user"}, controller.Config),controller.FindAll)
 	app.Delete("/v1/api/bank-soal/:id", middleware.AuthenticateJWT([]string{"admin"}, controller.Config), controller.Delete)
 }
 
@@ -263,8 +263,13 @@ func (controller BankSoalController) FindPreview(c *fiber.Ctx) error {
 		return err
 	}
 
+	resultCount, err := controller.BankSoalService.CountAll(c.Context())
+	if err != nil {
+		return err
+	}
+
 	payload := map[string]interface{}{
-		"count":         len(result),
+		"count":         resultCount,
 		"results":       result,
 		"preview_limit": limit,
 		"is_preview":    true,

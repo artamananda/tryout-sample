@@ -255,6 +255,10 @@ func (service *BankSoalService) FindPreview(ctx context.Context, questionType st
 	return responses, nil
 }
 
+func (service *BankSoalService) CountAll(ctx context.Context) (int, error) {
+	return service.BankSoalRepository.CountAll(ctx)
+}
+
 func normalizeCorrectAnswer(correctAnswer string, options []string) string {
 	normalized := normalizeOptionText(correctAnswer)
 	if normalized == "" {
