@@ -22,16 +22,44 @@ type AIService struct {
 	ChatLogRepository      *repository.ChatLogRepository
 	AIExampleRepository    *repository.AIExampleRepository
 	ChatArtifactRepository *repository.ChatArtifactRepository
+	SystemConfigRepository *repository.SystemConfigRepository
 }
 
-func NewAIService(cfg config.Config, chatLogRepo *repository.ChatLogRepository, aiExampleRepo *repository.AIExampleRepository, chatArtifactRepo *repository.ChatArtifactRepository) AIService {
+func NewAIService(cfg config.Config, chatLogRepo *repository.ChatLogRepository, aiExampleRepo *repository.AIExampleRepository, chatArtifactRepo *repository.ChatArtifactRepository, systemConfigRepo *repository.SystemConfigRepository) AIService {
 	return AIService{
 		Config:                 cfg,
 		AIClient:               common.NewAIClient(cfg.Get),
 		ChatLogRepository:      chatLogRepo,
 		AIExampleRepository:    aiExampleRepo,
 		ChatArtifactRepository: chatArtifactRepo,
+		SystemConfigRepository: systemConfigRepo,
 	}
+}
+
+// getAIClientForType returns an AI client configured for the given question type.
+// It looks up the category-specific token from system_configs, falling back to .env.
+func (service *AIService) getAIClientForType(ctx context.Context, questionType string) *common.AIClient {
+	if service.SystemConfigRepository == nil {
+		return service.AIClient
+	}
+	category := entity.GetCategoryFromType(questionType)
+	var providerKey, apiKeyKey, modelKey string
+	if category == entity.BankSoalCategorySKD {
+		providerKey = "llm_skd_provider"
+		apiKeyKey = "llm_skd_api_key"
+		modelKey = "llm_skd_model"
+	} else {
+		providerKey = "llm_utbk_provider"
+		apiKeyKey = "llm_utbk_api_key"
+		modelKey = "llm_utbk_model"
+	}
+	providerCfg, _ := service.SystemConfigRepository.FindByKey(ctx, providerKey)
+	apiKeyCfg, _ := service.SystemConfigRepository.FindByKey(ctx, apiKeyKey)
+	modelCfg, _ := service.SystemConfigRepository.FindByKey(ctx, modelKey)
+	if apiKeyCfg.Value != "" {
+		return common.NewAIClientWithValues(providerCfg.Value, apiKeyCfg.Value, modelCfg.Value, service.Config.Get)
+	}
+	return service.AIClient
 }
 
 // AI types are now handled by common.AIClient
@@ -44,15 +72,16 @@ func (service *AIService) GenerateQuestions(ctx context.Context, request model.G
 		}
 	}
 
-	if !service.AIClient.IsConfigured() {
+	aiClient := service.getAIClientForType(ctx, request.QuestionType)
+	if !aiClient.IsConfigured() {
 		return model.GenerateQuestionsResponse{}, exception.ValidationError{
-			Message: "AI provider not configured: API key missing",
+			Message: "AI provider not configured: API key missing. Set token di CMS Settings > LLM Config atau .env",
 		}
 	}
 
 	prompt := buildPrompt(request)
 
-	aiResp, err := service.AIClient.Chat(ctx, common.AIRequest{
+	aiResp, err := aiClient.Chat(ctx, common.AIRequest{
 		Messages: []common.AIMessage{
 			{
 				Role: "system",
@@ -184,9 +213,10 @@ func (service *AIService) Chat(ctx context.Context, request model.AIChatRequest,
 		}
 	}
 
-	if !service.AIClient.IsConfigured() {
+	aiClient := service.getAIClientForType(ctx, request.QuestionType)
+	if !aiClient.IsConfigured() {
 		return model.AIChatResponse{}, exception.ValidationError{
-			Message: "AI provider not configured: API key missing",
+			Message: "AI provider not configured: API key missing. Set token di CMS Settings > LLM Config atau .env",
 		}
 	}
 
@@ -281,7 +311,7 @@ SELALU respon dalam Bahasa Indonesia. SELALU respon dengan JSON yang valid saja.
 		})
 	}
 
-	aiResp, err := service.AIClient.Chat(ctx, common.AIRequest{
+	aiResp, err := aiClient.Chat(ctx, common.AIRequest{
 		Messages: aiMessages,
 	})
 	if err != nil {

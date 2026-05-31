@@ -79,7 +79,8 @@ const RootNavigator = () => {
         <Route path="/" element={<HomeScreen />} />
 
         <Route element={<AppLayout />}>
-          <Route path="/bank-soal" element={<BankSoalScreen />} />
+          <Route path="/bank-soal/utbk" element={<BankSoalScreen category="utbk" />} />
+          <Route path="/bank-soal/skd-cpns" element={<BankSoalScreen category="skd" />} />
           <Route
             path="/dashboard"
             element={

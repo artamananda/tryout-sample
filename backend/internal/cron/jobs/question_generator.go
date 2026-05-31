@@ -16,20 +16,26 @@ import (
 )
 
 type QuestionGenerator struct {
-	config       config.Config
-	aiClient     *common.AIClient
-	bankSoalRepo *repository.BankSoalRepository
+	config           config.Config
+	bankSoalRepo     *repository.BankSoalRepository
+	systemConfigRepo *repository.SystemConfigRepository
 }
 
-func NewQuestionGenerator(cfg config.Config, bankSoalRepo *repository.BankSoalRepository) *QuestionGenerator {
+func NewQuestionGenerator(cfg config.Config, bankSoalRepo *repository.BankSoalRepository, systemConfigRepo *repository.SystemConfigRepository) *QuestionGenerator {
 	return &QuestionGenerator{
-		config:       cfg,
-		aiClient:     common.NewAIClient(cfg.Get),
-		bankSoalRepo: bankSoalRepo,
+		config:           cfg,
+		bankSoalRepo:     bankSoalRepo,
+		systemConfigRepo: systemConfigRepo,
 	}
 }
 
-// UTBK Question Types with their topics
+// ==================== UTBK Question Types ====================
+
+type utbkTypeConfig struct {
+	Name   string
+	Topics []string
+}
+
 var utbkQuestionTypes = map[string]utbkTypeConfig{
 	"kpu": {
 		Name: "Penalaran Umum",
@@ -154,47 +160,141 @@ var utbkQuestionTypes = map[string]utbkTypeConfig{
 	},
 }
 
-type utbkTypeConfig struct {
+// ==================== SKD CPNS Question Types ====================
+
+type skdTypeConfig struct {
 	Name   string
 	Topics []string
 }
 
-const QUESTIONS_PER_BATCH = 5
-const TYPES_PER_RUN = 1 // Process only 1 type per run to stay within free tier RPD limits (Gemini free: ~20 RPD)
+var skdQuestionTypes = map[string]skdTypeConfig{
+	"twk": {
+		Name: "Tes Wawasan Kebangsaan",
+		Topics: []string{
+			"Pancasila: Sejarah dan Nilai-nilai Dasar",
+			"Pancasila: Implementasi dalam Kehidupan Berbangsa",
+			"UUD 1945: Pasal-pasal Utama dan Amandemen",
+			"UUD 1945: Hak dan Kewajiban Warga Negara",
+			"Bhinneka Tunggal Ika: Keberagaman dan Toleransi",
+			"Bhinneka Tunggal Ika: Nilai Persatuan dalam Keberagaman",
+			"NKRI: Wawasan Nusantara dan Ketahanan Nasional",
+			"NKRI: Sistem Pemerintahan dan Tata Negara",
+			"Sejarah Indonesia: Proklamasi dan Perjuangan Kemerdekaan",
+			"Sejarah Indonesia: Orde Lama, Orde Baru, dan Reformasi",
+			"Nasionalisme dan Bela Negara",
+			"Integritas dan Anti-Korupsi dalam Konteks Kebangsaan",
+		},
+	},
+	"tiu": {
+		Name: "Tes Intelegensia Umum",
+		Topics: []string{
+			"Verbal: Sinonim dan Antonim",
+			"Verbal: Analogi Kata",
+			"Verbal: Pengelompokan Kata",
+			"Numerik: Berhitung dan Operasi Dasar",
+			"Numerik: Deret Angka dan Pola Bilangan",
+			"Numerik: Perbandingan Kuantitatif",
+			"Numerik: Soal Cerita Matematika",
+			"Figural: Analogi Gambar",
+			"Figural: Ketidaksamaan Gambar",
+			"Figural: Seri Gambar dan Pola Visual",
+			"Penalaran Logis: Silogisme",
+			"Penalaran Analitis: Hubungan dan Urutan",
+		},
+	},
+	"tkp": {
+		Name: "Tes Karakteristik Pribadi",
+		Topics: []string{
+			"Integritas Diri: Kejujuran dan Tanggung Jawab",
+			"Semangat Berprestasi: Motivasi dan Target",
+			"Kreativitas dan Inovasi dalam Pekerjaan",
+			"Orientasi pada Pelayanan Publik",
+			"Kemampuan Beradaptasi terhadap Perubahan",
+			"Kemampuan Mengendalikan Diri dalam Tekanan",
+			"Bekerja Mandiri dan Tuntas",
+			"Kemampuan Belajar Berkelanjutan",
+			"Bekerja Sama dalam Kelompok/Tim",
+			"Kemampuan Menggerakkan dan Mengkoordinir Orang",
+			"Orientasi kepada Orang Lain dan Empati",
+			"Kemampuan Membina Hubungan Sosial",
+		},
+	},
+}
 
-// runIndex tracks which types to process next (rotates through all types)
-var runIndex int
+const QUESTIONS_PER_BATCH = 5
+const TYPES_PER_RUN = 1
+
+var utbkRunIndex int
+var skdRunIndex int
 
 func (j *QuestionGenerator) Run() error {
 	ctx := context.Background()
-	if !j.aiClient.IsConfigured() {
-		return fmt.Errorf("AI provider not configured: API key missing")
+
+	// Run UTBK generation
+	if err := j.runForCategory(ctx, entity.BankSoalCategoryUTBK); err != nil {
+		log.Printf("[QuestionGenerator] UTBK generation error: %v", err)
 	}
 
-	// Build a stable ordered list of type codes
-	typeCodes := make([]string, 0, len(utbkQuestionTypes))
-	for code := range utbkQuestionTypes {
-		typeCodes = append(typeCodes, code)
+	// Run SKD CPNS generation
+	if err := j.runForCategory(ctx, entity.BankSoalCategorySKD); err != nil {
+		log.Printf("[QuestionGenerator] SKD generation error: %v", err)
 	}
-	// Sort for deterministic rotation order
+
+	return nil
+}
+
+func (j *QuestionGenerator) runForCategory(ctx context.Context, category string) error {
+	aiClient := j.buildAIClient(ctx, category)
+	if !aiClient.IsConfigured() {
+		log.Printf("[QuestionGenerator] AI client not configured for category %s, skipping", category)
+		return nil
+	}
+
+	var typeCodes []string
+	switch category {
+	case entity.BankSoalCategorySKD:
+		for code := range skdQuestionTypes {
+			typeCodes = append(typeCodes, code)
+		}
+	default:
+		for code := range utbkQuestionTypes {
+			typeCodes = append(typeCodes, code)
+		}
+	}
 	sortStrings(typeCodes)
 
-	// Pick TYPES_PER_RUN types starting from current runIndex
-	selectedCodes := make([]string, 0, TYPES_PER_RUN)
-	for i := 0; i < TYPES_PER_RUN && i < len(typeCodes); i++ {
-		idx := (runIndex + i) % len(typeCodes)
-		selectedCodes = append(selectedCodes, typeCodes[idx])
+	var selectedCodes []string
+	switch category {
+	case entity.BankSoalCategorySKD:
+		for i := 0; i < TYPES_PER_RUN && i < len(typeCodes); i++ {
+			idx := (skdRunIndex + i) % len(typeCodes)
+			selectedCodes = append(selectedCodes, typeCodes[idx])
+		}
+		skdRunIndex = (skdRunIndex + TYPES_PER_RUN) % len(typeCodes)
+	default:
+		for i := 0; i < TYPES_PER_RUN && i < len(typeCodes); i++ {
+			idx := (utbkRunIndex + i) % len(typeCodes)
+			selectedCodes = append(selectedCodes, typeCodes[idx])
+		}
+		utbkRunIndex = (utbkRunIndex + TYPES_PER_RUN) % len(typeCodes)
 	}
-	runIndex = (runIndex + TYPES_PER_RUN) % len(typeCodes)
 
-	log.Printf("[QuestionGenerator] Processing %d/%d types this run: %v", len(selectedCodes), len(typeCodes), selectedCodes)
+	log.Printf("[QuestionGenerator][%s] Processing types: %v", category, selectedCodes)
 
 	totalGenerated := 0
-	totalFailed := 0
-
 	for _, typeCode := range selectedCodes {
-		typeConfig := utbkQuestionTypes[typeCode]
-		// Get existing questions count for this type to avoid duplicates
+		var name string
+		var topics []string
+		if category == entity.BankSoalCategorySKD {
+			cfg := skdQuestionTypes[typeCode]
+			name = cfg.Name
+			topics = cfg.Topics
+		} else {
+			cfg := utbkQuestionTypes[typeCode]
+			name = cfg.Name
+			topics = cfg.Topics
+		}
+
 		existing, err := j.bankSoalRepo.FindByType(ctx, typeCode, true)
 		if err != nil {
 			log.Printf("[QuestionGenerator] Error fetching existing questions for %s: %v", typeCode, err)
@@ -202,25 +302,26 @@ func (j *QuestionGenerator) Run() error {
 		}
 
 		existingTopics := j.getExistingTopicCounts(existing)
-
-		// Pick the topic with fewest questions (balanced distribution)
-		selectedTopic := j.selectLeastCoveredTopic(typeConfig.Topics, existingTopics)
+		selectedTopic := j.selectLeastCoveredTopic(topics, existingTopics)
 		selectedDifficulty := j.selectDifficulty(existing)
 
-		log.Printf("[QuestionGenerator] Generating %d questions for %s (%s) - Topic: %s, Difficulty: %s",
-			QUESTIONS_PER_BATCH, typeCode, typeConfig.Name, selectedTopic, selectedDifficulty)
+		log.Printf("[QuestionGenerator][%s] Generating %d questions for %s (%s) - Topic: %s, Difficulty: %s",
+			category, QUESTIONS_PER_BATCH, typeCode, name, selectedTopic, selectedDifficulty)
 
-		// Build existing question texts for uniqueness check
 		existingTexts := j.getExistingTexts(existing, selectedTopic)
 
-		questions, err := j.generateQuestions(ctx, typeCode, typeConfig.Name, selectedTopic, selectedDifficulty, existingTexts)
-		if err != nil {
-			log.Printf("[QuestionGenerator] Error generating questions for %s: %v", typeCode, err)
-			totalFailed++
+		var questions []GeneratedQuestion
+		var genErr error
+		if category == entity.BankSoalCategorySKD {
+			questions, genErr = j.generateSKDQuestions(ctx, aiClient, typeCode, name, selectedTopic, selectedDifficulty, existingTexts)
+		} else {
+			questions, genErr = j.generateUTBKQuestions(ctx, aiClient, typeCode, name, selectedTopic, selectedDifficulty, existingTexts)
+		}
+		if genErr != nil {
+			log.Printf("[QuestionGenerator] Error generating questions for %s: %v", typeCode, genErr)
 			continue
 		}
 
-		// Save generated questions
 		saved := 0
 		for _, q := range questions {
 			isOptions := len(q.Options) > 0
@@ -239,37 +340,48 @@ func (j *QuestionGenerator) Run() error {
 				CreatedAt:     time.Now(),
 				UpdatedAt:     time.Now(),
 			}
-
 			if _, err := j.bankSoalRepo.Create(ctx, bankSoal); err != nil {
 				log.Printf("[QuestionGenerator] Failed to save question: %v", err)
 			} else {
 				saved++
 			}
 		}
-
 		totalGenerated += saved
-		log.Printf("[QuestionGenerator] Saved %d/%d questions for %s (%s)", saved, len(questions), typeCode, typeConfig.Name)
-
-		// Minimal delay between types to avoid rate limiting
+		log.Printf("[QuestionGenerator][%s] Saved %d/%d questions for %s", category, saved, len(questions), typeCode)
 		time.Sleep(1 * time.Second)
 	}
 
-	log.Printf("[QuestionGenerator] Completed: Generated %d questions across %d types (%d failures)",
-		totalGenerated, len(selectedCodes), totalFailed)
+	log.Printf("[QuestionGenerator][%s] Completed: generated %d questions", category, totalGenerated)
 	return nil
 }
 
-// sortStrings sorts a string slice in-place (simple insertion sort to avoid importing sort package)
-func sortStrings(s []string) {
-	for i := 1; i < len(s); i++ {
-		for j := i; j > 0 && s[j] < s[j-1]; j-- {
-			s[j], s[j-1] = s[j-1], s[j]
+// buildAIClient creates an AI client using system config, falling back to .env values.
+func (j *QuestionGenerator) buildAIClient(ctx context.Context, category string) *common.AIClient {
+	if j.systemConfigRepo != nil {
+		var providerKey, apiKeyKey, modelKey string
+		if category == entity.BankSoalCategorySKD {
+			providerKey = "llm_skd_provider"
+			apiKeyKey = "llm_skd_api_key"
+			modelKey = "llm_skd_model"
+		} else {
+			providerKey = "llm_utbk_provider"
+			apiKeyKey = "llm_utbk_api_key"
+			modelKey = "llm_utbk_model"
+		}
+
+		providerCfg, _ := j.systemConfigRepo.FindByKey(ctx, providerKey)
+		apiKeyCfg, _ := j.systemConfigRepo.FindByKey(ctx, apiKeyKey)
+		modelCfg, _ := j.systemConfigRepo.FindByKey(ctx, modelKey)
+
+		if apiKeyCfg.Value != "" {
+			return common.NewAIClientWithValues(providerCfg.Value, apiKeyCfg.Value, modelCfg.Value, j.config.Get)
 		}
 	}
+	// Fall back to .env config
+	return common.NewAIClient(j.config.Get)
 }
 
-func (j *QuestionGenerator) generateQuestions(ctx context.Context, typeCode, typeName, topic, difficulty string, existingTexts []string) ([]GeneratedQuestion, error) {
-	// Build uniqueness context
+func (j *QuestionGenerator) generateUTBKQuestions(ctx context.Context, aiClient *common.AIClient, typeCode, typeName, topic, difficulty string, existingTexts []string) ([]GeneratedQuestion, error) {
 	var uniquenessInstruction string
 	if len(existingTexts) > 0 {
 		maxExamples := 10
@@ -287,8 +399,7 @@ func (j *QuestionGenerator) generateQuestions(ctx context.Context, typeCode, typ
 		uniquenessInstruction += "\nPastikan soal yang kamu buat BERBEDA sepenuhnya dari daftar di atas.\n"
 	}
 
-	systemPrompt := j.buildUTBKSystemPrompt(typeCode, typeName)
-
+	systemPrompt := buildUTBKSystemPrompt(typeCode, typeName)
 	userPrompt := fmt.Sprintf(`Buatkan %d soal UTBK untuk kategori %s (%s) dengan topik "%s" dan tingkat kesulitan "%s".
 
 KETENTUAN PENTING:
@@ -299,7 +410,7 @@ KETENTUAN PENTING:
 5. Soal harus UNIK dan tidak boleh mirip dengan soal yang sudah ada
 6. Gunakan konteks yang relevan dengan kehidupan sehari-hari atau isu terkini Indonesia
 7. Tingkat kesulitan "%s": %s
-8. PENTING: Jika soal memerlukan wacana/teks bacaan/stimulus/tabel/data, 
+8. PENTING: Jika soal memerlukan wacana/teks bacaan/stimulus/tabel/data,
    WAJIB sertakan wacana LENGKAP di field "text" SETIAP soal (bukan hanya di soal pertama).
    Setiap soal harus bisa dipahami secara mandiri tanpa perlu melihat soal lain.
    Gunakan HTML untuk format: <p><b>Bacalah teks berikut!</b></p><p>[wacana lengkap]</p><p><b>Pertanyaan:</b> [pertanyaan]</p>
@@ -317,19 +428,73 @@ Format JSON yang HARUS diikuti:
   ]
 }
 
-CATATAN: Untuk soal yang TIDAK memerlukan wacana (misalnya soal matematika langsung), 
+CATATAN: Untuk soal yang TIDAK memerlukan wacana (misalnya soal matematika langsung),
 field "text" cukup berisi pertanyaan saja tanpa format wacana.`,
-		QUESTIONS_PER_BATCH,
-		typeName,
-		typeCode,
-		topic,
-		difficulty,
-		difficulty,
-		j.getDifficultyDescription(difficulty),
-		uniquenessInstruction,
+		QUESTIONS_PER_BATCH, typeName, typeCode, topic, difficulty, difficulty,
+		getDifficultyDescription(difficulty), uniquenessInstruction,
 	)
 
-	aiResp, err := j.aiClient.Chat(ctx, common.AIRequest{
+	return callAI(ctx, aiClient, systemPrompt, userPrompt)
+}
+
+func (j *QuestionGenerator) generateSKDQuestions(ctx context.Context, aiClient *common.AIClient, typeCode, typeName, topic, difficulty string, existingTexts []string) ([]GeneratedQuestion, error) {
+	var uniquenessInstruction string
+	if len(existingTexts) > 0 {
+		maxExamples := 10
+		if len(existingTexts) < maxExamples {
+			maxExamples = len(existingTexts)
+		}
+		uniquenessInstruction = "\n\nBERIKUT ADALAH SOAL YANG SUDAH ADA (JANGAN membuat soal yang mirip atau serupa):\n"
+		for i := 0; i < maxExamples; i++ {
+			text := existingTexts[i]
+			if len(text) > 100 {
+				text = text[:100] + "..."
+			}
+			uniquenessInstruction += fmt.Sprintf("- %s\n", text)
+		}
+		uniquenessInstruction += "\nPastikan soal yang kamu buat BERBEDA sepenuhnya dari daftar di atas.\n"
+	}
+
+	systemPrompt := buildSKDSystemPrompt(typeCode, typeName)
+
+	var diffDescription string
+	if typeCode == "tkp" {
+		diffDescription = "Untuk TKP tidak ada konsep benar/salah mutlak — setiap pilihan memiliki bobot nilai berbeda (1-5)."
+	} else {
+		diffDescription = getDifficultyDescription(difficulty)
+	}
+
+	userPrompt := fmt.Sprintf(`Buatkan %d soal SKD CPNS untuk subtest %s (%s) dengan topik "%s" dan tingkat kesulitan "%s".
+
+KETENTUAN PENTING:
+1. Semua soal WAJIB dalam Bahasa Indonesia yang baku
+2. Setiap soal harus memiliki tepat 5 pilihan jawaban (A, B, C, D, E)
+3. Soal harus berkualitas tinggi, setara dengan soal SKD CPNS resmi BKN
+4. Setiap soal harus memiliki penjelasan yang lengkap
+5. Soal harus UNIK dan tidak boleh mirip dengan soal yang sudah ada
+6. Tingkat kesulitan "%s": %s
+%s
+
+Format JSON yang HARUS diikuti:
+{
+  "questions": [
+    {
+      "text": "Teks pertanyaan di sini",
+      "options": ["A. Pilihan 1", "B. Pilihan 2", "C. Pilihan 3", "D. Pilihan 4", "E. Pilihan 5"],
+      "correct_answer": "A",
+      "explanation": "Penjelasan lengkap mengapa jawaban A benar"
+    }
+  ]
+}`,
+		QUESTIONS_PER_BATCH, typeName, typeCode, topic, difficulty, difficulty,
+		diffDescription, uniquenessInstruction,
+	)
+
+	return callAI(ctx, aiClient, systemPrompt, userPrompt)
+}
+
+func callAI(ctx context.Context, aiClient *common.AIClient, systemPrompt, userPrompt string) ([]GeneratedQuestion, error) {
+	aiResp, err := aiClient.Chat(ctx, common.AIRequest{
 		Messages: []common.AIMessage{
 			{Role: "system", Content: systemPrompt},
 			{Role: "user", Content: userPrompt},
@@ -340,32 +505,31 @@ field "text" cukup berisi pertanyaan saja tanpa format wacana.`,
 	}
 
 	content := common.CleanJSONContent(aiResp.Content)
-
 	var result GenerateResponse
 	if err := json.Unmarshal([]byte(content), &result); err != nil {
 		var questions []GeneratedQuestion
 		if jsonErr := json.Unmarshal([]byte(content), &questions); jsonErr == nil {
-			result.Questions = questions
-		} else {
-			truncated := content
-			if len(truncated) > 200 {
-				truncated = truncated[:200]
-			}
-			return nil, fmt.Errorf("failed to parse AI response: %w (content: %s)", err, truncated)
+			return questions, nil
 		}
+		truncated := content
+		if len(truncated) > 200 {
+			truncated = truncated[:200]
+		}
+		return nil, fmt.Errorf("failed to parse AI response: %w (content: %s)", err, truncated)
 	}
-
 	return result.Questions, nil
 }
 
-func (j *QuestionGenerator) buildUTBKSystemPrompt(typeCode, typeName string) string {
-	basePrompt := `Kamu adalah pembuat soal UTBK (Ujian Tulis Berbasis Komputer) profesional dari Indonesia.
+// ==================== System Prompt Builders ====================
+
+func buildUTBKSystemPrompt(typeCode, typeName string) string {
+	base := `Kamu adalah pembuat soal UTBK (Ujian Tulis Berbasis Komputer) profesional dari Indonesia.
 Kamu memiliki pengalaman lebih dari 10 tahun dalam membuat soal-soal seleksi masuk perguruan tinggi negeri di Indonesia.
 
 PEDOMAN UTAMA:
 1. Semua soal HARUS dalam Bahasa Indonesia yang baku dan benar (sesuai PUEBI/EYD V)
 2. Soal harus setara dengan kualitas soal UTBK resmi dari LTMPT/SNPMB
-3. Setiap soal harus mengukur kemampuan berpikir tingkat tinggi (HOTS - Higher Order Thinking Skills)
+3. Setiap soal harus mengukur kemampuan berpikir tingkat tinggi (HOTS)
 4. Gunakan konteks yang relevan dengan Indonesia (budaya, geografi, sejarah, isu terkini)
 5. Hindari soal yang ambigu atau memiliki lebih dari satu jawaban benar
 6. Setiap pilihan jawaban harus masuk akal (plausible distractors)
@@ -376,103 +540,135 @@ ATURAN FORMAT:
 - correct_answer harus berupa huruf tunggal (A, B, C, D, atau E)
 - Respon HANYA dalam format JSON yang valid, tanpa markdown blocks
 
-ATURAN WACANA/TEKS BACAAN (SANGAT PENTING - WAJIB DIPATUHI):
-- Jika soal memerlukan wacana, teks bacaan, stimulus, tabel, grafik, atau konteks apa pun, 
+ATURAN WACANA/TEKS BACAAN (SANGAT PENTING):
+- Jika soal memerlukan wacana, teks bacaan, stimulus, tabel, grafik, atau konteks apa pun,
   maka teks tersebut HARUS disertakan LENGKAP di dalam field "text" pada SETIAP soal yang merujuk wacana itu.
-- JANGAN pernah menulis wacana hanya di satu soal dan merujuknya dari soal lain 
-  (misalnya "Berdasarkan teks di atas..." tanpa menyertakan teksnya).
+- JANGAN pernah menulis wacana hanya di satu soal dan merujuknya dari soal lain.
 - Setiap soal harus BERDIRI SENDIRI (self-contained) karena soal ditampilkan SATU PER SATU dan BISA DIACAK.
 - Wacana/teks TIDAK BOLEH dipotong, disingkat, dihilangkan, atau ditulis "..." - harus LENGKAP.
 - Gunakan format HTML di dalam field "text" agar tampilan rapi:
   <p><b>Bacalah teks berikut!</b></p><p>[seluruh isi wacana lengkap tanpa dipotong]</p><p><b>Pertanyaan:</b> [pertanyaan]</p>
-- Boleh ada beberapa soal yang berbagi wacana yang sama - tapi SETIAP soal tersebut HARUS 
-  menyertakan wacana lengkap yang sama di field "text"-nya masing-masing.
-- Field "text" boleh panjang. JANGAN khawatir tentang panjang teks.
 `
 
-	// Add type-specific instructions
 	switch typeCode {
 	case "kpu":
-		basePrompt += `
+		base += `
 KHUSUS PENALARAN UMUM:
 - Soal harus menguji kemampuan penalaran logis, analitis, dan kritis
 - Gunakan pola silogisme, analogi, deret, dan pengelompokan
 - Sertakan soal yang memerlukan analisis argumen dan penarikan kesimpulan
-- Jika soal memerlukan stimulus/bacaan, masukkan stimulus LENGKAP di field "text" setiap soal
-- Contoh gaya soal: "Jika semua X adalah Y, dan sebagian Y adalah Z, maka..."
 `
 	case "ppu":
-		basePrompt += `
+		base += `
 KHUSUS PENGETAHUAN DAN PEMAHAMAN UMUM:
 - Soal harus menguji wawasan kebangsaan dan pengetahuan umum
 - Gunakan konteks Indonesia: Pancasila, UUD 1945, NKRI, Bhinneka Tunggal Ika
 - Sertakan soal tentang isu terkini Indonesia yang relevan
 - Gunakan fakta-fakta yang akurat dan dapat diverifikasi
-- Integrasikan pengetahuan lintas bidang (sains, sosial, budaya)
-- Jika soal merujuk pada teks/kutipan/data, sertakan LENGKAP di setiap soal
 `
 	case "pbm":
-		basePrompt += `
+		base += `
 KHUSUS PEMAHAMAN BACAAN DAN MENULIS:
 - Buat teks bacaan/stimulus (200-400 kata) yang bervariasi: ilmiah populer, editorial, narasi, eksposisi
-- WAJIB: Sertakan teks bacaan LENGKAP di field "text" SETIAP soal. JANGAN pisahkan wacana dari soal.
+- WAJIB: Sertakan teks bacaan LENGKAP di field "text" SETIAP soal.
 - Soal harus menguji pemahaman literal, inferensial, dan evaluatif
-- Sertakan soal tentang EYD/PUEBI, kalimat efektif, dan kepaduan paragraf
-- Gunakan bahasa Indonesia yang baku dan benar
-- Format field "text" setiap soal: 
-  <p><b>Bacalah teks berikut!</b></p><p>[TEKS BACAAN LENGKAP 200-400 KATA - JANGAN DIPOTONG]</p><p><b>Pertanyaan:</b> [pertanyaan spesifik]</p>
+- Format field "text" setiap soal:
+  <p><b>Bacalah teks berikut!</b></p><p>[TEKS BACAAN LENGKAP 200-400 KATA]</p><p><b>Pertanyaan:</b> [pertanyaan spesifik]</p>
 `
 	case "pku":
-		basePrompt += `
+		base += `
 KHUSUS PENGETAHUAN KUANTITATIF:
 - Soal harus menguji kemampuan numerik dan kuantitatif
 - Gunakan konteks kehidupan sehari-hari (belanja, perjalanan, data statistik)
-- Sertakan soal tentang perbandingan, persentase, rata-rata, dan proporsi
-- Jika soal memerlukan tabel/grafik/data, sertakan data LENGKAP di setiap soal (gunakan HTML table)
 - Pastikan perhitungan dan jawaban benar secara matematis
 `
 	case "ind":
-		basePrompt += `
+		base += `
 KHUSUS LITERASI BAHASA INDONESIA:
 - Buat teks bacaan/stimulus yang substansial (300-500 kata)
-- Teks harus mencakup berbagai genre: berita, opini, ilmiah, sastra
-- WAJIB: Sertakan teks bacaan LENGKAP di field "text" SETIAP soal. JANGAN pisahkan wacana dari soal.
+- WAJIB: Sertakan teks bacaan LENGKAP di field "text" SETIAP soal.
 - Soal harus menguji kemampuan memahami isi tersurat dan tersirat
-- Sertakan soal tentang struktur teks, koherensi, dan kohesi
-- Gunakan teks yang relevan dengan konteks Indonesia terkini
-- Uji kemampuan menganalisis argumen dan mengevaluasi informasi
 - Format field "text" setiap soal:
-  <p><b>Bacalah teks berikut dengan saksama!</b></p><p>[TEKS BACAAN LENGKAP 300-500 KATA - JANGAN DIPOTONG]</p><p><b>Pertanyaan:</b> [pertanyaan spesifik]</p>
+  <p><b>Bacalah teks berikut dengan saksama!</b></p><p>[TEKS BACAAN LENGKAP 300-500 KATA]</p><p><b>Pertanyaan:</b> [pertanyaan spesifik]</p>
 `
 	case "ing":
-		basePrompt += `
+		base += `
 KHUSUS LITERASI BAHASA INGGRIS:
-- SOAL dan TEKS BACAAN dalam Bahasa Inggris (ini pengecualian dari aturan Bahasa Indonesia)
+- SOAL dan TEKS BACAAN dalam Bahasa Inggris
 - Buat reading passage (200-400 kata) menggunakan teks akademik dan ilmiah populer
-- WAJIB: Sertakan reading passage LENGKAP di field "text" SETIAP soal. JANGAN pisahkan passage dari soal.
-- Soal harus menguji reading comprehension, vocabulary in context, dan inference
-- Sertakan soal grammar dan error recognition
+- WAJIB: Sertakan reading passage LENGKAP di field "text" SETIAP soal.
 - Level bahasa setara CEFR B2-C1
 - Format field "text" setiap soal:
-  <p><b>Read the following passage carefully!</b></p><p>[FULL READING PASSAGE 200-400 WORDS - DO NOT TRUNCATE]</p><p><b>Question:</b> [specific question]</p>
+  <p><b>Read the following passage carefully!</b></p><p>[FULL READING PASSAGE 200-400 WORDS]</p><p><b>Question:</b> [specific question]</p>
 `
 	case "mtk":
-		basePrompt += `
+		base += `
 KHUSUS PENALARAN MATEMATIKA:
 - Soal harus menguji kemampuan penalaran matematika, bukan sekadar hafalan rumus
 - Gunakan konteks kehidupan sehari-hari Indonesia
-- Sertakan soal yang memerlukan analisis dan pemecahan masalah multi-langkah
 - Pastikan semua perhitungan dan jawaban 100% benar secara matematis
 - Sertakan langkah-langkah penyelesaian dalam penjelasan
-- Gunakan notasi matematika yang benar
-- Jika soal merujuk pada tabel/grafik/data, sertakan data LENGKAP di setiap soal
 `
 	}
-
-	return basePrompt
+	return base
 }
 
-func (j *QuestionGenerator) getDifficultyDescription(difficulty string) string {
+func buildSKDSystemPrompt(typeCode, typeName string) string {
+	base := `Kamu adalah pembuat soal SKD CPNS (Seleksi Kompetensi Dasar Calon Pegawai Negeri Sipil) profesional dari Indonesia.
+Kamu memiliki pengalaman lebih dari 10 tahun dalam membuat soal-soal seleksi CPNS yang diselenggarakan oleh BKN (Badan Kepegawaian Negara).
+
+PEDOMAN UTAMA:
+1. Semua soal HARUS dalam Bahasa Indonesia yang baku dan benar (sesuai PUEBI/EYD V)
+2. Soal harus setara dengan kualitas soal SKD CPNS resmi dari BKN
+3. Gunakan konteks yang relevan dengan pemerintahan dan pelayanan publik Indonesia
+4. Hindari soal yang ambigu atau tidak sesuai dengan regulasi terkini
+5. SELALU sertakan penjelasan yang komprehensif
+
+ATURAN FORMAT:
+- Setiap soal HARUS memiliki tepat 5 pilihan jawaban (A, B, C, D, E)
+- correct_answer harus berupa huruf tunggal (A, B, C, D, atau E)
+- Respon HANYA dalam format JSON yang valid, tanpa markdown blocks
+`
+
+	switch typeCode {
+	case "twk":
+		base += `
+KHUSUS TES WAWASAN KEBANGSAAN (TWK):
+- Soal harus menguji pemahaman dan penghayatan terhadap nilai-nilai kebangsaan Indonesia
+- Fokus pada: Pancasila, UUD 1945, Bhinneka Tunggal Ika, dan NKRI
+- Sertakan soal tentang sejarah perjuangan bangsa, bela negara, dan wawasan nusantara
+- Gunakan fakta sejarah dan regulasi yang akurat
+- Soal harus menguji sikap dan perilaku cinta tanah air
+`
+	case "tiu":
+		base += `
+KHUSUS TES INTELEGENSIA UMUM (TIU):
+- Soal harus menguji kemampuan verbal, numerik, dan figural
+- Verbal: sinonim, antonim, analogi kata, pengelompokan kata
+- Numerik: berhitung, deret angka, perbandingan kuantitatif, soal cerita
+- Figural: analogi gambar, ketidaksamaan, seri gambar (deskripsikan dalam teks)
+- Pastikan semua jawaban numerik 100% benar secara matematis
+- Soal analogi figural dapat dideskripsikan menggunakan teks dan angka
+`
+	case "tkp":
+		base += `
+KHUSUS TES KARAKTERISTIK PRIBADI (TKP):
+- Soal berbentuk situasional (Situational Judgment Test)
+- Setiap soal menyajikan situasi nyata di lingkungan kerja pemerintahan
+- 5 pilihan jawaban mencerminkan respons dengan tingkat ketepatan berbeda (tidak ada yang salah mutlak)
+- Pilihan jawaban diurutkan dari yang paling tepat (A=skor 5) ke yang kurang tepat (E=skor 1)
+- correct_answer diisi dengan huruf pilihan yang PALING TEPAT/IDEAL
+- Dalam explanation, jelaskan mengapa masing-masing pilihan memiliki bobot berbeda
+- Fokus pada: integritas, pelayanan, kerja sama, inovasi, adaptasi, dan pengembangan diri
+- PENTING: Semua pilihan jawaban harus masuk akal dan menggambarkan perilaku positif dengan intensitas berbeda
+`
+	}
+	return base
+}
+
+// ==================== Helpers ====================
+
+func getDifficultyDescription(difficulty string) string {
 	switch difficulty {
 	case "easy":
 		return "Soal mudah - menguji pemahaman dasar, satu langkah penyelesaian, konteks sederhana"
@@ -485,6 +681,14 @@ func (j *QuestionGenerator) getDifficultyDescription(difficulty string) string {
 	}
 }
 
+func sortStrings(s []string) {
+	for i := 1; i < len(s); i++ {
+		for j := i; j > 0 && s[j] < s[j-1]; j-- {
+			s[j], s[j-1] = s[j-1], s[j]
+		}
+	}
+}
+
 func (j *QuestionGenerator) getExistingTopicCounts(questions []entity.BankSoal) map[string]int {
 	counts := make(map[string]int)
 	for _, q := range questions {
@@ -494,9 +698,8 @@ func (j *QuestionGenerator) getExistingTopicCounts(questions []entity.BankSoal) 
 }
 
 func (j *QuestionGenerator) selectLeastCoveredTopic(topics []string, existingCounts map[string]int) string {
-	minCount := int(^uint(0) >> 1) // Max int
+	minCount := int(^uint(0) >> 1)
 	var candidates []string
-
 	for _, topic := range topics {
 		count := existingCounts[topic]
 		if count < minCount {
@@ -506,7 +709,6 @@ func (j *QuestionGenerator) selectLeastCoveredTopic(topics []string, existingCou
 			candidates = append(candidates, topic)
 		}
 	}
-
 	if len(candidates) == 0 {
 		return topics[rand.Intn(len(topics))]
 	}
@@ -518,17 +720,13 @@ func (j *QuestionGenerator) selectDifficulty(existing []entity.BankSoal) string 
 	for _, q := range existing {
 		counts[q.Difficulty]++
 	}
-
-	// Target ratio: 30% easy, 40% medium, 30% hard
 	total := len(existing)
 	if total == 0 {
 		return "medium"
 	}
-
 	easyRatio := float64(counts["easy"]) / float64(total)
 	mediumRatio := float64(counts["medium"]) / float64(total)
 	hardRatio := float64(counts["hard"]) / float64(total)
-
 	if easyRatio < 0.25 {
 		return "easy"
 	}
@@ -538,8 +736,6 @@ func (j *QuestionGenerator) selectDifficulty(existing []entity.BankSoal) string 
 	if mediumRatio < 0.35 {
 		return "medium"
 	}
-
-	// Random if balanced
 	diffs := []string{"easy", "medium", "hard"}
 	return diffs[rand.Intn(3)]
 }

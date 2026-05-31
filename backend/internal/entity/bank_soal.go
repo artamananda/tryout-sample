@@ -42,3 +42,38 @@ const (
 	BankSoalStatusPublished = "published"
 	BankSoalStatusDuplicate = "duplicate"
 )
+
+// BankSoal category constants
+const (
+	BankSoalCategoryUTBK = "utbk"
+	BankSoalCategorySKD  = "skd"
+)
+
+// UTBK type codes
+var UTBKTypes = map[string]bool{
+	"kpu": true, "ppu": true, "pbm": true,
+	"pku": true, "ind": true, "ing": true, "mtk": true,
+}
+
+// SKD CPNS type codes
+var SKDTypes = map[string]bool{
+	"twk": true, "tiu": true, "tkp": true,
+}
+
+// GetCategoryFromType returns the category ("utbk" or "skd") for a given type code.
+func GetCategoryFromType(typeCode string) string {
+	if SKDTypes[typeCode] {
+		return BankSoalCategorySKD
+	}
+	return BankSoalCategoryUTBK
+}
+
+// GetTypesByCategory returns all type codes for a given category.
+func GetTypesByCategory(category string) []string {
+	switch category {
+	case BankSoalCategorySKD:
+		return []string{"twk", "tiu", "tkp"}
+	default:
+		return []string{"kpu", "ppu", "pbm", "pku", "ind", "ing", "mtk"}
+	}
+}

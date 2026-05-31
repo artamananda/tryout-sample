@@ -3,6 +3,7 @@ import { Navigation } from '../../components/Home/Navigation';
 import { Header } from '../../components/Home/Header';
 import { Features } from '../../components/Home/Features';
 import { About } from '../../components/Home/About';
+import { SKDBanner } from '../../components/Home/SKDBanner';
 import { Services } from '../../components/Home/Services';
 import { Gallery } from '../../components/Home/Galery';
 import { Testimonials } from '../../components/Home/Testimonial';
@@ -29,6 +30,7 @@ const HomeScreen = () => {
       <ScrollToHash />
       <Navigation />
       <Header data={landingPageData.Header} />
+      <SKDBanner />
       {/* <Features targetDate="2025-12-20 09:00:00" /> */}
       <About data={landingPageData.About} />
       <Services data={landingPageData.Services} />

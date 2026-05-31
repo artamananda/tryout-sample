@@ -17,6 +17,7 @@ type Scheduler struct {
 	chatLogRepo            *repository.ChatLogRepository
 	dailyChallengeRepo     *repository.DailyChallengeRepository
 	questionStatisticsRepo *repository.QuestionStatisticsRepository
+	systemConfigRepo       *repository.SystemConfigRepository
 }
 
 func NewScheduler(
@@ -25,6 +26,7 @@ func NewScheduler(
 	chatLogRepo *repository.ChatLogRepository,
 	dailyChallengeRepo *repository.DailyChallengeRepository,
 	questionStatisticsRepo *repository.QuestionStatisticsRepository,
+	systemConfigRepo *repository.SystemConfigRepository,
 ) *Scheduler {
 	return &Scheduler{
 		cronRunner:             cronlib.New(cronlib.WithLocation(getJakartaTimezone())),
@@ -33,6 +35,7 @@ func NewScheduler(
 		chatLogRepo:            chatLogRepo,
 		dailyChallengeRepo:     dailyChallengeRepo,
 		questionStatisticsRepo: questionStatisticsRepo,
+		systemConfigRepo:       systemConfigRepo,
 	}
 }
 
@@ -103,7 +106,7 @@ func (s *Scheduler) Start() {
 	})
 
 	// Job 7: Question Generator - Every 4 hours (1 type per run, rotates through all types)
-	questionGenerator := jobs.NewQuestionGenerator(s.config, s.bankSoalRepo)
+	questionGenerator := jobs.NewQuestionGenerator(s.config, s.bankSoalRepo, s.systemConfigRepo)
 	s.cronRunner.AddFunc("0 */4 * * *", func() {
 		log.Println("[Cron] Running Question Generator...")
 		if err := questionGenerator.Run(); err != nil {
@@ -154,5 +157,5 @@ func (s *Scheduler) TriggerDifficultyCalibrator() error {
 }
 
 func (s *Scheduler) TriggerQuestionGenerator() error {
-	return jobs.NewQuestionGenerator(s.config, s.bankSoalRepo).Run()
+	return jobs.NewQuestionGenerator(s.config, s.bankSoalRepo, s.systemConfigRepo).Run()
 }

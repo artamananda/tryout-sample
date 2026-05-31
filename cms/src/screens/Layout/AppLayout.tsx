@@ -9,6 +9,7 @@ import {
   BookOutlined,
   RobotOutlined,
   PlayCircleOutlined,
+  SettingOutlined,
 } from "@ant-design/icons";
 import type { MenuProps } from "antd";
 import { Layout, Menu, Image, Spin, Modal } from "antd";
@@ -48,14 +49,19 @@ const AppLayout = () => {
     ]),
     getItem("Tryout", "/tryout", <CalendarOutlined />),
     getItem("Tryout Result", "/tryout-result", <BarChartOutlined />),
-    getItem("Bank Soal", "/bank-soal", <BookOutlined />),
+    getItem("Bank Soal", "/bank-soal", <BookOutlined />, [
+      getItem("Bank Soal UTBK", "/bank-soal/utbk"),
+      getItem("Bank Soal SKD CPNS", "/bank-soal/skd-cpns"),
+    ]),
     getItem("Learning Video", "/learning-video", <PlayCircleOutlined />),
     getItem("AI Generator", "/ai-generator", <RobotOutlined />),
     getItem("Program", "/program", <ScheduleOutlined />),
-    // getItem("Batch 5", "/program/batch5", <Html5Outlined />),
     getItem("Role", "/role", <UsergroupAddOutlined />, [
       getItem("Admin", "/role/admins"),
       getItem("User", "/role/users"),
+    ]),
+    getItem("Settings", "/settings", <SettingOutlined />, [
+      getItem("LLM Config", "/settings/llm-config"),
     ]),
   ];
 

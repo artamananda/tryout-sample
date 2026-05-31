@@ -54,21 +54,30 @@ const AppLayout = () => {
           getItem('Keluar', '/logout', <PoweroffOutlined />)
         ]),
         getItem('Tryout', '/tryout', <CalendarOutlined />),
-        getItem('Bank Soal', '/bank-soal', <BookOutlined />),
+        getItem('Bank Soal', '/bank-soal', <BookOutlined />, [
+          getItem('Bank Soal UTBK', '/bank-soal/utbk'),
+          getItem('Bank Soal SKD CPNS', '/bank-soal/skd-cpns'),
+        ]),
         getItem('Learning Video', '/learning-video', <PlayCircleOutlined />),
         getItem('Program', '/program', <ScheduleOutlined />)
       ]
     : [
-        getItem('Bank Soal', '/bank-soal', <BookOutlined />),
+        getItem('Bank Soal', '/bank-soal', <BookOutlined />, [
+          getItem('Bank Soal UTBK', '/bank-soal/utbk'),
+          getItem('Bank Soal SKD CPNS', '/bank-soal/skd-cpns'),
+        ]),
         getItem('Masuk', '/login', <UserOutlined />),
         getItem('Daftar', '/register', <CalendarOutlined />)
       ];
 
-  const selectedKey =
-    items?.find(
-      (item) =>
-        typeof item?.key === 'string' && location.pathname.startsWith(item.key)
-    )?.key || '/bank-soal';
+  const selectedKey = location.pathname.startsWith('/bank-soal/utbk')
+    ? '/bank-soal/utbk'
+    : location.pathname.startsWith('/bank-soal/skd-cpns')
+    ? '/bank-soal/skd-cpns'
+    : items?.find(
+        (item) =>
+          typeof item?.key === 'string' && location.pathname.startsWith(item.key)
+      )?.key || '/bank-soal/utbk';
 
   const handleMenuClick = (key: string) => {
     if (key === '/logout') {

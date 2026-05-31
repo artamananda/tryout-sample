@@ -20,18 +20,22 @@ import {
   getAllQuestionTypes,
   saveCustomType,
   DIFFICULTY_OPTIONS,
+  UTBK_QUESTION_TYPES,
+  SKD_QUESTION_TYPES,
 } from "./questionTypes";
 
 type PropTypes = {
   setIsModalOpen: (val: boolean) => void;
   isModalOpen: boolean;
   onSuccess: () => void;
+  category?: "utbk" | "skd";
 };
 
 const ModalCreateBankSoal = (props: PropTypes) => {
-  const { setIsModalOpen, isModalOpen, onSuccess } = props;
+  const { setIsModalOpen, isModalOpen, onSuccess, category } = props;
 
-  const [questionType, setQuestionType] = useState<string>("kpu");
+  const defaultType = category === "skd" ? "twk" : "kpu";
+  const [questionType, setQuestionType] = useState<string>(defaultType);
   const [questionText, setQuestionText] = useState<string>("");
   const [options, setOptions] = useState<string[]>(["", "", "", "", ""]);
   const [answer, setAnswer] = useState<string>("A");
@@ -204,7 +208,13 @@ const ModalCreateBankSoal = (props: PropTypes) => {
                 value={questionType}
                 onChange={(val) => setQuestionType(val)}
                 style={{ width: "100%" }}
-                options={getAllQuestionTypes()}
+                options={
+                  category === "skd"
+                    ? SKD_QUESTION_TYPES
+                    : category === "utbk"
+                    ? UTBK_QUESTION_TYPES
+                    : getAllQuestionTypes()
+                }
                 size="large"
                 showSearch
                 placeholder="Pilih atau buat jenis soal baru"

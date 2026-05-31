@@ -15,6 +15,47 @@ export const Navigation = (props: any) => {
   const authName: string = userAuth() ? userAuth()?.name : null;
   const navigate = useNavigate();
 
+  const bankSoalMenuItems: MenuProps['items'] = [
+    {
+      key: 'utbk',
+      label: (
+        <a href="/bank-soal/utbk">
+          <span style={{ fontWeight: 600 }}>Bank Soal UTBK</span>
+          <div style={{ fontSize: 11, color: '#888', marginTop: 1 }}>
+            KPU · PPU · PBM · PKU · IND · ING · MTK
+          </div>
+        </a>
+      )
+    },
+    {
+      key: 'skd',
+      label: (
+        <a href="/bank-soal/skd-cpns">
+          <span style={{ fontWeight: 600 }}>
+            Bank Soal SKD CPNS{' '}
+            <span
+              style={{
+                background: '#f6a800',
+                color: '#fff',
+                fontSize: 10,
+                padding: '1px 6px',
+                borderRadius: 8,
+                fontWeight: 700,
+                marginLeft: 4,
+                verticalAlign: 'middle'
+              }}
+            >
+              BARU
+            </span>
+          </span>
+          <div style={{ fontSize: 11, color: '#888', marginTop: 1 }}>
+            TWK · TIU · TKP
+          </div>
+        </a>
+      )
+    }
+  ];
+
   const secondaryMenuItems: MenuProps['items'] = [
     {
       key: 'portfolio',
@@ -122,9 +163,19 @@ export const Navigation = (props: any) => {
               </a>
             </li>
             <li>
-              <a href="/bank-soal" className="page-scroll">
-                Bank Soal
-              </a>
+              <Dropdown
+                menu={{ items: bankSoalMenuItems }}
+                placement="bottomLeft"
+                trigger={['click']}
+                overlayClassName="home-nav-dropdown"
+              >
+                <a
+                  className="page-scroll nav-menu-trigger"
+                  onClick={(e) => e.preventDefault()}
+                >
+                  Bank Soal <DownOutlined style={{ marginLeft: 6 }} />
+                </a>
+              </Dropdown>
             </li>
             <li>
               <Dropdown
