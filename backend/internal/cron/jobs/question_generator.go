@@ -195,11 +195,11 @@ var skdQuestionTypes = map[string]skdTypeConfig{
 			"Numerik: Deret Angka dan Pola Bilangan",
 			"Numerik: Perbandingan Kuantitatif",
 			"Numerik: Soal Cerita Matematika",
-			"Figural: Analogi Gambar",
-			"Figural: Ketidaksamaan Gambar",
-			"Figural: Seri Gambar dan Pola Visual",
-			"Penalaran Logis: Silogisme",
+			"Penalaran Logis: Silogisme dan Inferensi",
 			"Penalaran Analitis: Hubungan dan Urutan",
+			"Penalaran Logis: Pola Deret Huruf dan Angka",
+			"Verbal: Padanan Hubungan Kata",
+			"Numerik: Persamaan Linear dan Proporsi",
 		},
 	},
 	"tkp": {
@@ -473,6 +473,9 @@ KETENTUAN PENTING:
 4. Setiap soal harus memiliki penjelasan yang lengkap
 5. Soal harus UNIK dan tidak boleh mirip dengan soal yang sudah ada
 6. Tingkat kesulitan "%s": %s
+7. ⚠️ DILARANG KERAS: Jangan membuat soal yang memerlukan gambar, ilustrasi, diagram,
+   atau elemen visual apapun. Soal HARUS bisa dipahami sepenuhnya dari teks saja.
+   Untuk pola/deret gunakan angka atau huruf, bukan gambar.
 %s
 
 Format JSON yang HARUS diikuti:
@@ -624,6 +627,13 @@ PEDOMAN UTAMA:
 4. Hindari soal yang ambigu atau tidak sesuai dengan regulasi terkini
 5. SELALU sertakan penjelasan yang komprehensif
 
+LARANGAN KERAS — SOAL GAMBAR/VISUAL:
+- DILARANG KERAS membuat soal yang memerlukan gambar, ilustrasi, diagram, atau elemen visual apapun
+- JANGAN membuat soal figural (analogi gambar, seri gambar, ketidaksamaan gambar)
+- JANGAN mengacu pada "gambar di bawah", "perhatikan gambar", "pola gambar", atau sejenisnya
+- Semua soal HARUS bisa dipahami sepenuhnya hanya dari teks
+- Soal pola/deret HARUS menggunakan angka, huruf, atau simbol teks — bukan gambar
+
 ATURAN FORMAT:
 - Setiap soal HARUS memiliki tepat 5 pilihan jawaban (A, B, C, D, E)
 - correct_answer harus berupa huruf tunggal (A, B, C, D, atau E)
@@ -643,12 +653,13 @@ KHUSUS TES WAWASAN KEBANGSAAN (TWK):
 	case "tiu":
 		base += `
 KHUSUS TES INTELEGENSIA UMUM (TIU):
-- Soal harus menguji kemampuan verbal, numerik, dan figural
-- Verbal: sinonim, antonim, analogi kata, pengelompokan kata
-- Numerik: berhitung, deret angka, perbandingan kuantitatif, soal cerita
-- Figural: analogi gambar, ketidaksamaan, seri gambar (deskripsikan dalam teks)
+- Soal harus menguji kemampuan verbal dan numerik SAJA — TIDAK ada soal figural/gambar
+- Verbal: sinonim, antonim, analogi kata (A:B = C:?), pengelompokan kata, padanan hubungan
+- Numerik: berhitung, deret angka, deret huruf, perbandingan kuantitatif, soal cerita matematika
+- Penalaran: silogisme, inferensi logis, urutan/hubungan antar objek (dinyatakan dengan teks)
+- Untuk deret/pola: gunakan angka atau huruf, contoh "2, 4, 8, 16, ..." bukan pola gambar
 - Pastikan semua jawaban numerik 100% benar secara matematis
-- Soal analogi figural dapat dideskripsikan menggunakan teks dan angka
+- INGAT: DILARANG membuat soal yang memerlukan melihat gambar atau pola visual
 `
 	case "tkp":
 		base += `

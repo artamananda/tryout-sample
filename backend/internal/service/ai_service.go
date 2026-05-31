@@ -80,31 +80,12 @@ func (service *AIService) GenerateQuestions(ctx context.Context, request model.G
 	}
 
 	prompt := buildPrompt(request)
+	systemMsg := buildSystemPromptForType(request.QuestionType)
 
 	aiResp, err := aiClient.Chat(ctx, common.AIRequest{
 		Messages: []common.AIMessage{
-			{
-				Role: "system",
-				Content: `Kamu adalah pembuat soal UTBK (Ujian Tulis Berbasis Komputer) profesional Indonesia.
-Buat soal berkualitas tinggi setara soal UTBK resmi dari SNPMB.
-Semua soal WAJIB dalam Bahasa Indonesia (kecuali untuk Literasi Bahasa Inggris).
-Setiap soal harus memiliki tepat 5 pilihan jawaban (A, B, C, D, E).
-correct_answer harus berupa huruf tunggal (A, B, C, D, atau E).
-Sertakan penjelasan lengkap untuk setiap jawaban.
-Respon HANYA dengan JSON yang valid, tanpa markdown blocks.
-
-ATURAN WACANA/TEKS BACAAN (SANGAT PENTING):
-- Jika soal memerlukan wacana/teks bacaan/stimulus/tabel/data, 
-  sertakan teks tersebut LENGKAP di field "text" SETIAP soal.
-- JANGAN pernah menulis wacana hanya di satu soal lalu merujuknya dari soal lain.
-- Setiap soal harus BERDIRI SENDIRI karena soal ditampilkan satu per satu dan bisa diacak.
-- Wacana TIDAK BOLEH dipotong atau disingkat. Field "text" boleh panjang.
-- Gunakan format HTML: <p><b>Bacalah teks berikut!</b></p><p>[wacana lengkap]</p><p><b>Pertanyaan:</b> [pertanyaan]</p>`,
-			},
-			{
-				Role:    "user",
-				Content: prompt,
-			},
+			{Role: "system", Content: systemMsg},
+			{Role: "user", Content: prompt},
 		},
 	})
 	if err != nil {
@@ -130,6 +111,39 @@ ATURAN WACANA/TEKS BACAAN (SANGAT PENTING):
 	}
 
 	return result, nil
+}
+
+func buildSystemPromptForType(questionType string) string {
+	if entity.GetCategoryFromType(questionType) == entity.BankSoalCategorySKD {
+		return `Kamu adalah pembuat soal SKD CPNS (Seleksi Kompetensi Dasar Calon Pegawai Negeri Sipil) profesional Indonesia.
+Buat soal berkualitas tinggi setara soal SKD CPNS resmi dari BKN.
+Semua soal WAJIB dalam Bahasa Indonesia yang baku.
+Setiap soal harus memiliki tepat 5 pilihan jawaban (A, B, C, D, E).
+correct_answer harus berupa huruf tunggal (A, B, C, D, atau E).
+Sertakan penjelasan lengkap untuk setiap jawaban.
+Respon HANYA dengan JSON yang valid, tanpa markdown blocks.
+
+LARANGAN KERAS — SOAL GAMBAR/VISUAL:
+- DILARANG membuat soal yang memerlukan gambar, ilustrasi, diagram, atau elemen visual apapun.
+- JANGAN membuat soal figural (analogi gambar, seri gambar, ketidaksamaan gambar).
+- Semua soal HARUS bisa dipahami sepenuhnya dari teks saja.
+- Untuk pola/deret, gunakan angka atau huruf — bukan gambar.`
+	}
+	return `Kamu adalah pembuat soal UTBK (Ujian Tulis Berbasis Komputer) profesional Indonesia.
+Buat soal berkualitas tinggi setara soal UTBK resmi dari SNPMB.
+Semua soal WAJIB dalam Bahasa Indonesia (kecuali untuk Literasi Bahasa Inggris).
+Setiap soal harus memiliki tepat 5 pilihan jawaban (A, B, C, D, E).
+correct_answer harus berupa huruf tunggal (A, B, C, D, atau E).
+Sertakan penjelasan lengkap untuk setiap jawaban.
+Respon HANYA dengan JSON yang valid, tanpa markdown blocks.
+
+ATURAN WACANA/TEKS BACAAN (SANGAT PENTING):
+- Jika soal memerlukan wacana/teks bacaan/stimulus/tabel/data,
+  sertakan teks tersebut LENGKAP di field "text" SETIAP soal.
+- JANGAN pernah menulis wacana hanya di satu soal lalu merujuknya dari soal lain.
+- Setiap soal harus BERDIRI SENDIRI karena soal ditampilkan satu per satu dan bisa diacak.
+- Wacana TIDAK BOLEH dipotong atau disingkat. Field "text" boleh panjang.
+- Gunakan format HTML: <p><b>Bacalah teks berikut!</b></p><p>[wacana lengkap]</p><p><b>Pertanyaan:</b> [pertanyaan]</p>`
 }
 
 func buildPrompt(request model.GenerateQuestionsRequest) string {
