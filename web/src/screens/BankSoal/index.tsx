@@ -61,7 +61,7 @@ const getTypeColor = (type: string) => {
     ing: 'cyan',
     mtk: 'magenta',
     twk: 'gold',
-    tiu: 'geekblue',
+    tiu: '#1890ff',
     tkp: 'lime'
   };
   return colors[type] || 'default';
@@ -97,7 +97,7 @@ const BankSoalScreen = ({ category }: BankSoalScreenProps) => {
     setSearch,
     isLoading,
     pagination,
-    setQuery,
+    setQuery
   } = useFetchList<BankSoalItem>({
     endpoint: isGuestPreview ? 'public/bank-soal' : 'bank-soal',
     initialQuery: category ? { category } : {},
