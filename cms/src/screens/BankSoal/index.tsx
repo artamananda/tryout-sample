@@ -1,5 +1,4 @@
 import React, { useEffect, useState, useMemo } from "react";
-// Remove Duplicate useState import if any.
 import {
   Row,
   Col,
@@ -30,6 +29,10 @@ import { BankSoalResponse } from "../../types/ai.type";
 import {
   getCustomTypes,
   KNOWN_TYPE_LABELS,
+  UTBK_QUESTION_TYPES,
+  SKD_QUESTION_TYPES,
+  UTBK_TYPE_CODES,
+  SKD_TYPE_CODES,
   getQuestionTypeName,
 } from "./questionTypes";
 
@@ -38,18 +41,18 @@ const { Search } = Input;
 
 const getTypeColor = (type: string) => {
   const colors: Record<string, string> = {
-    kpu: "blue",
-    ppu: "green",
-    pbm: "purple",
-    pku: "orange",
-    ind: "red",
-    ing: "cyan",
-    mtk: "magenta",
+    kpu: "blue", ppu: "green", pbm: "purple",
+    pku: "orange", ind: "red", ing: "cyan", mtk: "magenta",
+    twk: "gold", tiu: "geekblue", tkp: "lime",
   };
   return colors[type] || "default";
 };
 
-const BankSoalScreen = () => {
+interface BankSoalScreenProps {
+  category?: "utbk" | "skd";
+}
+
+const BankSoalScreen = ({ category }: BankSoalScreenProps) => {
   const [selectedType, setSelectedType] = useState<string>("");
   const [expandedQuestion, setExpandedQuestion] = useState<string | null>(null);
   const [showAnswer, setShowAnswer] = useState<Record<string, boolean>>({});
@@ -62,17 +65,24 @@ const BankSoalScreen = () => {
   // Create State
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
 
+  const categoryQuery = category ? `?category=${category}` : "";
   const {
     data: questions,
     setSearch,
     isLoading,
   } = useFetchList<BankSoalResponse>({
-    endpoint: "bank-soal",
+    endpoint: `bank-soal${categoryQuery}`,
   });
 
+  const pageTitle = category === "skd"
+    ? "Bank Soal SKD CPNS"
+    : category === "utbk"
+    ? "Bank Soal UTBK"
+    : "Bank Soal";
+
   useEffect(() => {
-    document.title = "Bank Soal - CMS";
-  }, []);
+    document.title = `${pageTitle} - CMS`;
+  }, [pageTitle]);
 
   const handleTypeChange = (value: string) => {
     setSelectedType(value);
@@ -84,26 +94,20 @@ const BankSoalScreen = () => {
   const [currentPage, setCurrentPage] = useState(1);
   const [pageSize, setPageSize] = useState(10);
 
-  // Build dynamic filter options from fetched data + localStorage custom types
+  // Build dynamic filter options scoped to the current category
   const dynamicFilterOptions = useMemo(() => {
-    const typesFromData = questions.map((q) => q.type);
-    const knownTypes = Object.keys(KNOWN_TYPE_LABELS);
-    const customTypes = getCustomTypes().map((t) => t.value);
-    const allTypesArray = [...knownTypes, ...typesFromData, ...customTypes];
-    const uniqueTypes = allTypesArray.filter(
-      (type, index, self) => self.indexOf(type) === index,
-    );
+    const relevantTypes = category === "skd"
+      ? SKD_QUESTION_TYPES
+      : category === "utbk"
+      ? UTBK_QUESTION_TYPES
+      : Object.entries(KNOWN_TYPE_LABELS).map(([value, label]) => ({ value, label }));
+
     const options = [{ value: "", label: "Semua Jenis" }];
-    uniqueTypes.forEach((type) => {
-      if (type) {
-        options.push({
-          value: type,
-          label: KNOWN_TYPE_LABELS[type] || type.toUpperCase(),
-        });
-      }
+    relevantTypes.forEach(({ value, label }) => {
+      options.push({ value, label });
     });
     return options;
-  }, [questions]);
+  }, [category]);
 
   const filteredQuestions = questions
     .filter((q) => {
@@ -156,10 +160,14 @@ const BankSoalScreen = () => {
               level={2}
               style={{ margin: 0, color: "#1f1f1f", fontWeight: 700 }}
             >
-              Bank Soal
+              {pageTitle}
             </Title>
             <Text type="secondary" style={{ fontSize: 16 }}>
-              Manage and organize your question repository
+              {category === "skd"
+                ? "Kelola soal SKD CPNS (TWK, TIU, TKP)"
+                : category === "utbk"
+                ? "Kelola soal UTBK (KPU, PPU, PBM, PKU, IND, ING, MTK)"
+                : "Manage and organize your question repository"}
             </Text>
           </div>
           <Button
@@ -595,6 +603,7 @@ const BankSoalScreen = () => {
       <ModalCreateBankSoal
         isModalOpen={isCreateModalOpen}
         setIsModalOpen={setIsCreateModalOpen}
+        category={category}
         onSuccess={() => {
           window.location.reload();
         }}

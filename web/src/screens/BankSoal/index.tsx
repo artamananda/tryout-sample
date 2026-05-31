@@ -32,7 +32,6 @@ import renderTextWithMath from '../../components/RenderTextWithMath';
 
 const { Title, Paragraph, Text } = Typography;
 
-// Known question type labels for display
 const KNOWN_TYPE_LABELS: Record<string, string> = {
   kpu: 'Penalaran Umum (KPU)',
   ppu: 'Pengetahuan dan Pemahaman Umum (PPU)',
@@ -40,22 +39,22 @@ const KNOWN_TYPE_LABELS: Record<string, string> = {
   pku: 'Pengetahuan Kuantitatif (PKU)',
   ind: 'Literasi Bahasa Indonesia (IND)',
   ing: 'Literasi Bahasa Inggris (ING)',
-  mtk: 'Penalaran Matematika (MTK)'
+  mtk: 'Penalaran Matematika (MTK)',
+  twk: 'Tes Wawasan Kebangsaan (TWK)',
+  tiu: 'Tes Intelegensia Umum (TIU)',
+  tkp: 'Tes Karakteristik Pribadi (TKP)',
 };
 
-const getQuestionTypeName = (code: string) => {
-  return KNOWN_TYPE_LABELS[code] || code.toUpperCase();
-};
+const UTBK_TYPES = ['kpu', 'ppu', 'pbm', 'pku', 'ind', 'ing', 'mtk'];
+const SKD_TYPES = ['twk', 'tiu', 'tkp'];
+
+const getQuestionTypeName = (code: string) => KNOWN_TYPE_LABELS[code] || code.toUpperCase();
 
 const getTypeColor = (type: string) => {
   const colors: Record<string, string> = {
-    kpu: 'blue',
-    ppu: 'green',
-    pbm: 'purple',
-    pku: 'orange',
-    ind: 'red',
-    ing: 'cyan',
-    mtk: 'magenta'
+    kpu: 'blue', ppu: 'green', pbm: 'purple',
+    pku: 'orange', ind: 'red', ing: 'cyan', mtk: 'magenta',
+    twk: 'gold', tiu: 'geekblue', tkp: 'lime',
   };
   return colors[type] || 'default';
 };
@@ -68,7 +67,11 @@ const getQuestionId = (question: BankSoalItem) => {
   return question.question_id || question.bank_soal_id || '';
 };
 
-const BankSoalScreen = () => {
+interface BankSoalScreenProps {
+  category?: 'utbk' | 'skd';
+}
+
+const BankSoalScreen = ({ category }: BankSoalScreenProps) => {
   const isAuthenticated = useIsAuthenticated();
   const navigate = useNavigate();
   const isGuestPreview = !isAuthenticated();
@@ -80,19 +83,26 @@ const BankSoalScreen = () => {
   const [pageSize, setPageSize] = useState(10);
   const [sortBy, setSortBy] = useState('newest');
 
+  const categoryQuery = category ? `?category=${category}` : '';
   const {
     data: questions,
     setSearch,
     isLoading,
     pagination
   } = useFetchList<BankSoalItem>({
-    endpoint: isGuestPreview ? 'public/bank-soal' : 'bank-soal',
+    endpoint: isGuestPreview ? `public/bank-soal${categoryQuery}` : `bank-soal${categoryQuery}`,
     limit: isGuestPreview ? 5 : undefined
   });
 
+  const pageTitle = category === 'skd'
+    ? 'Bank Soal SKD CPNS'
+    : category === 'utbk'
+    ? 'Bank Soal UTBK'
+    : 'Bank Soal';
+
   useEffect(() => {
-    document.title = 'Bank Soal - Telisik';
-  }, []);
+    document.title = `${pageTitle} - Telisik`;
+  }, [pageTitle]);
 
   const handleTypeChange = (value: string) => {
     setSelectedType(value);
@@ -100,22 +110,13 @@ const BankSoalScreen = () => {
   };
 
   const dynamicFilterOptions = useMemo(() => {
-    const typesFromData = questions.map((q) => q.type);
-    const knownTypes = Object.keys(KNOWN_TYPE_LABELS);
-    const allTypesArray = [...knownTypes, ...typesFromData];
-    const uniqueTypes = Array.from(new Set(allTypesArray));
-
+    const relevantTypes = category === 'skd' ? SKD_TYPES : category === 'utbk' ? UTBK_TYPES : [...UTBK_TYPES, ...SKD_TYPES];
     const options = [{ value: '', label: 'Semua Jenis' }];
-    uniqueTypes.forEach((type) => {
-      if (type) {
-        options.push({
-          value: type,
-          label: KNOWN_TYPE_LABELS[type] || type.toUpperCase()
-        });
-      }
+    relevantTypes.forEach((type) => {
+      options.push({ value: type, label: KNOWN_TYPE_LABELS[type] || type.toUpperCase() });
     });
     return options;
-  }, [questions]);
+  }, [category]);
 
   const typeCounts = useMemo(() => {
     const counts: Record<string, number> = {};
@@ -175,8 +176,7 @@ const BankSoalScreen = () => {
           >
             <div style={{ padding: '20px 0' }}>
               <Title level={2} style={{ color: 'white', margin: 0 }}>
-                <RocketOutlined style={{ marginRight: '12px' }} /> Bank Soal
-                Telisik
+                <RocketOutlined style={{ marginRight: '12px' }} /> {pageTitle}
               </Title>
               <Paragraph
                 style={{
@@ -187,7 +187,9 @@ const BankSoalScreen = () => {
               >
                 {isGuestPreview
                   ? 'Coba gratis 5 soal pertama tanpa login. Lanjutkan akses penuh dengan daftar atau masuk gratis.'
-                  : 'Koleksi soal latihan terbaik untuk persiapan ujian yang lebih maksimal.'}
+                  : category === 'skd'
+                  ? 'Latihan soal SKD CPNS (TWK, TIU, TKP) untuk persiapan seleksi CPNS.'
+                  : 'Koleksi soal latihan UTBK terbaik untuk persiapan seleksi masuk PTN.'}
               </Paragraph>
             </div>
           </Card>

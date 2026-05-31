@@ -1,6 +1,6 @@
 // Shared constants and utilities for Bank Soal
 
-export const DEFAULT_QUESTION_TYPES = [
+export const UTBK_QUESTION_TYPES = [
   { value: "kpu", label: "Penalaran Umum (KPU)" },
   { value: "ppu", label: "Pengetahuan dan Pemahaman Umum (PPU)" },
   { value: "pbm", label: "Pemahaman Bacaan dan Menulis (PBM)" },
@@ -10,6 +10,15 @@ export const DEFAULT_QUESTION_TYPES = [
   { value: "mtk", label: "Penalaran Matematika (MTK)" },
 ];
 
+export const SKD_QUESTION_TYPES = [
+  { value: "twk", label: "Tes Wawasan Kebangsaan (TWK)" },
+  { value: "tiu", label: "Tes Intelegensia Umum (TIU)" },
+  { value: "tkp", label: "Tes Karakteristik Pribadi (TKP)" },
+];
+
+// All known types combined (for backwards compatibility)
+export const DEFAULT_QUESTION_TYPES = [...UTBK_QUESTION_TYPES, ...SKD_QUESTION_TYPES];
+
 export const KNOWN_TYPE_LABELS: Record<string, string> = {
   kpu: "Penalaran Umum (KPU)",
   ppu: "Pengetahuan dan Pemahaman Umum (PPU)",
@@ -18,26 +27,34 @@ export const KNOWN_TYPE_LABELS: Record<string, string> = {
   ind: "Literasi Bahasa Indonesia (IND)",
   ing: "Literasi Bahasa Inggris (ING)",
   mtk: "Penalaran Matematika (MTK)",
+  twk: "Tes Wawasan Kebangsaan (TWK)",
+  tiu: "Tes Intelegensia Umum (TIU)",
+  tkp: "Tes Karakteristik Pribadi (TKP)",
 };
+
+export const UTBK_TYPE_CODES = new Set(["kpu", "ppu", "pbm", "pku", "ind", "ing", "mtk"]);
+export const SKD_TYPE_CODES = new Set(["twk", "tiu", "tkp"]);
+
+export const getCategoryFromType = (typeCode: string): "utbk" | "skd" =>
+  SKD_TYPE_CODES.has(typeCode) ? "skd" : "utbk";
 
 export const getQuestionTypeName = (code: string) => {
   return KNOWN_TYPE_LABELS[code] || code.toUpperCase();
 };
 
-export const formatTypeOptions = (rawTypes: string[]) => {
+export const formatTypeOptions = (rawTypes: string[], category?: "utbk" | "skd") => {
+  const baseTypes = category === "skd" ? SKD_QUESTION_TYPES : category === "utbk" ? UTBK_QUESTION_TYPES : DEFAULT_QUESTION_TYPES;
   const customTypes = getCustomTypes().map(t => t.value);
   const allRawTypes = Array.from(new Set([...rawTypes, ...customTypes]));
-  
-  const options = allRawTypes.map(type => ({
-      value: type,
-      label: getQuestionTypeName(type)
-  }));
-  
-  // Also include defaults that might not be in the database yet but are "known"
-  DEFAULT_QUESTION_TYPES.forEach(def => {
-      if (!options.find(o => o.value === def.value)) {
-          options.push(def);
-      }
+
+  const options = allRawTypes
+    .filter(type => !category || (category === "skd" ? SKD_TYPE_CODES.has(type) : UTBK_TYPE_CODES.has(type)))
+    .map(type => ({ value: type, label: getQuestionTypeName(type) }));
+
+  baseTypes.forEach(def => {
+    if (!options.find(o => o.value === def.value)) {
+      options.push(def);
+    }
   });
 
   return options;

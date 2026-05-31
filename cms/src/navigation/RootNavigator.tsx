@@ -28,6 +28,7 @@ import EditProgramScreen from "../screens/ListProgram/Edit";
 import BankSoalScreen from "../screens/BankSoal";
 import AIChatScreen from "../screens/AIChat";
 import LearningVideoScreen from "../screens/LearningVideo";
+import LLMConfigScreen from "../screens/LLMConfig";
 
 const RootNavigator = () => {
   return (
@@ -66,10 +67,26 @@ const RootNavigator = () => {
           />
 
           <Route
-            path="/bank-soal"
+            path="/bank-soal/utbk"
             element={
               <PrivateRoute loginPath="/login">
-                <BankSoalScreen />
+                <BankSoalScreen category="utbk" />
+              </PrivateRoute>
+            }
+          />
+          <Route
+            path="/bank-soal/skd-cpns"
+            element={
+              <PrivateRoute loginPath="/login">
+                <BankSoalScreen category="skd" />
+              </PrivateRoute>
+            }
+          />
+          <Route
+            path="/settings/llm-config"
+            element={
+              <PrivateRoute loginPath="/login">
+                <LLMConfigScreen />
               </PrivateRoute>
             }
           />

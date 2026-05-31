@@ -4,6 +4,7 @@ import (
 	"strconv"
 
 	"github.com/artamananda/tryout-sample/internal/config"
+	"github.com/artamananda/tryout-sample/internal/entity"
 	"github.com/artamananda/tryout-sample/internal/middleware"
 	"github.com/artamananda/tryout-sample/internal/model"
 	"github.com/artamananda/tryout-sample/internal/service"
@@ -137,6 +138,7 @@ func (controller BankSoalController) FindAll(c *fiber.Ctx) error {
 	var result []model.BankSoalResponse
 	var err error
 	questionType := c.Query("type")
+	category := c.Query("category")
 	includeUsed, _ := strconv.ParseBool(c.Query("include_used", "false"))
 
 	if questionType != "" {
@@ -147,6 +149,21 @@ func (controller BankSoalController) FindAll(c *fiber.Ctx) error {
 
 	if err != nil {
 		return err
+	}
+
+	// Filter by category (utbk / skd) if provided
+	if category != "" {
+		allowedTypes := make(map[string]bool)
+		for _, t := range entity.GetTypesByCategory(category) {
+			allowedTypes[t] = true
+		}
+		filtered := result[:0]
+		for _, q := range result {
+			if allowedTypes[q.Type] {
+				filtered = append(filtered, q)
+			}
+		}
+		result = filtered
 	}
 
 	payload := map[string]interface{}{

@@ -88,6 +88,79 @@ type AIClient struct {
 	totalCostUSD     float64   // cumulative cost since process start
 }
 
+// NewAIClientWithValues creates an AI client with explicit provider/apiKey/model,
+// falling back to configGet for budget/limit settings. Use this when the token
+// comes from DB config rather than .env.
+func NewAIClientWithValues(provider, apiKey, model string, configGet func(string) string) *AIClient {
+	if provider == "" {
+		provider = "gemini"
+	}
+	client := &AIClient{
+		provider:   provider,
+		apiKey:     apiKey,
+		maxRetries: 3,
+	}
+	switch provider {
+	case "gemini":
+		client.model = model
+		if client.model == "" {
+			client.model = "gemini-2.5-flash"
+		}
+		client.modelVision = client.model
+		client.baseURL = "https://generativelanguage.googleapis.com/v1beta/openai"
+		client.minDelay = 15 * time.Second
+		client.dailyLimit = 50
+		client.dailyBudgetUSD = 0.10
+		client.monthlyBudgetUSD = 1.00
+	case "openai":
+		client.model = model
+		if client.model == "" {
+			client.model = "gpt-4o-mini"
+		}
+		client.modelVision = "gpt-4o"
+		client.baseURL = "https://api.openai.com/v1"
+		client.minDelay = 1 * time.Second
+		client.dailyBudgetUSD = 0.50
+		client.monthlyBudgetUSD = 5.00
+	default:
+		log.Printf("[AIClient] Unknown provider '%s', falling back to gemini", provider)
+		client.provider = "gemini"
+		client.model = model
+		if client.model == "" {
+			client.model = "gemini-2.5-flash"
+		}
+		client.modelVision = client.model
+		client.baseURL = "https://generativelanguage.googleapis.com/v1beta/openai"
+		client.minDelay = 15 * time.Second
+		client.dailyLimit = 50
+		client.dailyBudgetUSD = 0.10
+		client.monthlyBudgetUSD = 1.00
+	}
+	if configGet != nil {
+		if dl := configGet("AI_DAILY_LIMIT"); dl != "" {
+			if parsed, err := parseIntSafe(dl); err == nil && parsed > 0 {
+				client.dailyLimit = parsed
+			}
+		}
+		if db := configGet("AI_DAILY_BUDGET_USD"); db != "" {
+			var parsed float64
+			if _, err := fmt.Sscanf(db, "%f", &parsed); err == nil && parsed >= 0 {
+				client.dailyBudgetUSD = parsed
+			}
+		}
+		if mb := configGet("AI_MONTHLY_BUDGET_USD"); mb != "" {
+			var parsed float64
+			if _, err := fmt.Sscanf(mb, "%f", &parsed); err == nil && parsed >= 0 {
+				client.monthlyBudgetUSD = parsed
+			}
+		}
+	}
+	client.dayStart = time.Now()
+	client.monthStart = time.Now()
+	log.Printf("[AIClient] Initialized (explicit): provider=%s, model=%s", client.provider, client.model)
+	return client
+}
+
 // NewAIClient creates a new AI client based on config
 // It reads AI_PROVIDER, GEMINI_API_KEY, OPENAI_API_KEY, AI_MODEL, AI_MODEL_VISION from config
 func NewAIClient(configGet func(string) string) *AIClient {
