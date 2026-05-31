@@ -144,6 +144,17 @@ func (repository *BankSoalRepository) CountAll(ctx context.Context) (int, error)
 	return int(count), nil
 }
 
+// CountByTypes counts published/draft bank soal restricted to the given type codes.
+func (repository *BankSoalRepository) CountByTypes(ctx context.Context, types []string) (int, error) {
+	var count int64
+	err := repository.DB.WithContext(ctx).Model(&entity.BankSoal{}).
+		Where("type IN ?", types).Count(&count).Error
+	if err != nil {
+		return 0, err
+	}
+	return int(count), nil
+}
+
 func normalizeBankSoalForPersist(bankSoal *entity.BankSoal) {
 	normalizedOptions := normalizeBankSoalOptions(bankSoal.Options)
 	bankSoal.Options = normalizedOptions

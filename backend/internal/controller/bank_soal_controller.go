@@ -296,7 +296,7 @@ func (controller BankSoalController) FindPreview(c *fiber.Ctx) error {
 		result = filtered
 	}
 
-	resultCount, err := controller.BankSoalService.CountAll(c.Context())
+	resultCount, err := controller.BankSoalService.CountByCategory(c.Context(), category)
 	if err != nil {
 		return err
 	}
