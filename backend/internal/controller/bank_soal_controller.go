@@ -266,6 +266,7 @@ func (controller BankSoalController) GetUniqueTypes(c *fiber.Ctx) error {
 // @Router /public/bank-soal [get]
 func (controller BankSoalController) FindPreview(c *fiber.Ctx) error {
 	questionType := c.Query("type")
+	category := c.Query("category")
 	includeUsed, _ := strconv.ParseBool(c.Query("include_used", "false"))
 	limit := c.QueryInt("limit", 5)
 	if limit <= 0 {
@@ -278,6 +279,21 @@ func (controller BankSoalController) FindPreview(c *fiber.Ctx) error {
 	result, err := controller.BankSoalService.FindPreview(c.Context(), questionType, limit, includeUsed)
 	if err != nil {
 		return err
+	}
+
+	// Filter by category if provided
+	if category != "" {
+		allowedTypes := make(map[string]bool)
+		for _, t := range entity.GetTypesByCategory(category) {
+			allowedTypes[t] = true
+		}
+		filtered := result[:0]
+		for _, q := range result {
+			if allowedTypes[q.Type] {
+				filtered = append(filtered, q)
+			}
+		}
+		result = filtered
 	}
 
 	resultCount, err := controller.BankSoalService.CountAll(c.Context())

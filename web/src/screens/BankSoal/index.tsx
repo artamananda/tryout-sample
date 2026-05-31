@@ -42,19 +42,27 @@ const KNOWN_TYPE_LABELS: Record<string, string> = {
   mtk: 'Penalaran Matematika (MTK)',
   twk: 'Tes Wawasan Kebangsaan (TWK)',
   tiu: 'Tes Intelegensia Umum (TIU)',
-  tkp: 'Tes Karakteristik Pribadi (TKP)',
+  tkp: 'Tes Karakteristik Pribadi (TKP)'
 };
 
 const UTBK_TYPES = ['kpu', 'ppu', 'pbm', 'pku', 'ind', 'ing', 'mtk'];
 const SKD_TYPES = ['twk', 'tiu', 'tkp'];
 
-const getQuestionTypeName = (code: string) => KNOWN_TYPE_LABELS[code] || code.toUpperCase();
+const getQuestionTypeName = (code: string) =>
+  KNOWN_TYPE_LABELS[code] || code.toUpperCase();
 
 const getTypeColor = (type: string) => {
   const colors: Record<string, string> = {
-    kpu: 'blue', ppu: 'green', pbm: 'purple',
-    pku: 'orange', ind: 'red', ing: 'cyan', mtk: 'magenta',
-    twk: 'gold', tiu: 'geekblue', tkp: 'lime',
+    kpu: 'blue',
+    ppu: 'green',
+    pbm: 'purple',
+    pku: 'orange',
+    ind: 'red',
+    ing: 'cyan',
+    mtk: 'magenta',
+    twk: 'gold',
+    tiu: 'geekblue',
+    tkp: 'lime'
   };
   return colors[type] || 'default';
 };
@@ -82,27 +90,33 @@ const BankSoalScreen = ({ category }: BankSoalScreenProps) => {
   const [currentPage, setCurrentPage] = useState(1);
   const [pageSize, setPageSize] = useState(10);
   const [sortBy, setSortBy] = useState('newest');
+  const [pageTitle, setPageTitle] = useState('Bank Soal');
 
-  const categoryQuery = category ? `?category=${category}` : '';
   const {
     data: questions,
     setSearch,
     isLoading,
-    pagination
+    pagination,
+    setQuery,
   } = useFetchList<BankSoalItem>({
-    endpoint: isGuestPreview ? `public/bank-soal${categoryQuery}` : `bank-soal${categoryQuery}`,
+    endpoint: isGuestPreview ? 'public/bank-soal' : 'bank-soal',
+    initialQuery: category ? { category } : {},
     limit: isGuestPreview ? 5 : undefined
   });
 
-  const pageTitle = category === 'skd'
-    ? 'Bank Soal SKD CPNS'
-    : category === 'utbk'
-    ? 'Bank Soal UTBK'
-    : 'Bank Soal';
-
   useEffect(() => {
-    document.title = `${pageTitle} - Telisik`;
-  }, [pageTitle]);
+    const title =
+      category === 'skd'
+        ? 'Bank Soal SKD CPNS'
+        : category === 'utbk'
+          ? 'Bank Soal UTBK'
+          : 'Bank Soal';
+    setPageTitle(title);
+    document.title = `${title} - Telisik`;
+    // Updating query triggers a re-fetch inside useFetchList
+    setQuery((prev: any) => ({ ...prev, category: category || '', offset: 0 }));
+    setSelectedType('');
+  }, [category]);
 
   const handleTypeChange = (value: string) => {
     setSelectedType(value);
@@ -110,10 +124,18 @@ const BankSoalScreen = ({ category }: BankSoalScreenProps) => {
   };
 
   const dynamicFilterOptions = useMemo(() => {
-    const relevantTypes = category === 'skd' ? SKD_TYPES : category === 'utbk' ? UTBK_TYPES : [...UTBK_TYPES, ...SKD_TYPES];
+    const relevantTypes =
+      category === 'skd'
+        ? SKD_TYPES
+        : category === 'utbk'
+          ? UTBK_TYPES
+          : [...UTBK_TYPES, ...SKD_TYPES];
     const options = [{ value: '', label: 'Semua Jenis' }];
     relevantTypes.forEach((type) => {
-      options.push({ value: type, label: KNOWN_TYPE_LABELS[type] || type.toUpperCase() });
+      options.push({
+        value: type,
+        label: KNOWN_TYPE_LABELS[type] || type.toUpperCase()
+      });
     });
     return options;
   }, [category]);
@@ -188,8 +210,8 @@ const BankSoalScreen = ({ category }: BankSoalScreenProps) => {
                 {isGuestPreview
                   ? 'Coba gratis 5 soal pertama tanpa login. Lanjutkan akses penuh dengan daftar atau masuk gratis.'
                   : category === 'skd'
-                  ? 'Latihan soal SKD CPNS (TWK, TIU, TKP) untuk persiapan seleksi CPNS.'
-                  : 'Koleksi soal latihan UTBK terbaik untuk persiapan seleksi masuk PTN.'}
+                    ? 'Latihan soal SKD CPNS (TWK, TIU, TKP) untuk persiapan seleksi CPNS.'
+                    : 'Koleksi soal latihan UTBK terbaik untuk persiapan seleksi masuk PTN.'}
               </Paragraph>
             </div>
           </Card>
@@ -357,11 +379,11 @@ const BankSoalScreen = ({ category }: BankSoalScreenProps) => {
             gutter={[12, 12]}
             style={{ marginBottom: 32, justifyContent: 'center' }}
           >
-            {Array.from(
-              new Set([
-                ...Object.keys(KNOWN_TYPE_LABELS),
-                ...Object.keys(typeCounts)
-              ])
+            {(category === 'skd'
+              ? SKD_TYPES
+              : category === 'utbk'
+                ? UTBK_TYPES
+                : [...UTBK_TYPES, ...SKD_TYPES]
             ).map((type) => (
               <Col key={type} xs={12} sm={3}>
                 <div

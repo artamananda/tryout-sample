@@ -65,13 +65,14 @@ const BankSoalScreen = ({ category }: BankSoalScreenProps) => {
   // Create State
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
 
-  const categoryQuery = category ? `?category=${category}` : "";
   const {
     data: questions,
     setSearch,
     isLoading,
+    setQuery,
   } = useFetchList<BankSoalResponse>({
-    endpoint: `bank-soal${categoryQuery}`,
+    endpoint: "bank-soal",
+    initialQuery: category ? { category } : {},
   });
 
   const pageTitle = category === "skd"
@@ -82,7 +83,10 @@ const BankSoalScreen = ({ category }: BankSoalScreenProps) => {
 
   useEffect(() => {
     document.title = `${pageTitle} - CMS`;
-  }, [pageTitle]);
+    // Update query so useFetchList re-fetches with the correct category
+    setQuery((prev: any) => ({ ...prev, category: category || "", offset: 0 }));
+    setSelectedType("");
+  }, [category]);
 
   const handleTypeChange = (value: string) => {
     setSelectedType(value);
