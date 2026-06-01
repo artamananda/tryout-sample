@@ -159,3 +159,8 @@ func (s *Scheduler) TriggerDifficultyCalibrator() error {
 func (s *Scheduler) TriggerQuestionGenerator() error {
 	return jobs.NewQuestionGenerator(s.config, s.bankSoalRepo, s.systemConfigRepo).Run()
 }
+
+// TriggerGenerateForType manually generates questions for a specific subtest type.
+func (s *Scheduler) TriggerGenerateForType(typeCode string, count int) (int, error) {
+	return jobs.NewQuestionGenerator(s.config, s.bankSoalRepo, s.systemConfigRepo).RunForType(typeCode, count)
+}

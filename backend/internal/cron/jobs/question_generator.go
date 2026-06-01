@@ -243,6 +243,92 @@ func (j *QuestionGenerator) Run() error {
 	return nil
 }
 
+// RunForType generates questions for a specific subtest type (manual trigger).
+// Returns the number of questions saved.
+func (j *QuestionGenerator) RunForType(typeCode string, count int) (int, error) {
+	ctx := context.Background()
+	category := entity.GetCategoryFromType(typeCode)
+
+	aiClient := j.buildAIClient(ctx, category)
+	if !aiClient.IsConfigured() {
+		return 0, fmt.Errorf("AI client tidak terkonfigurasi untuk kategori %s. Set API key di Settings > LLM Config atau .env", category)
+	}
+
+	var name string
+	var topics []string
+	if category == entity.BankSoalCategorySKD {
+		cfg, ok := skdQuestionTypes[typeCode]
+		if !ok {
+			return 0, fmt.Errorf("tipe soal tidak dikenal: %s", typeCode)
+		}
+		name = cfg.Name
+		topics = cfg.Topics
+	} else {
+		cfg, ok := utbkQuestionTypes[typeCode]
+		if !ok {
+			return 0, fmt.Errorf("tipe soal tidak dikenal: %s", typeCode)
+		}
+		name = cfg.Name
+		topics = cfg.Topics
+	}
+
+	existing, err := j.bankSoalRepo.FindByType(ctx, typeCode, true)
+	if err != nil {
+		return 0, fmt.Errorf("gagal mengambil soal existing: %w", err)
+	}
+
+	existingTopics := j.getExistingTopicCounts(existing)
+	selectedTopic := j.selectLeastCoveredTopic(topics, existingTopics)
+	selectedDifficulty := j.selectDifficulty(existing)
+	existingTexts := j.getExistingTexts(existing, selectedTopic)
+
+	log.Printf("[QuestionGenerator] Manual trigger: generating %d questions for %s (%s) - Topic: %s, Difficulty: %s",
+		count, typeCode, name, selectedTopic, selectedDifficulty)
+
+	var questions []GeneratedQuestion
+	if category == entity.BankSoalCategorySKD {
+		questions, err = j.generateSKDQuestions(ctx, aiClient, typeCode, name, selectedTopic, selectedDifficulty, existingTexts)
+	} else {
+		questions, err = j.generateUTBKQuestions(ctx, aiClient, typeCode, name, selectedTopic, selectedDifficulty, existingTexts)
+	}
+	if err != nil {
+		return 0, fmt.Errorf("gagal generate soal: %w", err)
+	}
+
+	// Limit to requested count
+	if len(questions) > count {
+		questions = questions[:count]
+	}
+
+	saved := 0
+	for _, q := range questions {
+		isOptions := len(q.Options) > 0
+		bankSoal := entity.BankSoal{
+			BankSoalID:    uuid.New(),
+			Type:          typeCode,
+			Text:          q.Text,
+			IsOptions:     &isOptions,
+			Options:       q.Options,
+			CorrectAnswer: q.CorrectAnswer,
+			Explanation:   q.Explanation,
+			Topic:         selectedTopic,
+			Difficulty:    selectedDifficulty,
+			IsAIGenerated: true,
+			Status:        entity.BankSoalStatusDraft,
+			CreatedAt:     time.Now(),
+			UpdatedAt:     time.Now(),
+		}
+		if _, err := j.bankSoalRepo.Create(ctx, bankSoal); err != nil {
+			log.Printf("[QuestionGenerator] Failed to save question: %v", err)
+		} else {
+			saved++
+		}
+	}
+
+	log.Printf("[QuestionGenerator] Manual trigger done: saved %d/%d for %s", saved, len(questions), typeCode)
+	return saved, nil
+}
+
 func (j *QuestionGenerator) runForCategory(ctx context.Context, category string) error {
 	aiClient := j.buildAIClient(ctx, category)
 	if !aiClient.IsConfigured() {

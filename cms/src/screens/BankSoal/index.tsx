@@ -13,13 +13,18 @@ import {
   Divider,
   Button,
   Pagination,
+  Dropdown,
+  message,
 } from "antd";
+import type { MenuProps } from "antd";
 import {
   BookOutlined,
   QuestionCircleOutlined,
   FilterOutlined,
   CheckCircleOutlined,
   EditOutlined,
+  ThunderboltOutlined,
+  DownOutlined,
 } from "@ant-design/icons";
 import useFetchList from "../../hooks/useFetchList";
 import { QuestionProps } from "../../types/question";
@@ -35,6 +40,7 @@ import {
   SKD_TYPE_CODES,
   getQuestionTypeName,
 } from "./questionTypes";
+import { apiTriggerGenerate } from "../../api/admin";
 
 const { Title, Text } = Typography;
 const { Search } = Input;
@@ -65,6 +71,9 @@ const BankSoalScreen = ({ category }: BankSoalScreenProps) => {
   // Create State
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
 
+  // Generate State
+  const [generatingType, setGeneratingType] = useState<string | null>(null);
+
   const {
     data: questions,
     setSearch,
@@ -91,6 +100,35 @@ const BankSoalScreen = ({ category }: BankSoalScreenProps) => {
   const handleTypeChange = (value: string) => {
     setSelectedType(value);
   };
+
+  const handleGenerate = async (typeCode: string) => {
+    setGeneratingType(typeCode);
+    const result = await apiTriggerGenerate(typeCode, 5);
+    setGeneratingType(null);
+    if (result) {
+      message.success(`Berhasil generate ${result.saved} soal untuk ${getQuestionTypeName(typeCode)}`);
+      window.location.reload();
+    }
+  };
+
+  const generateMenuItems: MenuProps["items"] = (
+    category === "skd" ? SKD_QUESTION_TYPES : UTBK_QUESTION_TYPES
+  ).map(({ value, label }) => ({
+    key: value,
+    label: (
+      <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+        <Tag color={getTypeColor(value)} style={{ margin: 0, fontSize: 11 }}>
+          {value.toUpperCase()}
+        </Tag>
+        <span style={{ fontSize: 13 }}>{label}</span>
+        {generatingType === value && (
+          <Spin size="small" style={{ marginLeft: "auto" }} />
+        )}
+      </div>
+    ),
+    onClick: () => handleGenerate(value),
+    disabled: generatingType !== null,
+  }));
 
   // Filters & Pagination
   const [searchText, setSearchText] = useState("");
@@ -174,23 +212,46 @@ const BankSoalScreen = ({ category }: BankSoalScreenProps) => {
                 : "Manage and organize your question repository"}
             </Text>
           </div>
-          <Button
-            type="primary"
-            size="large"
-            style={{
-              background: "linear-gradient(135deg, #8C59F1 0%, #9e73f8 100%)",
-              border: "none",
-              boxShadow: "0 4px 14px rgba(140, 89, 241, 0.3)",
-              fontWeight: 600,
-              borderRadius: 12,
-              height: 48,
-              padding: "0 24px",
-            }}
-            icon={<CheckCircleOutlined />}
-            onClick={() => setIsCreateModalOpen(true)}
-          >
-            Add New Question
-          </Button>
+          <div style={{ display: "flex", gap: 10 }}>
+            <Dropdown
+              menu={{ items: generateMenuItems }}
+              trigger={["click"]}
+              placement="bottomRight"
+            >
+              <Button
+                size="large"
+                loading={generatingType !== null}
+                style={{
+                  border: "1.5px solid #8C59F1",
+                  color: "#8C59F1",
+                  fontWeight: 600,
+                  borderRadius: 12,
+                  height: 48,
+                  padding: "0 20px",
+                }}
+                icon={<ThunderboltOutlined />}
+              >
+                Generate Soal <DownOutlined style={{ fontSize: 11 }} />
+              </Button>
+            </Dropdown>
+            <Button
+              type="primary"
+              size="large"
+              style={{
+                background: "linear-gradient(135deg, #8C59F1 0%, #9e73f8 100%)",
+                border: "none",
+                boxShadow: "0 4px 14px rgba(140, 89, 241, 0.3)",
+                fontWeight: 600,
+                borderRadius: 12,
+                height: 48,
+                padding: "0 24px",
+              }}
+              icon={<CheckCircleOutlined />}
+              onClick={() => setIsCreateModalOpen(true)}
+            >
+              Add New Question
+            </Button>
+          </div>
         </div>
 
         {/* Toolbar */}

@@ -106,6 +106,7 @@ func main() {
 	bankSoalController := controller.NewBankSoalController(&bankSoalService, initConfig)
 	learningVideoController := controller.NewLearningVideoController(&learningVideoService, initConfig)
 	systemConfigController := controller.NewSystemConfigController(systemConfigService, initConfig)
+	adminController := controller.NewAdminController(scheduler, initConfig)
 
 	userController.Route(app)
 	tryoutController.Route(app)
@@ -120,6 +121,7 @@ func main() {
 	learningVideoController.Route(app)
 	bankSoalController.Route(app)
 	systemConfigController.Route(app)
+	adminController.Route(app)
 
 	app.Get("/", func(c *fiber.Ctx) error {
 		return c.Status(fiber.StatusCreated).JSON(model.GeneralResponse{
