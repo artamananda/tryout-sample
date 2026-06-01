@@ -1,4 +1,8 @@
 /* Header.css */
+@keyframes badgePulse {
+  0%, 100% { transform: scale(1); opacity: 1; }
+  50% { transform: scale(1.15); opacity: 0.85; }
+}
 .header {
   padding: 60px 20px;
   background-color: #fff;
