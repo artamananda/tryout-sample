@@ -12,7 +12,11 @@ import {
   Tag,
 } from "antd";
 import { SaveOutlined, ReloadOutlined } from "@ant-design/icons";
-import { apiGetSystemConfigs, apiUpdateSystemConfig, SystemConfig } from "../../api/systemConfig";
+import {
+  apiGetSystemConfigs,
+  apiUpdateSystemConfig,
+  SystemConfig,
+} from "../../api/systemConfig";
 
 const { Title, Text, Paragraph } = Typography;
 
@@ -27,6 +31,8 @@ const MODEL_OPTIONS: Record<string, { value: string; label: string }[]> = {
     { value: "gemini-2.0-flash", label: "Gemini 2.0 Flash" },
     { value: "gemini-2.0-flash-lite", label: "Gemini 2.0 Flash Lite" },
     { value: "gemini-2.5-pro", label: "Gemini 2.5 Pro" },
+    { value: "gemini-3.5-flash", label: "Gemini 3.5 Flash" },
+    { value: "gemini-3.0-flash", label: "Gemini 3.0 Flash" },
   ],
   openai: [
     { value: "gpt-4o-mini", label: "GPT-4o Mini (Recommended)" },
@@ -43,8 +49,16 @@ interface CategoryConfig {
 const LLMConfigScreen = () => {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState<"utbk" | "skd" | null>(null);
-  const [utbkConfig, setUtbkConfig] = useState<CategoryConfig>({ provider: "gemini", apiKey: "", model: "" });
-  const [skdConfig, setSkdConfig] = useState<CategoryConfig>({ provider: "gemini", apiKey: "", model: "" });
+  const [utbkConfig, setUtbkConfig] = useState<CategoryConfig>({
+    provider: "gemini",
+    apiKey: "",
+    model: "",
+  });
+  const [skdConfig, setSkdConfig] = useState<CategoryConfig>({
+    provider: "gemini",
+    apiKey: "",
+    model: "",
+  });
 
   useEffect(() => {
     document.title = "LLM Config - CMS";
@@ -55,7 +69,9 @@ const LLMConfigScreen = () => {
     setLoading(true);
     const configs = await apiGetSystemConfigs();
     const byKey: Record<string, string> = {};
-    configs.forEach((c: SystemConfig) => { byKey[c.key] = c.value; });
+    configs.forEach((c: SystemConfig) => {
+      byKey[c.key] = c.value;
+    });
 
     setUtbkConfig({
       provider: byKey["llm_utbk_provider"] || "gemini",
@@ -99,18 +115,33 @@ const LLMConfigScreen = () => {
         LLM Config
       </Title>
       <Paragraph type="secondary" style={{ marginBottom: 32 }}>
-        Atur token API untuk generator soal masing-masing kategori. Jika kosong, sistem akan menggunakan nilai dari <code>.env</code>.
-        Token yang diset di sini akan menggantikan nilai <code>.env</code> untuk kategori tersebut.
+        Atur token API untuk generator soal masing-masing kategori. Jika kosong,
+        sistem akan menggunakan nilai dari <code>.env</code>. Token yang diset
+        di sini akan menggantikan nilai <code>.env</code> untuk kategori
+        tersebut.
       </Paragraph>
 
       {/* UTBK Config */}
       <Card
         bordered={false}
-        style={{ borderRadius: 16, marginBottom: 24, boxShadow: "0 2px 12px rgba(0,0,0,0.06)" }}
+        style={{
+          borderRadius: 16,
+          marginBottom: 24,
+          boxShadow: "0 2px 12px rgba(0,0,0,0.06)",
+        }}
         bodyStyle={{ padding: 28 }}
       >
-        <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 20 }}>
-          <Title level={4} style={{ margin: 0 }}>Bank Soal UTBK</Title>
+        <div
+          style={{
+            display: "flex",
+            alignItems: "center",
+            gap: 12,
+            marginBottom: 20,
+          }}
+        >
+          <Title level={4} style={{ margin: 0 }}>
+            Bank Soal UTBK
+          </Title>
           <Tag color="blue">KPU · PPU · PBM · PKU · IND · ING · MTK</Tag>
         </div>
 
@@ -119,16 +150,30 @@ const LLMConfigScreen = () => {
             <Select
               value={utbkConfig.provider}
               options={PROVIDER_OPTIONS}
-              onChange={(v) => setUtbkConfig({ ...utbkConfig, provider: v, model: "" })}
+              onChange={(v) =>
+                setUtbkConfig({ ...utbkConfig, provider: v, model: "" })
+              }
               style={{ width: 240 }}
             />
           </Form.Item>
 
-          <Form.Item label="API Key" extra={<Text type="secondary" style={{ fontSize: 12 }}>Nilai saat ini: {utbkConfig.apiKey ? "●●●●●●●●" + utbkConfig.apiKey.slice(-4) : "Belum diset (pakai .env)"}</Text>}>
+          <Form.Item
+            label="API Key"
+            extra={
+              <Text type="secondary" style={{ fontSize: 12 }}>
+                Nilai saat ini:{" "}
+                {utbkConfig.apiKey
+                  ? "●●●●●●●●" + utbkConfig.apiKey.slice(-4)
+                  : "Belum diset (pakai .env)"}
+              </Text>
+            }
+          >
             <Input.Password
               placeholder="Masukkan API Key baru (kosongkan untuk tetap menggunakan nilai lama)"
               value={utbkConfig.apiKey}
-              onChange={(e) => setUtbkConfig({ ...utbkConfig, apiKey: e.target.value })}
+              onChange={(e) =>
+                setUtbkConfig({ ...utbkConfig, apiKey: e.target.value })
+              }
             />
           </Form.Item>
 
@@ -158,11 +203,24 @@ const LLMConfigScreen = () => {
       {/* SKD CPNS Config */}
       <Card
         bordered={false}
-        style={{ borderRadius: 16, marginBottom: 24, boxShadow: "0 2px 12px rgba(0,0,0,0.06)" }}
+        style={{
+          borderRadius: 16,
+          marginBottom: 24,
+          boxShadow: "0 2px 12px rgba(0,0,0,0.06)",
+        }}
         bodyStyle={{ padding: 28 }}
       >
-        <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 20 }}>
-          <Title level={4} style={{ margin: 0 }}>Bank Soal SKD CPNS</Title>
+        <div
+          style={{
+            display: "flex",
+            alignItems: "center",
+            gap: 12,
+            marginBottom: 20,
+          }}
+        >
+          <Title level={4} style={{ margin: 0 }}>
+            Bank Soal SKD CPNS
+          </Title>
           <Tag color="gold">TWK · TIU · TKP</Tag>
         </div>
 
@@ -171,16 +229,30 @@ const LLMConfigScreen = () => {
             <Select
               value={skdConfig.provider}
               options={PROVIDER_OPTIONS}
-              onChange={(v) => setSkdConfig({ ...skdConfig, provider: v, model: "" })}
+              onChange={(v) =>
+                setSkdConfig({ ...skdConfig, provider: v, model: "" })
+              }
               style={{ width: 240 }}
             />
           </Form.Item>
 
-          <Form.Item label="API Key" extra={<Text type="secondary" style={{ fontSize: 12 }}>Nilai saat ini: {skdConfig.apiKey ? "●●●●●●●●" + skdConfig.apiKey.slice(-4) : "Belum diset (pakai .env)"}</Text>}>
+          <Form.Item
+            label="API Key"
+            extra={
+              <Text type="secondary" style={{ fontSize: 12 }}>
+                Nilai saat ini:{" "}
+                {skdConfig.apiKey
+                  ? "●●●●●●●●" + skdConfig.apiKey.slice(-4)
+                  : "Belum diset (pakai .env)"}
+              </Text>
+            }
+          >
             <Input.Password
               placeholder="Masukkan API Key baru (kosongkan untuk tetap menggunakan nilai lama)"
               value={skdConfig.apiKey}
-              onChange={(e) => setSkdConfig({ ...skdConfig, apiKey: e.target.value })}
+              onChange={(e) =>
+                setSkdConfig({ ...skdConfig, apiKey: e.target.value })
+              }
             />
           </Form.Item>
 
