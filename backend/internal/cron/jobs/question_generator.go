@@ -171,18 +171,27 @@ var skdQuestionTypes = map[string]skdTypeConfig{
 	"twk": {
 		Name: "Tes Wawasan Kebangsaan",
 		Topics: []string{
-			"Pancasila: Sejarah dan Nilai-nilai Dasar",
-			"Pancasila: Implementasi dalam Kehidupan Berbangsa",
-			"UUD 1945: Pasal-pasal Utama dan Amandemen",
-			"UUD 1945: Hak dan Kewajiban Warga Negara",
-			"Bhinneka Tunggal Ika: Keberagaman dan Toleransi",
-			"Bhinneka Tunggal Ika: Nilai Persatuan dalam Keberagaman",
+			// Pilar kebangsaan
+			"Pancasila: Sejarah, Nilai-nilai Dasar, dan Pengamalan",
+			"Pancasila: Implementasi dalam Kehidupan Berbangsa dan Bernegara",
+			"UUD 1945: Pasal-pasal Utama, Amandemen, dan Implikasinya",
+			"UUD 1945: Hak dan Kewajiban Warga Negara dalam Konstitusi",
+			"Bhinneka Tunggal Ika: Keberagaman, Toleransi, dan Moderasi Beragama",
+			"Bhinneka Tunggal Ika: Persatuan dalam Keberagaman Suku, Budaya, dan Agama",
 			"NKRI: Wawasan Nusantara dan Ketahanan Nasional",
-			"NKRI: Sistem Pemerintahan dan Tata Negara",
-			"Sejarah Indonesia: Proklamasi dan Perjuangan Kemerdekaan",
-			"Sejarah Indonesia: Orde Lama, Orde Baru, dan Reformasi",
-			"Nasionalisme dan Bela Negara",
-			"Integritas dan Anti-Korupsi dalam Konteks Kebangsaan",
+			// Kehidupan bernegara
+			"Sistem Ketatanegaraan: Lembaga-lembaga Negara dan Kewenangannya",
+			"Demokrasi Pancasila: Sistem Pemilihan Umum dan Kedaulatan Rakyat",
+			"Otonomi Daerah: Desentralisasi dan Hubungan Pusat-Daerah",
+			"Hukum dan Peraturan Perundang-undangan: Hierarki dan Supremasi Hukum",
+			"Sistem Pertahanan dan Keamanan Negara: TNI, Polri, dan Bela Negara",
+			"Kebijakan Publik: Penyelenggaraan Pemerintahan yang Baik (Good Governance)",
+			"Hubungan Internasional: Politik Luar Negeri Bebas Aktif Indonesia",
+			"Ekonomi Kerakyatan: Kesejahteraan Sosial dan Pembangunan Nasional",
+			"Sejarah Indonesia: Proklamasi, Perjuangan Kemerdekaan, dan Peristiwa Penting",
+			"Sejarah Indonesia: Orde Lama, Orde Baru, Reformasi, dan Pelajarannya",
+			"Nasionalisme dan Bela Negara: Cinta Tanah Air dalam Konteks Kekinian",
+			"Integritas, Anti-Korupsi, dan Penyelenggaraan Negara yang Bersih",
 		},
 	},
 	"tiu": {
@@ -205,18 +214,27 @@ var skdQuestionTypes = map[string]skdTypeConfig{
 	"tkp": {
 		Name: "Tes Karakteristik Pribadi",
 		Topics: []string{
-			"Integritas Diri: Kejujuran dan Tanggung Jawab",
-			"Semangat Berprestasi: Motivasi dan Target",
-			"Kreativitas dan Inovasi dalam Pekerjaan",
-			"Orientasi pada Pelayanan Publik",
-			"Kemampuan Beradaptasi terhadap Perubahan",
-			"Kemampuan Mengendalikan Diri dalam Tekanan",
-			"Bekerja Mandiri dan Tuntas",
-			"Kemampuan Belajar Berkelanjutan",
-			"Bekerja Sama dalam Kelompok/Tim",
-			"Kemampuan Menggerakkan dan Mengkoordinir Orang",
-			"Orientasi kepada Orang Lain dan Empati",
-			"Kemampuan Membina Hubungan Sosial",
+			// Pelayanan Publik
+			"Pelayanan Publik: Orientasi dan Komitmen Melayani Masyarakat",
+			"Pelayanan Publik: Menangani Keluhan, Pengaduan, dan Situasi Sulit",
+			"Pelayanan Publik: Standar Pelayanan Prima dan Kepuasan Pengguna Layanan",
+			// Jejaring Kerja
+			"Jejaring Kerja: Membangun Kolaborasi Lintas Unit dan Instansi",
+			"Jejaring Kerja: Koordinasi, Komunikasi, dan Kerja Sama Tim",
+			"Jejaring Kerja: Mengelola Hubungan dengan Pemangku Kepentingan",
+			// Sosial Budaya
+			"Sosial Budaya: Kepekaan terhadap Keberagaman Sosial dan Budaya",
+			"Sosial Budaya: Toleransi, Inklusivitas, dan Penghargaan Perbedaan",
+			// TIK - Teknologi Informasi dan Komunikasi
+			"TIK: Pemanfaatan Teknologi Digital dalam Pelayanan dan Pekerjaan",
+			"TIK: Literasi Digital, Etika Bermedia Sosial, dan Keamanan Informasi",
+			// Profesionalisme
+			"Profesionalisme: Integritas, Disiplin, dan Tanggung Jawab Kerja",
+			"Profesionalisme: Semangat Berprestasi, Inovasi, dan Pengembangan Diri",
+			"Profesionalisme: Mengelola Konflik Kepentingan dan Pengambilan Keputusan Etis",
+			// Anti Radikalisme
+			"Anti Radikalisme: Mengenali dan Menyikapi Paham Radikal di Lingkungan Kerja",
+			"Anti Radikalisme: Wawasan Kebangsaan sebagai Benteng dari Ideologi Ekstrem",
 		},
 	},
 }
@@ -545,7 +563,9 @@ func (j *QuestionGenerator) generateSKDQuestions(ctx context.Context, aiClient *
 
 	var diffDescription string
 	if typeCode == "tkp" {
-		diffDescription = "Untuk TKP tidak ada konsep benar/salah mutlak — setiap pilihan memiliki bobot nilai berbeda (1-5)."
+		diffDescription = `Untuk TKP tidak ada konsep benar/salah mutlak — setiap pilihan memiliki bobot nilai berbeda (1-5).
+INGAT: Buat deskripsi situasi yang PANJANG dan DETAIL (minimal 5-7 kalimat). Fokus pada:
+Pelayanan Publik, Jejaring Kerja, Sosial Budaya, TIK, Profesionalisme, atau Anti Radikalisme.`
 	} else {
 		diffDescription = getDifficultyDescription(difficulty)
 	}
@@ -730,11 +750,13 @@ ATURAN FORMAT:
 	case "twk":
 		base += `
 KHUSUS TES WAWASAN KEBANGSAAN (TWK):
-- Soal harus menguji pemahaman dan penghayatan terhadap nilai-nilai kebangsaan Indonesia
-- Fokus pada: Pancasila, UUD 1945, Bhinneka Tunggal Ika, dan NKRI
-- Sertakan soal tentang sejarah perjuangan bangsa, bela negara, dan wawasan nusantara
-- Gunakan fakta sejarah dan regulasi yang akurat
-- Soal harus menguji sikap dan perilaku cinta tanah air
+- Soal menguji pemahaman mendalam terhadap pilar kebangsaan DAN kehidupan bernegara Indonesia
+- Pilar kebangsaan: Pancasila, UUD 1945, Bhinneka Tunggal Ika, NKRI
+- Kehidupan bernegara: sistem ketatanegaraan, lembaga negara, demokrasi, pemilu, otonomi daerah,
+  supremasi hukum, pertahanan keamanan, good governance, hubungan internasional, ekonomi kerakyatan
+- Gunakan fakta sejarah, pasal UUD, dan regulasi yang AKURAT dan DAPAT DIVERIFIKASI
+- Soal boleh berbentuk pemahaman konsep, penerapan nilai, atau analisis situasi bernegara
+- Tingkatkan proporsi soal tentang sistem pemerintahan, kebijakan publik, dan penyelenggaraan negara
 `
 	case "tiu":
 		base += `
@@ -750,14 +772,32 @@ KHUSUS TES INTELEGENSIA UMUM (TIU):
 	case "tkp":
 		base += `
 KHUSUS TES KARAKTERISTIK PRIBADI (TKP):
-- Soal berbentuk situasional (Situational Judgment Test)
-- Setiap soal menyajikan situasi nyata di lingkungan kerja pemerintahan
-- 5 pilihan jawaban mencerminkan respons dengan tingkat ketepatan berbeda (tidak ada yang salah mutlak)
-- Pilihan jawaban diurutkan dari yang paling tepat (A=skor 5) ke yang kurang tepat (E=skor 1)
-- correct_answer diisi dengan huruf pilihan yang PALING TEPAT/IDEAL
-- Dalam explanation, jelaskan mengapa masing-masing pilihan memiliki bobot berbeda
-- Fokus pada: integritas, pelayanan, kerja sama, inovasi, adaptasi, dan pengembangan diri
-- PENTING: Semua pilihan jawaban harus masuk akal dan menggambarkan perilaku positif dengan intensitas berbeda
+- Soal berbentuk situasional (Situational Judgment Test) yang PANJANG dan KAYA KONTEKS
+- Fokus wajib pada 6 aspek utama: Pelayanan Publik, Jejaring Kerja, Sosial Budaya,
+  TIK (Teknologi Informasi dan Komunikasi), Profesionalisme, dan Anti Radikalisme
+
+ATURAN PANJANG SOAL (WAJIB):
+- Field "text" HARUS berisi deskripsi situasi yang panjang dan detail (minimal 5-7 kalimat)
+- Situasi harus menggambarkan: (1) konteks/latar organisasi, (2) tokoh yang terlibat,
+  (3) masalah/tantangan yang dihadapi, (4) tekanan atau dilema yang ada,
+  (5) pertanyaan apa yang harus dilakukan
+- Gunakan format HTML untuk keterbacaan:
+  <p><b>Situasi:</b> [deskripsi konteks panjang 2-3 kalimat]</p>
+  <p>[Detail masalah/dilema 2-3 kalimat]</p>
+  <p><b>Apa yang Anda lakukan?</b></p>
+
+ATURAN PILIHAN JAWABAN:
+- 5 pilihan mencerminkan respons berbeda (tidak ada yang mutlak salah)
+- Pilihan A = respons PALING TEPAT/IDEAL (skor 5), E = kurang tepat (skor 1)
+- Setiap pilihan menggambarkan perilaku positif dengan intensitas/pendekatan berbeda
+- Pilihan harus cukup panjang dan spesifik (bukan hanya 1 kata)
+
+ATURAN PENJELASAN (explanation):
+- Jelaskan mengapa A adalah pilihan terbaik
+- Jelaskan nilai bobot setiap pilihan (A=5, B=4, C=3, D=2, E=1) beserta alasannya
+- Kaitkan dengan aspek TKP yang sedang diuji (pelayanan publik / jejaring kerja / dll)
+
+correct_answer diisi huruf pilihan PALING TEPAT (biasanya A).
 `
 	}
 	return base
