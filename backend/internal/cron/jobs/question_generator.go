@@ -570,6 +570,22 @@ Pelayanan Publik, Jejaring Kerja, Sosial Budaya, TIK, Profesionalisme, atau Anti
 		diffDescription = getDifficultyDescription(difficulty)
 	}
 
+	var twkFormatNote string
+	if typeCode == "twk" {
+		twkFormatNote = `
+KHUSUS TWK — FORMAT SOAL:
+- field "text": tulis PERTANYAAN yang jelas dan spesifik. JANGAN terlalu panjang.
+  Contoh baik: "Lembaga negara yang berwenang melakukan pengujian undang-undang terhadap UUD 1945 adalah..."
+  Contoh baik: "Nilai yang terkandung dalam sila ke-2 Pancasila 'Kemanusiaan yang Adil dan Beradab' adalah..."
+  Contoh buruk: pertanyaan yang tidak punya satu jawaban pasti
+- field "options": 5 pilihan jawaban yang JELAS dan BERBEDA satu sama lain
+  Contoh baik: ["A. Mahkamah Konstitusi", "B. Mahkamah Agung", "C. Komisi Yudisial", "D. DPR", "E. MPR"]
+  Contoh buruk: pilihan yang ambigu atau bisa lebih dari satu yang benar
+- field "correct_answer": huruf dari satu pilihan yang PASTI benar (A/B/C/D/E)
+- field "explanation": sebutkan sumber referensi (pasal UUD, nama lembaga, tahun, regulasi) dan
+  jelaskan mengapa jawaban itu benar DAN mengapa pilihan lain salah`
+	}
+
 	userPrompt := fmt.Sprintf(`Buatkan %d soal SKD CPNS untuk subtest %s (%s) dengan topik "%s" dan tingkat kesulitan "%s".
 
 KETENTUAN PENTING:
@@ -579,24 +595,23 @@ KETENTUAN PENTING:
 4. Setiap soal harus memiliki penjelasan yang lengkap
 5. Soal harus UNIK dan tidak boleh mirip dengan soal yang sudah ada
 6. Tingkat kesulitan "%s": %s
-7. ⚠️ DILARANG KERAS: Jangan membuat soal yang memerlukan gambar, ilustrasi, diagram,
-   atau elemen visual apapun. Soal HARUS bisa dipahami sepenuhnya dari teks saja.
-   Untuk pola/deret gunakan angka atau huruf, bukan gambar.
-%s
+7. ⚠️ DILARANG KERAS: Jangan membuat soal yang memerlukan gambar, ilustrasi, atau diagram.
+   Soal HARUS bisa dipahami sepenuhnya dari teks saja.
+%s%s
 
 Format JSON yang HARUS diikuti:
 {
   "questions": [
     {
-      "text": "Teks pertanyaan di sini",
-      "options": ["A. Pilihan 1", "B. Pilihan 2", "C. Pilihan 3", "D. Pilihan 4", "E. Pilihan 5"],
+      "text": "Pertanyaan yang jelas dan spesifik di sini?",
+      "options": ["A. Pilihan pertama", "B. Pilihan kedua", "C. Pilihan ketiga", "D. Pilihan keempat", "E. Pilihan kelima"],
       "correct_answer": "A",
-      "explanation": "Penjelasan lengkap mengapa jawaban A benar"
+      "explanation": "Jawaban yang benar adalah A karena [alasan + sumber referensi]. Pilihan B salah karena... dst."
     }
   ]
 }`,
 		QUESTIONS_PER_BATCH, typeName, typeCode, topic, difficulty, difficulty,
-		diffDescription, uniquenessInstruction,
+		diffDescription, uniquenessInstruction, twkFormatNote,
 	)
 
 	return callAI(ctx, aiClient, systemPrompt, userPrompt)
@@ -750,13 +765,32 @@ ATURAN FORMAT:
 	case "twk":
 		base += `
 KHUSUS TES WAWASAN KEBANGSAAN (TWK):
-- Soal menguji pemahaman mendalam terhadap pilar kebangsaan DAN kehidupan bernegara Indonesia
-- Pilar kebangsaan: Pancasila, UUD 1945, Bhinneka Tunggal Ika, NKRI
-- Kehidupan bernegara: sistem ketatanegaraan, lembaga negara, demokrasi, pemilu, otonomi daerah,
-  supremasi hukum, pertahanan keamanan, good governance, hubungan internasional, ekonomi kerakyatan
-- Gunakan fakta sejarah, pasal UUD, dan regulasi yang AKURAT dan DAPAT DIVERIFIKASI
-- Soal boleh berbentuk pemahaman konsep, penerapan nilai, atau analisis situasi bernegara
-- Tingkatkan proporsi soal tentang sistem pemerintahan, kebijakan publik, dan penyelenggaraan negara
+
+TIPE SOAL YANG DIPERBOLEHKAN — gunakan variasi dari tipe berikut:
+1. FAKTUAL: Menanyakan fakta spesifik yang memiliki satu jawaban pasti
+   Contoh stem: "Berdasarkan Pasal 1 ayat (2) UUD 1945, kedaulatan berada di tangan..."
+   Contoh stem: "Lembaga negara yang berwenang menguji undang-undang terhadap UUD 1945 adalah..."
+   Contoh stem: "Proklamasi kemerdekaan Indonesia dikumandangkan pada tanggal..."
+
+2. PEMAHAMAN KONSEP: Menanyakan pengertian, makna, atau prinsip
+   Contoh stem: "Yang dimaksud dengan wawasan nusantara adalah..."
+   Contoh stem: "Nilai yang terkandung dalam sila ke-3 Pancasila adalah..."
+   Contoh stem: "Otonomi daerah dalam sistem ketatanegaraan Indonesia bertujuan untuk..."
+
+3. PENERAPAN: Menerapkan prinsip/nilai pada situasi konkret
+   Contoh stem: "Seorang ASN yang menemukan rekan kerjanya menerima suap sebaiknya..."
+   Contoh stem: "Sikap yang mencerminkan pengamalan sila ke-4 Pancasila dalam rapat dinas adalah..."
+
+4. IDENTIFIKASI/KLASIFIKASI: Menentukan contoh yang benar atau yang salah
+   Contoh stem: "Berikut ini yang BUKAN termasuk hak warga negara dalam UUD 1945 adalah..."
+   Contoh stem: "Lembaga berikut yang termasuk lembaga tinggi negara berdasarkan UUD 1945 adalah..."
+
+ATURAN KUALITAS SOAL:
+- Setiap soal HARUS memiliki SATU jawaban yang jelas dan pasti benar
+- Pilihan jawaban harus logis dan tidak membingungkan
+- HINDARI soal yang jawabannya bergantung pada pendapat atau subjektif
+- Semua fakta, pasal, tanggal, dan nama lembaga HARUS akurat
+- Penjelasan (explanation) WAJIB menyebutkan sumber: pasal UUD, nama lembaga, tahun kejadian, dll
 `
 	case "tiu":
 		base += `
