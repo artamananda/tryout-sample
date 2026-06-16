@@ -126,7 +126,7 @@ export const Navigation = (props: any) => {
             <span className="icon-bar"></span>{' '}
             <span className="icon-bar"></span>{' '}
           </button>
-          <a className=" page-scroll" href="#header">
+          <a className=" page-scroll" href="/#header">
             <img
               src={'/img/logo.png'}
               style={{

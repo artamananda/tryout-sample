@@ -29,6 +29,7 @@ import BankSoalScreen from "../screens/BankSoal";
 import AIChatScreen from "../screens/AIChat";
 import LearningVideoScreen from "../screens/LearningVideo";
 import LLMConfigScreen from "../screens/LLMConfig";
+import EbookScreen from "../screens/Ebook";
 
 const RootNavigator = () => {
   return (
@@ -270,6 +271,15 @@ const RootNavigator = () => {
             element={
               <PrivateRoute loginPath="/login">
                 <LearningVideoScreen />
+              </PrivateRoute>
+            }
+          />
+
+          <Route
+            path="/ebook"
+            element={
+              <PrivateRoute loginPath="/login">
+                <EbookScreen />
               </PrivateRoute>
             }
           />
