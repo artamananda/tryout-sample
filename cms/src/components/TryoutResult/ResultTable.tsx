@@ -1,82 +1,49 @@
 import { Button, Table } from "antd";
 import { Excel } from "antd-table-saveas-excel";
 import { useEffect, useState } from "react";
-import { apiGetUserAnswer } from "../../api/userAnswer";
-import { UserAnswerProps } from "../../types/userAnswer.type";
-import { apiGetUsers } from "../../api/user";
-import useFetchList from "../../hooks/useFetchList";
-import { QuestionProps } from "../../types/question";
+import { apiGetTryoutResult } from "../../api/tryoutResult";
+import { TryoutResultPayload } from "../../types/tryoutResult.type";
 
 interface TableRowData {
   [key: string]: string;
   question_id: string;
+  subtest: string;
 }
 
 type FixedType = "left" | "right" | boolean;
 
 const ResultTable = () => {
   const tryoutId = window.location.href.split("/").pop();
-  const [userAnswers, setUserAnswers] = useState<UserAnswerProps[]>([]);
-  const [users, setUsers] = useState<{ user_id: string; name: string }[]>([]);
-  const [uniqueUserIds, setUniqueUserIds] = useState<string[]>([]);
-  const [user, setUser] = useState<{ [key: string]: string }>({});
-  const [answers, setAnswers] = useState<{ [key: string]: string }>({});
-  const [questionTypes, setQuestionTypes] = useState<{ [key: string]: string }>(
-    {}
+  const [resultData, setResultData] = useState<TryoutResultPayload | null>(
+    null,
   );
-
-  const { data: questionData } = useFetchList<QuestionProps>({
-    endpoint: "question",
-    initialQuery: {
-      tryoutId: tryoutId,
-    },
-  });
+  const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
-    const ans: { [key: string]: string } = {};
-    const qType: { [key: string]: string } = {};
-    questionData.forEach((item) => {
-      ans[item.question_id] = item.correct_answer;
-      qType[item.question_id] = item.type;
-    });
-    setAnswers(ans);
-    setQuestionTypes(qType);
-  }, [questionData]);
-
-  useEffect(() => {
-    const fetchUser = async () => {
-      const res = await apiGetUsers();
-      if (res) {
-        setUsers(res.data.payload.results);
+    const fetchTryoutResult = async () => {
+      if (!tryoutId) {
+        setIsLoading(false);
+        return;
       }
+
+      const res = await apiGetTryoutResult(tryoutId);
+      if (res?.data?.payload?.results?.[0]) {
+        setResultData(res.data.payload.results[0]);
+      }
+      setIsLoading(false);
     };
 
-    fetchUser();
-  }, []);
+    fetchTryoutResult();
+  }, [tryoutId]);
 
-  useEffect(() => {
-    const fetchAnswer = async () => {
-      const res = await apiGetUserAnswer();
-      if (res && users) {
-        const answersTmp = res.data.payload.results.filter(
-          (item) => item.tryout_id === tryoutId
-        );
-        setUserAnswers(answersTmp);
-
-        const newUser: { [key: string]: string } = {};
-        users.forEach((item) => {
-          newUser[item.user_id] = item.name;
-        });
-        setUser(newUser);
-
-        const newIds = answersTmp
-          .map((item) => item.user_id)
-          .filter((id, index, self) => self.indexOf(id) === index);
-        setUniqueUserIds(newIds);
-      }
-    };
-    fetchAnswer();
-  }, [users]);
+  const participants = resultData?.participants || [];
+  const dataSource: TableRowData[] = (resultData?.result_rows || []).map(
+    (row) => ({
+      question_id: row.question_id,
+      subtest: row.subtest,
+      ...row.marks,
+    }),
+  );
 
   // Menyiapkan kolom-kolom tabel
   const columns = [
@@ -104,10 +71,10 @@ const ResultTable = () => {
       ),
     },
     // Menambahkan kolom untuk setiap user ID yang unik
-    ...uniqueUserIds.map((userId) => ({
-      title: user[userId],
-      dataIndex: userId,
-      key: userId,
+    ...participants.map((participant) => ({
+      title: participant.name,
+      dataIndex: participant.user_id,
+      key: participant.user_id,
       render: (value: string) => (
         <div
           style={{
@@ -127,26 +94,6 @@ const ResultTable = () => {
     })),
   ];
 
-  // Menyiapkan data untuk tabel
-  const dataSource: TableRowData[] = [];
-  userAnswers.forEach((answer) => {
-    const existingRow = dataSource.find(
-      (row) => row.question_id === answer.question_id
-    );
-    if (existingRow) {
-      existingRow[answer.user_id] =
-        answer.user_answer === answers[answer.question_id] ? "V" : "X";
-    } else {
-      const newRow: TableRowData = {
-        question_id: answer.question_id,
-        subtest: questionTypes[answer.question_id],
-        [answer.user_id]:
-          answer.user_answer === answers[answer.question_id] ? "V" : "X",
-      };
-      dataSource.push(newRow);
-    }
-  });
-
   const handlePrint = () => {
     const excel = new Excel();
     excel
@@ -160,7 +107,12 @@ const ResultTable = () => {
 
   return (
     <div>
-      <Table dataSource={dataSource} columns={columns} pagination={false} />
+      <Table
+        dataSource={dataSource}
+        columns={columns}
+        pagination={false}
+        loading={isLoading}
+      />
       <div
         style={{
           margin: 20,
@@ -179,6 +131,7 @@ const ResultTable = () => {
           }}
           type="primary"
           onClick={handlePrint}
+          disabled={isLoading}
         >
           Download
         </Button>

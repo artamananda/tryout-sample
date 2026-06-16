@@ -2,6 +2,7 @@ import { BaseResponsePaginationProps } from './config.type';
 
 export interface TryoutProps {
   tryout_id: string;
+  program_id?: string;
   title: string;
   duration: number;
   start_time: Date | string;
@@ -9,10 +10,10 @@ export interface TryoutProps {
   created_at: Date | string;
   updated_at: Date | string;
   token: string;
+  show_score?: boolean;
 }
 
-export interface FetchAllTryoutsResponse
-  extends BaseResponsePaginationProps<TryoutProps> {
+export interface FetchAllTryoutsResponse extends BaseResponsePaginationProps<TryoutProps> {
   code: string;
   message: string;
   payload: {

@@ -122,6 +122,7 @@ func (service *TransactionTryoutService) FindByTryoutIDAndUserID(ctx context.Con
 		StartTime:   transactionTryout.Tryout.StartTime,
 		EndTime:     transactionTryout.Tryout.EndTime,
 		IsPublished: transactionTryout.Tryout.IsPublished,
+		ShowScore:   transactionTryout.Tryout.ShowScore,
 		CreatedAt:   transactionTryout.Tryout.CreatedAt,
 		UpdatedAt:   transactionTryout.Tryout.UpdatedAt,
 	}

@@ -1,6 +1,8 @@
 package entity
 
 import (
+	"time"
+
 	"github.com/google/uuid"
 )
 
@@ -10,6 +12,8 @@ type UserAnswer struct {
 	TryoutID     uuid.UUID `json:"tryout_id"`
 	QuestionID   uuid.UUID `json:"question_id"`
 	UserAnswer   string    `json:"user_answer"`
+	CreatedAt    time.Time `json:"created_at"`
+	UpdatedAt    time.Time `json:"updated_at"`
 }
 
 func (UserAnswer) TableName() string {

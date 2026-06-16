@@ -27,17 +27,18 @@ func (repository *TryoutRepository) Create(ctx context.Context, tryout entity.Tr
 }
 
 func (repository *TryoutRepository) Update(ctx context.Context, tryout entity.Tryout) entity.Tryout {
-	query := `
-        UPDATE tryouts
-        SET is_published = $1
-        WHERE tryout_id = $2
-    `
-	err := repository.DB.WithContext(ctx).Where("tryout_id = ?", tryout.TryoutID).Updates(&tryout).Error
+	err := repository.DB.WithContext(ctx).Model(&entity.Tryout{}).Where("tryout_id = ?", tryout.TryoutID).Updates(map[string]interface{}{
+		"program_id":   tryout.ProgramID,
+		"title":        tryout.Title,
+		"duration":     tryout.Duration,
+		"start_time":   tryout.StartTime,
+		"end_time":     tryout.EndTime,
+		"token":        tryout.Token,
+		"is_published": tryout.IsPublished,
+		"show_score":   tryout.ShowScore,
+		"updated_at":   tryout.UpdatedAt,
+	}).Error
 	exception.PanicLogging(err)
-
-	if !tryout.IsPublished {
-		repository.DB.WithContext(ctx).Where("tryout_id = ?", tryout.TryoutID).Exec(query, tryout.IsPublished, tryout.TryoutID)
-	}
 
 	return tryout
 }

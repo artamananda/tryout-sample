@@ -111,6 +111,19 @@ const ListTryout = () => {
       ),
     },
     {
+      title: "Show Score",
+      key: "show_score",
+      dataIndex: "show_score",
+      render: (_, { tryout_id, show_score }) => (
+        <SwitchButton
+          defaultChecked={show_score}
+          onChange={(checked) => {
+            handleShowScore(tryout_id, checked);
+          }}
+        />
+      ),
+    },
+    {
       title: "Token",
       key: "token",
       dataIndex: "token",
@@ -196,17 +209,29 @@ const ListTryout = () => {
     }
   };
 
+  const handleShowScore = async (tryoutId: string, checked: boolean) => {
+    try {
+      const res = await apiUpdateTryout(tryoutId, { show_score: checked });
+      if (res) {
+        fetchList();
+        message.success("Success Update Show Score");
+      }
+    } catch (err) {
+      message.error("Failed Update Show Score");
+    }
+  };
+
   const onFinishFailed = (errorInfo: any) => {
     message.error(getErrorMessage(errorInfo));
   };
 
   const onChange = (
     value: DatePickerProps["value"] | RangePickerProps["value"],
-    dateString: [string, string] | string
+    dateString: [string, string] | string,
   ) => {};
 
   const onOk = (
-    value: DatePickerProps["value"] | RangePickerProps["value"]
+    value: DatePickerProps["value"] | RangePickerProps["value"],
   ) => {};
 
   return (

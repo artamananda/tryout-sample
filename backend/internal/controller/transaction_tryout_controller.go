@@ -6,6 +6,7 @@ import (
 	"github.com/artamananda/tryout-sample/internal/config"
 	"github.com/artamananda/tryout-sample/internal/middleware"
 	"github.com/artamananda/tryout-sample/internal/model"
+	"github.com/artamananda/tryout-sample/internal/repository"
 	"github.com/artamananda/tryout-sample/internal/service"
 	"github.com/gofiber/fiber/v2"
 )
@@ -13,14 +14,24 @@ import (
 type TransactionTryoutController struct {
 	service.TransactionTryoutService
 	service.TryoutService
+	service.TryoutResultService
+	TransactionProgramRepository *repository.TransactionProgramRepository
 	config.Config
 }
 
-func NewTransactionTryoutController(transactionTryoutService *service.TransactionTryoutService, tryoutService *service.TryoutService, config config.Config) *TransactionTryoutController {
+func NewTransactionTryoutController(
+	transactionTryoutService *service.TransactionTryoutService,
+	tryoutService *service.TryoutService,
+	tryoutResultService *service.TryoutResultService,
+	transactionProgramRepository *repository.TransactionProgramRepository,
+	config config.Config,
+) *TransactionTryoutController {
 	return &TransactionTryoutController{
-		TransactionTryoutService: *transactionTryoutService,
-		TryoutService:            *tryoutService,
-		Config:                   config,
+		TransactionTryoutService:     *transactionTryoutService,
+		TryoutService:                *tryoutService,
+		TryoutResultService:          *tryoutResultService,
+		TransactionProgramRepository: transactionProgramRepository,
+		Config:                       config,
 	}
 }
 
@@ -89,6 +100,31 @@ func (controller TransactionTryoutController) UpdateToPaid(c *fiber.Ctx) error {
 			Message: "Unauthorized",
 			Data:    "Invalid Token",
 		})
+	}
+
+	tryoutData, err := controller.TryoutService.FindByID(c.Context(), requestBody.TryoutID.String())
+	if err != nil {
+		return c.Status(fiber.StatusNotFound).JSON(model.GeneralResponse{
+			Code:    404,
+			Message: "Not Found",
+			Data:    "Tryout Not Found",
+		})
+	}
+
+	if tryoutData.ProgramID != nil {
+		hasProgramAccess := controller.TransactionProgramRepository.HasPaidAccess(
+			c.Context(),
+			requestBody.UserID.String(),
+			tryoutData.ProgramID.String(),
+		)
+
+		if !hasProgramAccess {
+			return c.Status(fiber.StatusUnauthorized).JSON(model.GeneralResponse{
+				Code:    401,
+				Message: "Unauthorized",
+				Data:    "User does not have access to the assigned program",
+			})
+		}
 	}
 
 	transactionTryout, err := controller.TransactionTryoutService.FindByTryoutIDAndUserID(c.Context(), requestBody.TryoutID.String(), requestBody.UserID.String())
@@ -169,6 +205,8 @@ func (controller TransactionTryoutController) UpdateToFinish(c *fiber.Ctx) error
 	if err != nil {
 		return err
 	}
+
+	_, _ = controller.TryoutResultService.RebuildAndCacheByTryoutID(c.Context(), requestBody.TryoutID.String())
 
 	return c.Status(fiber.StatusOK).JSON(model.GeneralResponse{
 		Code:    200,

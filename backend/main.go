@@ -56,6 +56,7 @@ func main() {
 	transactionRepository := repository.NewTransactionTryoutRepository(db)
 	programRepository := repository.NewProgramRepository(db)
 	transactionProgramRepository := repository.NewTransactionProgramRepository(db)
+	tryoutResultCacheRepository := repository.NewTryoutResultCacheRepository(db)
 	ebookRepository := repository.NewEbookRepository(db)
 	bankSoalRepository := repository.NewBankSoalRepository(db)
 	chatLogRepository := repository.NewChatLogRepository(db)
@@ -80,6 +81,7 @@ func main() {
 
 	userService := service.NewUserService(&userRepository, uploader)
 	tryoutService := service.NewTryoutService(&tryoutRepository, &questionRepository, &bankSoalRepository)
+	tryoutResultService := service.NewTryoutResultService(&tryoutRepository, &questionRepository, &userAnswerRepository, &userRepository, &tryoutResultCacheRepository)
 	questionService := service.NewQuestionService(&questionRepository, uploader)
 	userAnswerService := service.NewUserAnswerService(&userAnswerRepository)
 	transactionTryoutService := service.NewTransactionTryoutService(&transactionRepository)
@@ -95,9 +97,10 @@ func main() {
 
 	userController := controller.NewUserController(&userService, initConfig)
 	tryoutController := controller.NewTryoutController(&tryoutService, initConfig)
+	tryoutResultController := controller.NewTryoutResultController(&tryoutResultService, initConfig)
 	questionController := controller.NewQuestionController(&questionService, initConfig)
 	userAnswerController := controller.NewUserAnswerController(&userAnswerService, initConfig)
-	transactionTryoutController := controller.NewTransactionTryoutController(&transactionTryoutService, &tryoutService, initConfig)
+	transactionTryoutController := controller.NewTransactionTryoutController(&transactionTryoutService, &tryoutService, &tryoutResultService, &transactionProgramRepository, initConfig)
 	programController := controller.NewProgramController(&programService, initConfig)
 	transactionProgramController := controller.NewTransactionProgramController(&transactionProgramService, initConfig)
 	registerProgramController := controller.NewRegisterProgramController(&registerProgramService, initConfig)
@@ -110,6 +113,7 @@ func main() {
 
 	userController.Route(app)
 	tryoutController.Route(app)
+	tryoutResultController.Route(app)
 	questionController.Route(app)
 	userAnswerController.Route(app)
 	transactionTryoutController.Route(app)
