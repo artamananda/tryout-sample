@@ -1,4 +1,4 @@
-import { Flex, Layout, Image, Button, Spin, Modal } from 'antd';
+import { Flex, Layout, Image, Button, Spin, Modal, message } from 'antd';
 import Option from './Option';
 import Question from './Question';
 import { Content, Footer, Header } from 'antd/es/layout/layout';
@@ -153,12 +153,13 @@ const Tryout = () => {
       Modal.confirm({
         title: 'Menyelesaikan Tryout',
         content: 'Apakah anda yakin sudah menyelesaikan tryout ini?',
-        onOk: () => {
-          finishTryout({
+        onOk: async () => {
+          await finishTryout({
             user_id: auth()?.user_id,
             tryout_id: tryoutId
           });
-          navigate(`/tryout`);
+          message.success('Tryout berhasil diselesaikan! Skor akan tersedia setelah dipublikasikan.');
+          navigate('/dashboard');
         }
       });
       return;

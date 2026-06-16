@@ -1,6 +1,7 @@
-import { Card, Col, Row, Spin, Statistic, Table, Typography } from 'antd';
+import { Alert, Button, Card, Col, Row, Spin, Statistic, Table, Typography } from 'antd';
+import { ArrowLeftOutlined } from '@ant-design/icons';
 import { useEffect, useMemo, useState } from 'react';
-import { useParams } from 'react-router-dom';
+import { useNavigate, useParams } from 'react-router-dom';
 import { getMyTryoutResult } from '../../api/tryoutResult';
 import { UserTryoutResultDetail } from '../../types/tryoutResult';
 
@@ -14,6 +15,7 @@ type ScoreRow = {
 
 const MyTryoutScoreScreen = () => {
   const { id } = useParams();
+  const navigate = useNavigate();
   const [isLoading, setIsLoading] = useState(true);
   const [result, setResult] = useState<UserTryoutResultDetail | null>(null);
 
@@ -70,32 +72,52 @@ const MyTryoutScoreScreen = () => {
 
   return (
     <div>
+      <Button
+        icon={<ArrowLeftOutlined />}
+        onClick={() => navigate('/dashboard')}
+        style={{ marginBottom: 16 }}
+      >
+        Kembali ke Dashboard
+      </Button>
+
       <Title level={3}>Detail Skor Tryout</Title>
       <Text type="secondary">Menampilkan skor kamu saja.</Text>
 
-      <Row gutter={16} style={{ marginTop: 16, marginBottom: 16 }}>
-        <Col xs={24} md={12}>
-          <Card>
-            <Statistic title="Total Score" value={result?.total_score || 0} />
-          </Card>
-        </Col>
-        <Col xs={24} md={12}>
-          <Card>
-            <Statistic
-              title="Average Score"
-              value={result?.avg_score || 0}
-              precision={2}
-            />
-          </Card>
-        </Col>
-      </Row>
+      {!result ? (
+        <Alert
+          style={{ marginTop: 16 }}
+          type="info"
+          showIcon
+          message="Skor Belum Tersedia"
+          description="Skor tryout kamu sedang diproses atau belum dipublikasikan oleh admin. Silakan cek kembali nanti."
+        />
+      ) : (
+        <>
+          <Row gutter={16} style={{ marginTop: 16, marginBottom: 16 }}>
+            <Col xs={24} md={12}>
+              <Card>
+                <Statistic title="Total Score" value={result.total_score} />
+              </Card>
+            </Col>
+            <Col xs={24} md={12}>
+              <Card>
+                <Statistic
+                  title="Average Score"
+                  value={result.avg_score}
+                  precision={2}
+                />
+              </Card>
+            </Col>
+          </Row>
 
-      <Table
-        dataSource={scoreRows}
-        columns={columns}
-        pagination={false}
-        locale={{ emptyText: 'Skor belum tersedia.' }}
-      />
+          <Table
+            dataSource={scoreRows}
+            columns={columns}
+            pagination={false}
+            locale={{ emptyText: 'Skor per subtest belum tersedia.' }}
+          />
+        </>
+      )}
     </div>
   );
 };

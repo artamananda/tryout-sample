@@ -126,6 +126,15 @@ const RootNavigator = () => {
               </PrivateRoute>
             }
           />
+
+          <Route
+            path="/tryout/:id/my-score"
+            element={
+              <PrivateRoute loginPath="/login">
+                <MyTryoutScoreScreen />
+              </PrivateRoute>
+            }
+          />
         </Route>
 
         <Route
@@ -134,15 +143,6 @@ const RootNavigator = () => {
             <TryoutRoute loginPath="/tryout">
               <TryoutScreen />
             </TryoutRoute>
-          }
-        />
-
-        <Route
-          path="/tryout/:id/my-score"
-          element={
-            <PrivateRoute loginPath="/login">
-              <MyTryoutScoreScreen />
-            </PrivateRoute>
           }
         />
       </Routes>
