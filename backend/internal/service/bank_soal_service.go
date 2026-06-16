@@ -255,6 +255,20 @@ func (service *BankSoalService) FindPreview(ctx context.Context, questionType st
 	return responses, nil
 }
 
+func (service *BankSoalService) CountAll(ctx context.Context) (int, error) {
+	return service.BankSoalRepository.CountAll(ctx)
+}
+
+// CountByCategory counts bank soal belonging to a category ("utbk" or "skd").
+// Falls back to CountAll when category is empty.
+func (service *BankSoalService) CountByCategory(ctx context.Context, category string) (int, error) {
+	if category == "" {
+		return service.BankSoalRepository.CountAll(ctx)
+	}
+	types := entity.GetTypesByCategory(category)
+	return service.BankSoalRepository.CountByTypes(ctx, types)
+}
+
 func normalizeCorrectAnswer(correctAnswer string, options []string) string {
 	normalized := normalizeOptionText(correctAnswer)
 	if normalized == "" {

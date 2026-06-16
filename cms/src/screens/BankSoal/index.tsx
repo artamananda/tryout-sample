@@ -1,5 +1,4 @@
 import React, { useEffect, useState, useMemo } from "react";
-// Remove Duplicate useState import if any.
 import {
   Row,
   Col,
@@ -14,13 +13,18 @@ import {
   Divider,
   Button,
   Pagination,
+  Dropdown,
+  message,
 } from "antd";
+import type { MenuProps } from "antd";
 import {
   BookOutlined,
   QuestionCircleOutlined,
   FilterOutlined,
   CheckCircleOutlined,
   EditOutlined,
+  ThunderboltOutlined,
+  DownOutlined,
 } from "@ant-design/icons";
 import useFetchList from "../../hooks/useFetchList";
 import { QuestionProps } from "../../types/question";
@@ -30,26 +34,31 @@ import { BankSoalResponse } from "../../types/ai.type";
 import {
   getCustomTypes,
   KNOWN_TYPE_LABELS,
+  UTBK_QUESTION_TYPES,
+  SKD_QUESTION_TYPES,
+  UTBK_TYPE_CODES,
+  SKD_TYPE_CODES,
   getQuestionTypeName,
 } from "./questionTypes";
+import { apiTriggerGenerate } from "../../api/admin";
 
 const { Title, Text } = Typography;
 const { Search } = Input;
 
 const getTypeColor = (type: string) => {
   const colors: Record<string, string> = {
-    kpu: "blue",
-    ppu: "green",
-    pbm: "purple",
-    pku: "orange",
-    ind: "red",
-    ing: "cyan",
-    mtk: "magenta",
+    kpu: "blue", ppu: "green", pbm: "purple",
+    pku: "orange", ind: "red", ing: "cyan", mtk: "magenta",
+    twk: "gold", tiu: "geekblue", tkp: "lime",
   };
   return colors[type] || "default";
 };
 
-const BankSoalScreen = () => {
+interface BankSoalScreenProps {
+  category?: "utbk" | "skd";
+}
+
+const BankSoalScreen = ({ category }: BankSoalScreenProps) => {
   const [selectedType, setSelectedType] = useState<string>("");
   const [expandedQuestion, setExpandedQuestion] = useState<string | null>(null);
   const [showAnswer, setShowAnswer] = useState<Record<string, boolean>>({});
@@ -62,21 +71,64 @@ const BankSoalScreen = () => {
   // Create State
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
 
+  // Generate State
+  const [generatingType, setGeneratingType] = useState<string | null>(null);
+
   const {
     data: questions,
     setSearch,
     isLoading,
+    setQuery,
   } = useFetchList<BankSoalResponse>({
     endpoint: "bank-soal",
+    initialQuery: category ? { category } : {},
   });
 
+  const pageTitle = category === "skd"
+    ? "Bank Soal SKD CPNS"
+    : category === "utbk"
+    ? "Bank Soal UTBK"
+    : "Bank Soal";
+
   useEffect(() => {
-    document.title = "Bank Soal - CMS";
-  }, []);
+    document.title = `${pageTitle} - CMS`;
+    // Update query so useFetchList re-fetches with the correct category
+    setQuery((prev: any) => ({ ...prev, category: category || "", offset: 0 }));
+    setSelectedType("");
+  }, [category]);
 
   const handleTypeChange = (value: string) => {
     setSelectedType(value);
   };
+
+  const handleGenerate = async (typeCode: string) => {
+    setGeneratingType(typeCode);
+    const result = await apiTriggerGenerate(typeCode, 5);
+    setGeneratingType(null);
+    if (result) {
+      message.success(`Berhasil generate ${result.saved} soal untuk ${getQuestionTypeName(typeCode)}`);
+      window.location.reload();
+    }
+  };
+
+  const generateMenuItems: MenuProps["items"] = (
+    category === "skd" ? SKD_QUESTION_TYPES : UTBK_QUESTION_TYPES
+  ).map(({ value, label }) => ({
+    key: value,
+    label: (
+      <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+        <Tag color={getTypeColor(value)} style={{ margin: 0, fontSize: 11 }}>
+          {value.toUpperCase()}
+        </Tag>
+        <span style={{ fontSize: 13 }}>{label}</span>
+        {generatingType === value && (
+          <Spin size="small" style={{ marginLeft: "auto" }} />
+        )}
+      </div>
+    ),
+    onClick: () => handleGenerate(value),
+    disabled: generatingType !== null,
+  }));
 
   // Filters & Pagination
   const [searchText, setSearchText] = useState("");
@@ -84,26 +136,20 @@ const BankSoalScreen = () => {
   const [currentPage, setCurrentPage] = useState(1);
   const [pageSize, setPageSize] = useState(10);
 
-  // Build dynamic filter options from fetched data + localStorage custom types
+  // Build dynamic filter options scoped to the current category
   const dynamicFilterOptions = useMemo(() => {
-    const typesFromData = questions.map((q) => q.type);
-    const knownTypes = Object.keys(KNOWN_TYPE_LABELS);
-    const customTypes = getCustomTypes().map((t) => t.value);
-    const allTypesArray = [...knownTypes, ...typesFromData, ...customTypes];
-    const uniqueTypes = allTypesArray.filter(
-      (type, index, self) => self.indexOf(type) === index,
-    );
+    const relevantTypes = category === "skd"
+      ? SKD_QUESTION_TYPES
+      : category === "utbk"
+      ? UTBK_QUESTION_TYPES
+      : Object.entries(KNOWN_TYPE_LABELS).map(([value, label]) => ({ value, label }));
+
     const options = [{ value: "", label: "Semua Jenis" }];
-    uniqueTypes.forEach((type) => {
-      if (type) {
-        options.push({
-          value: type,
-          label: KNOWN_TYPE_LABELS[type] || type.toUpperCase(),
-        });
-      }
+    relevantTypes.forEach(({ value, label }) => {
+      options.push({ value, label });
     });
     return options;
-  }, [questions]);
+  }, [category]);
 
   const filteredQuestions = questions
     .filter((q) => {
@@ -156,29 +202,56 @@ const BankSoalScreen = () => {
               level={2}
               style={{ margin: 0, color: "#1f1f1f", fontWeight: 700 }}
             >
-              Bank Soal
+              {pageTitle}
             </Title>
             <Text type="secondary" style={{ fontSize: 16 }}>
-              Manage and organize your question repository
+              {category === "skd"
+                ? "Kelola soal SKD CPNS (TWK, TIU, TKP)"
+                : category === "utbk"
+                ? "Kelola soal UTBK (KPU, PPU, PBM, PKU, IND, ING, MTK)"
+                : "Manage and organize your question repository"}
             </Text>
           </div>
-          <Button
-            type="primary"
-            size="large"
-            style={{
-              background: "linear-gradient(135deg, #8C59F1 0%, #9e73f8 100%)",
-              border: "none",
-              boxShadow: "0 4px 14px rgba(140, 89, 241, 0.3)",
-              fontWeight: 600,
-              borderRadius: 12,
-              height: 48,
-              padding: "0 24px",
-            }}
-            icon={<CheckCircleOutlined />}
-            onClick={() => setIsCreateModalOpen(true)}
-          >
-            Add New Question
-          </Button>
+          <div style={{ display: "flex", gap: 10 }}>
+            <Dropdown
+              menu={{ items: generateMenuItems }}
+              trigger={["click"]}
+              placement="bottomRight"
+            >
+              <Button
+                size="large"
+                loading={generatingType !== null}
+                style={{
+                  border: "1.5px solid #8C59F1",
+                  color: "#8C59F1",
+                  fontWeight: 600,
+                  borderRadius: 12,
+                  height: 48,
+                  padding: "0 20px",
+                }}
+                icon={<ThunderboltOutlined />}
+              >
+                Generate Soal <DownOutlined style={{ fontSize: 11 }} />
+              </Button>
+            </Dropdown>
+            <Button
+              type="primary"
+              size="large"
+              style={{
+                background: "linear-gradient(135deg, #8C59F1 0%, #9e73f8 100%)",
+                border: "none",
+                boxShadow: "0 4px 14px rgba(140, 89, 241, 0.3)",
+                fontWeight: 600,
+                borderRadius: 12,
+                height: 48,
+                padding: "0 24px",
+              }}
+              icon={<CheckCircleOutlined />}
+              onClick={() => setIsCreateModalOpen(true)}
+            >
+              Add New Question
+            </Button>
+          </div>
         </div>
 
         {/* Toolbar */}
@@ -595,6 +668,7 @@ const BankSoalScreen = () => {
       <ModalCreateBankSoal
         isModalOpen={isCreateModalOpen}
         setIsModalOpen={setIsCreateModalOpen}
+        category={category}
         onSuccess={() => {
           window.location.reload();
         }}

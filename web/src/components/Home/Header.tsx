@@ -37,6 +37,36 @@ export const Header = (props: any) => {
                 TRYOUT ONLINE
               </a>
             </div>
+            <div className="header-buttons">
+              <div style={{ position: 'relative', display: 'inline-block' }}>
+                <span
+                  style={{
+                    position: 'absolute',
+                    top: -8,
+                    right: -8,
+                    background: '#ff3b3b',
+                    color: '#fff',
+                    fontSize: 9,
+                    fontWeight: 800,
+                    padding: '2px 7px',
+                    borderRadius: 10,
+                    letterSpacing: 0.5,
+                    textTransform: 'uppercase',
+                    zIndex: 1,
+                    boxShadow: '0 2px 6px rgba(255,59,59,0.5)',
+                    animation: 'badgePulse 1.5s ease-in-out infinite'
+                  }}
+                >
+                  NEW
+                </span>
+                <a
+                  href="/bank-soal/skd-cpns"
+                  className="btn btn-custom page-scroll"
+                >
+                  BANK SOAL SKD CPNS
+                </a>
+              </div>
+            </div>
           </div>
 
           <div className="header-image">

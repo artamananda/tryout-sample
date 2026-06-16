@@ -4,6 +4,7 @@ import (
 	"strconv"
 
 	"github.com/artamananda/tryout-sample/internal/config"
+	"github.com/artamananda/tryout-sample/internal/entity"
 	"github.com/artamananda/tryout-sample/internal/middleware"
 	"github.com/artamananda/tryout-sample/internal/model"
 	"github.com/artamananda/tryout-sample/internal/service"
@@ -29,8 +30,8 @@ func (controller BankSoalController) Route(app *fiber.App) {
 	app.Put("/v1/api/bank-soal/:id", middleware.AuthenticateJWT([]string{"admin"}, controller.Config), controller.Update)
 	app.Get("/v1/api/public/bank-soal", controller.FindPreview)
 	app.Get("/v1/api/bank-soal/types", controller.GetUniqueTypes)
-	app.Get("/v1/api/bank-soal/:id", controller.FindById)
-	app.Get("/v1/api/bank-soal", controller.FindAll)
+	app.Get("/v1/api/bank-soal/:id", middleware.AuthenticateJWT([]string{"admin", "user"}, controller.Config), controller.FindById)
+	app.Get("/v1/api/bank-soal",  middleware.AuthenticateJWT([]string{"admin", "user"}, controller.Config),controller.FindAll)
 	app.Delete("/v1/api/bank-soal/:id", middleware.AuthenticateJWT([]string{"admin"}, controller.Config), controller.Delete)
 }
 
@@ -137,6 +138,7 @@ func (controller BankSoalController) FindAll(c *fiber.Ctx) error {
 	var result []model.BankSoalResponse
 	var err error
 	questionType := c.Query("type")
+	category := c.Query("category")
 	includeUsed, _ := strconv.ParseBool(c.Query("include_used", "false"))
 
 	if questionType != "" {
@@ -147,6 +149,21 @@ func (controller BankSoalController) FindAll(c *fiber.Ctx) error {
 
 	if err != nil {
 		return err
+	}
+
+	// Filter by category (utbk / skd) if provided
+	if category != "" {
+		allowedTypes := make(map[string]bool)
+		for _, t := range entity.GetTypesByCategory(category) {
+			allowedTypes[t] = true
+		}
+		filtered := result[:0]
+		for _, q := range result {
+			if allowedTypes[q.Type] {
+				filtered = append(filtered, q)
+			}
+		}
+		result = filtered
 	}
 
 	payload := map[string]interface{}{
@@ -249,6 +266,7 @@ func (controller BankSoalController) GetUniqueTypes(c *fiber.Ctx) error {
 // @Router /public/bank-soal [get]
 func (controller BankSoalController) FindPreview(c *fiber.Ctx) error {
 	questionType := c.Query("type")
+	category := c.Query("category")
 	includeUsed, _ := strconv.ParseBool(c.Query("include_used", "false"))
 	limit := c.QueryInt("limit", 5)
 	if limit <= 0 {
@@ -263,8 +281,28 @@ func (controller BankSoalController) FindPreview(c *fiber.Ctx) error {
 		return err
 	}
 
+	// Filter by category if provided
+	if category != "" {
+		allowedTypes := make(map[string]bool)
+		for _, t := range entity.GetTypesByCategory(category) {
+			allowedTypes[t] = true
+		}
+		filtered := result[:0]
+		for _, q := range result {
+			if allowedTypes[q.Type] {
+				filtered = append(filtered, q)
+			}
+		}
+		result = filtered
+	}
+
+	resultCount, err := controller.BankSoalService.CountByCategory(c.Context(), category)
+	if err != nil {
+		return err
+	}
+
 	payload := map[string]interface{}{
-		"count":         len(result),
+		"count":         resultCount,
 		"results":       result,
 		"preview_limit": limit,
 		"is_preview":    true,

@@ -17,10 +17,10 @@ import (
 	_ "github.com/artamananda/tryout-sample/docs"
 )
 
-const APP_VERSION = "0.5.3"
+const APP_VERSION = "0.6.0"
 
 // @title Tryout Sample
-// @version 0.5.3
+// @version 0.6.0
 // @description API Documentation for Telisik Tryout
 // @termsOfService http://swagger.io/terms/
 // @contact.name Artamananda
@@ -65,6 +65,7 @@ func main() {
 	aiExampleRepository := repository.NewAIExampleRepository(db)
 	chatArtifactRepository := repository.NewChatArtifactRepository(db)
 	learningVideoRepository := repository.NewLearningVideoRepository(db)
+	systemConfigRepository := repository.NewSystemConfigRepository(db)
 
 	// Cron Scheduler
 	scheduler := cron.NewScheduler(
@@ -73,6 +74,7 @@ func main() {
 		&chatLogRepository,
 		&dailyChallengeRepository,
 		&questionStatisticsRepository,
+		&systemConfigRepository,
 	)
 	scheduler.Start()
 	defer scheduler.Stop()
@@ -87,10 +89,11 @@ func main() {
 	transactionProgramService := service.NewTransactionProgramService(&transactionProgramRepository, &programRepository)
 	registerProgramService := service.NewRegisterProgramService(&userService, &programService, &transactionProgramService, uploader)
 	ebookService := service.NewEbookService(&ebookRepository, uploader)
-	aiService := service.NewAIService(initConfig, &chatLogRepository, &aiExampleRepository, &chatArtifactRepository)
+	aiService := service.NewAIService(initConfig, &chatLogRepository, &aiExampleRepository, &chatArtifactRepository, &systemConfigRepository)
 	extractionService := service.NewExtractionService(initConfig)
 	bankSoalService := service.NewBankSoalService(&bankSoalRepository)
 	learningVideoService := service.NewLearningVideoService(&learningVideoRepository)
+	systemConfigService := service.NewSystemConfigService(&systemConfigRepository)
 
 	userController := controller.NewUserController(&userService, initConfig)
 	tryoutController := controller.NewTryoutController(&tryoutService, initConfig)
@@ -105,6 +108,8 @@ func main() {
 	aiController := controller.NewAIController(&aiService, extractionService, initConfig)
 	bankSoalController := controller.NewBankSoalController(&bankSoalService, initConfig)
 	learningVideoController := controller.NewLearningVideoController(&learningVideoService, initConfig)
+	systemConfigController := controller.NewSystemConfigController(systemConfigService, initConfig)
+	adminController := controller.NewAdminController(scheduler, initConfig)
 
 	userController.Route(app)
 	tryoutController.Route(app)
@@ -119,6 +124,8 @@ func main() {
 	aiController.Route(app)
 	learningVideoController.Route(app)
 	bankSoalController.Route(app)
+	systemConfigController.Route(app)
+	adminController.Route(app)
 
 	app.Get("/", func(c *fiber.Ctx) error {
 		return c.Status(fiber.StatusCreated).JSON(model.GeneralResponse{
