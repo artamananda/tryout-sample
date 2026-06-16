@@ -54,6 +54,7 @@ const AppLayout = () => {
       getItem("Bank Soal SKD CPNS", "/bank-soal/skd-cpns"),
     ]),
     getItem("Learning Video", "/learning-video", <PlayCircleOutlined />),
+    getItem("Ebook", "/ebook", <BookOutlined />),
     getItem("AI Generator", "/ai-generator", <RobotOutlined />),
     getItem("Program", "/program", <ScheduleOutlined />),
     getItem("Role", "/role", <UsergroupAddOutlined />, [
