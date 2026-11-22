@@ -53,12 +53,14 @@ func (repository *QuestionRepository) Update(ctx context.Context, question entit
 			options = $8,
 			correct_answer = $9,
 			points = $10,
-			updated_at = $11
-		WHERE question_id = $12
+			updated_at = $11,
+			option_scores = $12,
+			explanation = $13
+		WHERE question_id = $14
     `
 	err := repository.DB.WithContext(ctx).Where("question_id = ?", question.QuestionID).Exec(query, question.TryoutID, question.BankSoalID, question.LocalID, question.Type, question.Text,
 		question.ImageUrl, question.IsOptions, pq.Array(question.Options), question.CorrectAnswer,
-		question.Points, question.UpdatedAt, question.QuestionID)
+		question.Points, question.UpdatedAt, question.OptionScores, question.Explanation, question.QuestionID)
 	if err.Error != nil {
 		return entity.Question{}, err.Error
 	}

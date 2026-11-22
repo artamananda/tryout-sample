@@ -41,8 +41,13 @@ func (service *BankSoalService) Create(ctx context.Context, request model.Create
 
 	normalizedOptions := normalizeOptions(request.Options)
 	correctAnswer := normalizeCorrectAnswer(request.CorrectAnswer, normalizedOptions)
+	optionScores, err := normalizeOptionScores(request.OptionScores, normalizedOptions)
+	if err != nil {
+		return model.BankSoalResponse{}, err
+	}
 
 	bankSoal := entity.BankSoal{
+		OptionScores:  optionScores,
 		Type:          request.Type,
 		Text:          request.Text,
 		ImageUrl:      request.ImageUrl,
@@ -84,8 +89,13 @@ func (service *BankSoalService) CreateBatch(ctx context.Context, request model.C
 
 		normalizedOptions := normalizeOptions(q.Options)
 		correctAnswer := normalizeCorrectAnswer(q.CorrectAnswer, normalizedOptions)
+		optionScores, err := normalizeOptionScores(q.OptionScores, normalizedOptions)
+		if err != nil {
+			return nil, err
+		}
 
 		bankSoals = append(bankSoals, entity.BankSoal{
+			OptionScores:  optionScores,
 			Type:          q.Type,
 			Text:          q.Text,
 			ImageUrl:      q.ImageUrl,
@@ -179,6 +189,7 @@ func toResponse(bankSoal entity.BankSoal) model.BankSoalResponse {
 		IsOptions:     bankSoal.IsOptions,
 		Options:       bankSoal.Options,
 		CorrectAnswer: bankSoal.CorrectAnswer,
+		OptionScores:  toIntSlice(bankSoal.OptionScores),
 		Explanation:   bankSoal.Explanation,
 		Difficulty:    bankSoal.Difficulty,
 		Topic:         bankSoal.Topic,
@@ -219,6 +230,15 @@ func (service *BankSoalService) Update(ctx context.Context, id string, request m
 	bankSoal.IsOptions = &isOptions
 	bankSoal.Options = normalizedOptions
 	bankSoal.CorrectAnswer = correctAnswer
+	// Absent option_scores keeps the stored weights; [] clears them.
+	if request.OptionScores != nil {
+		bankSoal.OptionScores, err = normalizeOptionScores(request.OptionScores, normalizedOptions)
+		if err != nil {
+			return model.BankSoalResponse{}, err
+		}
+	} else if len(bankSoal.OptionScores) != len(normalizedOptions) {
+		bankSoal.OptionScores = nil
+	}
 	bankSoal.Explanation = request.Explanation
 	bankSoal.Difficulty = request.Difficulty
 	bankSoal.Topic = request.Topic

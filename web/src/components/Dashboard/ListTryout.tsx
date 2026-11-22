@@ -7,15 +7,18 @@ import {
   Form,
   Input,
   message,
-  Alert
+  Alert,
+  Button,
+  Space,
+  Tooltip
 } from 'antd';
+import { LockOutlined } from '@ant-design/icons';
 import type { TableProps } from 'antd';
 import useFetchList from '../../hooks/useFetchList';
 import { TryoutProps } from '../../types/tryout.type';
 import dayjs from 'dayjs';
 import { redeemToken } from '../../api/tryout';
 import { useNavigate } from 'react-router-dom';
-import { useAuthUser } from 'react-auth-kit';
 
 const { Text, Link } = Typography;
 
@@ -61,29 +64,32 @@ const ListTryout = () => {
 
   const [id, setId] = useState('');
   const navigate = useNavigate();
-  const auth = useAuthUser();
 
   useEffect(() => {
     fetchList();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  const onFinish = async (data: {
-    tryout_id: string;
-    user_id: string;
-    token: string;
-  }) => {
-    try {
-      const res = await redeemToken(data);
-      if (res) {
-        navigate('/tryout/' + id + '/kpu/1');
-      } else {
-        message.error('Token Wrong');
-      }
-    } catch (err) {
-      message.error('Token Wrong');
+  const onFinish = async (data: { tryout_id: string; token: string }) => {
+    const res = await redeemToken({ tryout_id: data.tryout_id, token: data.token });
+    if (res.ok) {
+      navigate('/tryout/' + id + '/kpu/1');
+    } else {
+      message.error(res.message || 'Token salah');
     }
   };
+
+  const showLocked = (record: TryoutProps) => {
+    Modal.info({
+      title: 'Tryout terkunci',
+      content: record.locked_reason || 'Tryout ini belum termasuk dalam paket Anda.',
+      okText: 'Lihat Paket',
+      onOk: () =>
+        navigate(record.program_id ? `/program/${record.program_id}/paket` : '/paket')
+    });
+  };
+
+  const isSKD = (record: TryoutProps) => record.scoring_mode === 'skd';
 
   const columns: TableProps<TryoutProps>['columns'] = [
     {
@@ -94,12 +100,18 @@ const ListTryout = () => {
         <Link
           underline
           onClick={() => {
+            if (record.has_access === false) {
+              showLocked(record);
+              return;
+            }
             const tryoutStatus = checkStatus(
               record.start_time,
               record.end_time
             );
             if (tryoutStatus === 'FINISHED') {
-              if (record.show_score) {
+              if (isSKD(record)) {
+                navigate('/tryout/' + record.tryout_id + '/hasil-skd');
+              } else if (record.show_score) {
                 navigate('/tryout/' + record.tryout_id + '/my-score');
               } else {
                 message.error('Hasil tryout belum dipublikasikan.');
@@ -111,7 +123,8 @@ const ListTryout = () => {
               message.error('Tryout belum mulai!');
             } else {
               setId(record.tryout_id);
-              form.setFieldValue('token', record.token);
+              form.setFieldValue('tryout_id', record.tryout_id);
+              form.setFieldValue('token', '');
               showModal(record.title);
             }
           }}
@@ -145,6 +158,24 @@ const ListTryout = () => {
           {checkStatus(start_time, end_time)}
         </Tag>
       )
+    },
+    {
+      title: 'Aksi',
+      key: 'action',
+      render: (_, record) =>
+        record.has_access === false ? (
+          <Tooltip title={record.locked_reason}>
+            <Button size="small" icon={<LockOutlined />} onClick={() => showLocked(record)}>
+              Buka dengan Paket
+            </Button>
+          </Tooltip>
+        ) : isSKD(record) ? (
+          <Space>
+            <Button size="small" onClick={() => navigate('/tryout/' + record.tryout_id + '/hasil-skd')}>
+              Hasil & Peringkat
+            </Button>
+          </Space>
+        ) : null
     }
   ];
 
@@ -189,7 +220,12 @@ const ListTryout = () => {
 
   return (
     <div>
-      <Table columns={columns} dataSource={tryoutData} />
+      <Table
+        columns={columns}
+        dataSource={tryoutData}
+        rowKey="tryout_id"
+        scroll={{ x: true }}
+      />
 
       <Modal
         title={modalTitle}
@@ -211,7 +247,6 @@ const ListTryout = () => {
           <Form.Item name="tryout_id" initialValue={id} hidden>
             <Input value={id} />
           </Form.Item>
-          <Form.Item name="user_id" initialValue={auth()?.user_id} hidden />
           <Form.Item<FieldType>
             label="Token"
             name="token"

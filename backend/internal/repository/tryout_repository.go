@@ -36,6 +36,8 @@ func (repository *TryoutRepository) Update(ctx context.Context, tryout entity.Tr
 		"token":        tryout.Token,
 		"is_published": tryout.IsPublished,
 		"show_score":   tryout.ShowScore,
+		"sequence":     tryout.Sequence,
+		"scoring_mode": tryout.ScoringMode,
 		"updated_at":   tryout.UpdatedAt,
 	}).Error
 	exception.PanicLogging(err)

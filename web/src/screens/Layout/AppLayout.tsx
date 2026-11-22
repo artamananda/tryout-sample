@@ -8,7 +8,9 @@ import {
   PlayCircleOutlined,
   MenuFoldOutlined,
   MenuUnfoldOutlined,
-  IdcardOutlined
+  IdcardOutlined,
+  ShoppingOutlined,
+  FileTextOutlined
 } from '@ant-design/icons';
 import type { MenuProps } from 'antd';
 import { Layout, Menu, Image, Spin, Modal, Button, Grid } from 'antd';
@@ -61,19 +63,26 @@ const AppLayout = () => {
           getItem('Bank Soal SKD CPNS', '/bank-soal/skd-cpns'),
         ]),
         getItem('Learning Video', '/learning-video', <PlayCircleOutlined />),
-        getItem('Program', '/program', <ScheduleOutlined />)
+        getItem('Program', '/program', <ScheduleOutlined />),
+        getItem('Paket SKD CPNS', '/paket', <ShoppingOutlined />),
+        getItem('Pesanan Saya', '/pesanan', <FileTextOutlined />)
       ]
     : [
         getItem('Bank Soal', '/bank-soal', <BookOutlined />, [
           getItem('Bank Soal UTBK', '/bank-soal/utbk'),
           getItem('Bank Soal SKD CPNS', '/bank-soal/skd-cpns'),
         ]),
+        getItem('Paket SKD CPNS', '/paket', <ShoppingOutlined />),
         getItem('Masuk', '/login', <UserOutlined />),
         getItem('Daftar', '/register', <CalendarOutlined />)
       ];
 
   const selectedKey = location.pathname.startsWith('/profile')
     ? '/profile'
+    : location.pathname.startsWith('/pesanan')
+    ? '/pesanan'
+    : location.pathname.includes('/paket')
+    ? '/paket'
     : location.pathname.startsWith('/bank-soal/utbk')
     ? '/bank-soal/utbk'
     : location.pathname.startsWith('/bank-soal/skd-cpns')

@@ -6,7 +6,7 @@ import { getTokenRemainingMinutes, saveToken } from '../helpers/auth';
 import { useSignIn } from 'react-auth-kit';
 import axios from 'axios';
 import { getErrorMessage } from '../helpers/errorMessage';
-import { useNavigate } from 'react-router-dom';
+import { useLocation, useNavigate } from 'react-router-dom';
 
 type Props = {
   apiLoginUrl?: string;
@@ -15,6 +15,7 @@ type Props = {
 
 export default function useAuthApp(props?: Props) {
   const navigate = useNavigate();
+  const location = useLocation();
   const signIn = useSignIn();
 
   const [isAuthLoading, setIsAuthLoading] = useState(false);
@@ -77,7 +78,10 @@ export default function useAuthApp(props?: Props) {
         if (callback) {
           callback();
         } else {
-          navigate('/dashboard', { replace: true });
+          // Go back to the page that asked for login (e.g. the package page).
+          const from = (location.state as any)?.from;
+          const target = from?.pathname ? from.pathname + (from.search || '') : '/dashboard';
+          navigate(target, { replace: true });
         }
         message.success('Welcome to ' + import.meta.env.VITE_WEBSITE_NAME);
       } else {

@@ -87,6 +87,8 @@ export interface CreateBankSoalRequest {
   is_options?: boolean;
   options: string[];
   correct_answer: string;
+  /** TKP: points per option (1-5), aligned with options. */
+  option_scores?: number[];
   explanation?: string;
   difficulty?: string;
   topic?: string;
@@ -99,6 +101,7 @@ export interface CreateBankSoalBatchRequest {
 }
 
 export interface BankSoalResponse {
+  option_scores?: number[];
   bank_soal_id: string;
   question_id?: string; // alias for bank_soal_id in some contexts
   type: string;

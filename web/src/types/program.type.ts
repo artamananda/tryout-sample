@@ -9,6 +9,7 @@ export interface ProgramProps {
   end_time: string;
   open_registration: string;
   close_registration: string;
+  has_packages?: boolean;
   created_at: string;
   updated_at: string;
 }

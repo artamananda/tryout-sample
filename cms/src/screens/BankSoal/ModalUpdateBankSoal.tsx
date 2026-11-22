@@ -16,6 +16,7 @@ import { DownOutlined, PlusOutlined } from "@ant-design/icons";
 import { apiUpdateBankSoal } from "../../api/ai";
 import { getErrorMessage } from "../../helpers/errorHandler";
 import SwitchButton from "../../components/Ui/SwitchButton";
+import TkpScoreSelect, { DEFAULT_TKP_SCORES } from "./TkpScoreSelect";
 import { BankSoalResponse, CreateBankSoalRequest } from "../../types/ai.type";
 import {
   getAllQuestionTypes,
@@ -42,6 +43,9 @@ const ModalUpdateBankSoal = (props: PropTypes) => {
   const [answer, setAnswer] = useState<string>(
     questionData?.correct_answer || "",
   );
+  const [optionScores, setOptionScores] = useState<number[]>(
+    questionData?.option_scores?.length ? questionData.option_scores : DEFAULT_TKP_SCORES,
+  );
   const [explanation, setExplanation] = useState<string>(
     questionData?.explanation || "",
   );
@@ -64,6 +68,11 @@ const ModalUpdateBankSoal = (props: PropTypes) => {
       const nextOptions =
         questionData.options || Array.from({ length: 5 }, () => "");
       setOptions(nextOptions);
+      setOptionScores(
+        questionData.option_scores?.length === nextOptions.length
+          ? questionData.option_scores
+          : DEFAULT_TKP_SCORES,
+      );
 
       const rawAnswer = String(questionData.correct_answer || "").trim();
       const answerIndex = nextOptions.findIndex(
@@ -147,6 +156,10 @@ const ModalUpdateBankSoal = (props: PropTypes) => {
             ? normalizedOptions
             : [],
         correct_answer: resolvedCorrectAnswer,
+        option_scores:
+          questionType === "tkp" && isOptions && normalizedOptions.every((o) => o !== "")
+            ? normalizedOptions.map((_, i) => optionScores[i] ?? 1)
+            : undefined,
         explanation: explanation,
         difficulty: difficulty,
         topic: topic,
@@ -378,6 +391,18 @@ const ModalUpdateBankSoal = (props: PropTypes) => {
                         <span style={{ fontWeight: 600, color: "#8C59F1" }}>
                           {label}.
                         </span>
+                      }
+                      addonAfter={
+                        questionType === "tkp" ? (
+                          <TkpScoreSelect
+                            value={optionScores[index] ?? 1}
+                            onChange={(score) => {
+                              const next = [...optionScores];
+                              next[index] = score;
+                              setOptionScores(next);
+                            }}
+                          />
+                        ) : undefined
                       }
                     />
                   </Form.Item>

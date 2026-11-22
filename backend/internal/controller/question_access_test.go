@@ -30,7 +30,7 @@ func TestQuestionsHideAnswerKeyFromParticipants(t *testing.T) {
 	transactionService := service.NewTransactionTryoutService(&transactionRepo)
 
 	app := fiber.New(config.NewFiberConfiguration())
-	NewQuestionController(&questionService, &transactionService, testConfig).Route(app)
+	NewQuestionController(&questionService, &transactionService, nil, nil, testConfig).Route(app)
 
 	userID := uuid.New()
 	tryoutID := uuid.New()
@@ -79,7 +79,7 @@ func TestQuestionsRequireStartedTryout(t *testing.T) {
 	transactionService := service.NewTransactionTryoutService(&transactionRepo)
 
 	app := fiber.New(config.NewFiberConfiguration())
-	NewQuestionController(&questionService, &transactionService, testConfig).Route(app)
+	NewQuestionController(&questionService, &transactionService, nil, nil, testConfig).Route(app)
 
 	// No transaction: the participant never entered the token.
 	mock.ExpectQuery(`SELECT .* FROM "transaction_tryouts" JOIN tryouts`).

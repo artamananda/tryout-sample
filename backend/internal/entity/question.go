@@ -18,6 +18,8 @@ type Question struct {
 	IsOptions     *bool          `json:"is_options"`
 	Options       pq.StringArray `gorm:"type:text[]" json:"options"`
 	CorrectAnswer string         `json:"correct_answer"`
+	OptionScores  pq.Int64Array  `gorm:"type:integer[]" json:"option_scores"`
+	Explanation   string         `json:"explanation"`
 	Points        int            `json:"points"`
 	CreatedAt     time.Time      `json:"created_at"`
 	UpdatedAt     time.Time      `json:"updated_at"`

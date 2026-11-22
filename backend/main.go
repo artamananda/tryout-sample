@@ -1,11 +1,14 @@
 package main
 
 import (
+	"strconv"
+
 	"github.com/artamananda/tryout-sample/internal/config"
 	"github.com/artamananda/tryout-sample/internal/controller"
 	"github.com/artamananda/tryout-sample/internal/cron"
 	"github.com/artamananda/tryout-sample/internal/exception"
 	"github.com/artamananda/tryout-sample/internal/model"
+	"github.com/artamananda/tryout-sample/internal/payment"
 	"github.com/artamananda/tryout-sample/internal/repository"
 	"github.com/artamananda/tryout-sample/internal/service"
 	"github.com/aws/aws-sdk-go-v2/feature/s3/manager"
@@ -70,6 +73,8 @@ func main() {
 	chatArtifactRepository := repository.NewChatArtifactRepository(db)
 	learningVideoRepository := repository.NewLearningVideoRepository(db)
 	systemConfigRepository := repository.NewSystemConfigRepository(db)
+	packageRepository := repository.NewPackageRepository(db)
+	orderRepository := repository.NewOrderRepository(db)
 
 	// Cron Scheduler
 	scheduler := cron.NewScheduler(
@@ -90,8 +95,28 @@ func main() {
 	userAnswerService := service.NewUserAnswerService(&userAnswerRepository)
 	transactionTryoutService := service.NewTransactionTryoutService(&transactionRepository)
 	programService := service.NewProgramService(&programRepository, uploader)
+	programService.PackageRepository = &packageRepository
+	accessService := service.NewAccessService(&transactionProgramRepository, &packageRepository)
+	packageService := service.NewPackageService(&packageRepository, &programRepository, &orderRepository, &accessService)
+	paymentExpiryMinutes, _ := strconv.Atoi(initConfig.Get("PAYMENT_EXPIRY_MINUTES"))
+	orderService := service.NewOrderService(
+		&orderRepository,
+		&packageRepository,
+		&programRepository,
+		&userRepository,
+		&transactionProgramRepository,
+		&accessService,
+		payment.NewBridgeClient(initConfig.Get("PAYMENT_BRIDGE_URL"), initConfig.Get("PAYMENT_BRIDGE_API_KEY")),
+		service.OrderConfig{
+			CallbackURL:       initConfig.Get("PAYMENT_CALLBACK_URL"),
+			FinishRedirectURL: initConfig.Get("PAYMENT_FINISH_URL"),
+			CallbackSecret:    initConfig.Get("PAYMENT_CALLBACK_SECRET"),
+			ExpiryMinutes:     paymentExpiryMinutes,
+		},
+	)
+	skdResultService := service.NewSKDResultService(&tryoutRepository, &questionRepository, &userAnswerRepository, &transactionRepository, &userRepository)
 	transactionProgramService := service.NewTransactionProgramService(&transactionProgramRepository, &programRepository)
-	registerProgramService := service.NewRegisterProgramService(&userService, &programService, &transactionProgramService, uploader)
+	registerProgramService := service.NewRegisterProgramService(&userService, &programService, &transactionProgramService, &packageRepository, uploader)
 	ebookService := service.NewEbookService(&ebookRepository, uploader)
 	aiService := service.NewAIService(initConfig, &chatLogRepository, &aiExampleRepository, &chatArtifactRepository, &systemConfigRepository)
 	extractionService := service.NewExtractionService(initConfig)
@@ -100,11 +125,11 @@ func main() {
 	systemConfigService := service.NewSystemConfigService(&systemConfigRepository)
 
 	userController := controller.NewUserController(&userService, initConfig)
-	tryoutController := controller.NewTryoutController(&tryoutService, initConfig)
+	tryoutController := controller.NewTryoutController(&tryoutService, &accessService, initConfig)
 	tryoutResultController := controller.NewTryoutResultController(&tryoutResultService, initConfig)
-	questionController := controller.NewQuestionController(&questionService, &transactionTryoutService, initConfig)
+	questionController := controller.NewQuestionController(&questionService, &transactionTryoutService, &accessService, &tryoutRepository, initConfig)
 	userAnswerController := controller.NewUserAnswerController(&userAnswerService, &transactionTryoutService, initConfig)
-	transactionTryoutController := controller.NewTransactionTryoutController(&transactionTryoutService, &tryoutService, &tryoutResultService, &transactionProgramRepository, initConfig)
+	transactionTryoutController := controller.NewTransactionTryoutController(&transactionTryoutService, &tryoutService, &tryoutResultService, &transactionProgramRepository, &accessService, skdResultService, initConfig)
 	programController := controller.NewProgramController(&programService, initConfig)
 	transactionProgramController := controller.NewTransactionProgramController(&transactionProgramService, initConfig)
 	registerProgramController := controller.NewRegisterProgramController(&registerProgramService, initConfig)
@@ -114,6 +139,9 @@ func main() {
 	learningVideoController := controller.NewLearningVideoController(&learningVideoService, initConfig)
 	systemConfigController := controller.NewSystemConfigController(systemConfigService, initConfig)
 	adminController := controller.NewAdminController(scheduler, initConfig)
+	packageController := controller.NewPackageController(&packageService, initConfig)
+	orderController := controller.NewOrderController(&orderService, initConfig)
+	skdResultController := controller.NewSKDResultController(skdResultService, initConfig)
 
 	userController.Route(app)
 	tryoutController.Route(app)
@@ -130,6 +158,9 @@ func main() {
 	bankSoalController.Route(app)
 	systemConfigController.Route(app)
 	adminController.Route(app)
+	packageController.Route(app)
+	orderController.Route(app)
+	skdResultController.Route(app)
 
 	app.Get("/", func(c *fiber.Ctx) error {
 		return c.Status(fiber.StatusCreated).JSON(model.GeneralResponse{

@@ -10,6 +10,7 @@ import {
   RobotOutlined,
   PlayCircleOutlined,
   SettingOutlined,
+  ShoppingOutlined,
 } from "@ant-design/icons";
 import type { MenuProps } from "antd";
 import { Layout, Menu, Image, Spin, Modal } from "antd";
@@ -57,6 +58,7 @@ const AppLayout = () => {
     getItem("Ebook", "/ebook", <BookOutlined />),
     getItem("AI Generator", "/ai-generator", <RobotOutlined />),
     getItem("Program", "/program", <ScheduleOutlined />),
+    getItem("Pesanan Paket", "/orders", <ShoppingOutlined />),
     getItem("Role", "/role", <UsergroupAddOutlined />, [
       getItem("Admin", "/role/admins"),
       getItem("User", "/role/users"),

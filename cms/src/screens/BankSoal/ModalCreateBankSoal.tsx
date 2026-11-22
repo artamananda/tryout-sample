@@ -16,6 +16,7 @@ import { DownOutlined, PlusOutlined } from "@ant-design/icons";
 import { apiSaveToBankSoal } from "../../api/ai";
 import { getErrorMessage } from "../../helpers/errorHandler";
 import SwitchButton from "../../components/Ui/SwitchButton";
+import TkpScoreSelect, { DEFAULT_TKP_SCORES } from "./TkpScoreSelect";
 import {
   getAllQuestionTypes,
   saveCustomType,
@@ -38,6 +39,7 @@ const ModalCreateBankSoal = (props: PropTypes) => {
   const [questionType, setQuestionType] = useState<string>(defaultType);
   const [questionText, setQuestionText] = useState<string>("");
   const [options, setOptions] = useState<string[]>(["", "", "", "", ""]);
+  const [optionScores, setOptionScores] = useState<number[]>(DEFAULT_TKP_SCORES);
   const [answer, setAnswer] = useState<string>("A");
   const [explanation, setExplanation] = useState<string>("");
   const [difficulty, setDifficulty] = useState<string>("medium");
@@ -126,6 +128,14 @@ const ModalCreateBankSoal = (props: PropTypes) => {
             type: questionType,
             text: questionText,
             options: isOptions ? normalizedOptions.filter((o) => o) : [],
+            // TKP points follow the options that are kept.
+            option_scores:
+              isOptions && questionType === "tkp"
+                ? normalizedOptions
+                    .map((o, i) => ({ o, score: optionScores[i] ?? 1 }))
+                    .filter((item) => item.o)
+                    .map((item) => item.score)
+                : undefined,
             correct_answer: resolvedCorrectAnswer,
             explanation: explanation,
             difficulty: difficulty,
@@ -373,6 +383,18 @@ const ModalCreateBankSoal = (props: PropTypes) => {
                         <span style={{ fontWeight: 600, color: "#8C59F1" }}>
                           {label}.
                         </span>
+                      }
+                      addonAfter={
+                        questionType === "tkp" ? (
+                          <TkpScoreSelect
+                            value={optionScores[index] ?? 1}
+                            onChange={(score) => {
+                              const next = [...optionScores];
+                              next[index] = score;
+                              setOptionScores(next);
+                            }}
+                          />
+                        ) : undefined
                       }
                     />
                   </Form.Item>

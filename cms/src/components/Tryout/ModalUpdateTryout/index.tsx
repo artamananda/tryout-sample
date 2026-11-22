@@ -15,6 +15,7 @@ import dayjs from "dayjs";
 import { useEffect } from "react";
 import { useState } from "react";
 import { apiUpdateTryout } from "../../../api/tryout";
+import TryoutProgramFields from "../TryoutProgramFields";
 import { UpdateTryoutRequest } from "../../../types/tryout.type";
 
 type PropTypes = {
@@ -48,6 +49,8 @@ const ModalUpdateTryout = (props: PropTypes) => {
         ...showModalUpdate.data,
         start_time: dayjs(showModalUpdate.data.start_time),
         end_time: dayjs(showModalUpdate.data.end_time),
+        sequence: showModalUpdate.data.sequence ?? 0,
+        scoring_mode: showModalUpdate.data.scoring_mode || "irt",
       });
     }
   }, [showModalUpdate, updateForm]);
@@ -139,6 +142,8 @@ const ModalUpdateTryout = (props: PropTypes) => {
             defaultValue={dayjs(showModalUpdate?.data?.end_time)}
           />
         </Form.Item>
+
+        <TryoutProgramFields />
 
         <Form.Item label="Show Score to User" name="show_score">
           <SwitchButton

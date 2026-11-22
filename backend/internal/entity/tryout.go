@@ -16,6 +16,8 @@ type Tryout struct {
 	Token       string     `json:"token"`
 	IsPublished bool       `json:"is_published"`
 	ShowScore   bool       `json:"show_score"`
+	Sequence    int        `json:"sequence"`
+	ScoringMode string     `json:"scoring_mode"`
 	Questions   []Question `gorm:"foreignKey:TryoutID" json:"questions"`
 	CreatedAt   time.Time  `json:"created_at"`
 	UpdatedAt   time.Time  `json:"updated_at"`
@@ -24,3 +26,10 @@ type Tryout struct {
 func (Tryout) TableName() string {
 	return "tryouts"
 }
+
+// Scoring modes. IRT is the weighted UTBK-style score; SKD follows the BKN rules
+// (TWK/TIU 5 or 0 per question, TKP 1-5 per option).
+const (
+	ScoringModeIRT = "irt"
+	ScoringModeSKD = "skd"
+)

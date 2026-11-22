@@ -20,6 +20,11 @@ import BankSoalScreen from '../screens/BankSoal';
 import LearningVideoScreen from '../screens/LearningVideo';
 import MyTryoutScoreScreen from '../screens/Tryout/MyScore';
 import ProfileScreen from '../screens/Profile';
+import PackagesScreen, { CurrentPackagesRedirect } from '../screens/Packages';
+import MyOrdersScreen from '../screens/Orders';
+import OrderDetailScreen from '../screens/Orders/Detail';
+import SKDResultScreen from '../screens/Tryout/SKDResult';
+import TryoutReviewScreen from '../screens/Tryout/Review';
 
 const RootNavigator = () => {
   return (
@@ -123,6 +128,46 @@ const RootNavigator = () => {
             element={
               <PrivateRoute loginPath="/login">
                 <LearningVideoScreen />
+              </PrivateRoute>
+            }
+          />
+
+          {/* Price lists are public so links from ads work without login. */}
+          <Route path="/paket" element={<CurrentPackagesRedirect />} />
+          <Route path="/program/:programId/paket" element={<PackagesScreen />} />
+
+          <Route
+            path="/pesanan"
+            element={
+              <PrivateRoute loginPath="/login">
+                <MyOrdersScreen />
+              </PrivateRoute>
+            }
+          />
+
+          <Route
+            path="/pesanan/:orderNumber"
+            element={
+              <PrivateRoute loginPath="/login">
+                <OrderDetailScreen />
+              </PrivateRoute>
+            }
+          />
+
+          <Route
+            path="/tryout/:id/hasil-skd"
+            element={
+              <PrivateRoute loginPath="/login">
+                <SKDResultScreen />
+              </PrivateRoute>
+            }
+          />
+
+          <Route
+            path="/tryout/:id/pembahasan"
+            element={
+              <PrivateRoute loginPath="/login">
+                <TryoutReviewScreen />
               </PrivateRoute>
             }
           />

@@ -29,8 +29,9 @@ type ProgramResponse struct {
 	EndTime           time.Time `json:"end_time"`
 	OpenRegistration  time.Time `json:"open_registration"`
 	CloseRegistration time.Time `json:"close_registration"`
+	HasPackages       bool      `json:"has_packages"`
 	CreatedAt         time.Time `json:"created_at"`
-	UpdatedAt         time.Time `json:"deleted_at"`
+	UpdatedAt         time.Time `json:"updated_at"`
 }
 
 type FindAllProgramsRequest struct {

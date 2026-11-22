@@ -1,6 +1,17 @@
 export function getErrorMessage(err: any) {
   let errMessage = "Failed. Please try again.";
 
+  // The API answers { code, message, payload }; payload carries the detail.
+  const payload = err?.data?.payload ?? err?.response?.data?.payload;
+  if (typeof payload === "string" && payload) {
+    return payload;
+  }
+  if (Array.isArray(payload) && payload.length > 0) {
+    return payload
+      .map((item: any) => (item?.field ? `${item.field}: ${item.message}` : String(item)))
+      .join(", ");
+  }
+
   if (err && typeof err === "string") {
     errMessage = err;
   } else if (err && err.response) {

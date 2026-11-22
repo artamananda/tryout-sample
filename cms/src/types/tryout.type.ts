@@ -9,6 +9,8 @@ export interface TryoutProps {
   start_time: Date | string;
   is_published: boolean;
   show_score: boolean;
+  sequence?: number;
+  scoring_mode?: "irt" | "skd" | string;
   end_time: Date | string;
   created_at: Date | string;
   updated_at: Date | string;
@@ -22,6 +24,8 @@ export interface CreateTryoutRequest {
   end_time: Date | string;
   is_published: boolean;
   show_score?: boolean;
+  sequence?: number;
+  scoring_mode?: "irt" | "skd";
   generate_from_bank_soal?: boolean;
   bank_soal_distribution?: Array<{
     type: string;
@@ -37,6 +41,8 @@ export interface UpdateTryoutRequest {
   end_time?: Date | string;
   is_published?: boolean;
   show_score?: boolean;
+  sequence?: number;
+  scoring_mode?: "irt" | "skd";
 }
 
 export interface FetchAllTryoutsResponse extends BaseResponsePaginationProps<TryoutProps> {

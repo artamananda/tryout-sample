@@ -15,6 +15,7 @@ import (
 )
 
 type ProgramService struct {
+	PackageRepository *repository.PackageRepository
 	ProgramRepository *repository.ProgramRepository
 	Uploader          *manager.Uploader
 }
@@ -156,21 +157,17 @@ func (service *ProgramService) Delete(ctx context.Context, programID string) err
 }
 
 func (service *ProgramService) FindByID(ctx context.Context, programID string) (model.ProgramResponse, error) {
-	program, err := service.ProgramRepository.FindByID(ctx, uuid.MustParse(programID))
+	id, err := parseID(programID, "program_id")
 	if err != nil {
 		return model.ProgramResponse{}, err
 	}
-	return model.ProgramResponse{
-		ProgramID:         program.ProgramID,
-		Name:              program.Name,
-		Description:       program.Description,
-		MaxParticipants:   program.MaxParticipants,
-		IsPublished:       program.IsPublished,
-		StartTime:         program.StartTime,
-		EndTime:           program.EndTime,
-		OpenRegistration:  program.OpenRegistration,
-		CloseRegistration: program.CloseRegistration,
-	}, nil
+	program, err := service.ProgramRepository.FindByID(ctx, id)
+	if err != nil {
+		return model.ProgramResponse{}, exception.NotFoundError{Message: "program Not Found"}
+	}
+	response := toProgramResponse(program)
+	response.HasPackages = service.hasPackages(ctx, program.ProgramID)
+	return response, nil
 }
 
 func (service *ProgramService) FindAll(ctx context.Context, request model.FindAllProgramsRequest) ([]model.ProgramResponse, error) {
@@ -178,18 +175,18 @@ func (service *ProgramService) FindAll(ctx context.Context, request model.FindAl
 
 	var response []model.ProgramResponse
 	for _, program := range programs {
-		response = append(response, model.ProgramResponse{
-			ProgramID:         program.ProgramID,
-			Name:              program.Name,
-			Description:       program.Description,
-			MaxParticipants:   program.MaxParticipants,
-			IsPublished:       program.IsPublished,
-			StartTime:         program.StartTime,
-			EndTime:           program.EndTime,
-			OpenRegistration:  program.OpenRegistration,
-			CloseRegistration: program.CloseRegistration,
-		})
+		item := toProgramResponse(program)
+		item.HasPackages = service.hasPackages(ctx, program.ProgramID)
+		response = append(response, item)
 	}
 
 	return response, nil
+}
+
+func (service *ProgramService) hasPackages(ctx context.Context, programID uuid.UUID) bool {
+	if service.PackageRepository == nil {
+		return false
+	}
+	packages, err := service.PackageRepository.FindByProgram(ctx, programID, false)
+	return err == nil && len(packages) > 0
 }

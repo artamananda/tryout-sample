@@ -3,6 +3,7 @@ package repository
 import (
 	"context"
 	"errors"
+	"time"
 
 	"github.com/artamananda/tryout-sample/internal/entity"
 	"github.com/artamananda/tryout-sample/internal/exception"
@@ -82,4 +83,55 @@ func (repository *TransactionProgramRepository) HasPaidAccess(ctx context.Contex
 		Count(&total)
 
 	return total > 0
+}
+
+// ProgramAccess is the access a user has to one program, with the package held.
+type ProgramAccess struct {
+	ProgramID uuid.UUID
+	PackageID *uuid.UUID
+}
+
+// FindAccessByUser returns the programs the user can access (paid or registered).
+func (repository *TransactionProgramRepository) FindAccessByUser(ctx context.Context, userID string) ([]ProgramAccess, error) {
+	var rows []ProgramAccess
+	err := repository.DB.WithContext(ctx).
+		Model(&entity.TransactionProgram{}).
+		Select("program_id, package_id").
+		Where("user_id = ? AND status IN ?", userID, []string{"PAID", "COMPLETED"}).
+		Scan(&rows).Error
+	return rows, err
+}
+
+// GrantPackage gives the user access to the program with packageID, inside tx.
+// An existing registration keeps its row; only the package changes.
+func (repository *TransactionProgramRepository) GrantPackage(ctx context.Context, tx *gorm.DB, userID uuid.UUID, programID uuid.UUID, packageID uuid.UUID, invoiceNumber string) error {
+	var existing entity.TransactionProgram
+	result := tx.WithContext(ctx).
+		Where("user_id = ? AND program_id = ?", userID, programID).
+		Limit(1).Find(&existing)
+	if result.Error != nil {
+		return result.Error
+	}
+
+	now := time.Now()
+	if result.RowsAffected == 0 {
+		return tx.WithContext(ctx).Create(&entity.TransactionProgram{
+			TransactionProgramID: uuid.New(),
+			UserID:               userID,
+			ProgramID:            programID,
+			PackageID:            &packageID,
+			InvoiceNumber:        invoiceNumber,
+			Status:               "PAID",
+			CreatedAt:            now,
+			UpdatedAt:            now,
+		}).Error
+	}
+
+	return tx.WithContext(ctx).Model(&entity.TransactionProgram{}).
+		Where("transaction_program_id = ?", existing.TransactionProgramID).
+		Updates(map[string]interface{}{
+			"package_id": packageID,
+			"status":     "PAID",
+			"updated_at": now,
+		}).Error
 }

@@ -15,6 +15,8 @@ type CreateQuestionRequest struct {
 	IsOptions     *bool      `json:"is_options"`
 	Options       []string   `json:"options"`
 	CorrectAnswer string     `json:"correct_answer" validate:"required"`
+	OptionScores  []int      `json:"option_scores"`
+	Explanation   string     `json:"explanation"`
 	Points        int        `json:"points"`
 }
 
@@ -27,6 +29,8 @@ type UpdateQuestionRequest struct {
 	IsOptions     *bool      `json:"is_options"`
 	Options       []string   `json:"options" validate:"min=1,dive"`
 	CorrectAnswer string     `json:"correct_answer"`
+	OptionScores  []int      `json:"option_scores"`
+	Explanation   *string    `json:"explanation"`
 	Points        int        `json:"points"`
 }
 
@@ -41,6 +45,8 @@ type QuestionResponse struct {
 	IsOptions     *bool      `json:"is_options"`
 	Options       []string   `json:"options"`
 	CorrectAnswer string     `json:"correct_answer,omitempty"`
+	OptionScores  []int      `json:"option_scores,omitempty"`
+	Explanation   string     `json:"explanation,omitempty"`
 	Points        int        `json:"points"`
 	CreatedAt     time.Time  `json:"created_at"`
 	UpdatedAt     time.Time  `json:"updated_at"`
