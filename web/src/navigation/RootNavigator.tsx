@@ -3,7 +3,7 @@ import DashboardScreen from '../screens/Dashboard';
 import LoginScreen from '../screens/Auth/Login';
 import NotFoundScreen from '../screens/NotFound';
 import PublicRoute from './PublicRoute';
-import { Suspense } from 'react';
+import { lazy, Suspense } from 'react';
 import { Spin } from 'antd';
 import PrivateRoute from './PrivateRoute';
 import AppLayout from '../screens/Layout/AppLayout';
@@ -11,6 +11,9 @@ import TryoutScreen from '../screens/Tryout';
 import RegisterScreen from '../screens/Auth/Register';
 import ForgotPasswordScreen from '../screens/Auth/ForgotPassword';
 import TryoutRoute from './TryoutRoute';
+
+// Loaded on demand: it carries the chart library.
+const ParticipantDashboard = lazy(() => import('../screens/ParticipantDashboard'));
 import HomeScreen from '../screens/Home';
 import ELibraryScreen from '../screens/ELibrary';
 import ReadScreen from '../screens/ELibrary/Read';
@@ -93,7 +96,7 @@ const RootNavigator = () => {
             path="/dashboard"
             element={
               <PrivateRoute loginPath="/login">
-                <DashboardScreen />
+                <ParticipantDashboard />
               </PrivateRoute>
             }
           />

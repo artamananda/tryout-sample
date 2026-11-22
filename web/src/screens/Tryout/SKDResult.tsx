@@ -110,7 +110,8 @@ const SKDResultScreen = () => {
         <div style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
           {result.subtests.map((subtest) => {
             const percent = subtest.max_score > 0 ? Math.round((subtest.score / subtest.max_score) * 100) : 0;
-            const gradePercent = subtest.max_score > 0 ? (subtest.passing_grade / subtest.max_score) * 100 : 0;
+            // Clamp: a short tryout can have a max score below the passing grade.
+            const gradePercent = subtest.max_score > 0 ? Math.min(100, (subtest.passing_grade / subtest.max_score) * 100) : 0;
             return (
               <div key={subtest.code}>
                 <div style={{ display: 'flex', justifyContent: 'space-between', flexWrap: 'wrap', gap: 8 }}>

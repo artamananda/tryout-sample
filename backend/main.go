@@ -156,6 +156,13 @@ func main() {
 		MentoringRepository:          &mentoringRepository,
 		Now:                          time.Now,
 	}
+	analyticsService := &service.AnalyticsService{
+		DB:                  db,
+		TryoutRepository:    &tryoutRepository,
+		LiveClassRepository: &liveClassRepository,
+		SKDResultService:    skdResultService,
+		Now:                 time.Now,
+	}
 	// Weekly progress email: Sunday 19:00 WIB.
 	if err := scheduler.AddFunc("0 19 * * 0", func() {
 		result, err := weeklyReportService.Run(context.Background(), "", false)
@@ -196,6 +203,7 @@ func main() {
 	skdResultController := controller.NewSKDResultController(skdResultService, initConfig)
 	liveClassController := controller.NewLiveClassController(&liveClassService, initConfig)
 	mentoringController := controller.NewMentoringController(&mentoringService, initConfig)
+	analyticsController := controller.NewAnalyticsController(analyticsService, initConfig)
 	growthController := controller.NewGrowthController(&growthService, weeklyReportService, tutorFeeService, &systemConfigRepository, initConfig)
 
 	userController.Route(app)
@@ -219,6 +227,7 @@ func main() {
 	liveClassController.Route(app)
 	mentoringController.Route(app)
 	growthController.Route(app)
+	analyticsController.Route(app)
 
 	app.Get("/", func(c *fiber.Ctx) error {
 		return c.Status(fiber.StatusCreated).JSON(model.GeneralResponse{

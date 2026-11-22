@@ -267,7 +267,7 @@ const ListTryout = () => {
         <PlusOutlined />
         Create Tryout
       </Button>
-      <Table columns={columns} dataSource={tryoutData} loading={isLoading} />
+      <Table rowKey="tryout_id" columns={columns} dataSource={tryoutData} loading={isLoading} scroll={{ x: true }} />
 
       <ModalCreateTryout
         showModal={showModal}

@@ -1,4 +1,6 @@
 import { useEffect, useMemo, useState } from 'react';
+import useLandingStyles from '../../hooks/useLandingStyles';
+import LandingLoader from '../../components/LandingLoader';
 import { Navigation } from '../../components/Home/Navigation';
 import {
   Layout,
@@ -59,6 +61,7 @@ function getCategoryColor(category: string): string {
 type ViewMode = 'grid' | 'list';
 
 const ELibraryScreen = () => {
+  const landingReady = useLandingStyles();
   const navigate = useNavigate();
   const [viewMode, setViewMode] = useState<ViewMode>('grid');
   const [activeCategory, setActiveCategory] = useState<string>('Semua');
@@ -90,6 +93,10 @@ const ELibraryScreen = () => {
     categories: categories.length - 1,
     published: books.filter((b) => b.is_published).length
   }), [books, categories]);
+
+  if (!landingReady) {
+    return <LandingLoader />;
+  }
 
   return (
     <Layout style={{ minHeight: '100vh', background: '#f0f4f8' }}>

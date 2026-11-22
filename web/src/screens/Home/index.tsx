@@ -1,4 +1,6 @@
 import React, { useState, useEffect } from 'react';
+import useLandingStyles from '../../hooks/useLandingStyles';
+import LandingLoader from '../../components/LandingLoader';
 import { Navigation } from '../../components/Home/Navigation';
 import { Header } from '../../components/Home/Header';
 import { Features } from '../../components/Home/Features';
@@ -21,10 +23,15 @@ export const scroll = new SmoothScroll('a[href*="#"]', {
 });
 
 const HomeScreen = () => {
+  const landingReady = useLandingStyles();
   const [landingPageData, setLandingPageData] = useState<any>({});
   useEffect(() => {
     setLandingPageData(JsonData);
   }, []);
+
+  if (!landingReady) {
+    return <LandingLoader />;
+  }
 
   return (
     <div>

@@ -10,7 +10,8 @@ import {
   Alert,
   Button,
   Space,
-  Tooltip
+  Tooltip,
+  Card
 } from 'antd';
 import { LockOutlined } from '@ant-design/icons';
 import type { TableProps } from 'antd';
@@ -219,12 +220,13 @@ const ListTryout = () => {
   };
 
   return (
-    <div>
+    <Card className="tl-card" bodyStyle={{ padding: 0 }}>
       <Table
         columns={columns}
         dataSource={tryoutData}
         rowKey="tryout_id"
         scroll={{ x: true }}
+        pagination={{ pageSize: 10, hideOnSinglePage: true }}
       />
 
       <Modal
@@ -308,7 +310,7 @@ const ListTryout = () => {
           />
         </Form>
       </Modal>
-    </div>
+    </Card>
   );
 };
 

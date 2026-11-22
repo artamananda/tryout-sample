@@ -122,7 +122,7 @@ const TableUser = (props: { role?: string }) => {
   return (
     <div>
       <Input.Search onSearch={(e) => setSearch(e)} allowClear />
-      <Table columns={columns} dataSource={tryoutData} loading={isLoading} />
+      <Table rowKey="user_id" columns={columns} dataSource={tryoutData} loading={isLoading} scroll={{ x: true }} />
     </div>
   );
 };

@@ -441,7 +441,9 @@ const BankSoalScreen = ({ category }: BankSoalScreenProps) => {
         {/* Questions List */}
         {isLoading ? (
           <div style={{ textAlign: 'center', padding: '100px 0' }}>
-            <Spin size="large" tip="Memuat bank soal Telisik..." />
+            <Spin size="large" tip="Memuat bank soal Telisik...">
+              <div style={{ padding: 32 }} />
+            </Spin>
           </div>
         ) : filteredQuestions.length === 0 ? (
           <Card
