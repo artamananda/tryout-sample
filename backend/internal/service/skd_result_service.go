@@ -423,3 +423,49 @@ func (service *SKDResultService) Ranking(ctx context.Context, tryoutID string) (
 		GeneratedAt:  ranking.GeneratedAt,
 	}, nil
 }
+
+// ProgramProgress returns the user's SKD result for every SKD tryout of a
+// program, in TO order. maxSequence > 0 limits it to TO 1..maxSequence.
+func (service *SKDResultService) ProgramProgress(ctx context.Context, programID uuid.UUID, userID uuid.UUID, maxSequence int) ([]model.SKDTryoutProgress, error) {
+	tryouts, err := service.TryoutRepository.FindByProgram(ctx, programID)
+	if err != nil {
+		return nil, err
+	}
+	progress := []model.SKDTryoutProgress{}
+	for _, tryout := range tryouts {
+		if tryout.ScoringMode != entity.ScoringModeSKD || tryout.Sequence <= 0 {
+			continue
+		}
+		if maxSequence > 0 && tryout.Sequence > maxSequence {
+			continue
+		}
+		item := model.SKDTryoutProgress{
+			TryoutID:  tryout.TryoutID.String(),
+			Sequence:  tryout.Sequence,
+			Title:     tryout.Title,
+			StartTime: tryout.StartTime,
+			EndTime:   tryout.EndTime,
+		}
+		ranking, err := service.ranking(ctx, tryout.TryoutID.String())
+		if err != nil {
+			return nil, err
+		}
+		for _, participant := range ranking.Participants {
+			if participant.UserID != userID {
+				continue
+			}
+			finished := participant.FinishedAt
+			item.Completed = true
+			item.TotalScore = participant.Score.Total
+			item.Scores = participant.Score.ByCode
+			item.PassedAll = participant.Score.PassedAll
+			item.Weakest = participant.Score.Weakest
+			item.Rank = participant.Rank
+			item.Participants = len(ranking.Participants)
+			item.FinishedAt = &finished
+			break
+		}
+		progress = append(progress, item)
+	}
+	return progress, nil
+}

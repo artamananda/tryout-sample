@@ -9,7 +9,8 @@ import (
 )
 
 type CreateOrderRequest struct {
-	PackageID uuid.UUID `json:"package_id" validate:"required"`
+	PackageID    uuid.UUID `json:"package_id" validate:"required"`
+	ReferralCode string    `json:"referral_code" validate:"max=12"`
 }
 
 type OrderPackageSummary struct {
@@ -30,6 +31,10 @@ type OrderResponse struct {
 	OrderNumber       string              `json:"order_number"`
 	Status            string              `json:"status"`
 	Amount            int                 `json:"amount"`
+	ListPrice         int                 `json:"list_price"`
+	Discount          int                 `json:"discount"`
+	ReferralCode      string              `json:"referral_code,omitempty"`
+	IsUpgrade         bool                `json:"is_upgrade"`
 	ProgramID         uuid.UUID           `json:"program_id"`
 	Package           OrderPackageSummary `json:"package"`
 	User              *OrderUserSummary   `json:"user,omitempty"`

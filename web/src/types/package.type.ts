@@ -32,6 +32,9 @@ export interface PackageProps {
   is_owned: boolean;
   is_upgrade: boolean;
   can_purchase: boolean;
+  upgrade_price?: number;
+  has_guarantee?: boolean;
+  study_group_url?: string;
 }
 
 export interface ProgramPackagesProps {
@@ -48,6 +51,10 @@ export interface OrderProps {
   order_number: string;
   status: OrderStatus;
   amount: number;
+  list_price?: number;
+  discount?: number;
+  referral_code?: string;
+  is_upgrade?: boolean;
   program_id: string;
   package: { package_id: string; code: string; name: string };
   payment_provider: string;

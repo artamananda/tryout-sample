@@ -10,7 +10,8 @@ import {
   MenuUnfoldOutlined,
   IdcardOutlined,
   ShoppingOutlined,
-  FileTextOutlined
+  FileTextOutlined,
+  TrophyOutlined
 } from '@ant-design/icons';
 import type { MenuProps } from 'antd';
 import { Layout, Menu, Image, Spin, Modal, Button, Grid } from 'antd';
@@ -64,6 +65,7 @@ const AppLayout = () => {
         ]),
         getItem('Learning Video', '/learning-video', <PlayCircleOutlined />),
         getItem('Program', '/program', <ScheduleOutlined />),
+        getItem('Program Saya', '/program-saya', <TrophyOutlined />),
         getItem('Paket SKD CPNS', '/paket', <ShoppingOutlined />),
         getItem('Pesanan Saya', '/pesanan', <FileTextOutlined />)
       ]
@@ -79,6 +81,8 @@ const AppLayout = () => {
 
   const selectedKey = location.pathname.startsWith('/profile')
     ? '/profile'
+    : location.pathname.startsWith('/program-saya')
+    ? '/program-saya'
     : location.pathname.startsWith('/pesanan')
     ? '/pesanan'
     : location.pathname.includes('/paket')

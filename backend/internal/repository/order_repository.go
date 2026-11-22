@@ -151,3 +151,42 @@ func (repository *OrderRepository) ExpireStale(ctx context.Context, now time.Tim
 		Updates(map[string]interface{}{"status": entity.OrderExpired, "updated_at": now})
 	return result.RowsAffected, result.Error
 }
+
+// PaidSummary is what a user has paid in one program.
+type PaidSummary struct {
+	Total      int
+	LastPaidAt *time.Time
+}
+
+// SumPaid adds up the user's paid orders in a program and returns the time
+// of the latest one.
+func (repository *OrderRepository) SumPaid(ctx context.Context, userID uuid.UUID, programID uuid.UUID) (PaidSummary, error) {
+	var row struct {
+		Total      int
+		LastPaidAt *time.Time
+	}
+	err := repository.DB.WithContext(ctx).Model(&entity.Order{}).
+		Select("COALESCE(SUM(amount), 0) AS total, MAX(paid_at) AS last_paid_at").
+		Where("user_id = ? AND program_id = ? AND status = ?", userID, programID, entity.OrderPaid).
+		Scan(&row).Error
+	return PaidSummary{Total: row.Total, LastPaidAt: row.LastPaidAt}, err
+}
+
+// FindPaidByProgram lists the paid orders of a program (for fee reports).
+func (repository *OrderRepository) FindPaidByProgram(ctx context.Context, programID uuid.UUID) ([]entity.Order, error) {
+	var orders []entity.Order
+	err := repository.DB.WithContext(ctx).
+		Where("program_id = ? AND status = ?", programID, entity.OrderPaid).
+		Preload("Package").
+		Find(&orders).Error
+	return orders, err
+}
+
+// CountPaidReferrals counts paid orders that used the referrer's code.
+func (repository *OrderRepository) CountPaidReferrals(ctx context.Context, referrerID uuid.UUID) (int64, error) {
+	var count int64
+	err := repository.DB.WithContext(ctx).Model(&entity.Order{}).
+		Where("referrer_user_id = ? AND status = ? AND amount > 0", referrerID, entity.OrderPaid).
+		Count(&count).Error
+	return count, err
+}

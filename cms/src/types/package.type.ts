@@ -27,6 +27,10 @@ export interface PackageProps {
   badge: string;
   sort_order: number;
   is_active: boolean;
+  tutor_fee_percent?: number;
+  mentoring_fee?: number;
+  study_group_url?: string;
+  has_guarantee?: boolean;
 }
 
 export type OrderStatus = "PENDING" | "PAID" | "EXPIRED" | "CANCELLED" | "FAILED";

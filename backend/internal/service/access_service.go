@@ -30,8 +30,18 @@ func NewAccessService(transactionProgramRepository *repository.TransactionProgra
 // Membership is what a user holds in one program. Package is nil for older
 // registrations made before packages existed; those keep full access.
 type Membership struct {
-	ProgramID uuid.UUID
-	Package   *entity.Package
+	ProgramID    uuid.UUID
+	Package      *entity.Package
+	BonusTryouts int
+}
+
+// TryoutLimit is the highest TO number the membership opens, including
+// referral bonuses. Zero means no limit (legacy full access).
+func (membership Membership) TryoutLimit() int {
+	if membership.Package == nil {
+		return 0
+	}
+	return membership.Package.TryoutCount + membership.BonusTryouts
 }
 
 // TryoutAccess explains whether a participant can open a tryout.
@@ -64,7 +74,7 @@ func (service *AccessService) Memberships(ctx context.Context, userID string) (m
 
 	memberships := map[uuid.UUID]Membership{}
 	for _, row := range rows {
-		membership := Membership{ProgramID: row.ProgramID}
+		membership := Membership{ProgramID: row.ProgramID, BonusTryouts: row.BonusTryouts}
 		if row.PackageID != nil {
 			if pkg, ok := packageByID[*row.PackageID]; ok {
 				pkgCopy := pkg
@@ -104,9 +114,9 @@ func (service *AccessService) Evaluate(tryout entity.Tryout, memberships map[uui
 	if membership.Package == nil || tryout.Sequence <= 0 {
 		return TryoutAccess{HasAccess: true}
 	}
-	if tryout.Sequence > membership.Package.TryoutCount {
+	if tryout.Sequence > membership.TryoutLimit() {
 		return TryoutAccess{Reason: fmt.Sprintf("Paket %s mencakup TO 1 sampai %d. Tingkatkan paket untuk membuka TO %d.",
-			membership.Package.Name, membership.Package.TryoutCount, tryout.Sequence)}
+			membership.Package.Name, membership.TryoutLimit(), tryout.Sequence)}
 	}
 	return TryoutAccess{HasAccess: true}
 }

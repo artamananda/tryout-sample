@@ -21,6 +21,13 @@ import (
 	"gorm.io/gorm/clause"
 )
 
+// Referral rules from the business plan: the friend gets Rp10.000 off their
+// first paid package, the referrer gets 1 extra tryout per paid friend.
+const (
+	ReferralDiscount     = 10000
+	ReferralBonusTryouts = 1
+)
+
 // OrderConfig holds the payment settings read from the environment.
 type OrderConfig struct {
 	CallbackURL       string
@@ -83,6 +90,10 @@ func toOrderResponse(order entity.Order, includeUser bool, now time.Time) model.
 		OrderNumber:       order.OrderNumber,
 		Status:            status,
 		Amount:            order.Amount,
+		ListPrice:         order.ListPrice,
+		Discount:          order.Discount,
+		ReferralCode:      order.ReferralCode,
+		IsUpgrade:         order.UpgradeFromPackageID != nil,
 		ProgramID:         order.ProgramID,
 		PaymentProvider:   order.PaymentProvider,
 		PaymentMethod:     order.PaymentMethod,
@@ -144,6 +155,7 @@ func (service *OrderService) Checkout(ctx context.Context, userID string, reques
 	if err != nil {
 		return model.OrderResponse{}, err
 	}
+	var upgradeFrom *uuid.UUID
 	if membership, ok := memberships[pkg.ProgramID]; ok {
 		if membership.Package == nil {
 			return model.OrderResponse{}, exception.BadRequestError{Message: "Anda sudah terdaftar penuh di program ini."}
@@ -154,15 +166,63 @@ func (service *OrderService) Checkout(ctx context.Context, userID string, reques
 		if pkg.SortOrder <= membership.Package.SortOrder {
 			return model.OrderResponse{}, exception.BadRequestError{Message: "Anda sudah memiliki paket " + membership.Package.Name + ". Pilih paket yang lebih tinggi untuk meningkatkan."}
 		}
+		fromID := membership.Package.PackageID
+		upgradeFrom = &fromID
 	}
 
-	amount := pkg.CurrentPrice(now)
-	if amount == 0 {
+	listPrice := pkg.CurrentPrice(now)
+	if listPrice == 0 {
 		return service.claimFree(ctx, user, pkg, now)
 	}
 
+	paid, err := service.OrderRepository.SumPaid(ctx, user.UserID, pkg.ProgramID)
+	if err != nil {
+		return model.OrderResponse{}, err
+	}
+	amount := listPrice
+	if upgradeFrom != nil {
+		amount = UpgradePrice(pkg, paid, now)
+	}
+
+	// Referral: only for a participant's first paid package in the program.
+	discount := 0
+	referralCode := strings.ToUpper(strings.TrimSpace(request.ReferralCode))
+	var referrerID *uuid.UUID
+	if referralCode != "" {
+		if upgradeFrom != nil || paid.Total > 0 {
+			return model.OrderResponse{}, exception.BadRequestError{Message: "Kode rujukan hanya berlaku untuk pembelian paket berbayar pertama."}
+		}
+		referrer, err := service.UserRepository.FindByReferralCode(ctx, referralCode)
+		if err != nil {
+			return model.OrderResponse{}, exception.BadRequestError{Message: "Kode rujukan tidak ditemukan."}
+		}
+		if referrer.UserID == user.UserID || (referrer.PhoneNumber != "" && referrer.PhoneNumber == user.PhoneNumber) {
+			return model.OrderResponse{}, exception.BadRequestError{Message: "Kode rujukan tidak bisa dipakai untuk akun sendiri."}
+		}
+		referrerUserID := referrer.UserID
+		referrerID = &referrerUserID
+		discount = ReferralDiscount
+		if discount > amount {
+			discount = amount
+		}
+		amount -= discount
+	}
+
+	if amount == 0 {
+		// Fully covered (e.g. an upgrade already paid for): grant at once.
+		return service.grantWithoutPayment(ctx, user, pkg, now, entity.Order{
+			ListPrice:            listPrice,
+			Discount:             discount,
+			ReferralCode:         referralCode,
+			ReferrerUserID:       referrerID,
+			UpgradeFromPackageID: upgradeFrom,
+			PaymentProvider:      entity.PaymentProviderManual,
+			PaymentMethod:        "upgrade",
+		})
+	}
+
 	// Reuse an unpaid order so repeated clicks do not create duplicates.
-	if open, ok := service.OrderRepository.FindOpenOrder(ctx, user.UserID, pkg.PackageID, now); ok && open.Amount == amount && (open.PaymentURL != "" || open.PaymentToken != "") {
+	if open, ok := service.OrderRepository.FindOpenOrder(ctx, user.UserID, pkg.PackageID, now); ok && open.Amount == amount && open.ReferralCode == referralCode && (open.PaymentURL != "" || open.PaymentToken != "") {
 		order, err := service.OrderRepository.FindByID(ctx, open.OrderID)
 		if err != nil {
 			return model.OrderResponse{}, err
@@ -177,18 +237,23 @@ func (service *OrderService) Checkout(ctx context.Context, userID string, reques
 			return err
 		}
 		order = entity.Order{
-			OrderID:         uuid.New(),
-			OrderNumber:     newOrderNumber(now),
-			UserID:          user.UserID,
-			PackageID:       pkg.PackageID,
-			ProgramID:       pkg.ProgramID,
-			Amount:          amount,
-			Status:          entity.OrderPending,
-			PhoneNumber:     user.PhoneNumber,
-			PaymentProvider: entity.PaymentProviderBridge,
-			ExpiresAt:       &expiresAt,
-			CreatedAt:       now,
-			UpdatedAt:       now,
+			OrderID:              uuid.New(),
+			OrderNumber:          newOrderNumber(now),
+			UserID:               user.UserID,
+			PackageID:            pkg.PackageID,
+			ProgramID:            pkg.ProgramID,
+			Amount:               amount,
+			ListPrice:            listPrice,
+			Discount:             discount,
+			ReferralCode:         referralCode,
+			ReferrerUserID:       referrerID,
+			UpgradeFromPackageID: upgradeFrom,
+			Status:               entity.OrderPending,
+			PhoneNumber:          user.PhoneNumber,
+			PaymentProvider:      entity.PaymentProviderBridge,
+			ExpiresAt:            &expiresAt,
+			CreatedAt:            now,
+			UpdatedAt:            now,
 		}
 		return tx.WithContext(ctx).Create(&order).Error
 	})
@@ -274,30 +339,32 @@ func (service *OrderService) claimFree(ctx context.Context, user entity.User, pk
 	if claimed {
 		return model.OrderResponse{}, exception.BadRequestError{Message: "Nomor WhatsApp ini sudah pernah memakai paket " + pkg.Name + "."}
 	}
+	return service.grantWithoutPayment(ctx, user, pkg, now, entity.Order{PaymentProvider: entity.PaymentProviderFree})
+}
 
-	var order entity.Order
-	err = service.OrderRepository.DB.WithContext(ctx).Transaction(func(tx *gorm.DB) error {
+// grantWithoutPayment records a paid order of amount 0 and grants the package.
+func (service *OrderService) grantWithoutPayment(ctx context.Context, user entity.User, pkg entity.Package, now time.Time, template entity.Order) (model.OrderResponse, error) {
+	order := template
+	order.OrderID = uuid.New()
+	order.OrderNumber = newOrderNumber(now)
+	order.UserID = user.UserID
+	order.PackageID = pkg.PackageID
+	order.ProgramID = pkg.ProgramID
+	order.Amount = 0
+	order.Status = entity.OrderPaid
+	order.PhoneNumber = user.PhoneNumber
+	order.PaidAt = &now
+	order.CreatedAt = now
+	order.UpdatedAt = now
+
+	err := service.OrderRepository.DB.WithContext(ctx).Transaction(func(tx *gorm.DB) error {
 		if err := service.ensureQuota(ctx, tx, pkg, now); err != nil {
 			return err
-		}
-		order = entity.Order{
-			OrderID:         uuid.New(),
-			OrderNumber:     newOrderNumber(now),
-			UserID:          user.UserID,
-			PackageID:       pkg.PackageID,
-			ProgramID:       pkg.ProgramID,
-			Amount:          0,
-			Status:          entity.OrderPaid,
-			PhoneNumber:     user.PhoneNumber,
-			PaymentProvider: entity.PaymentProviderFree,
-			PaidAt:          &now,
-			CreatedAt:       now,
-			UpdatedAt:       now,
 		}
 		if err := tx.WithContext(ctx).Create(&order).Error; err != nil {
 			return err
 		}
-		return service.TransactionProgramRepository.GrantPackage(ctx, tx, user.UserID, pkg.ProgramID, pkg.PackageID, helper.GenerateInvoiceNumber())
+		return service.completePaid(ctx, tx, order)
 	})
 	if err != nil {
 		if strings.Contains(err.Error(), "orders_free_package_phone_unique") {
@@ -311,6 +378,34 @@ func (service *OrderService) claimFree(ctx context.Context, user entity.User, pk
 		return model.OrderResponse{}, err
 	}
 	return toOrderResponse(created, false, now), nil
+}
+
+// completePaid runs everything that follows a payment, inside tx: grant the
+// package and reward the referrer (once per order).
+func (service *OrderService) completePaid(ctx context.Context, tx *gorm.DB, order entity.Order) error {
+	if err := service.TransactionProgramRepository.GrantPackage(ctx, tx, order.UserID, order.ProgramID, order.PackageID, helper.GenerateInvoiceNumber()); err != nil {
+		return err
+	}
+	if order.ReferrerUserID == nil || order.Amount <= 0 {
+		return nil
+	}
+
+	granted, err := service.TransactionProgramRepository.AddBonusTryouts(ctx, tx, *order.ReferrerUserID, order.ProgramID, ReferralBonusTryouts)
+	if err != nil {
+		return err
+	}
+	reward := entity.ReferralReward{
+		OrderID:        order.OrderID,
+		ReferrerUserID: *order.ReferrerUserID,
+		ProgramID:      order.ProgramID,
+		BonusTryouts:   ReferralBonusTryouts,
+		CreatedAt:      time.Now(),
+	}
+	if !granted {
+		reward.BonusTryouts = 0
+		reward.Note = "pengajak belum terdaftar di program ini"
+	}
+	return tx.WithContext(ctx).Clauses(clause.OnConflict{DoNothing: true}).Create(&reward).Error
 }
 
 // HandleCallback applies a status update forwarded by the Midtrans bridge.
@@ -376,7 +471,7 @@ func (service *OrderService) HandleCallback(ctx context.Context, timestamp strin
 			if err := tx.WithContext(ctx).Model(&entity.Order{}).Where("order_id = ?", order.OrderID).Updates(changes).Error; err != nil {
 				return err
 			}
-			return service.TransactionProgramRepository.GrantPackage(ctx, tx, order.UserID, order.ProgramID, order.PackageID, helper.GenerateInvoiceNumber())
+			return service.completePaid(ctx, tx, order)
 		}
 
 		changes["status"] = newStatus
@@ -422,7 +517,7 @@ func (service *OrderService) MarkPaid(ctx context.Context, orderID string, reque
 		}).Error; err != nil {
 			return err
 		}
-		return service.TransactionProgramRepository.GrantPackage(ctx, tx, order.UserID, order.ProgramID, order.PackageID, helper.GenerateInvoiceNumber())
+		return service.completePaid(ctx, tx, order)
 	})
 	if err != nil {
 		return model.OrderResponse{}, err

@@ -59,6 +59,7 @@ jobs:
           echo "PAYMENT_CALLBACK_URL=${{ secrets.PAYMENT_CALLBACK_URL }}" >> ./backend/.env
           echo "PAYMENT_FINISH_URL=${{ secrets.PAYMENT_FINISH_URL }}" >> ./backend/.env
           echo "PAYMENT_EXPIRY_MINUTES=${{ secrets.PAYMENT_EXPIRY_MINUTES }}" >> ./backend/.env
+          echo "WEB_BASE_URL=${{ secrets.WEB_BASE_URL }}" >> ./backend/.env
           cat ./backend/.env
 
       - uses: superfly/flyctl-actions/setup-flyctl@master

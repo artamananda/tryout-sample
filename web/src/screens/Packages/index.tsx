@@ -5,6 +5,7 @@ import {
   Card,
   Col,
   Empty,
+  Input,
   message,
   Modal,
   Row,
@@ -13,7 +14,7 @@ import {
   Typography
 } from 'antd';
 import { CheckOutlined, CrownOutlined } from '@ant-design/icons';
-import { useLocation, useNavigate, useParams } from 'react-router-dom';
+import { useLocation, useNavigate, useParams, useSearchParams } from 'react-router-dom';
 import { useIsAuthenticated } from 'react-auth-kit';
 import dayjs from 'dayjs';
 import { checkoutPackage, getProgramPackages } from '../../api/package';
@@ -52,7 +53,10 @@ const PackagesScreen = () => {
   const { programId } = useParams();
   const navigate = useNavigate();
   const location = useLocation();
+  const [searchParams] = useSearchParams();
   const isAuthenticated = useIsAuthenticated();
+  // A shared link like /paket?ref=ABCD2345 fills in the referral code.
+  const referralFromLink = (searchParams.get('ref') || '').toUpperCase();
   const [data, setData] = useState<ProgramPackagesProps>();
   const [isLoading, setIsLoading] = useState(true);
   const [processingId, setProcessingId] = useState<string>();
@@ -76,13 +80,13 @@ const PackagesScreen = () => {
     });
   };
 
-  const startCheckout = async (pkg: PackageProps) => {
+  const startCheckout = async (pkg: PackageProps, referralCode?: string) => {
     try {
       setProcessingId(pkg.package_id);
-      const order = await checkoutPackage(pkg.package_id);
+      const order = await checkoutPackage(pkg.package_id, referralCode);
       if (order.status === 'PAID') {
         message.success(`Paket ${pkg.name} aktif. Selamat berlatih!`);
-        navigate('/tryout');
+        navigate(`/program-saya?program=${pkg.program_id}`);
         return;
       }
       if (order.payment_url) {
@@ -108,16 +112,42 @@ const PackagesScreen = () => {
       navigate('/login', { state: { from: location } });
       return;
     }
+    const price = payablePrice(pkg);
+    // Referral codes apply to the first paid package only.
+    const canUseReferral = !pkg.is_free && !data?.owned_package_id && price > 0;
+    let referralCode = referralFromLink;
     Modal.confirm({
-      title: pkg.is_free ? `Ambil paket ${pkg.name}?` : `Beli paket ${pkg.name}?`,
-      content: pkg.is_free
-        ? 'Paket gratis hanya bisa diambil satu kali per nomor WhatsApp.'
-        : `Total pembayaran ${formatRupiah(pkg.current_price)}. Anda akan diarahkan ke halaman pembayaran.`,
+      title: pkg.is_free ? `Ambil paket ${pkg.name}?` : pkg.is_upgrade ? `Tingkatkan ke ${pkg.name}?` : `Beli paket ${pkg.name}?`,
+      content: pkg.is_free ? (
+        'Paket gratis hanya bisa diambil satu kali per nomor WhatsApp.'
+      ) : (
+        <div>
+          <p style={{ marginBottom: 8 }}>
+            Total pembayaran {formatRupiah(price)}
+            {pkg.is_upgrade && price < pkg.current_price && ' (selisih dari paket Anda)'}. Anda akan diarahkan ke halaman pembayaran.
+          </p>
+          {canUseReferral && (
+            <Input
+              defaultValue={referralFromLink}
+              placeholder="Kode rujukan teman (opsional, potongan Rp10.000)"
+              maxLength={12}
+              onChange={(event) => {
+                referralCode = event.target.value.toUpperCase();
+              }}
+            />
+          )}
+        </div>
+      ),
       okText: pkg.is_free ? 'Ambil Gratis' : 'Lanjut Bayar',
       cancelText: 'Batal',
-      onOk: () => startCheckout(pkg)
+      onOk: () => startCheckout(pkg, canUseReferral ? referralCode : undefined)
     });
   };
+
+  const payablePrice = (pkg: PackageProps) =>
+    pkg.is_upgrade && pkg.upgrade_price !== undefined && pkg.upgrade_price !== null
+      ? pkg.upgrade_price
+      : pkg.current_price;
 
   const buttonFor = (pkg: PackageProps) => {
     const loggedIn = isAuthenticated();
@@ -210,6 +240,11 @@ const PackagesScreen = () => {
                       )}
                     </>
                   )}
+                  {pkg.is_upgrade && pkg.upgrade_price !== undefined && pkg.upgrade_price !== null && pkg.upgrade_price < pkg.current_price && (
+                    <Tag color="blue" style={{ marginTop: 6, width: 'fit-content' }}>
+                      Upgrade cukup {formatRupiah(pkg.upgrade_price)}
+                    </Tag>
+                  )}
                   {pkg.savings_percent > 0 && !pkg.is_free && (
                     <Tag color="red" style={{ marginTop: 6, width: 'fit-content' }}>
                       Hemat {pkg.savings_percent}%
@@ -259,6 +294,7 @@ const PackagesScreen = () => {
 /** /paket: opens the program whose registration is open (for links in ads). */
 export const CurrentPackagesRedirect = () => {
   const navigate = useNavigate();
+  const location = useLocation();
   const [notFound, setNotFound] = useState(false);
 
   useEffect(() => {
@@ -275,13 +311,13 @@ export const CurrentPackagesRedirect = () => {
         );
         const target = open || withPackages[0];
         if (target) {
-          navigate(`/program/${target.program_id}/paket`, { replace: true });
+          navigate(`/program/${target.program_id}/paket${location.search}`, { replace: true });
         } else {
           setNotFound(true);
         }
       })
       .catch(() => setNotFound(true));
-  }, [navigate]);
+  }, [navigate, location.search]);
 
   return notFound ? (
     <Empty description="Belum ada paket yang dibuka." />

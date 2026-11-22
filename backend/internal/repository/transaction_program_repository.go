@@ -87,8 +87,9 @@ func (repository *TransactionProgramRepository) HasPaidAccess(ctx context.Contex
 
 // ProgramAccess is the access a user has to one program, with the package held.
 type ProgramAccess struct {
-	ProgramID uuid.UUID
-	PackageID *uuid.UUID
+	ProgramID    uuid.UUID
+	PackageID    *uuid.UUID
+	BonusTryouts int
 }
 
 // FindAccessByUser returns the programs the user can access (paid or registered).
@@ -96,7 +97,7 @@ func (repository *TransactionProgramRepository) FindAccessByUser(ctx context.Con
 	var rows []ProgramAccess
 	err := repository.DB.WithContext(ctx).
 		Model(&entity.TransactionProgram{}).
-		Select("program_id, package_id").
+		Select("program_id, package_id, bonus_tryouts").
 		Where("user_id = ? AND status IN ?", userID, []string{"PAID", "COMPLETED"}).
 		Scan(&rows).Error
 	return rows, err
@@ -134,4 +135,26 @@ func (repository *TransactionProgramRepository) GrantPackage(ctx context.Context
 			"status":     "PAID",
 			"updated_at": now,
 		}).Error
+}
+
+// AddBonusTryouts gives the user extra tryouts in a program (referral reward).
+// It returns false when the user has no registration in that program.
+func (repository *TransactionProgramRepository) AddBonusTryouts(ctx context.Context, tx *gorm.DB, userID uuid.UUID, programID uuid.UUID, count int) (bool, error) {
+	result := tx.WithContext(ctx).Model(&entity.TransactionProgram{}).
+		Where("user_id = ? AND program_id = ? AND status IN ?", userID, programID, []string{"PAID", "COMPLETED"}).
+		Updates(map[string]interface{}{
+			"bonus_tryouts": gorm.Expr("bonus_tryouts + ?", count),
+			"updated_at":    time.Now(),
+		})
+	return result.RowsAffected > 0, result.Error
+}
+
+// FindProgramMembers lists every registration of a program (paid or registered).
+func (repository *TransactionProgramRepository) FindProgramMembers(ctx context.Context, programID uuid.UUID) ([]entity.TransactionProgram, error) {
+	var rows []entity.TransactionProgram
+	err := repository.DB.WithContext(ctx).
+		Where("program_id = ? AND status IN ?", programID, []string{"PAID", "COMPLETED"}).
+		Preload("User").
+		Find(&rows).Error
+	return rows, err
 }

@@ -28,6 +28,10 @@ type CreatePackageRequest struct {
 	Badge             string     `json:"badge" validate:"max=50"`
 	SortOrder         int        `json:"sort_order"`
 	IsActive          bool       `json:"is_active"`
+	TutorFeePercent   float64    `json:"tutor_fee_percent" validate:"min=0,max=100"`
+	MentoringFee      int        `json:"mentoring_fee" validate:"min=0"`
+	StudyGroupURL     string     `json:"study_group_url" validate:"omitempty,url"`
+	HasGuarantee      bool       `json:"has_guarantee"`
 }
 
 // UpdatePackageRequest changes only the fields present in the body.
@@ -55,6 +59,10 @@ type UpdatePackageRequest struct {
 	Badge             *string    `json:"badge" validate:"omitempty,max=50"`
 	SortOrder         *int       `json:"sort_order"`
 	IsActive          *bool      `json:"is_active"`
+	TutorFeePercent   *float64   `json:"tutor_fee_percent" validate:"omitempty,min=0,max=100"`
+	MentoringFee      *int       `json:"mentoring_fee" validate:"omitempty,min=0"`
+	StudyGroupURL     *string    `json:"study_group_url"`
+	HasGuarantee      *bool      `json:"has_guarantee"`
 }
 
 type PackageResponse struct {
@@ -87,10 +95,19 @@ type PackageResponse struct {
 	Badge             string     `json:"badge"`
 	SortOrder         int        `json:"sort_order"`
 	IsActive          bool       `json:"is_active"`
+	HasGuarantee      bool       `json:"has_guarantee"`
+	// Only for admins.
+	TutorFeePercent *float64 `json:"tutor_fee_percent,omitempty"`
+	MentoringFee    *int     `json:"mentoring_fee,omitempty"`
+	// Only for admins and for the participants who own the package.
+	StudyGroupURL string `json:"study_group_url,omitempty"`
 	// Filled for a logged-in participant.
 	IsOwned     bool `json:"is_owned"`
 	IsUpgrade   bool `json:"is_upgrade"`
 	CanPurchase bool `json:"can_purchase"`
+	// UpgradePrice is what the owner pays to move to this package now
+	// (Paket Tambah: the difference within the upgrade window).
+	UpgradePrice *int `json:"upgrade_price,omitempty"`
 }
 
 type ProgramPackagesResponse struct {

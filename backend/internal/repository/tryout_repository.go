@@ -74,3 +74,10 @@ func (repository *TryoutRepository) FindAll(ctx context.Context, params model.Fi
 	query.Find(&tryouts)
 	return tryouts
 }
+
+// FindByProgram lists the tryouts of a program in TO order.
+func (repository *TryoutRepository) FindByProgram(ctx context.Context, programID uuid.UUID) ([]entity.Tryout, error) {
+	var tryouts []entity.Tryout
+	err := repository.DB.WithContext(ctx).Where("program_id = ?", programID).Order("sequence ASC, start_time ASC").Find(&tryouts).Error
+	return tryouts, err
+}

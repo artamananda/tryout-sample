@@ -100,6 +100,15 @@ const CardProgram = ({ record }: { record: ProgramProps }) => {
         <Button onClick={() => navigate(`/orders?program_id=${record.program_id}`)}>
           Pesanan
         </Button>
+        <Button onClick={() => navigate(`${record.program_id}/classes`)}>
+          Kelas Live
+        </Button>
+        <Button onClick={() => navigate(`${record.program_id}/mentoring`)}>
+          Mentoring
+        </Button>
+        <Button onClick={() => navigate(`${record.program_id}/tutor-fees`)}>
+          Fee Tutor
+        </Button>
       </div>
     </Card>
   );

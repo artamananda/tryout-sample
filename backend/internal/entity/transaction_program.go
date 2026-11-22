@@ -13,6 +13,7 @@ type TransactionProgram struct {
 	ProgramID            uuid.UUID  `json:"program_id"`
 	Program              Program    `json:"program" gorm:"foreignKey:ProgramID;references:ProgramID"`
 	PackageID            *uuid.UUID `json:"package_id"`
+	BonusTryouts         int        `json:"bonus_tryouts"`
 	InvoiceNumber        string     `json:"invoice_number"`
 	Status               string     `json:"status"`
 	Motivation           string     `json:"motivation"`

@@ -69,6 +69,11 @@ func IsRegistrationOpen(program entity.Program, now time.Time) bool {
 }
 
 func (service *PackageService) toResponse(ctx context.Context, pkg entity.Package) model.PackageResponse {
+	return service.toResponseFor(ctx, pkg, false)
+}
+
+// toResponseFor maps a package; admin views include fees and the group link.
+func (service *PackageService) toResponseFor(ctx context.Context, pkg entity.Package, admin bool) model.PackageResponse {
 	now := service.Now()
 	current := pkg.CurrentPrice(now)
 
@@ -98,6 +103,14 @@ func (service *PackageService) toResponse(ctx context.Context, pkg entity.Packag
 		Badge:             pkg.Badge,
 		SortOrder:         pkg.SortOrder,
 		IsActive:          pkg.IsActive,
+		HasGuarantee:      pkg.HasGuarantee,
+	}
+	if admin {
+		fee := pkg.TutorFeePercent
+		mentoringFee := pkg.MentoringFee
+		response.TutorFeePercent = &fee
+		response.MentoringFee = &mentoringFee
+		response.StudyGroupURL = pkg.StudyGroupURL
 	}
 	if response.Features == nil {
 		response.Features = []string{}
@@ -165,6 +178,13 @@ func (service *PackageService) ListForProgram(ctx context.Context, programID str
 		response.OwnedPackageID = &owned.PackageID
 	}
 
+	var paid repository.PaidSummary
+	if userID != "" && owned != nil {
+		if parsedUserID, err := parseID(userID, "user_id"); err == nil {
+			paid, _ = service.OrderRepository.SumPaid(ctx, parsedUserID, id)
+		}
+	}
+
 	for _, pkg := range packages {
 		item := service.toResponse(ctx, pkg)
 		if userID != "" {
@@ -176,6 +196,13 @@ func (service *PackageService) ListForProgram(ctx context.Context, programID str
 				canBuy = false
 			}
 			item.CanPurchase = canBuy
+			if item.IsOwned {
+				item.StudyGroupURL = pkg.StudyGroupURL
+			}
+			if item.IsUpgrade && !item.IsFree {
+				price := UpgradePrice(pkg, paid, service.Now())
+				item.UpgradePrice = &price
+			}
 		}
 		response.Packages = append(response.Packages, item)
 	}
@@ -194,7 +221,7 @@ func (service *PackageService) ListAllForProgram(ctx context.Context, programID 
 	}
 	responses := make([]model.PackageResponse, 0, len(packages))
 	for _, pkg := range packages {
-		responses = append(responses, service.toResponse(ctx, pkg))
+		responses = append(responses, service.toResponseFor(ctx, pkg, true))
 	}
 	return responses, nil
 }
@@ -204,7 +231,7 @@ func (service *PackageService) FindByID(ctx context.Context, packageID string) (
 	if err != nil {
 		return model.PackageResponse{}, err
 	}
-	return service.toResponse(ctx, pkg), nil
+	return service.toResponseFor(ctx, pkg, true), nil
 }
 
 func (service *PackageService) find(ctx context.Context, packageID string) (entity.Package, error) {
@@ -275,6 +302,10 @@ func (service *PackageService) Create(ctx context.Context, request model.CreateP
 		Badge:             request.Badge,
 		SortOrder:         request.SortOrder,
 		IsActive:          request.IsActive,
+		TutorFeePercent:   request.TutorFeePercent,
+		MentoringFee:      request.MentoringFee,
+		StudyGroupURL:     strings.TrimSpace(request.StudyGroupURL),
+		HasGuarantee:      request.HasGuarantee,
 	})
 	if err != nil {
 		if strings.Contains(err.Error(), "packages_program_id_code_key") {
@@ -282,7 +313,7 @@ func (service *PackageService) Create(ctx context.Context, request model.CreateP
 		}
 		return model.PackageResponse{}, err
 	}
-	return service.toResponse(ctx, pkg), nil
+	return service.toResponseFor(ctx, pkg, true), nil
 }
 
 func (service *PackageService) Update(ctx context.Context, packageID string, request model.UpdatePackageRequest) (model.PackageResponse, error) {
@@ -329,6 +360,12 @@ func (service *PackageService) Update(ctx context.Context, packageID string, req
 	setBool("has_study_group", request.HasStudyGroup)
 	setBool("has_certificate", request.HasCertificate)
 	setBool("is_active", request.IsActive)
+	setBool("has_guarantee", request.HasGuarantee)
+	setString("study_group_url", request.StudyGroupURL)
+	setInt("mentoring_fee", request.MentoringFee)
+	if request.TutorFeePercent != nil {
+		changes["tutor_fee_percent"] = *request.TutorFeePercent
+	}
 	if request.Features != nil {
 		changes["features"] = cleanFeatures(*request.Features)
 	}

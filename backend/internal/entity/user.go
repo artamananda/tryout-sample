@@ -15,6 +15,7 @@ type User struct {
 	Role            string     `json:"role"`
 	PhoneNumber     string     `json:"phone_number"`
 	PhoneVerifiedAt *time.Time `json:"phone_verified_at"`
+	ReferralCode    *string    `json:"referral_code"`
 	Gender          string     `json:"gender"`
 	BirthDate       *time.Time `json:"birth_date"`
 	LastEducation   string     `json:"last_education"`

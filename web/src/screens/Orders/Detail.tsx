@@ -80,9 +80,12 @@ const OrderDetailScreen = () => {
         <Result
           status="success"
           title={`Paket ${order.package.name} aktif`}
-          subTitle="Tryout dan kelas sesuai paket sudah bisa diakses."
+          subTitle="Tryout, kelas, dan fasilitas paket sudah bisa diakses."
           extra={[
-            <Button type="primary" key="tryout" onClick={() => navigate('/tryout')}>
+            <Button type="primary" key="program" onClick={() => navigate(`/program-saya?program=${order.program_id}`)}>
+              Buka Program Saya
+            </Button>,
+            <Button key="tryout" onClick={() => navigate('/tryout')}>
               Lihat Tryout
             </Button>,
             <Button key="orders" onClick={() => navigate('/pesanan')}>

@@ -38,17 +38,19 @@ const { Title, Text } = Typography;
  * (study group from Unggulan, certificate from Eksekutif).
  */
 const TELISIK_TEMPLATE = [
-  { code: "perdana", name: "Perdana", price: 0, normal_value: 10000, tryout_count: 1, has_explanation: false, sort_order: 1,
+  { code: "perdana", name: "Perdana", price: 0, normal_value: 10000, tryout_count: 1, has_explanation: false, sort_order: 1, tutor_fee_percent: 0,
     description: "1 TO SKD gratis, satu kali per nomor WhatsApp." },
-  { code: "premium", name: "Premium", price: 50000, normal_value: 50000, tryout_count: 5, has_explanation: true, sort_order: 2,
+  { code: "premium", name: "Premium", price: 50000, normal_value: 50000, tryout_count: 5, has_explanation: true, sort_order: 2, tutor_fee_percent: 15,
     description: "5 TO SKD dengan pembahasan tertulis dan analisis skor." },
   { code: "unggulan", name: "Unggulan", price: 149000, normal_value: 175000, tryout_count: 5, class_count: 5, recording_days: 30,
-    has_explanation: true, has_study_group: true, sort_order: 3, description: "5 TO SKD + 5 kelas pembahasan live." },
+    has_explanation: true, has_study_group: true, sort_order: 3, tutor_fee_percent: 35, description: "5 TO SKD + 5 kelas pembahasan live." },
   { code: "eksekutif", name: "Eksekutif", price: 279000, normal_value: 350000, tryout_count: 10, class_count: 10, recording_days: 60,
     has_explanation: true, has_weekly_report: true, has_study_group: true, has_certificate: true, badge: "Andalan", sort_order: 4,
+    tutor_fee_percent: 33, has_guarantee: true,
     description: "10 TO SKD + 10 kelas live + email progres mingguan." },
   { code: "platinum", name: "Platinum", price: 449000, normal_value: 475000, tryout_count: 10, class_count: 10, recording_days: 90,
     mentoring_sessions: 1, has_explanation: true, has_weekly_report: true, has_study_group: true, has_certificate: true, quota: 50,
+    tutor_fee_percent: 33, mentoring_fee: 60000,
     sort_order: 5, features: ["Peta kelemahan personal", "Prioritas tanya tutor", "Grup belajar khusus"],
     description: "Isi Eksekutif + mentoring 1:1 + peta kelemahan personal." },
 ];
@@ -371,6 +373,7 @@ const PackagesScreen = () => {
               ["has_weekly_report", "Email progres mingguan"],
               ["has_study_group", "Grup belajar"],
               ["has_certificate", "Sertifikat"],
+              ["has_guarantee", "Garansi naik kelas"],
               ["is_active", "Aktif (tampil di web)"],
             ].map(([name, label]) => (
               <Col xs={12} md={8} key={name}>
@@ -379,6 +382,23 @@ const PackagesScreen = () => {
                 </Form.Item>
               </Col>
             ))}
+          </Row>
+          <Row gutter={12}>
+            <Col xs={24} md={8}>
+              <Form.Item name="tutor_fee_percent" label="Fee tutor (%)" extra="Dari harga yang dibayar peserta">
+                <InputNumber min={0} max={100} step={0.5} style={{ width: "100%" }} />
+              </Form.Item>
+            </Col>
+            <Col xs={24} md={8}>
+              <Form.Item name="mentoring_fee" label="Fee mentoring/sesi (Rp)">
+                <InputNumber min={0} step={10000} style={{ width: "100%" }} />
+              </Form.Item>
+            </Col>
+            <Col xs={24} md={8}>
+              <Form.Item name="study_group_url" label="Link grup belajar" rules={[{ type: "url", message: "URL lengkap (https://...)" }]}>
+                <Input placeholder="https://chat.whatsapp.com/..." />
+              </Form.Item>
+            </Col>
           </Row>
           <Form.Item name="features" label="Fitur tambahan" extra="Ketik lalu tekan Enter">
             <Select mode="tags" open={false} />

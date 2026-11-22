@@ -39,6 +39,10 @@ type Package struct {
 	Features          pq.StringArray `gorm:"type:text[]" json:"features"`
 	Quota             *int           `json:"quota"`
 	Badge             string         `json:"badge"`
+	TutorFeePercent   float64        `json:"tutor_fee_percent"`
+	MentoringFee      int            `json:"mentoring_fee"`
+	StudyGroupURL     string         `gorm:"column:study_group_url" json:"study_group_url"`
+	HasGuarantee      bool           `json:"has_guarantee"`
 	SortOrder         int            `json:"sort_order"`
 	IsActive          bool           `json:"is_active"`
 	CreatedAt         time.Time      `json:"created_at"`

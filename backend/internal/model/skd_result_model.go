@@ -56,3 +56,20 @@ type SKDRankingResponse struct {
 	Rows         []SKDRankingRow `json:"rows"`
 	GeneratedAt  time.Time       `json:"generated_at"`
 }
+
+// SKDTryoutProgress is one TO of a participant's progress in a program.
+type SKDTryoutProgress struct {
+	TryoutID     string         `json:"tryout_id"`
+	Sequence     int            `json:"sequence"`
+	Title        string         `json:"title"`
+	Completed    bool           `json:"completed"`
+	TotalScore   int            `json:"total_score"`
+	Scores       map[string]int `json:"scores,omitempty"`
+	PassedAll    bool           `json:"passed_all"`
+	Weakest      string         `json:"weakest_subtest,omitempty"`
+	Rank         int            `json:"rank,omitempty"`
+	Participants int            `json:"participants,omitempty"`
+	FinishedAt   *time.Time     `json:"finished_at,omitempty"`
+	StartTime    time.Time      `json:"start_time"`
+	EndTime      time.Time      `json:"end_time"`
+}

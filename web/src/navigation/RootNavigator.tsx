@@ -25,6 +25,8 @@ import MyOrdersScreen from '../screens/Orders';
 import OrderDetailScreen from '../screens/Orders/Detail';
 import SKDResultScreen from '../screens/Tryout/SKDResult';
 import TryoutReviewScreen from '../screens/Tryout/Review';
+import MyProgramScreen from '../screens/MyProgram';
+import CertificateScreen from '../screens/Certificate';
 
 const RootNavigator = () => {
   return (
@@ -135,6 +137,16 @@ const RootNavigator = () => {
           {/* Price lists are public so links from ads work without login. */}
           <Route path="/paket" element={<CurrentPackagesRedirect />} />
           <Route path="/program/:programId/paket" element={<PackagesScreen />} />
+          <Route path="/sertifikat/:number" element={<CertificateScreen />} />
+
+          <Route
+            path="/program-saya"
+            element={
+              <PrivateRoute loginPath="/login">
+                <MyProgramScreen />
+              </PrivateRoute>
+            }
+          />
 
           <Route
             path="/pesanan"

@@ -9,9 +9,10 @@ export const getProgramPackages = async (programId: string) => {
   return res.data.payload;
 };
 
-export const checkoutPackage = async (packageId: string) => {
+export const checkoutPackage = async (packageId: string, referralCode?: string) => {
   const res = await httpRequest.post<BaseResponseProps<OrderProps>>('/order', {
-    package_id: packageId
+    package_id: packageId,
+    referral_code: referralCode?.trim() || undefined
   });
   return res.data.payload;
 };
