@@ -4,6 +4,7 @@ import (
 	"path/filepath"
 
 	"github.com/artamananda/tryout-sample/internal/config"
+	"github.com/artamananda/tryout-sample/internal/exception"
 	"github.com/artamananda/tryout-sample/internal/middleware"
 	"github.com/artamananda/tryout-sample/internal/model"
 	"github.com/artamananda/tryout-sample/internal/service"
@@ -12,23 +13,36 @@ import (
 
 type QuestionController struct {
 	service.QuestionService
+	TransactionTryoutService *service.TransactionTryoutService
 	config.Config
 }
 
-func NewQuestionController(questionService *service.QuestionService, config config.Config) *QuestionController {
+func NewQuestionController(questionService *service.QuestionService, transactionTryoutService *service.TransactionTryoutService, config config.Config) *QuestionController {
 	return &QuestionController{
-		QuestionService: *questionService,
-		Config:          config,
+		QuestionService:          *questionService,
+		TransactionTryoutService: transactionTryoutService,
+		Config:                   config,
 	}
 }
 
 func (controller QuestionController) Route(app *fiber.App) {
-	app.Post("/v1/api/question/:tryoutId", middleware.AuthenticateJWT([]string{"admin"}, controller.Config), controller.Create)
-	app.Put("/v1/api/question/:id", middleware.AuthenticateJWT([]string{"admin"}, controller.Config), controller.Update)
-	app.Delete("/v1/api/question/:id", middleware.AuthenticateJWT([]string{"admin"}, controller.Config), controller.Delete)
-	app.Get("/v1/api/question/:id", controller.FindById)
-	app.Get("/v1/api/question", controller.FindAll)
-	app.Put("/v1/api/question/:id/upload-image", middleware.AuthenticateJWT([]string{"admin"}, controller.Config), controller.UpdateImage)
+	adminOnly := middleware.AuthenticateJWT([]string{middleware.RoleAdmin}, controller.Config)
+	loggedIn := middleware.AuthenticateJWT([]string{middleware.RoleAdmin, middleware.RoleUser}, controller.Config)
+
+	app.Post("/v1/api/question/:tryoutId", adminOnly, controller.Create)
+	app.Put("/v1/api/question/:id", adminOnly, controller.Update)
+	app.Delete("/v1/api/question/:id", adminOnly, controller.Delete)
+	app.Get("/v1/api/question/:id", loggedIn, controller.FindById)
+	app.Get("/v1/api/question", loggedIn, controller.FindAll)
+	app.Put("/v1/api/question/:id/upload-image", adminOnly, controller.UpdateImage)
+}
+
+// hideAnswers removes the answer key before questions are sent to a participant.
+func hideAnswers(questions []model.QuestionResponse) []model.QuestionResponse {
+	for i := range questions {
+		questions[i].CorrectAnswer = ""
+	}
+	return questions
 }
 
 // Create handles creation of a question for a specific tryout.
@@ -185,11 +199,21 @@ func (controller QuestionController) Delete(c *fiber.Ctx) error {
 // @Success 200 {object} model.GeneralResponse
 // @Router /question/{id} [get]
 func (controller QuestionController) FindById(c *fiber.Ctx) error {
-	id := c.Params("id")
-
-	result, err := controller.QuestionService.FindByID(c.Context(), id)
+	authUser, err := requireAuthUser(c)
 	if err != nil {
 		return err
+	}
+
+	result, err := controller.QuestionService.FindByID(c.Context(), c.Params("id"))
+	if err != nil {
+		return err
+	}
+
+	if !authUser.IsAdmin() {
+		if !controller.TransactionTryoutService.HasStarted(c.Context(), result.TryoutID.String(), authUser.UserID) {
+			return exception.NotFoundError{Message: "question Not Found"}
+		}
+		result.CorrectAnswer = ""
 	}
 
 	return c.Status(fiber.StatusOK).JSON(model.GeneralResponse{
@@ -210,11 +234,28 @@ func (controller QuestionController) FindById(c *fiber.Ctx) error {
 // @Success 200 {object} model.GeneralResponse
 // @Router /question [get]
 func (controller QuestionController) FindAll(c *fiber.Ctx) error {
+	authUser, err := requireAuthUser(c)
+	if err != nil {
+		return err
+	}
+
 	var result []model.QuestionResponse
-	var err error
 	tryoutId := c.Query("tryoutId")
 
-	if tryoutId != "" {
+	if !authUser.IsAdmin() {
+		// Participants only see the questions of a tryout they started, without the answer key.
+		if tryoutId == "" {
+			return exception.BadRequestError{Message: "tryoutId wajib diisi"}
+		}
+		if !controller.TransactionTryoutService.HasStarted(c.Context(), tryoutId, authUser.UserID) {
+			return exception.NotFoundError{Message: "tryout belum dimulai"}
+		}
+		result, err = controller.QuestionService.FindByTryoutID(c.Context(), tryoutId)
+		if err != nil {
+			return err
+		}
+		result = hideAnswers(result)
+	} else if tryoutId != "" {
 		result, err = controller.QuestionService.FindByTryoutID(c.Context(), tryoutId)
 	} else {
 		result, err = controller.QuestionService.FindAll(c.Context())

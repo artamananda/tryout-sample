@@ -77,7 +77,8 @@ func (repository *TransactionProgramRepository) HasPaidAccess(ctx context.Contex
 	var total int64
 	repository.DB.WithContext(ctx).
 		Model(&entity.TransactionProgram{}).
-		Where("user_id = ? AND program_id = ? AND status = ?", userID, programID, "PAID").
+		// Self-registration stores COMPLETED, admin/payment flows store PAID; both grant access.
+		Where("user_id = ? AND program_id = ? AND status IN ?", userID, programID, []string{"PAID", "COMPLETED"}).
 		Count(&total)
 
 	return total > 0

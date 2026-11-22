@@ -4,11 +4,13 @@ import (
 	"time"
 
 	"github.com/artamananda/tryout-sample/internal/config"
+	"github.com/artamananda/tryout-sample/internal/exception"
 	"github.com/artamananda/tryout-sample/internal/middleware"
 	"github.com/artamananda/tryout-sample/internal/model"
 	"github.com/artamananda/tryout-sample/internal/repository"
 	"github.com/artamananda/tryout-sample/internal/service"
 	"github.com/gofiber/fiber/v2"
+	"github.com/google/uuid"
 )
 
 type TransactionTryoutController struct {
@@ -56,11 +58,16 @@ func (controller TransactionTryoutController) Route(app *fiber.App) {
 // @Success 201 {object} model.GeneralResponse
 // @Router /transaction-tryout [post]
 func (controller TransactionTryoutController) Create(c *fiber.Ctx) error {
-	var request model.CreateTransactionTryoutRequest
-	err := c.BodyParser(&request)
+	authUser, err := requireAuthUser(c)
 	if err != nil {
 		return err
 	}
+
+	var request model.CreateTransactionTryoutRequest
+	if err := parseBody(c, &request); err != nil {
+		return err
+	}
+	request.UserID = actingUserID(authUser, request.UserID)
 
 	response, err := controller.TransactionTryoutService.Create(c.Context(), request)
 	if err != nil {
@@ -85,12 +92,17 @@ func (controller TransactionTryoutController) Create(c *fiber.Ctx) error {
 // @Success 200 {object} model.GeneralResponse
 // @Router /transaction-tryout/paid [patch]
 func (controller TransactionTryoutController) UpdateToPaid(c *fiber.Ctx) error {
-	var request model.UpdateTransactionTryoutRequest
-	var requestBody model.UpdateTransactionTryoutRequest
-	err := c.BodyParser(&requestBody)
+	authUser, err := requireAuthUser(c)
 	if err != nil {
 		return err
 	}
+
+	var request model.UpdateTransactionTryoutRequest
+	var requestBody model.UpdateTransactionTryoutRequest
+	if err := parseBody(c, &requestBody); err != nil {
+		return err
+	}
+	requestBody.UserID = actingUserID(authUser, requestBody.UserID)
 
 	isTokenValid := controller.TryoutService.CheckTryoutToken(c.Context(), requestBody.TryoutID.String(), requestBody.Token)
 
@@ -171,12 +183,17 @@ func (controller TransactionTryoutController) UpdateToPaid(c *fiber.Ctx) error {
 // @Success 200 {object} model.GeneralResponse
 // @Router /transaction-tryout/complete [patch]
 func (controller TransactionTryoutController) UpdateToFinish(c *fiber.Ctx) error {
-	var request model.UpdateTransactionTryoutRequest
-	var requestBody model.UpdateStatusTransactionTryoutRequest
-	err := c.BodyParser(&requestBody)
+	authUser, err := requireAuthUser(c)
 	if err != nil {
 		return err
 	}
+
+	var request model.UpdateTransactionTryoutRequest
+	var requestBody model.UpdateStatusTransactionTryoutRequest
+	if err := parseBody(c, &requestBody); err != nil {
+		return err
+	}
+	requestBody.UserID = actingUserID(authUser, requestBody.UserID)
 
 	transactionTryout, err := controller.TransactionTryoutService.FindByTryoutIDAndUserID(c.Context(), requestBody.TryoutID.String(), requestBody.UserID.String())
 
@@ -250,11 +267,17 @@ func (controller TransactionTryoutController) Delete(c *fiber.Ctx) error {
 // @Success 200 {object} model.GeneralResponse
 // @Router /transaction-tryout/{id} [get]
 func (controller TransactionTryoutController) FindById(c *fiber.Ctx) error {
-	id := c.Params("id")
-
-	result, err := controller.TransactionTryoutService.FindByID(c.Context(), id)
+	authUser, err := requireAuthUser(c)
 	if err != nil {
 		return err
+	}
+
+	result, err := controller.TransactionTryoutService.FindByID(c.Context(), c.Params("id"))
+	if err != nil {
+		return err
+	}
+	if !authUser.IsAdmin() && result.UserID.String() != authUser.UserID {
+		return exception.NotFoundError{Message: "transaction tryout Not Found"}
 	}
 
 	return c.Status(fiber.StatusOK).JSON(model.GeneralResponse{
@@ -276,16 +299,27 @@ func (controller TransactionTryoutController) FindById(c *fiber.Ctx) error {
 // @Success 200 {object} model.GeneralResponse
 // @Router /transaction-tryout [get]
 func (controller TransactionTryoutController) FindAll(c *fiber.Ctx) error {
-	var results []model.TransactionTryoutResponse
+	authUser, err := requireAuthUser(c)
+	if err != nil {
+		return err
+	}
+
+	results := []model.TransactionTryoutResponse{}
 	tryoutId := c.Query("tryoutId")
 	userId := c.Query("userId")
+	if !authUser.IsAdmin() {
+		// Participants only ever see their own transactions.
+		userId = authUser.UserID
+	}
 
-	if tryoutId != "" && userId != "" {
-		result, err := controller.TransactionTryoutService.FindByTryoutIDAndUserID(c.Context(), tryoutId, userId)
-		if err == nil {
+	switch {
+	case tryoutId != "" && userId != "":
+		if result, err := controller.TransactionTryoutService.FindByTryoutIDAndUserID(c.Context(), tryoutId, userId); err == nil {
 			results = append(results, result)
 		}
-	} else {
+	case userId != "":
+		results = controller.TransactionTryoutService.FindByUserID(c.Context(), userId)
+	default:
 		results = controller.TransactionTryoutService.FindAll(c.Context())
 	}
 
@@ -301,4 +335,13 @@ func (controller TransactionTryoutController) FindAll(c *fiber.Ctx) error {
 		Message: "Success",
 		Data:    payload,
 	})
+}
+
+// actingUserID returns whose data a request acts on: participants always act
+// as themselves, admins may act on behalf of the user in the body.
+func actingUserID(authUser middleware.AuthUser, requested uuid.UUID) uuid.UUID {
+	if authUser.IsAdmin() && requested != uuid.Nil {
+		return requested
+	}
+	return uuid.MustParse(authUser.UserID)
 }

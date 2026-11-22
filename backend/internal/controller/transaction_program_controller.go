@@ -2,6 +2,7 @@ package controller
 
 import (
 	"github.com/artamananda/tryout-sample/internal/config"
+	"github.com/artamananda/tryout-sample/internal/exception"
 	"github.com/artamananda/tryout-sample/internal/middleware"
 	"github.com/artamananda/tryout-sample/internal/model"
 	"github.com/artamananda/tryout-sample/internal/service"
@@ -23,8 +24,8 @@ func NewTransactionProgramController(transactionProgramService *service.Transact
 func (controller TransactionProgramController) Route(app *fiber.App) {
 	app.Post("/v1/api/transaction-program", middleware.AuthenticateJWT([]string{"admin"}, controller.Config), controller.Create)
 	app.Patch("/v1/api/transaction-program/:id", middleware.AuthenticateJWT([]string{"admin"}, controller.Config), controller.Update)
-	app.Get("/v1/api/transaction-program/:id", controller.FindById)
-	app.Get("/v1/api/transaction-program", controller.FindAll)
+	app.Get("/v1/api/transaction-program/:id", middleware.AuthenticateJWT([]string{"admin", "user"}, controller.Config), controller.FindById)
+	app.Get("/v1/api/transaction-program", middleware.AuthenticateJWT([]string{"admin", "user"}, controller.Config), controller.FindAll)
 	app.Delete("/v1/api/transaction-program/:id", middleware.AuthenticateJWT([]string{"admin"}, controller.Config), controller.Delete)
 }
 
@@ -100,9 +101,17 @@ func (controller TransactionProgramController) Update(c *fiber.Ctx) error {
 // @Success 200 {object} model.GeneralResponse
 // @Router /transaction-program/{id} [get]
 func (controller TransactionProgramController) FindById(c *fiber.Ctx) error {
-	response, err := controller.TransactionProgramService.FindById(c.Context(), c.Params("id"))
+	authUser, err := requireAuthUser(c)
 	if err != nil {
 		return err
+	}
+
+	response, err := controller.TransactionProgramService.FindById(c.Context(), c.Params("id"))
+	if err != nil {
+		return exception.NotFoundError{Message: "transaction program Not Found"}
+	}
+	if !authUser.IsAdmin() && response.UserID.String() != authUser.UserID {
+		return exception.NotFoundError{Message: "transaction program Not Found"}
 	}
 
 	return c.Status(fiber.StatusOK).JSON(model.GeneralResponse{
@@ -124,10 +133,18 @@ func (controller TransactionProgramController) FindById(c *fiber.Ctx) error {
 // @Success 200 {object} model.GeneralResponse
 // @Router /transaction-program [get]
 func (controller TransactionProgramController) FindAll(c *fiber.Ctx) error {
-	var request model.FindAllTransactionProgramsRequest
-	err := c.QueryParser(&request)
+	authUser, err := requireAuthUser(c)
 	if err != nil {
 		return err
+	}
+
+	var request model.FindAllTransactionProgramsRequest
+	if err := c.QueryParser(&request); err != nil {
+		return exception.BadRequestError{Message: "query tidak valid"}
+	}
+	if !authUser.IsAdmin() {
+		// Participants only see their own registrations.
+		request.UserID = authUser.UserID
 	}
 
 	result := controller.TransactionProgramService.FindAll(c.Context(), request)

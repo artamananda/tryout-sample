@@ -45,7 +45,7 @@ func TestUserRepository_FindById(t *testing.T) {
 			AddRow(userId, "testuser", "test@example.com", "Test User")
 
 		mock.ExpectQuery(regexp.QuoteMeta(`SELECT * FROM "users" WHERE user_id = $1`)).
-			WithArgs(userId).
+			WithArgs(userId, 1).
 			WillReturnRows(rows)
 
 		user, err := repo.FindById(ctx, userId)
@@ -56,7 +56,7 @@ func TestUserRepository_FindById(t *testing.T) {
 
 	t.Run("returns error when user not found", func(t *testing.T) {
 		mock.ExpectQuery(regexp.QuoteMeta(`SELECT * FROM "users" WHERE user_id = $1`)).
-			WithArgs(userId).
+			WithArgs(userId, 1).
 			WillReturnRows(sqlmock.NewRows([]string{}))
 
 		user, err := repo.FindById(ctx, userId)
@@ -79,8 +79,8 @@ func TestUserRepository_FindByEmail(t *testing.T) {
 		rows := sqlmock.NewRows([]string{"user_id", "username", "email", "name"}).
 			AddRow(userId, "testuser", email, "Test User")
 
-		mock.ExpectQuery(regexp.QuoteMeta(`SELECT * FROM "users" WHERE email = $1`)).
-			WithArgs(email).
+		mock.ExpectQuery(regexp.QuoteMeta(`SELECT * FROM "users" WHERE LOWER(email) = $1`)).
+			WithArgs(email, 1).
 			WillReturnRows(rows)
 
 		user, err := repo.FindByEmail(ctx, email)
@@ -89,8 +89,8 @@ func TestUserRepository_FindByEmail(t *testing.T) {
 	})
 
 	t.Run("returns error when user not found", func(t *testing.T) {
-		mock.ExpectQuery(regexp.QuoteMeta(`SELECT * FROM "users" WHERE email = $1`)).
-			WithArgs(email).
+		mock.ExpectQuery(regexp.QuoteMeta(`SELECT * FROM "users" WHERE LOWER(email) = $1`)).
+			WithArgs(email, 1).
 			WillReturnRows(sqlmock.NewRows([]string{}))
 
 		user, err := repo.FindByEmail(ctx, email)
@@ -141,8 +141,8 @@ func TestUserRepository_Authentication(t *testing.T) {
 		rows := sqlmock.NewRows([]string{"user_id", "email", "password", "username"}).
 			AddRow(userId, email, "hashedpassword", "testuser")
 
-		mock.ExpectQuery(regexp.QuoteMeta(`SELECT * FROM "users" WHERE email = $1`)).
-			WithArgs(email).
+		mock.ExpectQuery(regexp.QuoteMeta(`SELECT * FROM "users" WHERE LOWER(email) = $1`)).
+			WithArgs(email, 1).
 			WillReturnRows(rows)
 
 		user, err := repo.Authentication(ctx, email)
@@ -151,8 +151,8 @@ func TestUserRepository_Authentication(t *testing.T) {
 	})
 
 	t.Run("returns error when user not found", func(t *testing.T) {
-		mock.ExpectQuery(regexp.QuoteMeta(`SELECT * FROM "users" WHERE email = $1`)).
-			WithArgs(email).
+		mock.ExpectQuery(regexp.QuoteMeta(`SELECT * FROM "users" WHERE LOWER(email) = $1`)).
+			WithArgs(email, 1).
 			WillReturnRows(sqlmock.NewRows([]string{}))
 
 		user, err := repo.Authentication(ctx, email)
@@ -225,7 +225,8 @@ func TestUserRepository_CreateOtp(t *testing.T) {
 			WithArgs(userOtp.Email, userOtp.Otp, sqlmock.AnyArg(), sqlmock.AnyArg()).
 			WillReturnResult(sqlmock.NewResult(1, 1))
 
-		result := repo.CreateOtp(ctx, userOtp)
+		result, err := repo.CreateOtp(ctx, userOtp)
+		assert.NoError(t, err)
 		assert.Equal(t, userOtp.Email, result.Email)
 		assert.Equal(t, userOtp.Otp, result.Otp)
 	})
@@ -244,8 +245,8 @@ func TestUserRepository_FindOtpByEmail(t *testing.T) {
 		rows := sqlmock.NewRows([]string{"email", "otp", "expired_at"}).
 			AddRow(email, "123456", expiredAt)
 
-		mock.ExpectQuery(regexp.QuoteMeta(`SELECT * FROM "user_otps" WHERE email = $1`)).
-			WithArgs(email).
+		mock.ExpectQuery(regexp.QuoteMeta(`SELECT * FROM "user_otp" WHERE email = $1`)).
+			WithArgs(email, 1).
 			WillReturnRows(rows)
 
 		otp, err := repo.FindOtpByEmail(ctx, email)
@@ -254,8 +255,8 @@ func TestUserRepository_FindOtpByEmail(t *testing.T) {
 	})
 
 	t.Run("returns error when OTP not found", func(t *testing.T) {
-		mock.ExpectQuery(regexp.QuoteMeta(`SELECT * FROM "user_otps" WHERE email = $1`)).
-			WithArgs(email).
+		mock.ExpectQuery(regexp.QuoteMeta(`SELECT * FROM "user_otp" WHERE email = $1`)).
+			WithArgs(email, 1).
 			WillReturnError(gorm.ErrRecordNotFound)
 
 		otp, err := repo.FindOtpByEmail(ctx, email)
@@ -265,8 +266,8 @@ func TestUserRepository_FindOtpByEmail(t *testing.T) {
 	})
 
 	t.Run("returns database error", func(t *testing.T) {
-		mock.ExpectQuery(regexp.QuoteMeta(`SELECT * FROM "user_otps" WHERE email = $1`)).
-			WithArgs(email).
+		mock.ExpectQuery(regexp.QuoteMeta(`SELECT * FROM "user_otp" WHERE email = $1`)).
+			WithArgs(email, 1).
 			WillReturnError(errors.New("database error"))
 
 		_, err := repo.FindOtpByEmail(ctx, email)

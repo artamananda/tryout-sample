@@ -72,3 +72,14 @@ func (repository *UserAnswerRepository) FindAll(ctx context.Context) []entity.Us
 	repository.DB.WithContext(ctx).Find(&user_answers)
 	return user_answers
 }
+
+// FindByUserTryoutQuestion returns the stored answer of a user for one question.
+func (repository *UserAnswerRepository) FindByUserTryoutQuestion(ctx context.Context, userID uuid.UUID, tryoutID uuid.UUID, questionID uuid.UUID) (entity.UserAnswer, bool) {
+	var userAnswer entity.UserAnswer
+	result := repository.DB.WithContext(ctx).
+		Where("user_id = ? AND tryout_id = ? AND question_id = ?", userID, tryoutID, questionID).
+		Order("updated_at DESC").
+		Limit(1).
+		Find(&userAnswer)
+	return userAnswer, result.RowsAffected > 0
+}

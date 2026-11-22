@@ -7,7 +7,8 @@ import {
   BookOutlined,
   PlayCircleOutlined,
   MenuFoldOutlined,
-  MenuUnfoldOutlined
+  MenuUnfoldOutlined,
+  IdcardOutlined
 } from '@ant-design/icons';
 import type { MenuProps } from 'antd';
 import { Layout, Menu, Image, Spin, Modal, Button, Grid } from 'antd';
@@ -51,6 +52,7 @@ const AppLayout = () => {
   const items: MenuItem[] = loggedIn
     ? [
         getItem(name, '/user', <UserOutlined />, [
+          getItem('Profil Saya', '/profile', <IdcardOutlined />),
           getItem('Keluar', '/logout', <PoweroffOutlined />)
         ]),
         getItem('Tryout', '/tryout', <CalendarOutlined />),
@@ -70,7 +72,9 @@ const AppLayout = () => {
         getItem('Daftar', '/register', <CalendarOutlined />)
       ];
 
-  const selectedKey = location.pathname.startsWith('/bank-soal/utbk')
+  const selectedKey = location.pathname.startsWith('/profile')
+    ? '/profile'
+    : location.pathname.startsWith('/bank-soal/utbk')
     ? '/bank-soal/utbk'
     : location.pathname.startsWith('/bank-soal/skd-cpns')
     ? '/bank-soal/skd-cpns'

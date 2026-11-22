@@ -2,9 +2,10 @@ import { BaseResponseProps } from '../types/config.type';
 import { message } from 'antd';
 import { useState } from 'react';
 import { httpRequest } from '../helpers/api';
-import { saveToken } from '../helpers/auth';
+import { getTokenRemainingMinutes, saveToken } from '../helpers/auth';
 import { useSignIn } from 'react-auth-kit';
 import axios from 'axios';
+import { getErrorMessage } from '../helpers/errorMessage';
 import { useNavigate } from 'react-router-dom';
 
 type Props = {
@@ -48,15 +49,10 @@ export default function useAuthApp(props?: Props) {
           token: string;
         }>
       >(
-        props?.apiGetMyProfileUrl ||
-          import.meta.env.VITE_BASE_URL +
-            '/user/' +
-            resultAuthLogin.data.payload.user_id,
+        props?.apiGetMyProfileUrl || import.meta.env.VITE_BASE_URL + '/me',
         {
           headers: {
-            Authorization: 'Bearer ' + resultAuthLogin.data.payload.token,
-            username: resultAuthLogin.data.payload.username,
-            role: resultAuthLogin.data.payload.role
+            Authorization: 'Bearer ' + resultAuthLogin.data.payload.token
           }
         }
       );
@@ -69,7 +65,9 @@ export default function useAuthApp(props?: Props) {
       if (
         signIn({
           token: resultAuthLogin.data.payload.token,
-          expiresIn: 350,
+          // Follow the expiry set by the API instead of a fixed duration.
+          expiresIn:
+            getTokenRemainingMinutes(resultAuthLogin.data.payload.token) || 350,
           tokenType: 'Bearer',
           authState: resProfile.data.payload
         })
@@ -87,7 +85,7 @@ export default function useAuthApp(props?: Props) {
         //Throw error
       }
     } catch (err) {
-      message.error('Login failed. ' + err);
+      message.error('Login gagal. ' + getErrorMessage(err));
     }
 
     setIsAuthLoading(false);

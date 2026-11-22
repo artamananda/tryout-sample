@@ -12,15 +12,16 @@ import (
 	"github.com/aws/aws-sdk-go-v2/service/s3"
 	"github.com/gofiber/fiber/v2"
 	"github.com/gofiber/fiber/v2/middleware/cors"
+	"github.com/gofiber/fiber/v2/middleware/recover"
 	"github.com/gofiber/swagger"
 
 	_ "github.com/artamananda/tryout-sample/docs"
 )
 
-const APP_VERSION = "0.6.0"
+const APP_VERSION = "0.7.0"
 
 // @title Tryout Sample
-// @version 0.6.0
+// @version 0.7.0
 // @description API Documentation for Telisik Tryout
 // @termsOfService http://swagger.io/terms/
 // @contact.name Artamananda
@@ -37,10 +38,13 @@ const APP_VERSION = "0.6.0"
 func main() {
 	initConfig := config.New()
 	db := config.NewDB(initConfig)
-	app := fiber.New()
+	app := fiber.New(config.NewFiberConfiguration())
 	awsConfig, _ := config.NewAWSConfig(initConfig)
 	s3Client := s3.NewFromConfig(awsConfig)
 	uploader := manager.NewUploader(s3Client)
+
+	// A panic in one handler must not take down the whole API.
+	app.Use(recover.New(recover.Config{EnableStackTrace: true}))
 
 	app.Use(cors.New(cors.Config{
 		AllowHeaders:     "*",
@@ -98,8 +102,8 @@ func main() {
 	userController := controller.NewUserController(&userService, initConfig)
 	tryoutController := controller.NewTryoutController(&tryoutService, initConfig)
 	tryoutResultController := controller.NewTryoutResultController(&tryoutResultService, initConfig)
-	questionController := controller.NewQuestionController(&questionService, initConfig)
-	userAnswerController := controller.NewUserAnswerController(&userAnswerService, initConfig)
+	questionController := controller.NewQuestionController(&questionService, &transactionTryoutService, initConfig)
+	userAnswerController := controller.NewUserAnswerController(&userAnswerService, &transactionTryoutService, initConfig)
 	transactionTryoutController := controller.NewTransactionTryoutController(&transactionTryoutService, &tryoutService, &tryoutResultService, &transactionProgramRepository, initConfig)
 	programController := controller.NewProgramController(&programService, initConfig)
 	transactionProgramController := controller.NewTransactionProgramController(&transactionProgramService, initConfig)

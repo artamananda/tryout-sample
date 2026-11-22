@@ -10,7 +10,6 @@ import AppLayout from '../screens/Layout/AppLayout';
 import TryoutScreen from '../screens/Tryout';
 import RegisterScreen from '../screens/Auth/Register';
 import ForgotPasswordScreen from '../screens/Auth/ForgotPassword';
-import Batch5 from '../screens/Program/Batch5';
 import TryoutRoute from './TryoutRoute';
 import HomeScreen from '../screens/Home';
 import ELibraryScreen from '../screens/ELibrary';
@@ -20,6 +19,7 @@ import RegisterProgramScreen from '../screens/Program/Register';
 import BankSoalScreen from '../screens/BankSoal';
 import LearningVideoScreen from '../screens/LearningVideo';
 import MyTryoutScoreScreen from '../screens/Tryout/MyScore';
+import ProfileScreen from '../screens/Profile';
 
 const RootNavigator = () => {
   return (
@@ -123,6 +123,15 @@ const RootNavigator = () => {
             element={
               <PrivateRoute loginPath="/login">
                 <LearningVideoScreen />
+              </PrivateRoute>
+            }
+          />
+
+          <Route
+            path="/profile"
+            element={
+              <PrivateRoute loginPath="/login">
+                <ProfileScreen />
               </PrivateRoute>
             }
           />

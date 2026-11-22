@@ -21,7 +21,7 @@ import Outdated from './Outdated';
 import { ProgramProps } from '../../types/program.type';
 import { useAuthUser } from 'react-auth-kit';
 import { UserProperties } from '../../types/user.type';
-import axios from 'axios';
+import { getErrorMessage } from '../../helpers/errorMessage';
 
 const { Text } = Typography;
 
@@ -70,7 +70,7 @@ const RegisterProgramScreen = () => {
         setIsSuccess(true);
       }
     } catch (err: any) {
-      message.error(err?.response?.data || 'Gagal mengambil data program');
+      message.error(getErrorMessage(err, 'Gagal mengambil data program'));
     } finally {
       setIsFetching(false);
     }
@@ -131,26 +131,15 @@ const RegisterProgramScreen = () => {
         message.error('Program ID is required');
         return;
       }
-      if (user?.user_id) {
-        formData.append('user_id', user.user_id);
-      } else {
-        message.error('User ID is required');
-        return;
-      }
-      await axios.post('/register-program', formData, {
-        headers: {
-          'Content-Type': 'multipart/form-data'
-        },
-        maxContentLength: 2 * 1024 * 1024,
+      // httpRequest attaches the login token; the API takes the user from it.
+      await httpRequest.post('/register-program', formData, {
         timeout: 300000
       });
       setIsSuccess(true);
       message.success('Pendaftaran berhasil, silahkan cek email anda');
     } catch (err: any) {
       message.error(
-        err?.response?.data ||
-          err?.response ||
-          'Gagal mendaftar, silahkan hubungi admin'
+        getErrorMessage(err, 'Gagal mendaftar, silahkan hubungi admin')
       );
     } finally {
       setIsLoading(false);
@@ -219,8 +208,9 @@ const RegisterProgramScreen = () => {
             { type: 'email', message: 'Please input valid email!' }
           ]}
           normalize={(value) => value?.trim()}
+          extra="Email mengikuti akun Anda dan tidak dapat diubah."
         >
-          <Input type="email" inputMode="email" />
+          <Input type="email" inputMode="email" disabled />
         </Form.Item>
         <Form.Item
           name={'name'}

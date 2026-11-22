@@ -40,7 +40,7 @@ type QuestionResponse struct {
 	ImageUrl      string     `json:"image_url"`
 	IsOptions     *bool      `json:"is_options"`
 	Options       []string   `json:"options"`
-	CorrectAnswer string     `json:"correct_answer"`
+	CorrectAnswer string     `json:"correct_answer,omitempty"`
 	Points        int        `json:"points"`
 	CreatedAt     time.Time  `json:"created_at"`
 	UpdatedAt     time.Time  `json:"updated_at"`

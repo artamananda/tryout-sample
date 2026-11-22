@@ -2,6 +2,7 @@ package service
 
 import (
 	"context"
+	"time"
 
 	"github.com/artamananda/tryout-sample/internal/common"
 	"github.com/artamananda/tryout-sample/internal/entity"
@@ -28,14 +29,20 @@ func (service *UserAnswerService) Create(ctx context.Context, request model.Crea
 		}
 	}
 
-	userAnswer := entity.UserAnswer{
-		UserID:     request.UserID,
-		TryoutID:   request.TryoutID,
-		QuestionID: request.QuestionID,
-		UserAnswer: request.UserAnswer,
+	// One answer per user per question: re-answering updates the stored row.
+	userAnswer, exists := service.UserAnswerRepository.FindByUserTryoutQuestion(ctx, request.UserID, request.TryoutID, request.QuestionID)
+	if exists {
+		userAnswer.UserAnswer = request.UserAnswer
+		userAnswer.UpdatedAt = time.Now()
+		userAnswer = service.UserAnswerRepository.Update(ctx, userAnswer)
+	} else {
+		userAnswer = service.UserAnswerRepository.Create(ctx, entity.UserAnswer{
+			UserID:     request.UserID,
+			TryoutID:   request.TryoutID,
+			QuestionID: request.QuestionID,
+			UserAnswer: request.UserAnswer,
+		})
 	}
-
-	userAnswer = service.UserAnswerRepository.Create(ctx, userAnswer)
 
 	return model.UserAnswerResponse{
 		UserAnswerID: userAnswer.UserAnswerID,

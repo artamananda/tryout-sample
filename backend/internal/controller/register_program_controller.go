@@ -1,7 +1,13 @@
 package controller
 
 import (
+	"mime/multipart"
+	"strings"
+
 	"github.com/artamananda/tryout-sample/internal/config"
+	"github.com/artamananda/tryout-sample/internal/exception"
+	"github.com/artamananda/tryout-sample/internal/helper"
+	"github.com/artamananda/tryout-sample/internal/middleware"
 	"github.com/artamananda/tryout-sample/internal/model"
 	"github.com/artamananda/tryout-sample/internal/service"
 	"github.com/gofiber/fiber/v2"
@@ -19,74 +25,65 @@ func NewRegisterProgramController(registerProgramService *service.RegisterProgra
 	}
 }
 
-func (controller RegisterProgramController) Route(fiber *fiber.App) {
-	fiber.Post("/v1/api/register-program", controller.RegisterProgram)
+func (controller RegisterProgramController) Route(app *fiber.App) {
+	app.Post("/v1/api/register-program", middleware.AuthenticateJWT([]string{middleware.RoleAdmin, middleware.RoleUser}, controller.Config), controller.RegisterProgram)
 }
 
-// RegisterProgram handles registration of a batch 5.
-// @Summary Register a batch 5
-// @Description Register a new batch 5
-// @Tags RegisterProgram
+func formValue(form *multipart.Form, key string) string {
+	if values := form.Value[key]; len(values) > 0 {
+		return strings.TrimSpace(values[0])
+	}
+	return ""
+}
+
+// RegisterProgram registers the logged-in user to a program.
+// @Summary Register to a program
+// @Description Registers the logged-in user to a program and updates their profile with the form data.
+// @Tags Programs
 // @Accept multipart/form-data
-// @Produce json
-// @Param user_id formData string true "User ID"
-// @Param name formData string true "Name"
-// @Param email formData string true "Email"
-// @Param grade formData string true "Grade"
-// @Param nisn formData string true "NISN"
-// @Param school formData string true "School"
-// @Param regency formData string true "Regency"
-// @Param province formData string true "Province"
-// @Param motivation formData string true "Motivation"
+// @Param file formData file true "Profile picture (JPG, PNG or WEBP, max 2 MB)"
 // @Param program_id formData string true "Program ID"
-// @Param file formData file true "Profile Picture" // Menambahkan parameter file
+// @Security JWT
 // @Success 200 {object} model.GeneralResponse
 // @Router /register-program [post]
 func (controller RegisterProgramController) RegisterProgram(c *fiber.Ctx) error {
-	var request model.RegisterProgramModel
-	form, err := c.MultipartForm()
+	authUser, err := requireAuthUser(c)
 	if err != nil {
 		return err
+	}
+
+	form, err := c.MultipartForm()
+	if err != nil {
+		return exception.BadRequestError{Message: "format request tidak valid"}
 	}
 
 	files := form.File["file"]
 	if len(files) == 0 {
-		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
-			"error": "No file uploaded",
-		})
+		return exception.BadRequestError{Message: "file wajib diunggah"}
 	}
-
 	file := files[0]
-
-	fileOpened, err := file.Open()
+	contentType, _, err := helper.ValidateImageUpload(file, helper.MaxProfilePictureBytes)
 	if err != nil {
-		return err
+		return exception.BadRequestError{Message: err.Error()}
+	}
+	file.Header.Set("Content-Type", contentType)
+
+	request := model.RegisterProgramModel{
+		// The participant is always the logged-in user, never a user_id from the form.
+		UserID:     authUser.UserID,
+		File:       file,
+		Name:       formValue(form, "name"),
+		Email:      formValue(form, "email"),
+		Grade:      formValue(form, "grade"),
+		NISN:       formValue(form, "nisn"),
+		School:     formValue(form, "school"),
+		Regency:    formValue(form, "regency"),
+		Province:   formValue(form, "province"),
+		Motivation: formValue(form, "motivation"),
+		ProgramID:  formValue(form, "program_id"),
 	}
 
-	defer fileOpened.Close()
-
-	request.File = file
-	request.Name = form.Value["name"][0]
-	request.Email = form.Value["email"][0]
-	request.Grade = form.Value["grade"][0]
-	request.NISN = form.Value["nisn"][0]
-	request.School = form.Value["school"][0]
-	request.Regency = form.Value["regency"][0]
-	request.Province = form.Value["province"][0]
-	request.Motivation = form.Value["motivation"][0]
-	request.ProgramID = form.Value["program_id"][0]
-	request.UserID = form.Value["user_id"][0]
-
-	otpCfg := model.SendOtpConfig{
-		SmtpHost:     controller.Config.Get("GOMAIL_SMTP_HOST"),
-		SmtpPort:     controller.Config.Get("GOMAIL_SMTP_PORT"),
-		SenderName:   controller.Config.Get("GOMAIL_SENDER_NAME"),
-		AuthEmail:    controller.Config.Get("GOMAIL_AUTH_EMAIL"),
-		AuthPassword: controller.Config.Get("GOMAIL_AUTH_PASSWORD"),
-	}
-
-	err = controller.RegisterProgramService.RegisterProgram(c.Context(), request, otpCfg)
-	if err != nil {
+	if err := controller.RegisterProgramService.RegisterProgram(c.Context(), request, otpConfigFrom(controller.Config)); err != nil {
 		return err
 	}
 

@@ -6,6 +6,16 @@ export interface UserProps {
   name: string;
   email: string;
   role: string;
+  phone_number?: string;
+  gender?: string;
+  birth_date?: string;
+  last_education?: string;
+  major?: string;
+  target_agency?: string;
+  target_position?: string;
+  school?: string;
+  regency?: string;
+  province?: string;
   last_login?: Date | string;
   created_at?: Date | string;
 }

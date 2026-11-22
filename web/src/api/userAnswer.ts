@@ -28,7 +28,7 @@ export const putAnswer = async (
   }
 ) => {
   try {
-    const res = await httpRequest.put<BaseResponseProps<any>>(
+    const res = await httpRequest.patch<BaseResponseProps<any>>(
       import.meta.env.VITE_BASE_URL + '/user-answer/' + user_answer_id,
       data
     );

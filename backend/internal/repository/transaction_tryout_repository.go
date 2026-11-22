@@ -25,6 +25,7 @@ func (repository *TransactionTryoutRepository) Create(ctx context.Context, trans
 		transactionTryout.TransactionTryoutID = uuid.New()
 		err := repository.DB.WithContext(ctx).Create(&transactionTryout).Error
 		exception.PanicLogging(err)
+		return transactionTryout
 	}
 
 	return transactionTryoutResult
@@ -77,5 +78,11 @@ func (repository *TransactionTryoutRepository) FindByTryoutIdAndUserId(ctx conte
 func (repository *TransactionTryoutRepository) FindAll(ctx context.Context) []entity.TransactionTryout {
 	var transactionTryouts []entity.TransactionTryout
 	repository.DB.WithContext(ctx).Find(&transactionTryouts)
+	return transactionTryouts
+}
+
+func (repository *TransactionTryoutRepository) FindByUserId(ctx context.Context, userId string) []entity.TransactionTryout {
+	var transactionTryouts []entity.TransactionTryout
+	repository.DB.WithContext(ctx).Where("user_id = ?", userId).Order("created_at DESC").Find(&transactionTryouts)
 	return transactionTryouts
 }

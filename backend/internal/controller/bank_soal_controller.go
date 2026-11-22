@@ -9,7 +9,6 @@ import (
 	"github.com/artamananda/tryout-sample/internal/model"
 	"github.com/artamananda/tryout-sample/internal/service"
 	"github.com/gofiber/fiber/v2"
-	"github.com/golang-jwt/jwt/v4"
 )
 
 type BankSoalController struct {
@@ -52,9 +51,11 @@ func (controller BankSoalController) Create(c *fiber.Ctx) error {
 		return err
 	}
 
-	user := c.Locals("user").(*jwt.Token)
-	claims := user.Claims.(jwt.MapClaims)
-	userID := claims["user_id"].(string)
+	authUser, err := requireAuthUser(c)
+	if err != nil {
+		return err
+	}
+	userID := authUser.UserID
 
 	response, err := controller.BankSoalService.Create(c.Context(), request, userID)
 	if err != nil {
@@ -85,9 +86,11 @@ func (controller BankSoalController) CreateBatch(c *fiber.Ctx) error {
 		return err
 	}
 
-	user := c.Locals("user").(*jwt.Token)
-	claims := user.Claims.(jwt.MapClaims)
-	userID := claims["user_id"].(string)
+	authUser, err := requireAuthUser(c)
+	if err != nil {
+		return err
+	}
+	userID := authUser.UserID
 
 	response, err := controller.BankSoalService.CreateBatch(c.Context(), request, userID)
 	if err != nil {

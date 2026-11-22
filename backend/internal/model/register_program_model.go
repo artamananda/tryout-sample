@@ -5,7 +5,7 @@ import "mime/multipart"
 type RegisterProgramModel struct {
 	UserID     string                `json:"user_id" validate:"required"`
 	Name       string                `json:"name" validate:"required"`
-	Email      string                `json:"email" validate:"required"`
+	Email      string                `json:"email"`
 	Grade      string                `json:"grade" validate:"required"`
 	NISN       string                `json:"nisn" validate:"required"`
 	School     string                `json:"school" validate:"required"`

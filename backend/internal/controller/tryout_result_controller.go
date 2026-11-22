@@ -2,12 +2,10 @@ package controller
 
 import (
 	"github.com/artamananda/tryout-sample/internal/config"
-	"github.com/artamananda/tryout-sample/internal/exception"
 	"github.com/artamananda/tryout-sample/internal/middleware"
 	"github.com/artamananda/tryout-sample/internal/model"
 	"github.com/artamananda/tryout-sample/internal/service"
 	"github.com/gofiber/fiber/v2"
-	"github.com/golang-jwt/jwt/v4"
 )
 
 type TryoutResultController struct {
@@ -47,13 +45,11 @@ func (controller TryoutResultController) FindByTryoutID(c *fiber.Ctx) error {
 
 func (controller TryoutResultController) FindByTryoutIDForCurrentUser(c *fiber.Ctx) error {
 	id := c.Params("id")
-	user := c.Locals("user").(*jwt.Token)
-	claims := user.Claims.(jwt.MapClaims)
-
-	userID, ok := claims["user_id"].(string)
-	if !ok || userID == "" {
-		return exception.UnauthorizedError{Message: "invalid user claims"}
+	authUser, err := requireAuthUser(c)
+	if err != nil {
+		return err
 	}
+	userID := authUser.UserID
 
 	result, err := controller.TryoutResultService.FindUserResultByTryoutIDAndUserID(c.Context(), id, userID)
 	if err != nil {

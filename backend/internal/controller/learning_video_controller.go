@@ -9,7 +9,6 @@ import (
 	"github.com/artamananda/tryout-sample/internal/model"
 	"github.com/artamananda/tryout-sample/internal/service"
 	"github.com/gofiber/fiber/v2"
-	"github.com/golang-jwt/jwt/v4"
 )
 
 type LearningVideoController struct {
@@ -178,9 +177,11 @@ func (controller LearningVideoController) FindAll(c *fiber.Ctx) error {
 	offset, _ := strconv.Atoi(c.Query("offset", "0"))
 	limit, _ := strconv.Atoi(c.Query("limit", "25"))
 
-	user := c.Locals("user").(*jwt.Token)
-	claims := user.Claims.(jwt.MapClaims)
-	role := claims["roles"].(string)
+	authUser, err := requireAuthUser(c)
+	if err != nil {
+		return err
+	}
+	role := authUser.Role
 
 	var programIDPtr *string
 	if programID != "" {

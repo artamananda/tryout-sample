@@ -1,0 +1,50 @@
+.profile-page {
+  max-width: 880px;
+  margin: 0 auto;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.profile-header {
+  display: flex;
+  align-items: center;
+  gap: 20px;
+  flex-wrap: wrap;
+}
+
+.profile-header-info {
+  flex: 1;
+  min-width: 200px;
+}
+
+.profile-header-info h2 {
+  margin: 0;
+  font-size: 22px;
+}
+
+.profile-header-email {
+  color: rgba(0, 0, 0, 0.55);
+  word-break: break-all;
+}
+
+.profile-section-title {
+  margin: 8px 0 12px !important;
+  font-size: 15px !important;
+}
+
+.profile-actions {
+  display: flex;
+  justify-content: flex-end;
+}
+
+@media (max-width: 576px) {
+  .profile-header {
+    flex-direction: column;
+    text-align: center;
+  }
+
+  .profile-actions .ant-btn {
+    width: 100%;
+  }
+}

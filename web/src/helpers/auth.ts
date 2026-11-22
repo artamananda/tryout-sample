@@ -40,7 +40,7 @@ export const getLoginData = async (token?: string) => {
     Authorization: 'Bearer ' + (token ? token : getToken())
   };
   const resultUser = await axios.get<IHttpResponse<UserProperties>>(
-    import.meta.env.VITE_BASE_URL + '/users/me',
+    import.meta.env.VITE_BASE_URL + '/me',
     { headers }
   );
 
@@ -49,3 +49,15 @@ export const getLoginData = async (token?: string) => {
     role: resultUser.data.payload.role
   };
 };
+
+/** Minutes until the JWT expires, read from its `exp` claim. */
+export function getTokenRemainingMinutes(token: string | null): number {
+  if (!token) return 0;
+  try {
+    const payload = JSON.parse(atob(token.split('.')[1].replace(/-/g, '+').replace(/_/g, '/')));
+    if (!payload.exp) return 0;
+    return Math.max(0, Math.floor((payload.exp * 1000 - Date.now()) / 60000));
+  } catch {
+    return 0;
+  }
+}

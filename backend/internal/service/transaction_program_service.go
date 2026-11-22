@@ -147,20 +147,7 @@ func (service *TransactionProgramService) FindById(ctx context.Context, transact
 		return model.TransactionProgramResponse{}, err
 	}
 
-	userDataRespone := model.GetUserResponse{
-		UserID:     transactionProgram.User.UserID,
-		Name:       transactionProgram.User.Name,
-		Username:   transactionProgram.User.Username,
-		Email:      transactionProgram.User.Email,
-		PictureURL: transactionProgram.User.PictureURL,
-		Role:       transactionProgram.User.Role,
-		NISN:       transactionProgram.User.NISN,
-		Grade:      transactionProgram.User.Grade,
-		School:     transactionProgram.User.School,
-		Regency:    transactionProgram.User.Regency,
-		Province:   transactionProgram.User.Province,
-		CreatedAt:  transactionProgram.User.CreatedAt,
-	}
+	userDataRespone := ToUserResponse(transactionProgram.User)
 	programDataRespone := model.ProgramResponse{
 		ProgramID:         transactionProgram.Program.ProgramID,
 		Name:              transactionProgram.Program.Name,
@@ -195,20 +182,7 @@ func (service *TransactionProgramService) FindAll(ctx context.Context, params mo
 
 	var response []model.TransactionProgramResponse
 	for _, transactionProgram := range transactionPrograms {
-		userDataRespone := model.GetUserResponse{
-			UserID:     transactionProgram.User.UserID,
-			Name:       transactionProgram.User.Name,
-			Username:   transactionProgram.User.Username,
-			Email:      transactionProgram.User.Email,
-			PictureURL: transactionProgram.User.PictureURL,
-			Role:       transactionProgram.User.Role,
-			NISN:       transactionProgram.User.NISN,
-			Grade:      transactionProgram.User.Grade,
-			School:     transactionProgram.User.School,
-			Regency:    transactionProgram.User.Regency,
-			Province:   transactionProgram.User.Province,
-			CreatedAt:  transactionProgram.User.CreatedAt,
-		}
+		userDataRespone := ToUserResponse(transactionProgram.User)
 		programDataRespone := model.ProgramResponse{
 			ProgramID:         transactionProgram.Program.ProgramID,
 			Name:              transactionProgram.Program.Name,

@@ -23,7 +23,7 @@ rows := sqlmock.NewRows([]string{"question_id", "text", "points"}).
 AddRow(questionId, "What is 2+2?", 10)
 
 mock.ExpectQuery(regexp.QuoteMeta(`SELECT * FROM "questions" WHERE question_id = $1`)).
-WithArgs(questionId).
+WithArgs(questionId, 1).
 WillReturnRows(rows)
 
 question, err := repo.FindByID(ctx, questionId)
@@ -33,7 +33,7 @@ assert.Equal(t, "What is 2+2?", question.Text)
 
 t.Run("returns error when not found", func(t *testing.T) {
 mock.ExpectQuery(regexp.QuoteMeta(`SELECT * FROM "questions" WHERE question_id = $1`)).
-WithArgs(questionId).
+WithArgs(questionId, 1).
 WillReturnRows(sqlmock.NewRows([]string{}))
 
 question, err := repo.FindByID(ctx, questionId)

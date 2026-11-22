@@ -4,6 +4,7 @@ import (
 	"github.com/artamananda/tryout-sample/internal/common"
 	"github.com/artamananda/tryout-sample/internal/config"
 	"github.com/artamananda/tryout-sample/internal/exception"
+	"github.com/artamananda/tryout-sample/internal/helper"
 	"github.com/artamananda/tryout-sample/internal/middleware"
 	"github.com/artamananda/tryout-sample/internal/model"
 	"github.com/artamananda/tryout-sample/internal/service"
@@ -20,18 +21,66 @@ func NewUserController(userService *service.UserService, config config.Config) *
 }
 
 func (controller UserController) Route(app *fiber.App) {
-	app.Post("/v1/api/login", controller.Authentication)
-	app.Post("/v1/api/email/send-otp", controller.SendOtp)
+	adminOnly := middleware.AuthenticateJWT([]string{middleware.RoleAdmin}, controller.Config)
+	loggedIn := middleware.AuthenticateJWT([]string{middleware.RoleAdmin, middleware.RoleUser}, controller.Config)
+	otpLimiter := middleware.RateLimit(5, 10*60)
+	loginLimiter := middleware.RateLimit(20, 5*60)
+
+	app.Post("/v1/api/login", loginLimiter, controller.Authentication)
+	app.Post("/v1/api/email/send-otp", otpLimiter, controller.SendOtp)
 	app.Post("/v1/api/register", controller.SelfRegister)
-	app.Post("/v1/api/user", middleware.AuthenticateJWT([]string{"admin"}, controller.Config), controller.Create)
 	app.Post("/v1/api/user/check-by-email", controller.CheckByEmail)
-	app.Post("/v1/api/users", middleware.AuthenticateJWT([]string{"admin"}, controller.Config), controller.CreateBulk)
-	app.Patch("/v1/api/user/:id", middleware.AuthenticateJWT([]string{"admin"}, controller.Config), controller.Update)
-	app.Delete("/v1/api/user/:id", middleware.AuthenticateJWT([]string{"admin"}, controller.Config), controller.Delete)
-	app.Get("/v1/api/user/:id", controller.FindById)
-	app.Get("/v1/api/user", middleware.AuthenticateJWT([]string{"admin", "user"}, controller.Config), controller.FindAll)
-	app.Post("/v1/api/forgot-password/send-otp", controller.SendPasswordResetOtp)
+	app.Post("/v1/api/forgot-password/send-otp", otpLimiter, controller.SendPasswordResetOtp)
 	app.Post("/v1/api/forgot-password/reset", controller.ResetPassword)
+
+	// Profile of the logged-in user.
+	app.Get("/v1/api/me", loggedIn, controller.GetMyProfile)
+	app.Patch("/v1/api/me", loggedIn, controller.UpdateMyProfile)
+	app.Patch("/v1/api/me/password", loggedIn, controller.ChangeMyPassword)
+	app.Post("/v1/api/me/picture", loggedIn, controller.UpdateMyPicture)
+
+	// User management.
+	app.Post("/v1/api/user", adminOnly, controller.Create)
+	app.Post("/v1/api/users", adminOnly, controller.CreateBulk)
+	app.Patch("/v1/api/user/:id", adminOnly, controller.Update)
+	app.Delete("/v1/api/user/:id", adminOnly, controller.Delete)
+	app.Get("/v1/api/user/:id", loggedIn, controller.FindById)
+	app.Get("/v1/api/user", adminOnly, controller.FindAll)
+}
+
+func otpConfigFrom(cfg config.Config) model.SendOtpConfig {
+	return model.SendOtpConfig{
+		SmtpHost:     cfg.Get("GOMAIL_SMTP_HOST"),
+		SmtpPort:     cfg.Get("GOMAIL_SMTP_PORT"),
+		SenderName:   cfg.Get("GOMAIL_SENDER_NAME"),
+		AuthEmail:    cfg.Get("GOMAIL_AUTH_EMAIL"),
+		AuthPassword: cfg.Get("GOMAIL_AUTH_PASSWORD"),
+	}
+}
+
+// parseBody decodes the JSON body and turns a malformed body into a 400.
+func parseBody(c *fiber.Ctx, out interface{}) error {
+	if err := c.BodyParser(out); err != nil {
+		return exception.BadRequestError{Message: "format request tidak valid"}
+	}
+	return nil
+}
+
+// requireAuthUser returns the identity from the JWT on a protected route.
+func requireAuthUser(c *fiber.Ctx) (middleware.AuthUser, error) {
+	authUser, ok := middleware.GetAuthUser(c)
+	if !ok {
+		return middleware.AuthUser{}, exception.UnauthorizedError{Message: "Invalid or expired JWT"}
+	}
+	return authUser, nil
+}
+
+func success(c *fiber.Ctx, status int, data interface{}) error {
+	return c.Status(status).JSON(model.GeneralResponse{
+		Code:    200,
+		Message: "Success",
+		Data:    data,
+	})
 }
 
 // SelfRegister handles self-registration of users.
@@ -45,19 +94,15 @@ func (controller UserController) Route(app *fiber.App) {
 // @Router /register [post]
 func (controller UserController) SelfRegister(c *fiber.Ctx) error {
 	var request model.SelfRegisterRequest
-	err := c.BodyParser(&request)
-	exception.PanicLogging(err)
+	if err := parseBody(c, &request); err != nil {
+		return err
+	}
 
 	response, err := controller.UserService.SelfRegister(c.Context(), request)
 	if err != nil {
 		return err
 	}
-
-	return c.Status(fiber.StatusCreated).JSON(model.GeneralResponse{
-		Code:    200,
-		Message: "Success",
-		Data:    response,
-	})
+	return success(c, fiber.StatusCreated, response)
 }
 
 // Create handles creation of a single user.
@@ -72,19 +117,15 @@ func (controller UserController) SelfRegister(c *fiber.Ctx) error {
 // @Router /user [post]
 func (controller UserController) Create(c *fiber.Ctx) error {
 	var request model.RegisterRequest
-	err := c.BodyParser(&request)
-	exception.PanicLogging(err)
+	if err := parseBody(c, &request); err != nil {
+		return err
+	}
 
 	response, err := controller.UserService.Create(c.Context(), request)
 	if err != nil {
 		return err
 	}
-
-	return c.Status(fiber.StatusCreated).JSON(model.GeneralResponse{
-		Code:    200,
-		Message: "Success",
-		Data:    response,
-	})
+	return success(c, fiber.StatusCreated, response)
 }
 
 // CreateBulk handles bulk creation of users.
@@ -99,8 +140,7 @@ func (controller UserController) Create(c *fiber.Ctx) error {
 // @Router /users [post]
 func (controller UserController) CreateBulk(c *fiber.Ctx) error {
 	var requests []model.RegisterRequest
-	err := c.BodyParser(&requests)
-	if err != nil {
+	if err := parseBody(c, &requests); err != nil {
 		return err
 	}
 
@@ -108,17 +148,12 @@ func (controller UserController) CreateBulk(c *fiber.Ctx) error {
 	if err != nil {
 		return err
 	}
-
-	return c.Status(fiber.StatusCreated).JSON(model.GeneralResponse{
-		Code:    200,
-		Message: "Success",
-		Data:    responses,
-	})
+	return success(c, fiber.StatusCreated, responses)
 }
 
-// Update handles updating an existing user.
+// Update handles updating an existing user (admin only).
 // @Summary Update an existing user
-// @Description Update an existing user with provided details
+// @Description Update an existing user. Only the fields present in the body are changed.
 // @Tags Users
 // @Accept json
 // @Produce json
@@ -129,19 +164,15 @@ func (controller UserController) CreateBulk(c *fiber.Ctx) error {
 // @Router /user/{id} [patch]
 func (controller UserController) Update(c *fiber.Ctx) error {
 	var request model.UpdateUserRequest
-	id := c.Params("id")
-	err := c.BodyParser(&request)
-	exception.PanicLogging(err)
+	if err := parseBody(c, &request); err != nil {
+		return err
+	}
 
-	response, err := controller.UserService.Update(c.Context(), request, id)
+	response, err := controller.UserService.Update(c.Context(), request, c.Params("id"))
 	if err != nil {
 		return err
 	}
-	return c.Status(fiber.StatusOK).JSON(model.GeneralResponse{
-		Code:    200,
-		Message: "Success",
-		Data:    response,
-	})
+	return success(c, fiber.StatusOK, response)
 }
 
 // Delete handles deleting an existing user.
@@ -155,43 +186,40 @@ func (controller UserController) Update(c *fiber.Ctx) error {
 // @Success 200 {object} model.GeneralResponse
 // @Router /user/{id} [delete]
 func (controller UserController) Delete(c *fiber.Ctx) error {
-	id := c.Params("id")
-
-	err := controller.UserService.Delete(c.Context(), id)
-	if err != nil {
+	if err := controller.UserService.Delete(c.Context(), c.Params("id")); err != nil {
 		return err
 	}
-
-	return c.Status(fiber.StatusOK).JSON(model.GeneralResponse{
-		Code:    200,
-		Message: "Success",
-	})
+	return success(c, fiber.StatusOK, nil)
 }
 
-// FindById handles finding a user by ID.
+// FindById handles finding a user by ID. Users can only read their own data.
 // @Summary Find a user by ID
 // @Description Find a user by their unique ID
 // @Tags Users
 // @Accept json
 // @Produce json
 // @Param id path string true "User ID"
+// @Security JWT
 // @Success 200 {object} model.GeneralResponse
 // @Router /user/{id} [get]
 func (controller UserController) FindById(c *fiber.Ctx) error {
+	authUser, err := requireAuthUser(c)
+	if err != nil {
+		return err
+	}
 	id := c.Params("id")
+	if !authUser.IsAdmin() && id != authUser.UserID {
+		return exception.NotFoundError{Message: "user Not Found"}
+	}
 
 	result, err := controller.UserService.FindById(c.Context(), id)
 	if err != nil {
 		return err
 	}
-	return c.Status(fiber.StatusOK).JSON(model.GeneralResponse{
-		Code:    200,
-		Message: "Success",
-		Data:    result,
-	})
+	return success(c, fiber.StatusOK, result)
 }
 
-// FindAll handles finding all users.
+// FindAll handles finding all users (admin only).
 // @Summary Find all users
 // @Description Retrieve a list of all users, optionally filtered by role
 // @Tags Users
@@ -203,23 +231,131 @@ func (controller UserController) FindById(c *fiber.Ctx) error {
 // @Success 200 {object} model.GeneralResponse
 // @Router /user [get]
 func (controller UserController) FindAll(c *fiber.Ctx) error {
-	params := model.FindAllUserRequest{}
-	params.Search = c.Query("search")
-	params.Role = c.Query("role")
+	params := model.FindAllUserRequest{
+		Search: c.Query("search"),
+		Role:   c.Query("role"),
+	}
 
 	result := controller.UserService.FindAll(c.Context(), params)
-
-	payload := map[string]interface{}{
+	return success(c, fiber.StatusOK, map[string]interface{}{
 		"count":   len(result),
 		"next":    nil,
 		"prev":    nil,
 		"results": result,
+	})
+}
+
+// GetMyProfile returns the profile of the logged-in user.
+// @Summary Get my profile
+// @Tags Profile
+// @Produce json
+// @Security JWT
+// @Success 200 {object} model.GeneralResponse
+// @Router /me [get]
+func (controller UserController) GetMyProfile(c *fiber.Ctx) error {
+	authUser, err := requireAuthUser(c)
+	if err != nil {
+		return err
+	}
+
+	result, err := controller.UserService.GetProfile(c.Context(), authUser.UserID)
+	if err != nil {
+		return err
+	}
+	return success(c, fiber.StatusOK, result)
+}
+
+// UpdateMyProfile updates the profile of the logged-in user. Email and role cannot be changed here.
+// @Summary Update my profile
+// @Description Only the fields present in the body are changed. An empty string clears a field.
+// @Tags Profile
+// @Accept json
+// @Produce json
+// @Param request body model.UpdateMyProfileRequest true "Request Body"
+// @Security JWT
+// @Success 200 {object} model.GeneralResponse
+// @Router /me [patch]
+func (controller UserController) UpdateMyProfile(c *fiber.Ctx) error {
+	authUser, err := requireAuthUser(c)
+	if err != nil {
+		return err
+	}
+
+	var request model.UpdateMyProfileRequest
+	if err := parseBody(c, &request); err != nil {
+		return err
+	}
+
+	result, err := controller.UserService.UpdateProfile(c.Context(), authUser.UserID, request)
+	if err != nil {
+		return err
+	}
+	return success(c, fiber.StatusOK, result)
+}
+
+// ChangeMyPassword changes the password of the logged-in user.
+// @Summary Change my password
+// @Tags Profile
+// @Accept json
+// @Produce json
+// @Param request body model.ChangePasswordRequest true "Request Body"
+// @Security JWT
+// @Success 200 {object} model.GeneralResponse
+// @Router /me/password [patch]
+func (controller UserController) ChangeMyPassword(c *fiber.Ctx) error {
+	authUser, err := requireAuthUser(c)
+	if err != nil {
+		return err
+	}
+
+	var request model.ChangePasswordRequest
+	if err := parseBody(c, &request); err != nil {
+		return err
+	}
+
+	if err := controller.UserService.ChangePassword(c.Context(), authUser.UserID, request); err != nil {
+		return err
 	}
 	return c.Status(fiber.StatusOK).JSON(model.GeneralResponse{
 		Code:    200,
-		Message: "Success",
-		Data:    payload,
+		Message: "Password berhasil diubah",
 	})
+}
+
+// UpdateMyPicture uploads a new profile picture for the logged-in user.
+// @Summary Upload my profile picture
+// @Tags Profile
+// @Accept multipart/form-data
+// @Param file formData file true "JPG, PNG or WEBP, max 2 MB"
+// @Security JWT
+// @Success 200 {object} model.GeneralResponse
+// @Router /me/picture [post]
+func (controller UserController) UpdateMyPicture(c *fiber.Ctx) error {
+	authUser, err := requireAuthUser(c)
+	if err != nil {
+		return err
+	}
+
+	fileHeader, err := c.FormFile("file")
+	if err != nil {
+		return exception.BadRequestError{Message: "file wajib diunggah"}
+	}
+
+	contentType, ext, err := helper.ValidateImageUpload(fileHeader, helper.MaxProfilePictureBytes)
+	if err != nil {
+		return exception.BadRequestError{Message: err.Error()}
+	}
+
+	result, err := controller.UserService.UpdateImage(c.Context(), model.UploadFileRequest{
+		FileHeader:  fileHeader,
+		ContentType: contentType,
+		FolderName:  "users",
+		FileName:    authUser.UserID + ext,
+	}, authUser.UserID)
+	if err != nil {
+		return err
+	}
+	return success(c, fiber.StatusOK, result)
 }
 
 // Authentication handles user authentication.
@@ -233,25 +369,24 @@ func (controller UserController) FindAll(c *fiber.Ctx) error {
 // @Router /login [post]
 func (controller UserController) Authentication(c *fiber.Ctx) error {
 	var request model.LoginRequest
-	err := c.BodyParser(&request)
-	exception.PanicLogging(err)
+	if err := parseBody(c, &request); err != nil {
+		return err
+	}
+	if err := common.Validate(request); err != nil {
+		return err
+	}
 
 	result, err := controller.UserService.Authentication(c.Context(), request)
 	if err != nil {
-		return exception.ErrorHandler(c, exception.NotFoundError{Message: err.Error()})
+		return err
 	}
 
 	tokenJwtResult := common.GenerateToken(result.UserID.String(), result.Username, result.Role, controller.Config)
-	resultWithToken := map[string]interface{}{
+	return success(c, fiber.StatusOK, map[string]interface{}{
 		"token":    tokenJwtResult,
 		"user_id":  result.UserID,
 		"username": result.Username,
 		"role":     result.Role,
-	}
-	return c.Status(fiber.StatusOK).JSON(model.GeneralResponse{
-		Code:    200,
-		Message: "Success",
-		Data:    resultWithToken,
 	})
 }
 
@@ -262,32 +397,19 @@ func (controller UserController) Authentication(c *fiber.Ctx) error {
 // @Accept json
 // @Produce json
 // @Param request body model.CreateUserOtpRequest true "Request Body"
-// @Security JWT
 // @Success 200 {object} model.GeneralResponse
 // @Router /email/send-otp [post]
 func (controller UserController) SendOtp(c *fiber.Ctx) error {
 	var request model.CreateUserOtpRequest
-	err := c.BodyParser(&request)
-	exception.PanicLogging(err)
-
-	otpCfg := model.SendOtpConfig{
-		SmtpHost:     controller.Config.Get("GOMAIL_SMTP_HOST"),
-		SmtpPort:     controller.Config.Get("GOMAIL_SMTP_PORT"),
-		SenderName:   controller.Config.Get("GOMAIL_SENDER_NAME"),
-		AuthEmail:    controller.Config.Get("GOMAIL_AUTH_EMAIL"),
-		AuthPassword: controller.Config.Get("GOMAIL_AUTH_PASSWORD"),
+	if err := parseBody(c, &request); err != nil {
+		return err
 	}
 
-	result, err := controller.UserService.SendOtp(c.Context(), otpCfg, request)
+	result, err := controller.UserService.SendOtp(c.Context(), otpConfigFrom(controller.Config), request)
 	if err != nil {
-		return exception.ErrorHandler(c, err)
+		return err
 	}
-
-	return c.Status(fiber.StatusOK).JSON(model.GeneralResponse{
-		Code:    200,
-		Message: "Success",
-		Data:    result,
-	})
+	return success(c, fiber.StatusOK, result)
 }
 
 // CheckByEmail handles checking if an email is already registered.
@@ -301,19 +423,15 @@ func (controller UserController) SendOtp(c *fiber.Ctx) error {
 // @Router /user/check-by-email [post]
 func (controller UserController) CheckByEmail(c *fiber.Ctx) error {
 	var request model.CheckByEmailRequest
-	err := c.BodyParser(&request)
-	exception.PanicLogging(err)
+	if err := parseBody(c, &request); err != nil {
+		return err
+	}
 
 	result, err := controller.UserService.CheckByEmail(c.Context(), request)
 	if err != nil {
-		return exception.ErrorHandler(c, err)
+		return err
 	}
-
-	return c.Status(fiber.StatusOK).JSON(model.GeneralResponse{
-		Code:    200,
-		Message: "Success",
-		Data:    result,
-	})
+	return success(c, fiber.StatusOK, result)
 }
 
 // SendPasswordResetOtp handles sending OTP for password reset.
@@ -327,22 +445,14 @@ func (controller UserController) CheckByEmail(c *fiber.Ctx) error {
 // @Router /forgot-password/send-otp [post]
 func (controller UserController) SendPasswordResetOtp(c *fiber.Ctx) error {
 	var request model.ForgotPasswordRequest
-	err := c.BodyParser(&request)
-	exception.PanicLogging(err)
-
-	otpCfg := model.SendOtpConfig{
-		SmtpHost:     controller.Config.Get("GOMAIL_SMTP_HOST"),
-		SmtpPort:     controller.Config.Get("GOMAIL_SMTP_PORT"),
-		SenderName:   controller.Config.Get("GOMAIL_SENDER_NAME"),
-		AuthEmail:    controller.Config.Get("GOMAIL_AUTH_EMAIL"),
-		AuthPassword: controller.Config.Get("GOMAIL_AUTH_PASSWORD"),
+	if err := parseBody(c, &request); err != nil {
+		return err
 	}
 
-	result, err := controller.UserService.SendPasswordResetOtp(c.Context(), otpCfg, request)
+	result, err := controller.UserService.SendPasswordResetOtp(c.Context(), otpConfigFrom(controller.Config), request)
 	if err != nil {
-		return exception.ErrorHandler(c, err)
+		return err
 	}
-
 	return c.Status(fiber.StatusOK).JSON(model.GeneralResponse{
 		Code:    200,
 		Message: "OTP sent to your email",
@@ -361,17 +471,15 @@ func (controller UserController) SendPasswordResetOtp(c *fiber.Ctx) error {
 // @Router /forgot-password/reset [post]
 func (controller UserController) ResetPassword(c *fiber.Ctx) error {
 	var request model.ResetPasswordRequest
-	err := c.BodyParser(&request)
-	exception.PanicLogging(err)
-
-	err = controller.UserService.ResetPassword(c.Context(), request)
-	if err != nil {
-		return exception.ErrorHandler(c, err)
+	if err := parseBody(c, &request); err != nil {
+		return err
 	}
 
+	if err := controller.UserService.ResetPassword(c.Context(), request); err != nil {
+		return err
+	}
 	return c.Status(fiber.StatusOK).JSON(model.GeneralResponse{
 		Code:    200,
 		Message: "Password reset successfully",
-		Data:    nil,
 	})
 }

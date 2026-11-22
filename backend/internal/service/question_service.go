@@ -169,9 +169,13 @@ func (service *QuestionService) Delete(ctx context.Context, questionID string) e
 }
 
 func (service *QuestionService) FindByID(ctx context.Context, questionID string) (model.QuestionResponse, error) {
-	question, err := service.QuestionRepository.FindByID(ctx, uuid.MustParse(questionID))
+	id, err := parseID(questionID, "question_id")
 	if err != nil {
 		return model.QuestionResponse{}, err
+	}
+	question, err := service.QuestionRepository.FindByID(ctx, id)
+	if err != nil {
+		return model.QuestionResponse{}, exception.NotFoundError{Message: "question Not Found"}
 	}
 
 	return model.QuestionResponse{
@@ -190,7 +194,11 @@ func (service *QuestionService) FindByID(ctx context.Context, questionID string)
 }
 
 func (service *QuestionService) FindByTryoutID(ctx context.Context, tryoutID string) ([]model.QuestionResponse, error) {
-	questions, err := service.QuestionRepository.FindByTryoutID(ctx, uuid.MustParse(tryoutID))
+	id, err := parseID(tryoutID, "tryoutId")
+	if err != nil {
+		return nil, err
+	}
+	questions, err := service.QuestionRepository.FindByTryoutID(ctx, id)
 	if err != nil {
 		return nil, err
 	}

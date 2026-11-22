@@ -7,7 +7,6 @@ import (
 	"github.com/artamananda/tryout-sample/internal/model"
 	"github.com/artamananda/tryout-sample/internal/service"
 	"github.com/gofiber/fiber/v2"
-	"github.com/golang-jwt/jwt/v4"
 )
 
 type TryoutController struct {
@@ -150,11 +149,12 @@ func (controller TryoutController) FindAll(c *fiber.Ctx) error {
 	params.Search = c.Query("search")
 	params.IsPublished, _ = helper.StrToBoolPtr(c.Query("is_published"))
 
-	user := c.Locals("user").(*jwt.Token)
-	claims := user.Claims.(jwt.MapClaims)
-	role := claims["roles"].(string)
+	authUser, err := requireAuthUser(c)
+	if err != nil {
+		return err
+	}
 
-	if role == "admin" || controller.Config.Get("IS_TRYOUT_BYPASS") == "true" {
+	if authUser.IsAdmin() || controller.Config.Get("IS_TRYOUT_BYPASS") == "true" {
 		result := controller.TryoutService.FindAllAsAdmin(c.Context(), params)
 		payload := map[string]interface{}{
 			"count":   len(result),

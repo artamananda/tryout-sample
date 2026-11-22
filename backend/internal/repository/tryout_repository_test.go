@@ -22,13 +22,12 @@ func TestTryoutRepository_Create(t *testing.T) {
 	t.Run("creates tryout successfully", func(t *testing.T) {
 		tryout := entity.Tryout{
 			Title:       "Test Tryout",
-			
 			IsPublished: false,
 		}
 
 		mock.ExpectBegin()
-		mock.ExpectQuery(regexp.QuoteMeta(`INSERT INTO "tryouts"`)).
-			WillReturnRows(sqlmock.NewRows([]string{"tryout_id"}).AddRow(uuid.New()))
+		mock.ExpectExec(regexp.QuoteMeta(`INSERT INTO "tryouts"`)).
+			WillReturnResult(sqlmock.NewResult(1, 1))
 		mock.ExpectCommit()
 
 		result := repo.Create(ctx, tryout)
@@ -49,7 +48,7 @@ func TestTryoutRepository_FindById(t *testing.T) {
 			AddRow(tryoutId, "Test Tryout", "Description")
 
 		mock.ExpectQuery(regexp.QuoteMeta(`SELECT * FROM "tryouts" WHERE tryout_id = $1`)).
-			WithArgs(tryoutId).
+			WithArgs(tryoutId, 1).
 			WillReturnRows(rows)
 
 		tryout, err := repo.FindById(ctx, tryoutId)
@@ -59,7 +58,7 @@ func TestTryoutRepository_FindById(t *testing.T) {
 
 	t.Run("returns error when not found", func(t *testing.T) {
 		mock.ExpectQuery(regexp.QuoteMeta(`SELECT * FROM "tryouts" WHERE tryout_id = $1`)).
-			WithArgs(tryoutId).
+			WithArgs(tryoutId, 1).
 			WillReturnRows(sqlmock.NewRows([]string{}))
 
 		tryout, err := repo.FindById(ctx, tryoutId)

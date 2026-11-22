@@ -62,6 +62,39 @@ const TableUser = (props: { role?: string }) => {
       render: (_, record) => <Text>{record.email}</Text>,
     },
     {
+      title: "WhatsApp",
+      dataIndex: "phone_number",
+      key: "phone_number",
+      render: (_, { phone_number }) =>
+        phone_number ? (
+          <Link href={`https://wa.me/${phone_number}`} target="_blank" rel="noreferrer">
+            {phone_number}
+          </Link>
+        ) : (
+          <Text type="secondary">-</Text>
+        ),
+    },
+    {
+      title: "Pendidikan",
+      dataIndex: "last_education",
+      key: "last_education",
+      render: (_, { last_education, major }) =>
+        last_education ? (
+          <Text>
+            {last_education}
+            {major ? ` - ${major}` : ""}
+          </Text>
+        ) : (
+          <Text type="secondary">-</Text>
+        ),
+    },
+    {
+      title: "Target Instansi",
+      dataIndex: "target_agency",
+      key: "target_agency",
+      render: (_, { target_agency }) => <Text>{target_agency || "-"}</Text>,
+    },
+    {
       title: "Created At",
       dataIndex: "createdAt",
       key: "createdAt",
