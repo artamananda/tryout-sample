@@ -51,7 +51,7 @@ sertifikat mulai dari Eksekutif. Perdana tidak menyertakan pembahasan tertulis (
 - Program yang dijual lewat paket **tidak bisa didaftari gratis** lewat form pendaftaran program lama. **[Implementasi]**
 - Kuota paket menghitung pesanan lunas **ditambah** pesanan menunggu pembayaran yang belum kedaluwarsa, supaya kursi
   tidak terjual berlebih. Kuota dikunci saat checkout. **[Implementasi]**
-- Pesanan yang belum dibayar kedaluwarsa setelah `PAYMENT_EXPIRY_MINUTES` (default 1.440 menit = 24 jam).
+- Pesanan yang belum dibayar kedaluwarsa setelah 24 jam (1.440 menit, diatur di kode).
   Klik "beli" berulang untuk paket yang sama memakai kembali pesanan yang masih terbuka. **[Implementasi]**
 - Nomor pesanan berawalan `TLS-` untuk membedakannya dari pesanan bisnis lain yang berbagi akun Midtrans.
 
@@ -66,16 +66,19 @@ sertifikat mulai dari Eksekutif. Perdana tidak menyertakan pembahasan tertulis (
 
 ## 4. Pembayaran
 
-- Pembayaran dibuat lewat API bridge Midtrans milik sistem lain. TELISIK tidak menerima webhook Midtrans langsung.
-- Status pesanan berubah hanya lewat callback bridge yang **ditandatangani HMAC-SHA256**, dengan timestamp maksimal ±5 menit
-  dari waktu server.
-- Callback `settlement` (atau `capture` dengan fraud `accept`) menandai pesanan **lunas** dan memberikan paket. Nominal
-  pada callback **harus sama** dengan nominal pesanan; bila berbeda, callback ditolak.
-- Callback bersifat **idempoten**: pesanan yang sudah lunas tidak bisa kembali ke status lain, dan paket hanya diberikan
-  sekali.
+- Pembayaran dibuat lewat payment bridge di backend **Novelle**, pemilik akun dan webhook Midtrans. TELISIK tidak
+  menerima webhook Midtrans langsung dan hanya butuh satu env: `PAYMENT_BRIDGE_URL`.
+- Saat pembayaran berubah, Novelle hanya mengirim **ping berisi nomor pesanan** ke callback TELISIK. TELISIK lalu
+  **menanyakan sendiri** status pesanan ke Novelle, yang mengambilnya langsung dari Midtrans. Ping palsu tidak bisa
+  melunaskan pesanan, jadi tidak perlu secret bersama.
+- Status `settlement` (atau `capture` dengan fraud `accept`) menandai pesanan **lunas** dan memberikan paket. Nominal
+  dari Midtrans **harus sama** dengan nominal pesanan; bila berbeda, pesanan tidak dilunaskan.
+- Pembaruan bersifat **idempoten**: pesanan yang sudah lunas tidak bisa kembali ke status lain, dan paket hanya diberikan
+  sekali. Halaman pesanan juga menanyakan status ke Novelle bila pesanan masih menunggu, sehingga ping yang hilang tidak
+  membuat pesanan tertahan.
 - `expire`, `cancel`, dan `deny/failure` mengubah status menjadi `EXPIRED`, `CANCELLED`, dan `FAILED`. Status lain
   (misalnya `refund`) **diabaikan**; refund ditangani manual. **[Implementasi]**
-- Admin bisa **menandai lunas manual** di CMS (Pesanan Paket → Tandai Lunas) bila callback tidak sampai. Pastikan
+- Admin bisa **menandai lunas manual** di CMS (Pesanan Paket → Tandai Lunas) bila status tidak tersinkron. Pastikan
   pembayaran sudah masuk di dashboard Midtrans sebelum menandai.
 - Kebijakan refund dan syarat garansi untuk halaman S&K **belum ditetapkan** tim bisnis.
 

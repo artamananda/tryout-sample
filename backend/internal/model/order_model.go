@@ -57,18 +57,6 @@ type FindAllOrdersRequest struct {
 	Offset    int    `query:"offset"`
 }
 
-// PaymentCallbackRequest is what the Midtrans bridge forwards. Field names
-// follow the Midtrans notification so the bridge can pass it through as-is.
-type PaymentCallbackRequest struct {
-	OrderID           string         `json:"order_id"`
-	TransactionStatus string         `json:"transaction_status"`
-	FraudStatus       string         `json:"fraud_status"`
-	GrossAmount       FlexibleString `json:"gross_amount"`
-	TransactionID     string         `json:"transaction_id"`
-	PaymentType       string         `json:"payment_type"`
-	SettlementTime    string         `json:"settlement_time"`
-}
-
 type MarkOrderPaidRequest struct {
 	PaymentMethod string `json:"payment_method" validate:"max=50"`
 	Reference     string `json:"reference" validate:"max=100"`

@@ -1,6 +1,9 @@
 package controller
 
 import (
+	"net/url"
+	"strings"
+
 	"github.com/artamananda/tryout-sample/internal/config"
 	"github.com/artamananda/tryout-sample/internal/exception"
 	"github.com/artamananda/tryout-sample/internal/middleware"
@@ -28,8 +31,8 @@ func (controller OrderController) Route(app *fiber.App) {
 	app.Get("/v1/api/order/:number", loggedIn, controller.FindByNumber)
 	app.Patch("/v1/api/order/:id/mark-paid", adminOnly, controller.MarkPaid)
 
-	// Called by the Midtrans bridge; authenticated by its HMAC signature.
-	app.Post("/v1/api/payment/callback", controller.PaymentCallback)
+	// Pinged by the payment bridge (Novelle); the status is fetched back from it.
+	app.Post("/v1/api/payment/callback", middleware.RateLimit(120, 60), controller.PaymentCallback)
 }
 
 // Checkout creates an order for a package: free packages are granted at once,
@@ -51,7 +54,7 @@ func (controller OrderController) Checkout(c *fiber.Ctx) error {
 	if err := parseBody(c, &request); err != nil {
 		return err
 	}
-	result, err := controller.OrderService.Checkout(c.Context(), authUser.UserID, request)
+	result, err := controller.OrderService.Checkout(c.Context(), authUser.UserID, request, controller.checkoutLinks(c))
 	if err != nil {
 		return err
 	}
@@ -144,23 +147,37 @@ func (controller OrderController) MarkPaid(c *fiber.Ctx) error {
 	return success(c, fiber.StatusOK, result)
 }
 
-// PaymentCallback receives payment status updates from the Midtrans bridge.
-// @Summary Payment status callback (Midtrans bridge)
-// @Description Body follows the Midtrans notification (order_id, transaction_status, fraud_status, gross_amount, transaction_id, payment_type). Signed with headers X-Callback-Timestamp and X-Callback-Signature = hex(HMAC-SHA256(secret, timestamp + "." + body)).
+// PaymentCallback receives a ping from the payment bridge (Novelle) saying an
+// order changed. The status is then fetched from the bridge, never taken from
+// the request, so the endpoint needs no signature.
+// @Summary Payment ping from the bridge
+// @Description Body: {"order_id": "TLS-..."}. Triggers a status sync of that order.
 // @Tags Orders
 // @Accept json
 // @Produce json
 // @Success 200 {object} model.GeneralResponse
 // @Router /payment/callback [post]
 func (controller OrderController) PaymentCallback(c *fiber.Ctx) error {
-	err := controller.OrderService.HandleCallback(
-		c.Context(),
-		c.Get("X-Callback-Timestamp"),
-		c.Get("X-Callback-Signature"),
-		c.Body(),
-	)
-	if err != nil {
+	if err := controller.OrderService.HandleCallback(c.Context(), c.Body()); err != nil {
 		return err
 	}
 	return success(c, fiber.StatusOK, nil)
+}
+
+// checkoutLinks derives the bridge URLs from the request: the callback goes to
+// this API's own host, and the buyer returns to the web origin that started
+// the checkout (WEB_BASE_URL when the request has no usable Origin).
+func (controller OrderController) checkoutLinks(c *fiber.Ctx) service.CheckoutLinks {
+	links := service.CheckoutLinks{CallbackURL: strings.TrimRight(c.BaseURL(), "/") + "/v1/api/payment/callback"}
+
+	web := ""
+	if origin, err := url.Parse(c.Get(fiber.HeaderOrigin)); err == nil && (origin.Scheme == "https" || origin.Scheme == "http") && origin.Host != "" {
+		web = origin.Scheme + "://" + origin.Host
+	} else if base := strings.TrimRight(controller.Config.Get("WEB_BASE_URL"), "/"); base != "" {
+		web = base
+	}
+	if web != "" {
+		links.FinishURL = web + "/pesanan/{order_number}"
+	}
+	return links
 }

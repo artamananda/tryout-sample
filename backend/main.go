@@ -3,7 +3,6 @@ package main
 import (
 	"context"
 	"log"
-	"strconv"
 	"time"
 
 	"github.com/artamananda/tryout-sample/internal/config"
@@ -105,7 +104,6 @@ func main() {
 	programService.PackageRepository = &packageRepository
 	accessService := service.NewAccessService(&transactionProgramRepository, &packageRepository)
 	packageService := service.NewPackageService(&packageRepository, &programRepository, &orderRepository, &accessService)
-	paymentExpiryMinutes, _ := strconv.Atoi(initConfig.Get("PAYMENT_EXPIRY_MINUTES"))
 	orderService := service.NewOrderService(
 		&orderRepository,
 		&packageRepository,
@@ -113,13 +111,8 @@ func main() {
 		&userRepository,
 		&transactionProgramRepository,
 		&accessService,
-		payment.NewBridgeClient(initConfig.Get("PAYMENT_BRIDGE_URL"), initConfig.Get("PAYMENT_BRIDGE_API_KEY")),
-		service.OrderConfig{
-			CallbackURL:       initConfig.Get("PAYMENT_CALLBACK_URL"),
-			FinishRedirectURL: initConfig.Get("PAYMENT_FINISH_URL"),
-			CallbackSecret:    initConfig.Get("PAYMENT_CALLBACK_SECRET"),
-			ExpiryMinutes:     paymentExpiryMinutes,
-		},
+		// Only the bridge base URL is configured; endpoints are fixed in the client.
+		payment.NewBridgeClient(initConfig.Get("PAYMENT_BRIDGE_URL")),
 	)
 	skdResultService := service.NewSKDResultService(&tryoutRepository, &questionRepository, &userAnswerRepository, &transactionRepository, &userRepository)
 	liveClassService := service.NewLiveClassService(&liveClassRepository, &programRepository, &accessService)

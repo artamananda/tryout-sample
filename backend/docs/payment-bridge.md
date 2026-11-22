@@ -1,121 +1,111 @@
-# Kontrak API Bridge Pembayaran (Midtrans)
+# Payment Bridge (Midtrans via Novelle)
 
-TELISIK tidak terhubung langsung ke Midtrans. Akun Midtrans dan webhook-nya milik sistem bisnis lain ("bridge"). Alurnya:
+TELISIK tidak terhubung langsung ke Midtrans. Akun Midtrans dan webhook-nya milik backend **Novelle**, yang menyediakan
+bridge khusus TELISIK. Kode bridge: `novelle/backend/internal/handler/bridge.go`.
 
-```
-Peserta ──► TELISIK API ──(1) buat pembayaran──► Bridge ──► Midtrans (Snap)
-                ▲                                   │
-                └──────(3) callback status──────────┘ ◄──(2) notifikasi Midtrans
-```
-
-1. TELISIK membuat order `PENDING` lalu meminta bridge membuat transaksi Snap.
-2. Midtrans mengirim notifikasi ke webhook bridge (tetap seperti sekarang).
-3. Untuk `order_id` berawalan `TLS-`, bridge meneruskan status ke callback TELISIK.
-
-## 1. TELISIK → Bridge: buat pembayaran
-
-`POST {PAYMENT_BRIDGE_URL}`
-
-Header:
+Konfigurasi di TELISIK hanya satu env:
 
 ```
-Content-Type: application/json
-Authorization: Bearer {PAYMENT_BRIDGE_API_KEY}
+PAYMENT_BRIDGE_URL=https://<domain-api-novelle>
 ```
 
-Body:
+Path endpoint, URL callback dan masa berlaku pembayaran (24 jam) sudah ditulis di kode
+(`internal/payment/bridge.go`, `internal/controller/order_controller.go`). Jika `PAYMENT_BRIDGE_URL` kosong, checkout
+berbayar ditolak dengan pesan bahwa pembayaran belum dikonfigurasi.
+
+## Alur
+
+```
+Peserta ─► TELISIK ──(1) POST buat pembayaran──► Novelle ──► Midtrans Snap
+                                                   ▲
+                                 (2) notifikasi ───┘ (signature SHA512 dicek Novelle)
+           TELISIK ◄──(3) ping {"order_id"}──────── Novelle
+           TELISIK ──(4) GET status──────────────► Novelle ──► Midtrans Core API
+```
+
+1. TELISIK membuat order `PENDING`, lalu meminta Novelle membuat transaksi Snap.
+2. Midtrans mengirim notifikasi ke webhook Novelle yang sudah ada (`/api/webhooks/midtrans`). Order berawalan `TLS-`
+   dicatat di tabel `bridge_payments` dan **tidak** masuk ke pembayaran/laporan Novelle.
+3. Novelle mengirim ping berisi `order_id` saja ke callback TELISIK (maks. 4 percobaan dengan jeda 2s, 6s, 18s).
+4. TELISIK menanyakan status ke Novelle. Novelle mengambilnya langsung dari Midtrans, lalu TELISIK mengubah order.
+
+Kenapa tanpa secret: TELISIK tidak pernah memercayai isi ping. Status selalu diambil sendiri dari Novelle lewat HTTPS,
+dan nominal dari Midtrans harus sama dengan nominal order. Ping palsu hanya memicu pengecekan status yang tidak
+mengubah apa pun.
+
+## 1. Buat pembayaran
+
+`POST {PAYMENT_BRIDGE_URL}/api/bridge/telisik/payments`
 
 ```json
 {
   "source": "telisik",
-  "order_id": "TLS-261122-1A2B3C4D",
+  "order_id": "TLS-261123-AB12CD34",
   "gross_amount": 279000,
-  "customer": { "name": "Nama Peserta", "email": "peserta@example.com", "phone": "6281234567890" },
-  "items": [{ "id": "<package_id>", "name": "Eksekutif - TELISIK SKD CPNS 2027", "price": 279000, "quantity": 1 }],
-  "callback_url": "https://<api-telisik>/v1/api/payment/callback",
-  "finish_redirect_url": "https://<web-telisik>/pesanan/TLS-261122-1A2B3C4D",
+  "customer": { "name": "Budi", "email": "budi@example.com", "phone": "6281234567890" },
+  "items": [{ "id": "<package-id>", "name": "Eksekutif - Gelombang 1", "price": 279000, "quantity": 1 }],
+  "callback_url": "https://api.terasbelajarasik.web.id/v1/api/payment/callback",
+  "finish_redirect_url": "https://terasbelajarasik.web.id/pesanan/TLS-261123-AB12CD34",
   "expiry_minutes": 1440
 }
 ```
 
-- `order_id` dipakai apa adanya sebagai `transaction_details.order_id` Midtrans. Prefiks `TLS-` membedakannya dari order bisnis lain.
-- `gross_amount` dalam rupiah, bilangan bulat.
-- `finish_redirect_url` dipakai sebagai `callbacks.finish` Snap, supaya peserta kembali ke halaman status pesanan.
-- `expiry_minutes` dipakai untuk `expiry` Snap.
+- `order_id` harus cocok `^TLS-[A-Z0-9-]{6,40}$`; `gross_amount` 1 s.d. 10.000.000.
+- `callback_url` diambil dari alamat API TELISIK yang menerima request; `finish_redirect_url` dari `Origin` web
+  (fallback `WEB_BASE_URL`). Keduanya harus HTTPS dan host-nya ada di allowlist Novelle (`bridgeAllowedHosts`).
+  `localhost`/`127.0.0.1` hanya diizinkan bila Midtrans Novelle bukan production.
+- Jika total `items` tidak sama dengan `gross_amount` (misalnya karena diskon), Novelle mengirim satu item
+  "Paket TELISIK" seharga total.
 
-Respons sukses (HTTP 2xx) minimal berisi salah satu dari `token` dan `redirect_url`. Keduanya boleh di level atas, atau dibungkus di `data` atau `payload`:
+Respons `201` (atau `200` bila order yang sama diminta ulang; token yang sama dikembalikan):
 
 ```json
-{ "token": "<snap token>", "redirect_url": "https://app.midtrans.com/snap/v4/redirection/<token>" }
+{ "token": "snap-token", "redirect_url": "https://app.midtrans.com/snap/v4/redirection/snap-token" }
 ```
 
-Kalau gagal, balas status non-2xx. TELISIK menandai order `FAILED` dan peserta diminta mencoba lagi.
+Error berbentuk `{"error": "..."}`: `400` input tidak valid, `409` order sudah ada dengan nominal berbeda, `502` Midtrans
+menolak, `429` rate limit (30/menit).
 
-## 2. Bridge → TELISIK: callback status
+## 2. Cek status
 
-`POST {callback_url}`, yaitu `/v1/api/payment/callback`.
-
-Body cukup berisi field notifikasi Midtrans (boleh diteruskan apa adanya):
+`GET {PAYMENT_BRIDGE_URL}/api/bridge/telisik/payments/{order_id}`
 
 ```json
 {
-  "order_id": "TLS-261122-1A2B3C4D",
+  "order_id": "TLS-261123-AB12CD34",
   "transaction_status": "settlement",
   "fraud_status": "accept",
   "gross_amount": "279000.00",
-  "transaction_id": "<id transaksi midtrans>",
+  "transaction_id": "...",
   "payment_type": "qris",
-  "settlement_time": "2026-11-25 10:00:00"
+  "settlement_time": "2026-11-30 10:00:00"
 }
 ```
 
-Header tanda tangan (wajib):
+Bila peserta belum memilih metode bayar (Midtrans belum punya transaksi), `transaction_status` bernilai `pending`.
+Order yang tidak dibuat lewat bridge menghasilkan `404`.
 
-```
-X-Callback-Timestamp: <unix detik saat dikirim>
-X-Callback-Signature: hex(HMAC-SHA256(PAYMENT_CALLBACK_SECRET, "<timestamp>.<raw body>"))
-```
+## 3. Ping ke TELISIK
 
-- Tanda tangan dihitung dari **byte body yang persis dikirim**, jadi jangan serialisasi ulang setelah ditandatangani.
-- Timestamp harus dalam ±5 menit dari waktu server TELISIK. Callback lama ditolak.
-- Bridge sebaiknya sudah memverifikasi `signature_key` Midtrans sebelum meneruskan.
+`POST {callback_url}` dengan body `{"order_id": "TLS-..."}`. TELISIK (`/v1/api/payment/callback`, rate limit
+120/menit) selalu menjawab `200` untuk order yang tidak dikenal, lalu menjalankan pengecekan status.
 
-Contoh (Node.js):
+## Pemetaan status
 
-```js
-const ts = Math.floor(Date.now() / 1000).toString();
-const body = JSON.stringify(notification);
-const signature = crypto.createHmac("sha256", secret).update(`${ts}.${body}`).digest("hex");
-await fetch(callbackUrl, {
-  method: "POST",
-  headers: { "Content-Type": "application/json", "X-Callback-Timestamp": ts, "X-Callback-Signature": signature },
-  body,
-});
-```
+| Midtrans `transaction_status`        | Status order TELISIK |
+| ------------------------------------ | -------------------- |
+| `settlement`, `capture` + `accept`   | `PAID`               |
+| `pending`, `capture` + `challenge`   | `PENDING`            |
+| `expire`                             | `EXPIRED`            |
+| `cancel`                             | `CANCELLED`          |
+| `deny`, `failure`                    | `FAILED`             |
+| lainnya (`refund`, ...)              | tidak diubah         |
 
-Pemetaan status:
+Order `PAID` tidak berubah lagi dan paket hanya diberikan sekali. Halaman detail pesanan peserta juga menanyakan status
+ke Novelle selama order masih `PENDING`, jadi ping yang gagal terkirim tetap tertangani. Admin tetap bisa menandai lunas
+manual dari CMS.
 
-| `transaction_status` | Status order TELISIK |
-|---|---|
-| `settlement`, `capture` + `fraud_status` `accept` | `PAID` (paket langsung aktif) |
-| `pending`, `capture` + `challenge` | `PENDING` |
-| `expire` | `EXPIRED` |
-| `cancel` | `CANCELLED` |
-| `deny`, `failure` | `FAILED` |
-| lainnya (mis. `refund`) | diabaikan; refund ditangani manual |
+## Menambah domain
 
-Respons TELISIK:
-
-| HTTP | Arti | Bridge sebaiknya |
-|---|---|---|
-| 200 | Diterima (termasuk callback ulang untuk order yang sudah lunas, dan order non-`TLS-`) | selesai |
-| 401 | Tanda tangan salah atau timestamp kedaluwarsa | perbaiki konfigurasi, jangan diulang terus |
-| 400 | Nominal tidak sama dengan order, atau body rusak | periksa manual |
-| 404 | `order_id` tidak dikenal | periksa manual |
-| 5xx | Gangguan sementara | ulangi dengan jeda (retry) |
-
-Callback bersifat idempoten: order yang sudah `PAID` tidak berubah lagi, dan paket hanya diberikan sekali.
-
-## Cadangan
-
-Kalau callback tidak sampai, admin bisa menandai order lunas di CMS (**Pesanan Paket → Tandai Lunas**) setelah memastikan pembayaran masuk di dashboard Midtrans.
+Domain baru untuk API atau web TELISIK harus ditambahkan ke `bridgeAllowedHosts` di Novelle, lalu Novelle di-deploy
+ulang. Tanpa itu, checkout dari domain tersebut ditolak `400`.

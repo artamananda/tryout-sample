@@ -1,26 +1,37 @@
-// Package payment talks to the Midtrans bridge: an API of another business
-// system that owns the Midtrans account and webhook. This API asks the bridge
-// to create a payment, and the bridge calls back when the status changes.
+// Package payment talks to the payment bridge in the Novelle backend, which
+// owns the Midtrans account and webhook (see backend/docs/payment-bridge.md).
+//
+//   - CreatePayment asks the bridge to create a Midtrans Snap transaction.
+//   - GetStatus reads the authoritative status, which the bridge fetches from
+//     the Midtrans Core API.
+//
+// The bridge pings our callback with only an order id; we then call GetStatus.
+// Because the status always comes from the bridge we called ourselves, a forged
+// ping cannot mark an order as paid, so no shared secret is needed.
 package payment
 
 import (
 	"bytes"
 	"context"
-	"crypto/hmac"
-	"crypto/sha256"
-	"encoding/hex"
 	"encoding/json"
 	"errors"
 	"fmt"
 	"io"
 	"math"
 	"net/http"
+	"net/url"
 	"strconv"
 	"strings"
 	"time"
 )
 
-// ErrNotConfigured is returned when the bridge URL or key is missing.
+// Bridge endpoints, relative to PAYMENT_BRIDGE_URL.
+const (
+	createPath = "/api/bridge/telisik/payments"
+	statusPath = "/api/bridge/telisik/payments/"
+)
+
+// ErrNotConfigured is returned when PAYMENT_BRIDGE_URL is missing.
 var ErrNotConfigured = errors.New("payment bridge is not configured")
 
 type Customer struct {
@@ -36,7 +47,7 @@ type Item struct {
 	Quantity int    `json:"quantity"`
 }
 
-// CreatePaymentRequest is sent to the bridge to create a Midtrans transaction.
+// CreatePaymentRequest is sent to the bridge to create a Snap transaction.
 type CreatePaymentRequest struct {
 	Source            string   `json:"source"`
 	OrderID           string   `json:"order_id"`
@@ -44,105 +55,95 @@ type CreatePaymentRequest struct {
 	Customer          Customer `json:"customer"`
 	Items             []Item   `json:"items"`
 	CallbackURL       string   `json:"callback_url"`
-	FinishRedirectURL string   `json:"finish_redirect_url"`
+	FinishRedirectURL string   `json:"finish_redirect_url,omitempty"`
 	ExpiryMinutes     int      `json:"expiry_minutes"`
 }
 
-// Session is what the bridge returns: the Snap token and/or the redirect URL.
+// Session is what the bridge returns: the Snap token and the redirect URL.
 type Session struct {
-	Token       string
-	RedirectURL string
+	Token       string `json:"token"`
+	RedirectURL string `json:"redirect_url"`
 }
 
-// Gateway creates payments. It is an interface so tests can replace it.
+// Status is the Midtrans status of one order, as reported by the bridge.
+type Status struct {
+	OrderID           string `json:"order_id"`
+	TransactionStatus string `json:"transaction_status"`
+	FraudStatus       string `json:"fraud_status"`
+	GrossAmount       string `json:"gross_amount"`
+	TransactionID     string `json:"transaction_id"`
+	PaymentType       string `json:"payment_type"`
+	SettlementTime    string `json:"settlement_time"`
+}
+
+// Gateway is implemented by BridgeClient; tests replace it.
 type Gateway interface {
 	CreatePayment(ctx context.Context, request CreatePaymentRequest) (Session, error)
+	GetStatus(ctx context.Context, orderID string) (Status, error)
 }
 
 type BridgeClient struct {
-	URL        string
-	APIKey     string
+	BaseURL    string
 	HTTPClient *http.Client
 }
 
-func NewBridgeClient(url string, apiKey string) *BridgeClient {
+func NewBridgeClient(baseURL string) *BridgeClient {
 	return &BridgeClient{
-		URL:        strings.TrimSpace(url),
-		APIKey:     strings.TrimSpace(apiKey),
-		HTTPClient: &http.Client{Timeout: 20 * time.Second},
+		BaseURL:    strings.TrimRight(strings.TrimSpace(baseURL), "/"),
+		HTTPClient: &http.Client{Timeout: 30 * time.Second},
 	}
 }
 
-func (client *BridgeClient) CreatePayment(ctx context.Context, request CreatePaymentRequest) (Session, error) {
-	if client.URL == "" || client.APIKey == "" {
-		return Session{}, ErrNotConfigured
+func (client *BridgeClient) do(ctx context.Context, method string, path string, body interface{}, out interface{}) error {
+	if client.BaseURL == "" {
+		return ErrNotConfigured
 	}
-
-	body, err := json.Marshal(request)
-	if err != nil {
-		return Session{}, err
+	var reader io.Reader
+	if body != nil {
+		encoded, err := json.Marshal(body)
+		if err != nil {
+			return err
+		}
+		reader = bytes.NewReader(encoded)
 	}
-
-	httpRequest, err := http.NewRequestWithContext(ctx, http.MethodPost, client.URL, bytes.NewReader(body))
+	request, err := http.NewRequestWithContext(ctx, method, client.BaseURL+path, reader)
 	if err != nil {
-		return Session{}, err
+		return err
 	}
-	httpRequest.Header.Set("Content-Type", "application/json")
-	httpRequest.Header.Set("Authorization", "Bearer "+client.APIKey)
-
-	response, err := client.HTTPClient.Do(httpRequest)
+	request.Header.Set("Accept", "application/json")
+	if body != nil {
+		request.Header.Set("Content-Type", "application/json")
+	}
+	response, err := client.HTTPClient.Do(request)
 	if err != nil {
-		return Session{}, fmt.Errorf("payment bridge request failed: %w", err)
+		return fmt.Errorf("payment bridge request failed: %w", err)
 	}
 	defer response.Body.Close()
-
-	responseBody, _ := io.ReadAll(io.LimitReader(response.Body, 1<<20))
+	data, _ := io.ReadAll(io.LimitReader(response.Body, 1<<20))
 	if response.StatusCode < 200 || response.StatusCode >= 300 {
-		return Session{}, fmt.Errorf("payment bridge returned %d: %s", response.StatusCode, truncate(string(responseBody), 300))
+		return fmt.Errorf("payment bridge returned %d: %s", response.StatusCode, truncate(string(data), 300))
 	}
+	if err := json.Unmarshal(data, out); err != nil {
+		return fmt.Errorf("payment bridge response is not JSON: %s", truncate(string(data), 300))
+	}
+	return nil
+}
 
-	session := parseSession(responseBody)
+func (client *BridgeClient) CreatePayment(ctx context.Context, request CreatePaymentRequest) (Session, error) {
+	var session Session
+	if err := client.do(ctx, http.MethodPost, createPath, request, &session); err != nil {
+		return Session{}, err
+	}
 	if session.Token == "" && session.RedirectURL == "" {
-		return Session{}, fmt.Errorf("payment bridge response has no token or redirect_url: %s", truncate(string(responseBody), 300))
+		return Session{}, errors.New("payment bridge response has no token or redirect_url")
 	}
 	return session, nil
 }
 
-// parseSession accepts {"token","redirect_url"} at the top level or wrapped in
-// "data" or "payload", since the bridge belongs to another system.
-func parseSession(body []byte) Session {
-	var raw map[string]json.RawMessage
-	if json.Unmarshal(body, &raw) != nil {
-		return Session{}
-	}
-	read := func(fields map[string]json.RawMessage) Session {
-		var session Session
-		for _, key := range []string{"token", "snap_token"} {
-			if value, ok := fields[key]; ok && session.Token == "" {
-				_ = json.Unmarshal(value, &session.Token)
-			}
-		}
-		for _, key := range []string{"redirect_url", "payment_url"} {
-			if value, ok := fields[key]; ok && session.RedirectURL == "" {
-				_ = json.Unmarshal(value, &session.RedirectURL)
-			}
-		}
-		return session
-	}
-	if session := read(raw); session.Token != "" || session.RedirectURL != "" {
-		return session
-	}
-	for _, wrapper := range []string{"data", "payload"} {
-		if inner, ok := raw[wrapper]; ok {
-			var fields map[string]json.RawMessage
-			if json.Unmarshal(inner, &fields) == nil {
-				if session := read(fields); session.Token != "" || session.RedirectURL != "" {
-					return session
-				}
-			}
-		}
-	}
-	return Session{}
+func (client *BridgeClient) GetStatus(ctx context.Context, orderID string) (Status, error) {
+	var status Status
+	err := client.do(ctx, http.MethodGet, statusPath+url.PathEscape(orderID), nil, &status)
+	return status, err
 }
 
 func truncate(text string, max int) string {
@@ -152,52 +153,7 @@ func truncate(text string, max int) string {
 	return text[:max] + "..."
 }
 
-// Callback signing: the bridge sends
-//
-//	X-Callback-Timestamp: <unix seconds>
-//	X-Callback-Signature: hex(HMAC-SHA256(secret, "<timestamp>.<raw body>"))
-//
-// and the timestamp must be within CallbackTolerance of now.
-const CallbackTolerance = 5 * time.Minute
-
-var (
-	ErrMissingSignature = errors.New("missing callback signature")
-	ErrStaleCallback    = errors.New("callback timestamp is too old or in the future")
-	ErrBadSignature     = errors.New("invalid callback signature")
-)
-
-// Sign returns the signature the bridge must send for body at timestamp.
-func Sign(secret string, timestamp string, body []byte) string {
-	mac := hmac.New(sha256.New, []byte(secret))
-	mac.Write([]byte(timestamp))
-	mac.Write([]byte("."))
-	mac.Write(body)
-	return hex.EncodeToString(mac.Sum(nil))
-}
-
-// VerifyCallback checks the timestamp window and the HMAC of a callback.
-func VerifyCallback(secret string, timestamp string, signature string, body []byte, now time.Time) error {
-	if secret == "" {
-		return ErrNotConfigured
-	}
-	if timestamp == "" || signature == "" {
-		return ErrMissingSignature
-	}
-	seconds, err := strconv.ParseInt(timestamp, 10, 64)
-	if err != nil {
-		return ErrStaleCallback
-	}
-	if math.Abs(now.Sub(time.Unix(seconds, 0)).Seconds()) > CallbackTolerance.Seconds() {
-		return ErrStaleCallback
-	}
-	expected := Sign(secret, timestamp, body)
-	if !hmac.Equal([]byte(expected), []byte(strings.ToLower(strings.TrimSpace(signature)))) {
-		return ErrBadSignature
-	}
-	return nil
-}
-
-// Midtrans transaction statuses mapped to order statuses.
+// Order statuses that a Midtrans status maps to.
 const (
 	StatusPaid      = "PAID"
 	StatusPending   = "PENDING"

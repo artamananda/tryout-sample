@@ -5,26 +5,10 @@ import (
 	"encoding/json"
 	"net/http"
 	"net/http/httptest"
-	"strconv"
 	"testing"
-	"time"
 
 	"github.com/stretchr/testify/assert"
 )
-
-func TestVerifyCallback(t *testing.T) {
-	now := time.Unix(1_800_000_000, 0)
-	body := []byte(`{"order_id":"TLS-1","transaction_status":"settlement"}`)
-	ts := strconv.FormatInt(now.Unix(), 10)
-	signature := Sign("secret", ts, body)
-
-	assert.NoError(t, VerifyCallback("secret", ts, signature, body, now))
-	assert.ErrorIs(t, VerifyCallback("secret", ts, signature, []byte(`{"order_id":"TLS-2"}`), now), ErrBadSignature, "tampered body")
-	assert.ErrorIs(t, VerifyCallback("other", ts, signature, body, now), ErrBadSignature, "wrong secret")
-	assert.ErrorIs(t, VerifyCallback("secret", ts, signature, body, now.Add(10*time.Minute)), ErrStaleCallback, "replayed later")
-	assert.ErrorIs(t, VerifyCallback("secret", "", signature, body, now), ErrMissingSignature)
-	assert.ErrorIs(t, VerifyCallback("", ts, signature, body, now), ErrNotConfigured, "no secret configured")
-}
 
 func TestMapMidtransStatus(t *testing.T) {
 	cases := map[[2]string]string{
@@ -53,14 +37,16 @@ func TestParseAmount(t *testing.T) {
 func TestBridgeClientCreatePayment(t *testing.T) {
 	var received CreatePaymentRequest
 	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		assert.Equal(t, "Bearer key-123", r.Header.Get("Authorization"))
+		assert.Equal(t, http.MethodPost, r.Method)
+		assert.Equal(t, "/api/bridge/telisik/payments", r.URL.Path)
 		assert.NoError(t, json.NewDecoder(r.Body).Decode(&received))
-		// The bridge may wrap its answer; the client must still find it.
-		_, _ = w.Write([]byte(`{"code":200,"data":{"token":"snap-abc","redirect_url":"https://app.midtrans.com/snap/v4/redirection/snap-abc"}}`))
+		w.WriteHeader(http.StatusCreated)
+		_, _ = w.Write([]byte(`{"token":"snap-abc","redirect_url":"https://app.midtrans.com/snap/v4/redirection/snap-abc"}`))
 	}))
 	defer server.Close()
 
-	client := NewBridgeClient(server.URL, "key-123")
+	// A trailing slash in PAYMENT_BRIDGE_URL is tolerated.
+	client := NewBridgeClient(server.URL + "/")
 	session, err := client.CreatePayment(context.Background(), CreatePaymentRequest{OrderID: "TLS-1", GrossAmount: 50000})
 	assert.NoError(t, err)
 	assert.Equal(t, "snap-abc", session.Token)
@@ -69,14 +55,38 @@ func TestBridgeClientCreatePayment(t *testing.T) {
 	assert.Equal(t, 50000, received.GrossAmount)
 }
 
+func TestBridgeClientGetStatus(t *testing.T) {
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		assert.Equal(t, http.MethodGet, r.Method)
+		assert.Equal(t, "/api/bridge/telisik/payments/TLS-261123-ABC123", r.URL.Path)
+		_, _ = w.Write([]byte(`{"order_id":"TLS-261123-ABC123","transaction_status":"settlement","fraud_status":"accept","gross_amount":"50000.00","payment_type":"qris"}`))
+	}))
+	defer server.Close()
+
+	status, err := NewBridgeClient(server.URL).GetStatus(context.Background(), "TLS-261123-ABC123")
+	assert.NoError(t, err)
+	assert.Equal(t, "settlement", status.TransactionStatus)
+	assert.Equal(t, "50000.00", status.GrossAmount)
+	assert.Equal(t, "qris", status.PaymentType)
+}
+
 func TestBridgeClientErrors(t *testing.T) {
-	_, err := NewBridgeClient("", "").CreatePayment(context.Background(), CreatePaymentRequest{})
+	_, err := NewBridgeClient("").CreatePayment(context.Background(), CreatePaymentRequest{})
+	assert.ErrorIs(t, err, ErrNotConfigured)
+	_, err = NewBridgeClient("  ").GetStatus(context.Background(), "TLS-1")
 	assert.ErrorIs(t, err, ErrNotConfigured)
 
 	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		w.WriteHeader(http.StatusBadGateway)
+		if r.Method == http.MethodGet {
+			w.WriteHeader(http.StatusNotFound)
+			_, _ = w.Write([]byte(`{"error":"payment not found"}`))
+			return
+		}
+		_, _ = w.Write([]byte(`{}`)) // 200 without a token
 	}))
 	defer server.Close()
-	_, err = NewBridgeClient(server.URL, "k").CreatePayment(context.Background(), CreatePaymentRequest{})
+	_, err = NewBridgeClient(server.URL).CreatePayment(context.Background(), CreatePaymentRequest{})
 	assert.Error(t, err)
+	_, err = NewBridgeClient(server.URL).GetStatus(context.Background(), "TLS-1")
+	assert.ErrorContains(t, err, "404")
 }

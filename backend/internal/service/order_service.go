@@ -28,12 +28,17 @@ const (
 	ReferralBonusTryouts = 1
 )
 
-// OrderConfig holds the payment settings read from the environment.
-type OrderConfig struct {
-	CallbackURL       string
-	FinishRedirectURL string
-	CallbackSecret    string
-	ExpiryMinutes     int
+// PaymentExpiryMinutes is how long a Midtrans payment link stays valid.
+const PaymentExpiryMinutes = 24 * 60
+
+// CheckoutLinks are the URLs the payment bridge needs for one checkout. They
+// come from the request (our API host, the buyer's web origin) so no extra
+// configuration is needed.
+type CheckoutLinks struct {
+	// CallbackURL is where the bridge pings us when the status changes.
+	CallbackURL string
+	// FinishURL is where Midtrans sends the buyer back; "{order_number}" is replaced.
+	FinishURL string
 }
 
 type OrderService struct {
@@ -44,7 +49,6 @@ type OrderService struct {
 	TransactionProgramRepository *repository.TransactionProgramRepository
 	AccessService                *AccessService
 	Gateway                      payment.Gateway
-	Config                       OrderConfig
 	Now                          func() time.Time
 }
 
@@ -56,11 +60,7 @@ func NewOrderService(
 	transactionProgramRepository *repository.TransactionProgramRepository,
 	accessService *AccessService,
 	gateway payment.Gateway,
-	config OrderConfig,
 ) OrderService {
-	if config.ExpiryMinutes <= 0 {
-		config.ExpiryMinutes = 24 * 60
-	}
 	return OrderService{
 		OrderRepository:              orderRepository,
 		PackageRepository:            packageRepository,
@@ -69,7 +69,6 @@ func NewOrderService(
 		TransactionProgramRepository: transactionProgramRepository,
 		AccessService:                accessService,
 		Gateway:                      gateway,
-		Config:                       config,
 		Now:                          time.Now,
 	}
 }
@@ -125,7 +124,7 @@ func toOrderResponse(order entity.Order, includeUser bool, now time.Time) model.
 
 // Checkout creates an order for the package. Free packages are granted at
 // once; paid ones get a Midtrans payment through the bridge.
-func (service *OrderService) Checkout(ctx context.Context, userID string, request model.CreateOrderRequest) (model.OrderResponse, error) {
+func (service *OrderService) Checkout(ctx context.Context, userID string, request model.CreateOrderRequest, links CheckoutLinks) (model.OrderResponse, error) {
 	if err := common.Validate(request); err != nil {
 		return model.OrderResponse{}, err
 	}
@@ -230,7 +229,7 @@ func (service *OrderService) Checkout(ctx context.Context, userID string, reques
 		return toOrderResponse(order, false, now), nil
 	}
 
-	expiresAt := now.Add(time.Duration(service.Config.ExpiryMinutes) * time.Minute)
+	expiresAt := now.Add(PaymentExpiryMinutes * time.Minute)
 	var order entity.Order
 	err = service.OrderRepository.DB.WithContext(ctx).Transaction(func(tx *gorm.DB) error {
 		if err := service.ensureQuota(ctx, tx, pkg, now); err != nil {
@@ -276,9 +275,9 @@ func (service *OrderService) Checkout(ctx context.Context, userID string, reques
 			Price:    amount,
 			Quantity: 1,
 		}},
-		CallbackURL:       service.Config.CallbackURL,
-		FinishRedirectURL: strings.ReplaceAll(service.Config.FinishRedirectURL, "{order_number}", order.OrderNumber),
-		ExpiryMinutes:     service.Config.ExpiryMinutes,
+		CallbackURL:       links.CallbackURL,
+		FinishRedirectURL: strings.ReplaceAll(links.FinishURL, "{order_number}", order.OrderNumber),
+		ExpiryMinutes:     PaymentExpiryMinutes,
 	})
 	if err != nil {
 		log.Printf("payment bridge failed for order %s: %v", order.OrderNumber, err)
@@ -408,75 +407,93 @@ func (service *OrderService) completePaid(ctx context.Context, tx *gorm.DB, orde
 	return tx.WithContext(ctx).Clauses(clause.OnConflict{DoNothing: true}).Create(&reward).Error
 }
 
-// HandleCallback applies a status update forwarded by the Midtrans bridge.
-// It is idempotent: a paid order stays paid and is granted only once.
-func (service *OrderService) HandleCallback(ctx context.Context, timestamp string, signature string, body []byte) error {
-	if err := payment.VerifyCallback(service.Config.CallbackSecret, timestamp, signature, body, service.Now()); err != nil {
-		if errors.Is(err, payment.ErrNotConfigured) {
-			log.Printf("payment callback rejected: PAYMENT_CALLBACK_SECRET is not set")
-		}
-		return exception.UnauthorizedError{Message: "invalid callback signature"}
+// HandleCallback handles a ping from the payment bridge. The ping only says
+// which order changed; the status itself is always fetched from the bridge.
+func (service *OrderService) HandleCallback(ctx context.Context, body []byte) error {
+	var callback struct {
+		OrderID string `json:"order_id"`
 	}
-
-	var callback model.PaymentCallbackRequest
-	if err := json.Unmarshal(body, &callback); err != nil || callback.OrderID == "" {
+	if err := json.Unmarshal(body, &callback); err != nil || strings.TrimSpace(callback.OrderID) == "" {
 		return exception.BadRequestError{Message: "payload callback tidak valid"}
 	}
 	if !strings.HasPrefix(callback.OrderID, "TLS-") {
-		// Orders of the other business are not ours; acknowledge and ignore.
+		// Not one of ours; acknowledge and ignore.
 		return nil
 	}
-
-	newStatus := payment.MapMidtransStatus(callback.TransactionStatus, callback.FraudStatus)
-	if newStatus == "" {
-		log.Printf("payment callback for %s ignored: status %q", callback.OrderID, callback.TransactionStatus)
+	_, err := service.SyncStatus(ctx, callback.OrderID)
+	if errors.Is(err, repository.ErrOrderNotFound) {
 		return nil
 	}
+	return err
+}
 
+// SyncStatus fetches the Midtrans status of an order from the bridge and
+// applies it. It is idempotent: a paid order stays paid and the package is
+// granted only once. It returns the order status after the sync.
+func (service *OrderService) SyncStatus(ctx context.Context, orderNumber string) (string, error) {
+	order, err := service.OrderRepository.FindByNumber(ctx, orderNumber)
+	if err != nil {
+		return "", err
+	}
+	if order.Status == entity.OrderPaid || order.PaymentProvider != entity.PaymentProviderBridge {
+		return order.Status, nil
+	}
+
+	status, err := service.Gateway.GetStatus(ctx, orderNumber)
+	if err != nil {
+		return order.Status, err
+	}
+	newStatus := payment.MapMidtransStatus(status.TransactionStatus, status.FraudStatus)
+	if newStatus == "" || (newStatus == order.Status && newStatus != payment.StatusPaid) {
+		return order.Status, nil
+	}
+
+	raw, _ := json.Marshal(status)
 	now := service.Now()
-	return service.OrderRepository.DB.WithContext(ctx).Transaction(func(tx *gorm.DB) error {
-		order, err := service.OrderRepository.FindByNumberForUpdate(ctx, tx, callback.OrderID)
-		if errors.Is(err, repository.ErrOrderNotFound) {
-			return exception.NotFoundError{Message: "order Not Found"}
-		}
+	result := order.Status
+	err = service.OrderRepository.DB.WithContext(ctx).Transaction(func(tx *gorm.DB) error {
+		locked, err := service.OrderRepository.FindByNumberForUpdate(ctx, tx, orderNumber)
 		if err != nil {
 			return err
 		}
-
-		changes := map[string]interface{}{
-			"last_callback": string(body),
-			"updated_at":    now,
-		}
-		if callback.PaymentType != "" {
-			changes["payment_method"] = callback.PaymentType
-		}
-		if callback.TransactionID != "" {
-			changes["provider_reference"] = callback.TransactionID
+		if locked.Status == entity.OrderPaid {
+			result = entity.OrderPaid
+			return nil
 		}
 
-		if order.Status == entity.OrderPaid {
-			// Already granted; never move a paid order back.
-			return tx.WithContext(ctx).Model(&entity.Order{}).Where("order_id = ?", order.OrderID).
-				Updates(map[string]interface{}{"last_callback": string(body), "updated_at": now}).Error
+		changes := map[string]interface{}{"last_callback": string(raw), "updated_at": now}
+		if status.PaymentType != "" {
+			changes["payment_method"] = status.PaymentType
+		}
+		if status.TransactionID != "" {
+			changes["provider_reference"] = status.TransactionID
 		}
 
 		if newStatus == payment.StatusPaid {
-			amount, err := payment.ParseAmount(string(callback.GrossAmount))
-			if err != nil || amount != order.Amount {
-				log.Printf("payment callback for %s has amount %q, expected %d", order.OrderNumber, callback.GrossAmount, order.Amount)
+			// Money received: grant even if the order already timed out here.
+			amount, err := payment.ParseAmount(status.GrossAmount)
+			if err != nil || amount != locked.Amount {
+				log.Printf("payment status for %s has amount %q, expected %d", locked.OrderNumber, status.GrossAmount, locked.Amount)
 				return exception.BadRequestError{Message: "nominal pembayaran tidak sesuai"}
 			}
 			changes["status"] = entity.OrderPaid
 			changes["paid_at"] = now
-			if err := tx.WithContext(ctx).Model(&entity.Order{}).Where("order_id = ?", order.OrderID).Updates(changes).Error; err != nil {
+			if err := tx.WithContext(ctx).Model(&entity.Order{}).Where("order_id = ?", locked.OrderID).Updates(changes).Error; err != nil {
 				return err
 			}
-			return service.completePaid(ctx, tx, order)
+			result = entity.OrderPaid
+			return service.completePaid(ctx, tx, locked)
 		}
 
+		// Other statuses only replace a pending order.
+		if locked.Status != entity.OrderPending {
+			return nil
+		}
 		changes["status"] = newStatus
-		return tx.WithContext(ctx).Model(&entity.Order{}).Where("order_id = ?", order.OrderID).Updates(changes).Error
+		result = newStatus
+		return tx.WithContext(ctx).Model(&entity.Order{}).Where("order_id = ?", locked.OrderID).Updates(changes).Error
 	})
+	return result, err
 }
 
 // MarkPaid lets an admin confirm a payment by hand (for example when a
@@ -531,10 +548,19 @@ func (service *OrderService) MarkPaid(ctx context.Context, orderID string, reque
 }
 
 // FindForUser returns one order of the user by its number.
+// A pending order is synced with the bridge first, so the status page is
+// right even if the bridge's ping never arrived.
 func (service *OrderService) FindForUser(ctx context.Context, userID string, orderNumber string, isAdmin bool) (model.OrderResponse, error) {
 	order, err := service.OrderRepository.FindByNumber(ctx, orderNumber)
 	if err != nil || (!isAdmin && order.UserID.String() != userID) {
 		return model.OrderResponse{}, exception.NotFoundError{Message: "order Not Found"}
+	}
+	if order.Status == entity.OrderPending && order.PaymentProvider == entity.PaymentProviderBridge {
+		if _, err := service.SyncStatus(ctx, orderNumber); err != nil {
+			log.Printf("sync order %s: %v", orderNumber, err)
+		} else if refreshed, err := service.OrderRepository.FindByNumber(ctx, orderNumber); err == nil {
+			order = refreshed
+		}
 	}
 	return toOrderResponse(order, isAdmin, service.Now()), nil
 }
