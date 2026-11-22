@@ -3,7 +3,9 @@ package service
 import (
 	"context"
 	"fmt"
+	"math/rand"
 	"sort"
+	"strings"
 
 	"github.com/artamananda/tryout-sample/internal/common"
 	"github.com/artamananda/tryout-sample/internal/entity"
@@ -12,6 +14,7 @@ import (
 	"github.com/artamananda/tryout-sample/internal/model"
 	"github.com/artamananda/tryout-sample/internal/repository"
 	"github.com/google/uuid"
+	pq "github.com/lib/pq"
 )
 
 type TryoutService struct {
@@ -49,6 +52,11 @@ func (service *TryoutService) Create(ctx context.Context, request model.CreateTr
 		Token:       helper.GenerateOTP(6),
 		IsPublished: request.IsPublished,
 		ShowScore:   request.ShowScore,
+		Sequence:    request.Sequence,
+		ScoringMode: request.ScoringMode,
+	}
+	if tryout.ScoringMode == "" {
+		tryout.ScoringMode = entity.ScoringModeIRT
 	}
 
 	tryout = service.TryoutRepository.Create(ctx, tryout)
@@ -71,6 +79,8 @@ func (service *TryoutService) Create(ctx context.Context, request model.CreateTr
 		Token:                  tryout.Token,
 		IsPublished:            tryout.IsPublished,
 		ShowScore:              tryout.ShowScore,
+		Sequence:               tryout.Sequence,
+		ScoringMode:            tryout.ScoringMode,
 		GeneratedQuestionCount: generatedQuestionCount,
 	}, nil
 }
@@ -118,6 +128,17 @@ func (service *TryoutService) Update(ctx context.Context, request model.UpdateTr
 		tryout.ShowScore = *request.ShowScore
 	}
 
+	if request.Sequence != nil {
+		tryout.Sequence = *request.Sequence
+	}
+
+	if request.ScoringMode != nil {
+		tryout.ScoringMode = *request.ScoringMode
+	}
+	if tryout.ScoringMode == "" {
+		tryout.ScoringMode = entity.ScoringModeIRT
+	}
+
 	tryout = service.TryoutRepository.Update(ctx, tryout)
 
 	return model.TryoutResponse{
@@ -130,6 +151,8 @@ func (service *TryoutService) Update(ctx context.Context, request model.UpdateTr
 		Token:       tryout.Token,
 		IsPublished: tryout.IsPublished,
 		ShowScore:   tryout.ShowScore,
+		Sequence:    tryout.Sequence,
+		ScoringMode: tryout.ScoringMode,
 	}, nil
 }
 
@@ -161,6 +184,8 @@ func (service *TryoutService) FindByID(ctx context.Context, tryoutID string) (mo
 		EndTime:     tryout.EndTime,
 		IsPublished: tryout.IsPublished,
 		ShowScore:   tryout.ShowScore,
+		Sequence:    tryout.Sequence,
+		ScoringMode: tryout.ScoringMode,
 	}, nil
 }
 
@@ -179,6 +204,8 @@ func (service *TryoutService) FindAll(ctx context.Context, params model.FindAllT
 				EndTime:     tryout.EndTime,
 				IsPublished: tryout.IsPublished,
 				ShowScore:   tryout.ShowScore,
+				Sequence:    tryout.Sequence,
+				ScoringMode: tryout.ScoringMode,
 			},
 		)
 	}
@@ -204,6 +231,8 @@ func (service *TryoutService) FindAllAsAdmin(ctx context.Context, params model.F
 				Token:       tryout.Token,
 				IsPublished: tryout.IsPublished,
 				ShowScore:   tryout.ShowScore,
+				Sequence:    tryout.Sequence,
+				ScoringMode: tryout.ScoringMode,
 			},
 		)
 	}
@@ -268,16 +297,20 @@ func (service *TryoutService) generateQuestionsFromBankSoal(
 		}
 
 		for _, bankSoal := range bankSoals {
+			options, optionScores := shuffleOptions(bankSoal.Type, bankSoal.Options, bankSoal.OptionScores)
+			bankSoalID := bankSoal.BankSoalID
 			questionsToCreate = append(questionsToCreate, entity.Question{
 				TryoutID:      tryoutID,
-				BankSoalID:    &bankSoal.BankSoalID,
+				BankSoalID:    &bankSoalID,
 				LocalID:       localID,
 				Type:          bankSoal.Type,
 				Text:          bankSoal.Text,
 				ImageUrl:      bankSoal.ImageUrl,
 				IsOptions:     bankSoal.IsOptions,
-				Options:       bankSoal.Options,
+				Options:       options,
 				CorrectAnswer: bankSoal.CorrectAnswer,
+				OptionScores:  optionScores,
+				Explanation:   bankSoal.Explanation,
 				Points:        bankSoal.Points,
 			})
 			localID++
@@ -294,4 +327,40 @@ func (service *TryoutService) generateQuestionsFromBankSoal(
 	}
 
 	return len(questionsToCreate), nil
+}
+
+// shuffleOptions puts the options of a generated question in random order so
+// the right answer is not always in the same place. Answers are stored as
+// option text, so the correct answer stays valid; TKP weights move with their
+// option. TKP questions without weights get the generator's convention
+// (first option 5 down to last option 1) before shuffling.
+func shuffleOptions(questionType string, options []string, scores pq.Int64Array) (pq.StringArray, pq.Int64Array) {
+	if len(options) < 2 {
+		return pq.StringArray(options), scores
+	}
+	if strings.EqualFold(strings.TrimSpace(questionType), "tkp") && len(scores) != len(options) {
+		scores = make(pq.Int64Array, len(options))
+		for i := range options {
+			value := int64(5 - i)
+			if value < 1 {
+				value = 1
+			}
+			scores[i] = value
+		}
+	}
+	hasScores := len(scores) == len(options)
+
+	order := rand.Perm(len(options))
+	shuffled := make(pq.StringArray, len(options))
+	var shuffledScores pq.Int64Array
+	if hasScores {
+		shuffledScores = make(pq.Int64Array, len(options))
+	}
+	for to, from := range order {
+		shuffled[to] = options[from]
+		if hasScores {
+			shuffledScores[to] = scores[from]
+		}
+	}
+	return shuffled, shuffledScores
 }

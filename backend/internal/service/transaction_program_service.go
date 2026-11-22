@@ -93,7 +93,7 @@ func (service *TransactionProgramService) Create(ctx context.Context, request mo
 		Status:               transactionProgram.Status,
 		Motivation:           transactionProgram.Motivation,
 		InvoiceNumber:        transactionProgram.InvoiceNumber,
-		Program: model.ProgramResponse(transactionProgram.Program),
+		Program: toProgramResponse(transactionProgram.Program),
 		CreatedAt:            transactionProgram.CreatedAt,
 		UpdatedAt:            transactionProgram.UpdatedAt,
 	}, nil

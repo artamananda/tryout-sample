@@ -189,3 +189,34 @@ func (repository *UserRepository) FindByIDs(ctx context.Context, userIDs []uuid.
 func normalizeEmail(email string) string {
 	return strings.ToLower(strings.TrimSpace(email))
 }
+
+func (repository *UserRepository) FindByReferralCode(ctx context.Context, code string) (entity.User, error) {
+	var user entity.User
+	result := repository.DB.WithContext(ctx).Where("referral_code = ?", strings.ToUpper(strings.TrimSpace(code))).Limit(1).Find(&user)
+	if result.Error != nil {
+		return entity.User{}, result.Error
+	}
+	if result.RowsAffected == 0 {
+		return entity.User{}, errors.New("referral code not found")
+	}
+	return user, nil
+}
+
+// SetReferralCodeIfEmpty stores code unless the user already has one, and
+// returns the code the user ends up with.
+func (repository *UserRepository) SetReferralCodeIfEmpty(ctx context.Context, userID uuid.UUID, code string) (string, error) {
+	err := repository.DB.WithContext(ctx).Model(&entity.User{}).
+		Where("user_id = ? AND referral_code IS NULL", userID).
+		Update("referral_code", code).Error
+	if err != nil {
+		return "", err
+	}
+	var user entity.User
+	if err := repository.DB.WithContext(ctx).Select("referral_code").Where("user_id = ?", userID).First(&user).Error; err != nil {
+		return "", err
+	}
+	if user.ReferralCode == nil {
+		return "", errors.New("referral code was not saved")
+	}
+	return *user.ReferralCode, nil
+}

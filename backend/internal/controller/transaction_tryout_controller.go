@@ -18,6 +18,8 @@ type TransactionTryoutController struct {
 	service.TryoutService
 	service.TryoutResultService
 	TransactionProgramRepository *repository.TransactionProgramRepository
+	AccessService                *service.AccessService
+	SKDResultService             *service.SKDResultService
 	config.Config
 }
 
@@ -26,6 +28,8 @@ func NewTransactionTryoutController(
 	tryoutService *service.TryoutService,
 	tryoutResultService *service.TryoutResultService,
 	transactionProgramRepository *repository.TransactionProgramRepository,
+	accessService *service.AccessService,
+	skdResultService *service.SKDResultService,
 	config config.Config,
 ) *TransactionTryoutController {
 	return &TransactionTryoutController{
@@ -33,6 +37,8 @@ func NewTransactionTryoutController(
 		TryoutService:                *tryoutService,
 		TryoutResultService:          *tryoutResultService,
 		TransactionProgramRepository: transactionProgramRepository,
+		AccessService:                accessService,
+		SKDResultService:             skdResultService,
 		Config:                       config,
 	}
 }
@@ -114,28 +120,17 @@ func (controller TransactionTryoutController) UpdateToPaid(c *fiber.Ctx) error {
 		})
 	}
 
-	tryoutData, err := controller.TryoutService.FindByID(c.Context(), requestBody.TryoutID.String())
+	tryoutEntity, err := controller.TryoutService.TryoutRepository.FindById(c.Context(), requestBody.TryoutID.String())
 	if err != nil {
-		return c.Status(fiber.StatusNotFound).JSON(model.GeneralResponse{
-			Code:    404,
-			Message: "Not Found",
-			Data:    "Tryout Not Found",
-		})
+		return exception.NotFoundError{Message: "Tryout Not Found"}
 	}
 
-	if tryoutData.ProgramID != nil {
-		hasProgramAccess := controller.TransactionProgramRepository.HasPaidAccess(
-			c.Context(),
-			requestBody.UserID.String(),
-			tryoutData.ProgramID.String(),
-		)
-
-		if !hasProgramAccess {
-			return c.Status(fiber.StatusUnauthorized).JSON(model.GeneralResponse{
-				Code:    401,
-				Message: "Unauthorized",
-				Data:    "User does not have access to the assigned program",
-			})
+	if !authUser.IsAdmin() {
+		// Package coverage (TO number) and, for program tryouts, the open window.
+		existing, findErr := controller.TransactionTryoutService.FindByTryoutIDAndUserID(c.Context(), requestBody.TryoutID.String(), requestBody.UserID.String())
+		alreadyStarted := findErr == nil && !existing.StartTime.IsZero()
+		if err := controller.AccessService.EnsureCanStart(c.Context(), requestBody.UserID.String(), tryoutEntity, alreadyStarted); err != nil {
+			return err
 		}
 	}
 
@@ -224,6 +219,9 @@ func (controller TransactionTryoutController) UpdateToFinish(c *fiber.Ctx) error
 	}
 
 	_, _ = controller.TryoutResultService.RebuildAndCacheByTryoutID(c.Context(), requestBody.TryoutID.String())
+	if controller.SKDResultService != nil {
+		controller.SKDResultService.Invalidate(requestBody.TryoutID.String())
+	}
 
 	return c.Status(fiber.StatusOK).JSON(model.GeneralResponse{
 		Code:    200,

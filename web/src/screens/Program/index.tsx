@@ -101,10 +101,16 @@ const ProgramCard = ({
         type="primary"
         block
         style={{ marginTop: 16 }}
-        disabled={!isOpen}
-        onClick={() => navigate(`/program/${record.program_id}/register`)}
+        disabled={!isOpen && !record.has_packages}
+        onClick={() =>
+          navigate(
+            record.has_packages
+              ? `/program/${record.program_id}/paket`
+              : `/program/${record.program_id}/register`
+          )
+        }
       >
-        {isOpen ? 'Daftar Sekarang' : 'Lihat Detail'}
+        {record.has_packages ? 'Lihat Paket' : isOpen ? 'Daftar Sekarang' : 'Lihat Detail'}
       </Button>
     </Card>
   );

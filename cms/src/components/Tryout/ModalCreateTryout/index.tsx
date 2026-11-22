@@ -16,9 +16,14 @@ import { RangePickerProps } from "antd/es/date-picker";
 import { useEffect, useState } from "react";
 import { apiCreateTryout } from "../../../api/tryout";
 import { apiGetBankSoalTypes } from "../../../api/ai";
+import TryoutProgramFields from "../TryoutProgramFields";
 const { Text } = Typography;
 
 const DEFAULT_DISTRIBUTION_BY_TYPE: Record<string, number> = {
+  // SKD CPNS: 110 soal (CAT BKN)
+  twk: 30,
+  tiu: 35,
+  tkp: 45,
   kpu: 30,
   ppu: 20,
   pbm: 20,
@@ -134,7 +139,7 @@ const ModalCreateTryout = (props: PropTypes) => {
           });
         }}
         onFinishFailed={onFinishFailed}
-        initialValues={{ is_published: false }}
+        initialValues={{ is_published: false, sequence: 0, scoring_mode: "irt" }}
         layout="vertical"
         form={form}
       >
@@ -153,6 +158,8 @@ const ModalCreateTryout = (props: PropTypes) => {
         >
           <InputNumber />
         </Form.Item>
+
+        <TryoutProgramFields />
 
         <Form.Item
           label="Start Time"

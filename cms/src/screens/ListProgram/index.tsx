@@ -83,7 +83,7 @@ const CardProgram = ({ record }: { record: ProgramProps }) => {
       </div>
 
       <div
-        style={{ marginTop: 16, display: "flex", flexDirection: "row", gap: 8 }}
+        style={{ marginTop: 16, display: "flex", flexDirection: "row", flexWrap: "wrap", gap: 8 }}
       >
         <Button
           type="primary"
@@ -93,6 +93,21 @@ const CardProgram = ({ record }: { record: ProgramProps }) => {
         </Button>
         <Button onClick={() => navigate(`${record.program_id}/edit`)}>
           Edit
+        </Button>
+        <Button onClick={() => navigate(`${record.program_id}/packages`)}>
+          Paket
+        </Button>
+        <Button onClick={() => navigate(`/orders?program_id=${record.program_id}`)}>
+          Pesanan
+        </Button>
+        <Button onClick={() => navigate(`${record.program_id}/classes`)}>
+          Kelas Live
+        </Button>
+        <Button onClick={() => navigate(`${record.program_id}/mentoring`)}>
+          Mentoring
+        </Button>
+        <Button onClick={() => navigate(`${record.program_id}/tutor-fees`)}>
+          Fee Tutor
         </Button>
       </div>
     </Card>

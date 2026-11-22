@@ -7,6 +7,7 @@ import (
 	"github.com/artamananda/tryout-sample/internal/exception"
 	"github.com/artamananda/tryout-sample/internal/middleware"
 	"github.com/artamananda/tryout-sample/internal/model"
+	"github.com/artamananda/tryout-sample/internal/repository"
 	"github.com/artamananda/tryout-sample/internal/service"
 	"github.com/gofiber/fiber/v2"
 )
@@ -14,13 +15,23 @@ import (
 type QuestionController struct {
 	service.QuestionService
 	TransactionTryoutService *service.TransactionTryoutService
+	AccessService            *service.AccessService
+	TryoutRepository         *repository.TryoutRepository
 	config.Config
 }
 
-func NewQuestionController(questionService *service.QuestionService, transactionTryoutService *service.TransactionTryoutService, config config.Config) *QuestionController {
+func NewQuestionController(
+	questionService *service.QuestionService,
+	transactionTryoutService *service.TransactionTryoutService,
+	accessService *service.AccessService,
+	tryoutRepository *repository.TryoutRepository,
+	config config.Config,
+) *QuestionController {
 	return &QuestionController{
 		QuestionService:          *questionService,
 		TransactionTryoutService: transactionTryoutService,
+		AccessService:            accessService,
+		TryoutRepository:         tryoutRepository,
 		Config:                   config,
 	}
 }
@@ -37,12 +48,28 @@ func (controller QuestionController) Route(app *fiber.App) {
 	app.Put("/v1/api/question/:id/upload-image", adminOnly, controller.UpdateImage)
 }
 
-// hideAnswers removes the answer key before questions are sent to a participant.
+// hideAnswers removes the answer key, TKP weights and explanations before
+// questions are sent to a participant.
 func hideAnswers(questions []model.QuestionResponse) []model.QuestionResponse {
 	for i := range questions {
 		questions[i].CorrectAnswer = ""
+		questions[i].OptionScores = nil
+		questions[i].Explanation = ""
 	}
 	return questions
+}
+
+// canReview reports whether the participant may see the answer key and the
+// written explanations of the tryout (after it closes, if the package has them).
+func (controller QuestionController) canReview(c *fiber.Ctx, tryoutID string, userID string) bool {
+	if controller.AccessService == nil || controller.TryoutRepository == nil {
+		return false
+	}
+	tryout, err := controller.TryoutRepository.FindById(c.Context(), tryoutID)
+	if err != nil {
+		return false
+	}
+	return controller.AccessService.CanReviewExplanation(c.Context(), userID, tryout)
 }
 
 // Create handles creation of a question for a specific tryout.
@@ -213,7 +240,9 @@ func (controller QuestionController) FindById(c *fiber.Ctx) error {
 		if !controller.TransactionTryoutService.HasStarted(c.Context(), result.TryoutID.String(), authUser.UserID) {
 			return exception.NotFoundError{Message: "question Not Found"}
 		}
-		result.CorrectAnswer = ""
+		if !controller.canReview(c, result.TryoutID.String(), authUser.UserID) {
+			result = hideAnswers([]model.QuestionResponse{result})[0]
+		}
 	}
 
 	return c.Status(fiber.StatusOK).JSON(model.GeneralResponse{
@@ -254,7 +283,9 @@ func (controller QuestionController) FindAll(c *fiber.Ctx) error {
 		if err != nil {
 			return err
 		}
-		result = hideAnswers(result)
+		if !controller.canReview(c, tryoutId, authUser.UserID) {
+			result = hideAnswers(result)
+		}
 	} else if tryoutId != "" {
 		result, err = controller.QuestionService.FindByTryoutID(c.Context(), tryoutId)
 	} else {

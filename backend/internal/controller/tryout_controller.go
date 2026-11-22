@@ -2,6 +2,7 @@ package controller
 
 import (
 	"github.com/artamananda/tryout-sample/internal/config"
+	"github.com/artamananda/tryout-sample/internal/entity"
 	"github.com/artamananda/tryout-sample/internal/helper"
 	"github.com/artamananda/tryout-sample/internal/middleware"
 	"github.com/artamananda/tryout-sample/internal/model"
@@ -11,11 +12,12 @@ import (
 
 type TryoutController struct {
 	service.TryoutService
+	AccessService *service.AccessService
 	config.Config
 }
 
-func NewTryoutController(tryoutService *service.TryoutService, config config.Config) *TryoutController {
-	return &TryoutController{TryoutService: *tryoutService, Config: config}
+func NewTryoutController(tryoutService *service.TryoutService, accessService *service.AccessService, config config.Config) *TryoutController {
+	return &TryoutController{TryoutService: *tryoutService, AccessService: accessService, Config: config}
 }
 
 func (controller TryoutController) Route(app *fiber.App) {
@@ -154,31 +156,43 @@ func (controller TryoutController) FindAll(c *fiber.Ctx) error {
 		return err
 	}
 
-	if authUser.IsAdmin() || controller.Config.Get("IS_TRYOUT_BYPASS") == "true" {
+	if authUser.IsAdmin() {
 		result := controller.TryoutService.FindAllAsAdmin(c.Context(), params)
-		payload := map[string]interface{}{
+		return success(c, fiber.StatusOK, map[string]interface{}{
 			"count":   len(result),
 			"next":    nil,
 			"prev":    nil,
 			"results": result,
-		}
-		return c.Status(fiber.StatusOK).JSON(model.GeneralResponse{
-			Code:    200,
-			Message: "Success",
-			Data:    payload,
 		})
 	}
 
-	result := controller.TryoutService.FindAll(c.Context(), params)
-	payload := map[string]interface{}{
+	var result []model.TryoutResponse
+	if controller.Config.Get("IS_TRYOUT_BYPASS") == "true" {
+		result = controller.TryoutService.FindAllAsAdmin(c.Context(), params)
+	} else {
+		result = controller.TryoutService.FindAll(c.Context(), params)
+	}
+
+	memberships, err := controller.AccessService.Memberships(c.Context(), authUser.UserID)
+	if err != nil {
+		return err
+	}
+	for i := range result {
+		// The token is what participants must type in; never send it to them.
+		result[i].Token = ""
+		access := controller.AccessService.Evaluate(entity.Tryout{
+			ProgramID: result[i].ProgramID,
+			Sequence:  result[i].Sequence,
+		}, memberships)
+		hasAccess := access.HasAccess
+		result[i].HasAccess = &hasAccess
+		result[i].LockedReason = access.Reason
+	}
+
+	return success(c, fiber.StatusOK, map[string]interface{}{
 		"count":   len(result),
 		"next":    nil,
 		"prev":    nil,
 		"results": result,
-	}
-	return c.Status(fiber.StatusOK).JSON(model.GeneralResponse{
-		Code:    200,
-		Message: "Success",
-		Data:    payload,
 	})
 }

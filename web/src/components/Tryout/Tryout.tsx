@@ -62,6 +62,9 @@ const Tryout = () => {
     });
 
   const typeDisplayNameMap: Record<string, string> = {
+    twk: 'Tes Wawasan Kebangsaan',
+    tiu: 'Tes Intelegensia Umum',
+    tkp: 'Tes Karakteristik Pribadi',
     kpu: 'Penalaran Umum',
     ppu: 'Pengetahuan dan Pemahaman Umum',
     pbm: 'Pemahaman Bacaan dan Menulis',
@@ -75,7 +78,8 @@ const Tryout = () => {
   const [answerIdx, setAnswerIdx] = useState<number>();
   const [answerId, setAnswerId] = useState<string>();
 
-  const typeOrderPreference = ['kpu', 'ppu', 'pbm', 'pku', 'ind', 'ing', 'mtk'];
+  // SKD follows the BKN order (TWK, TIU, TKP); UTBK keeps its own order.
+  const typeOrderPreference = ['twk', 'tiu', 'tkp', 'kpu', 'ppu', 'pbm', 'pku', 'ind', 'ing', 'mtk'];
 
   const groupedQuestions = useMemo(() => {
     const grouped: Record<string, QuestionProps[]> = {};
@@ -158,6 +162,12 @@ const Tryout = () => {
             user_id: auth()?.user_id,
             tryout_id: tryoutId
           });
+          if (transactionData?.[0]?.tryout?.scoring_mode === 'skd') {
+            // SKD scores and the provisional rank are available right away.
+            message.success('Tryout selesai! Ini skor dan peringkatmu.');
+            navigate(`/tryout/${tryoutId}/hasil-skd`);
+            return;
+          }
           message.success('Tryout berhasil diselesaikan! Skor akan tersedia setelah dipublikasikan.');
           navigate('/dashboard');
         }

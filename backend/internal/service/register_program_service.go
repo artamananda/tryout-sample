@@ -9,6 +9,7 @@ import (
 	"github.com/artamananda/tryout-sample/internal/exception"
 	"github.com/artamananda/tryout-sample/internal/helper"
 	"github.com/artamananda/tryout-sample/internal/model"
+	"github.com/artamananda/tryout-sample/internal/repository"
 	"github.com/aws/aws-sdk-go-v2/feature/s3/manager"
 )
 
@@ -16,14 +17,16 @@ type RegisterProgramService struct {
 	UserService               *UserService
 	ProgramService            *ProgramService
 	TransactionProgramService *TransactionProgramService
+	PackageRepository         *repository.PackageRepository
 	Uploader                  *manager.Uploader
 }
 
-func NewRegisterProgramService(userService *UserService, programService *ProgramService, transactionProgramService *TransactionProgramService, uploader *manager.Uploader) RegisterProgramService {
+func NewRegisterProgramService(userService *UserService, programService *ProgramService, transactionProgramService *TransactionProgramService, packageRepository *repository.PackageRepository, uploader *manager.Uploader) RegisterProgramService {
 	return RegisterProgramService{
 		UserService:               userService,
 		ProgramService:            programService,
 		TransactionProgramService: transactionProgramService,
+		PackageRepository:         packageRepository,
 		Uploader:                  uploader,
 	}
 }
@@ -34,6 +37,21 @@ func (service *RegisterProgramService) RegisterProgram(ctx context.Context, requ
 	}
 
 	userId := request.UserID
+
+	// Programs sold through packages (TELISIK) cannot be joined for free here.
+	programID, err := parseID(request.ProgramID, "program_id")
+	if err != nil {
+		return err
+	}
+	if service.PackageRepository != nil {
+		packages, err := service.PackageRepository.FindByProgram(ctx, programID, false)
+		if err != nil {
+			return err
+		}
+		if len(packages) > 0 {
+			return exception.BadRequestError{Message: "Program ini memakai paket. Silakan pilih paket di halaman Paket."}
+		}
+	}
 
 	// The registration form doubles as a profile update.
 	user, err := service.UserService.UpdateProfile(ctx, userId, model.UpdateMyProfileRequest{

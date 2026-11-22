@@ -86,3 +86,9 @@ func (repository *TransactionTryoutRepository) FindByUserId(ctx context.Context,
 	repository.DB.WithContext(ctx).Where("user_id = ?", userId).Order("created_at DESC").Find(&transactionTryouts)
 	return transactionTryouts
 }
+
+func (repository *TransactionTryoutRepository) FindByTryoutId(ctx context.Context, tryoutId string) ([]entity.TransactionTryout, error) {
+	var transactionTryouts []entity.TransactionTryout
+	err := repository.DB.WithContext(ctx).Where("tryout_id = ?", tryoutId).Find(&transactionTryouts).Error
+	return transactionTryouts, err
+}

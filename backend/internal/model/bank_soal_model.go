@@ -13,6 +13,7 @@ type CreateBankSoalRequest struct {
 	IsOptions     *bool    `json:"is_options"`
 	Options       []string `json:"options"`
 	CorrectAnswer string   `json:"correct_answer" validate:"required"`
+	OptionScores  []int    `json:"option_scores"`
 	Explanation   string   `json:"explanation"`
 	Difficulty    string   `json:"difficulty"`
 	Topic         string   `json:"topic"`
@@ -31,6 +32,7 @@ type UpdateBankSoalRequest struct {
 	IsOptions     *bool    `json:"is_options"`
 	Options       []string `json:"options"`
 	CorrectAnswer string   `json:"correct_answer"`
+	OptionScores  []int    `json:"option_scores"`
 	Explanation   string   `json:"explanation"`
 	Difficulty    string   `json:"difficulty"`
 	Topic         string   `json:"topic"`
@@ -45,6 +47,7 @@ type BankSoalResponse struct {
 	IsOptions     *bool     `json:"is_options"`
 	Options       []string  `json:"options"`
 	CorrectAnswer string    `json:"correct_answer"`
+	OptionScores  []int     `json:"option_scores"`
 	Explanation   string    `json:"explanation"`
 	Difficulty    string    `json:"difficulty"`
 	Topic         string    `json:"topic"`

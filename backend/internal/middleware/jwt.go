@@ -1,6 +1,8 @@
 package middleware
 
 import (
+	"strings"
+
 	"github.com/artamananda/tryout-sample/internal/config"
 	"github.com/artamananda/tryout-sample/internal/model"
 	"github.com/gofiber/fiber/v2"
@@ -89,4 +91,25 @@ func AuthenticateJWT(roles []string, config config.Config) func(*fiber.Ctx) erro
 				})
 		},
 	})
+}
+
+// OptionalJWT reads a valid Bearer token when one is sent, so GetAuthUser
+// works, but lets anonymous requests through. Invalid tokens are ignored.
+func OptionalJWT(config config.Config) fiber.Handler {
+	secret := []byte(config.Get("JWT_SECRET_KEY"))
+	return func(ctx *fiber.Ctx) error {
+		header := ctx.Get(fiber.HeaderAuthorization)
+		if len(header) > 7 && strings.EqualFold(header[:7], "Bearer ") {
+			token, err := jwt.Parse(header[7:], func(token *jwt.Token) (interface{}, error) {
+				if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {
+					return nil, jwt.ErrSignatureInvalid
+				}
+				return secret, nil
+			})
+			if err == nil && token.Valid {
+				ctx.Locals("user", token)
+			}
+		}
+		return ctx.Next()
+	}
 }

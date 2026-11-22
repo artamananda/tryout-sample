@@ -1,186 +1,252 @@
-import React, { Suspense, useState } from 'react';
+import { Suspense, useEffect, useMemo, useState } from 'react';
 import {
-  CalendarOutlined,
-  UserOutlined,
-  PoweroffOutlined,
-  ScheduleOutlined,
   BookOutlined,
-  PlayCircleOutlined,
+  CalendarOutlined,
+  DashboardOutlined,
+  FileTextOutlined,
+  IdcardOutlined,
+  LoginOutlined,
+  LogoutOutlined,
   MenuFoldOutlined,
+  MenuOutlined,
   MenuUnfoldOutlined,
-  IdcardOutlined
+  PlayCircleOutlined,
+  ScheduleOutlined,
+  ShoppingOutlined,
+  TrophyOutlined,
+  UserAddOutlined,
+  UserOutlined
 } from '@ant-design/icons';
 import type { MenuProps } from 'antd';
-import { Layout, Menu, Image, Spin, Modal, Button, Grid } from 'antd';
-import logo from '../../assets/logo-yellow.png';
+import { Avatar, Button, Drawer, Dropdown, Grid, Layout, Menu, Modal, Spin } from 'antd';
 import { Outlet, useLocation, useNavigate } from 'react-router-dom';
 import { useAuthUser, useIsAuthenticated, useSignOut } from 'react-auth-kit';
+import logoWordmark from '../../assets/logo-wordmark.png';
+import logoIcon from '../../assets/logo-icon.png';
 import FooterCopyright from '../../components/Footer';
-import './AppLayout.css';
 
 const { Content, Header, Sider } = Layout;
 const { useBreakpoint } = Grid;
 
 type MenuItem = Required<MenuProps>['items'][number];
 
-function getItem(
-  label: React.ReactNode,
-  key: React.Key,
-  icon?: React.ReactNode,
-  children?: MenuItem[]
-): MenuItem {
-  return {
-    key,
-    icon,
-    children,
-    label
-  } as MenuItem;
+/** Page titles for the header, matched by path prefix (longest first). */
+const PAGE_TITLES: [string, string][] = [
+  ['/dashboard', 'Dashboard'],
+  ['/program-saya', 'Program Saya'],
+  ['/tryout', 'Tryout'],
+  ['/bank-soal/utbk', 'Bank Soal UTBK'],
+  ['/bank-soal/skd-cpns', 'Bank Soal SKD CPNS'],
+  ['/learning-video', 'Learning Video'],
+  ['/paket', 'Paket SKD CPNS'],
+  ['/pesanan', 'Pesanan Saya'],
+  ['/profile', 'Profil Saya'],
+  ['/sertifikat', 'Sertifikat'],
+  ['/program', 'Program']
+];
+
+/** Menu key for the current path; program package pages belong to "Paket". */
+function selectedKeyFor(pathname: string) {
+  if (/^\/program\/[^/]+\/paket/.test(pathname)) return '/paket';
+  const match = PAGE_TITLES.filter(([prefix]) => pathname.startsWith(prefix)).sort((a, b) => b[0].length - a[0].length)[0];
+  return match ? match[0] : '';
 }
 
 const AppLayout = () => {
   const screens = useBreakpoint();
   const isMobile = !screens.lg;
   const [collapsed, setCollapsed] = useState(false);
+  const [drawerOpen, setDrawerOpen] = useState(false);
   const navigate = useNavigate();
   const location = useLocation();
   const signOut = useSignOut();
   const isAuthenticated = useIsAuthenticated();
-  const userAuth = useAuthUser();
+  const authUser = useAuthUser();
   const loggedIn = isAuthenticated();
-  const name = loggedIn && userAuth() ? userAuth()?.name : 'Pengunjung';
+  const user = loggedIn ? authUser() : null;
 
-  const items: MenuItem[] = loggedIn
-    ? [
-        getItem(name, '/user', <UserOutlined />, [
-          getItem('Profil Saya', '/profile', <IdcardOutlined />),
-          getItem('Keluar', '/logout', <PoweroffOutlined />)
-        ]),
-        getItem('Tryout', '/tryout', <CalendarOutlined />),
-        getItem('Bank Soal', '/bank-soal', <BookOutlined />, [
-          getItem('Bank Soal UTBK', '/bank-soal/utbk'),
-          getItem('Bank Soal SKD CPNS', '/bank-soal/skd-cpns'),
-        ]),
-        getItem('Learning Video', '/learning-video', <PlayCircleOutlined />),
-        getItem('Program', '/program', <ScheduleOutlined />)
-      ]
-    : [
-        getItem('Bank Soal', '/bank-soal', <BookOutlined />, [
-          getItem('Bank Soal UTBK', '/bank-soal/utbk'),
-          getItem('Bank Soal SKD CPNS', '/bank-soal/skd-cpns'),
-        ]),
-        getItem('Masuk', '/login', <UserOutlined />),
-        getItem('Daftar', '/register', <CalendarOutlined />)
-      ];
+  // Close the mobile menu whenever the page changes.
+  useEffect(() => setDrawerOpen(false), [location.pathname]);
 
-  const selectedKey = location.pathname.startsWith('/profile')
-    ? '/profile'
-    : location.pathname.startsWith('/bank-soal/utbk')
-    ? '/bank-soal/utbk'
-    : location.pathname.startsWith('/bank-soal/skd-cpns')
-    ? '/bank-soal/skd-cpns'
-    : items?.find(
-        (item) =>
-          typeof item?.key === 'string' && location.pathname.startsWith(item.key)
-      )?.key || '/bank-soal/utbk';
+  const items: MenuItem[] = useMemo(
+    () =>
+      loggedIn
+        ? [
+            {
+              type: 'group',
+              label: 'Belajar',
+              children: [
+                { key: '/dashboard', icon: <DashboardOutlined />, label: 'Dashboard' },
+                { key: '/program-saya', icon: <TrophyOutlined />, label: 'Program Saya' },
+                { key: '/tryout', icon: <CalendarOutlined />, label: 'Tryout' },
+                {
+                  key: 'bank-soal',
+                  icon: <BookOutlined />,
+                  label: 'Bank Soal',
+                  children: [
+                    { key: '/bank-soal/utbk', label: 'UTBK' },
+                    { key: '/bank-soal/skd-cpns', label: 'SKD CPNS' }
+                  ]
+                },
+                { key: '/learning-video', icon: <PlayCircleOutlined />, label: 'Learning Video' }
+              ]
+            },
+            {
+              type: 'group',
+              label: 'Program & Paket',
+              children: [
+                { key: '/paket', icon: <ShoppingOutlined />, label: 'Paket SKD CPNS' },
+                { key: '/pesanan', icon: <FileTextOutlined />, label: 'Pesanan Saya' },
+                { key: '/program', icon: <ScheduleOutlined />, label: 'Program' }
+              ]
+            },
+            {
+              type: 'group',
+              label: 'Akun',
+              children: [{ key: '/profile', icon: <IdcardOutlined />, label: 'Profil Saya' }]
+            }
+          ]
+        : [
+            {
+              type: 'group',
+              label: 'Jelajahi',
+              children: [
+                {
+                  key: 'bank-soal',
+                  icon: <BookOutlined />,
+                  label: 'Bank Soal',
+                  children: [
+                    { key: '/bank-soal/utbk', label: 'UTBK' },
+                    { key: '/bank-soal/skd-cpns', label: 'SKD CPNS' }
+                  ]
+                },
+                { key: '/paket', icon: <ShoppingOutlined />, label: 'Paket SKD CPNS' }
+              ]
+            },
+            {
+              type: 'group',
+              label: 'Akun',
+              children: [
+                { key: '/login', icon: <LoginOutlined />, label: 'Masuk' },
+                { key: '/register', icon: <UserAddOutlined />, label: 'Daftar' }
+              ]
+            }
+          ],
+    [loggedIn]
+  );
 
-  const handleMenuClick = (key: string) => {
-    if (key === '/logout') {
-      Modal.confirm({
-        title: 'Konfirmasi Keluar',
-        content: 'Apakah Anda yakin ingin keluar dari akun?',
-        okText: 'Ya',
-        cancelText: 'Tidak',
-        onOk: () => {
-          signOut();
-          navigate('/login');
-        }
-      });
-      return;
-    }
+  const selectedKey = selectedKeyFor(location.pathname);
+  const title = PAGE_TITLES.find(([prefix]) => prefix === selectedKey)?.[1] || '';
 
-    navigate(key);
-    if (isMobile) {
-      setCollapsed(true);
-    }
-  };
+  const confirmLogout = () =>
+    Modal.confirm({
+      title: 'Keluar dari akun?',
+      content: 'Anda perlu masuk lagi untuk melanjutkan.',
+      okText: 'Keluar',
+      cancelText: 'Batal',
+      onOk: () => {
+        signOut();
+        navigate('/login');
+      }
+    });
 
-  const generatePathName = (path: string) => {
-    path = path.replace(/^\//, '');
-    return path
-      .split('-')
-      .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
-      .join(' ');
-  };
+  const menu = (
+    <div className="tl-sider-menu">
+      <Menu
+        theme="dark"
+        mode="inline"
+        items={items}
+        selectedKeys={[selectedKey]}
+        defaultOpenKeys={location.pathname.startsWith('/bank-soal') ? ['bank-soal'] : []}
+        onClick={({ key }) => navigate(key)}
+      />
+    </div>
+  );
+
+  const brand = (
+    <div className={`tl-brand${!isMobile && collapsed ? " is-collapsed" : ""}`}>
+      {!isMobile && collapsed ? (
+        <img src={logoIcon} alt="TELISIK" className="tl-brand-icon" />
+      ) : (
+        <>
+          <img src={logoWordmark} alt="TELISIK - Teras Belajar Asik" className="tl-brand-wordmark" />
+        </>
+      )}
+    </div>
+  );
+
+  const userMenu: MenuProps['items'] = [
+    { key: 'profile', icon: <IdcardOutlined />, label: 'Profil Saya', onClick: () => navigate('/profile') },
+    { key: 'orders', icon: <FileTextOutlined />, label: 'Pesanan Saya', onClick: () => navigate('/pesanan') },
+    { type: 'divider' },
+    { key: 'logout', icon: <LogoutOutlined />, label: 'Keluar', danger: true, onClick: confirmLogout }
+  ];
 
   return (
-    <Layout className="app-shell">
-      <Sider
-        className="app-sidebar"
-        trigger={null}
-        width={268}
-        collapsedWidth={isMobile ? 0 : 80}
-        collapsed={collapsed}
-        onCollapse={(value) => setCollapsed(value)}
-        breakpoint="lg"
-        onBreakpoint={(broken) => setCollapsed(broken)}
-      >
-        <div className={`app-sidebar-brand ${collapsed ? 'is-collapsed' : ''}`}>
-          {collapsed ? (
-            <Image
-              src={logo}
-              alt="Logo"
-              preview={false}
-              style={{ maxHeight: 30 }}
-            />
-          ) : (
-            <Image
-              src={logo}
-              alt="Logo"
-              preview={false}
-              style={{ maxHeight: 42 }}
-            />
+    <Layout className={`tl-shell${collapsed && !isMobile ? ' is-collapsed' : ''}`}>
+      {!isMobile && (
+        <Sider className="tl-sider" width={256} collapsedWidth={76} collapsed={collapsed} trigger={null}>
+          {brand}
+          {menu}
+          {!collapsed && (
+            <div className="tl-sider-footer">
+              <FooterCopyright />
+            </div>
           )}
+        </Sider>
+      )}
+
+      <Drawer
+        className="tl-mobile-drawer"
+        placement="left"
+        width={272}
+        open={isMobile && drawerOpen}
+        onClose={() => setDrawerOpen(false)}
+        closable={false}
+      >
+        {brand}
+        {menu}
+        <div className="tl-sider-footer">
+          <FooterCopyright />
         </div>
+      </Drawer>
 
-        <Menu
-          className="app-sidebar-menu"
-          theme="dark"
-          selectedKeys={[String(selectedKey)]}
-          mode="inline"
-          items={items}
-          onClick={({ key }) => handleMenuClick(key)}
-        />
-
-        {!collapsed && (
-          <div className="app-sidebar-version">
-            <FooterCopyright />
-          </div>
-        )}
-      </Sider>
-
-      <Layout className="app-main-layout">
-        <Header className="app-topbar">
+      <Layout className="tl-main">
+        <Header className="tl-header">
           <Button
-            className="app-menu-toggle"
             type="text"
-            icon={collapsed ? <MenuUnfoldOutlined /> : <MenuFoldOutlined />}
-            onClick={() => setCollapsed((prev) => !prev)}
-            aria-label="Toggle navigation menu"
+            aria-label="Buka menu"
+            icon={isMobile ? <MenuOutlined /> : collapsed ? <MenuUnfoldOutlined /> : <MenuFoldOutlined />}
+            onClick={() => (isMobile ? setDrawerOpen(true) : setCollapsed((value) => !value))}
           />
-          <div className="app-topbar-title">
-            {generatePathName(location.pathname)}
-          </div>
+          <div className="tl-header-title">{title}</div>
+          {user ? (
+            <Dropdown menu={{ items: userMenu }} trigger={['click']} placement="bottomRight">
+              <div className="tl-header-user" role="button" tabIndex={0}>
+                <Avatar src={user.picture_url || undefined} icon={<UserOutlined />} style={{ background: '#2563eb' }} />
+                <div className="tl-header-user-text">
+                  <strong>{user.name}</strong>
+                  <span>{user.email}</span>
+                </div>
+              </div>
+            </Dropdown>
+          ) : (
+            <Button type="primary" onClick={() => navigate('/login', { state: { from: location } })}>
+              Masuk
+            </Button>
+          )}
         </Header>
 
-        <Content className="app-main-content">
-          <Suspense fallback={<Spin spinning={true} />}>
-            <div className="app-content-card">
-              <Outlet />
-            </div>
+        <Content className="tl-content">
+          <Suspense
+            fallback={
+              <div style={{ textAlign: 'center', padding: 48 }}>
+                <Spin />
+              </div>
+            }
+          >
+            <Outlet />
           </Suspense>
-          {/* <div className="app-main-footer">
-            <FooterCopyright />
-          </div> */}
         </Content>
       </Layout>
     </Layout>

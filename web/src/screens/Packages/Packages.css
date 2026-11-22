@@ -1,0 +1,71 @@
+.packages-page {
+  max-width: 1120px;
+  margin: 0 auto;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.package-card {
+  height: 100%;
+  border-radius: 14px;
+}
+
+.package-card .ant-card-body {
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.package-card.is-highlighted {
+  border: 2px solid #faad14;
+  box-shadow: 0 8px 24px rgba(250, 173, 20, 0.18);
+}
+
+.package-card.is-owned {
+  border: 2px solid #52c41a;
+}
+
+.package-card-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.package-price {
+  display: flex;
+  flex-direction: column;
+}
+
+.package-price-value {
+  font-size: 28px;
+  font-weight: 700;
+  line-height: 1.2;
+}
+
+.package-benefits {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.package-benefits li {
+  display: flex;
+  gap: 8px;
+  align-items: flex-start;
+}
+
+.package-benefits .anticon {
+  color: #52c41a;
+  margin-top: 4px;
+}
+
+.package-quota {
+  font-weight: 600;
+}

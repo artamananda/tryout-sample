@@ -1,4 +1,6 @@
 import { useEffect, useState, useRef, useCallback } from 'react';
+import useLandingStyles from '../../hooks/useLandingStyles';
+import LandingLoader from '../../components/LandingLoader';
 import { pdfjs, Document, Page } from 'react-pdf';
 import 'react-pdf/dist/Page/AnnotationLayer.css';
 import 'react-pdf/dist/Page/TextLayer.css';
@@ -23,6 +25,7 @@ const { Text } = Typography;
 type PDFFile = string | File | null;
 
 export default function ReadScreen() {
+  const landingReady = useLandingStyles();
   const { id } = useParams();
   const navigate = useNavigate();
   const [file, setFile] = useState<PDFFile>(null);
@@ -90,6 +93,10 @@ export default function ReadScreen() {
 
   const pageWidth = Math.min(baseWidth * zoom, (typeof window !== 'undefined' ? window.innerWidth - 48 : 640));
   const progress = numPages > 0 ? Math.round((currentPage / numPages) * 100) : 0;
+
+  if (!landingReady) {
+    return <LandingLoader />;
+  }
 
   return (
     <div

@@ -53,6 +53,8 @@ jobs:
           echo "OPENAI_API_KEY=${{ secrets.OPENAI_API_KEY }}" >> ./backend/.env
           echo "GEMINI_API_KEY=${{ secrets.GEMINI_API_KEY }}" >> ./backend/.env
           echo "AI_PROVIDER=${{ secrets.AI_PROVIDER }}" >> ./backend/.env
+          echo "PAYMENT_BRIDGE_URL=${{ secrets.PAYMENT_BRIDGE_URL }}" >> ./backend/.env
+          echo "WEB_BASE_URL=${{ secrets.WEB_BASE_URL }}" >> ./backend/.env
           cat ./backend/.env
 
       - uses: superfly/flyctl-actions/setup-flyctl@master

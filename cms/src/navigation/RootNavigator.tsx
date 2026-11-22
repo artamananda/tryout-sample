@@ -30,6 +30,14 @@ import AIChatScreen from "../screens/AIChat";
 import LearningVideoScreen from "../screens/LearningVideo";
 import LLMConfigScreen from "../screens/LLMConfig";
 import EbookScreen from "../screens/Ebook";
+import PackagesScreen from "../screens/Packages";
+import OrdersScreen from "../screens/Orders";
+import SKDRankingScreen from "../screens/TryoutResult/SKDRanking";
+import LiveClassesScreen from "../screens/ProgramOps/LiveClasses";
+import MentoringScreen from "../screens/ProgramOps/Mentoring";
+import TutorFeesScreen from "../screens/ProgramOps/TutorFees";
+import GuaranteeScreen from "../screens/ProgramOps/Guarantee";
+import WeeklyReportScreen from "../screens/ProgramOps/WeeklyReport";
 
 const RootNavigator = () => {
   return (
@@ -262,6 +270,70 @@ const RootNavigator = () => {
             element={
               <PrivateRoute loginPath="/login">
                 <ListProgramStudentScreen />
+              </PrivateRoute>
+            }
+          />
+          <Route
+            path="/program/:programId/packages"
+            element={
+              <PrivateRoute loginPath="/login">
+                <PackagesScreen />
+              </PrivateRoute>
+            }
+          />
+          <Route
+            path="/program/:programId/classes"
+            element={
+              <PrivateRoute loginPath="/login">
+                <LiveClassesScreen />
+              </PrivateRoute>
+            }
+          />
+          <Route
+            path="/program/:programId/mentoring"
+            element={
+              <PrivateRoute loginPath="/login">
+                <MentoringScreen />
+              </PrivateRoute>
+            }
+          />
+          <Route
+            path="/program/:programId/tutor-fees"
+            element={
+              <PrivateRoute loginPath="/login">
+                <TutorFeesScreen />
+              </PrivateRoute>
+            }
+          />
+          <Route
+            path="/guarantee-claims"
+            element={
+              <PrivateRoute loginPath="/login">
+                <GuaranteeScreen />
+              </PrivateRoute>
+            }
+          />
+          <Route
+            path="/weekly-report"
+            element={
+              <PrivateRoute loginPath="/login">
+                <WeeklyReportScreen />
+              </PrivateRoute>
+            }
+          />
+          <Route
+            path="/orders"
+            element={
+              <PrivateRoute loginPath="/login">
+                <OrdersScreen />
+              </PrivateRoute>
+            }
+          />
+          <Route
+            path="/tryout/:id/skd-ranking"
+            element={
+              <PrivateRoute loginPath="/login">
+                <SKDRankingScreen />
               </PrivateRoute>
             }
           />

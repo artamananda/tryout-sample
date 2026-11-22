@@ -28,7 +28,7 @@ func newAccessTestApp() *fiber.App {
 	app := fiber.New(config.NewFiberConfiguration())
 	NewUserController(&service.UserService{}, testConfig).Route(app)
 	NewUserAnswerController(&service.UserAnswerService{}, &service.TransactionTryoutService{}, testConfig).Route(app)
-	NewQuestionController(&service.QuestionService{}, &service.TransactionTryoutService{}, testConfig).Route(app)
+	NewQuestionController(&service.QuestionService{}, &service.TransactionTryoutService{}, nil, nil, testConfig).Route(app)
 	return app
 }
 

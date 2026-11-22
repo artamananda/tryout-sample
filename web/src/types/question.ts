@@ -7,6 +7,7 @@ export interface QuestionProps {
   text: string;
   options: string[];
   correct_answer: string;
+  option_scores?: number[];
   points?: string;
   difficulty?: string;
   explanation?: string;

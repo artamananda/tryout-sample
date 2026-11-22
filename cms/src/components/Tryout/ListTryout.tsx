@@ -66,6 +66,16 @@ const ListTryout = () => {
       ),
     },
     {
+      title: "TO / Mode",
+      key: "sequence",
+      render: (_, record) => (
+        <span>
+          {record.sequence ? `TO ${record.sequence}` : "-"}{" "}
+          {record.scoring_mode === "skd" && <Tag color="purple">SKD</Tag>}
+        </span>
+      ),
+    },
+    {
       title: "Duration",
       dataIndex: "duration",
       key: "duration",
@@ -158,6 +168,11 @@ const ListTryout = () => {
           >
             Edit
           </Link>
+          {record.scoring_mode === "skd" && (
+            <Link onClick={() => navigate("/tryout/" + record.tryout_id + "/skd-ranking")}>
+              Ranking SKD
+            </Link>
+          )}
           <Link
             onClick={() =>
               setShowModalDelete({ status: true, tryoutId: record.tryout_id })
@@ -252,7 +267,7 @@ const ListTryout = () => {
         <PlusOutlined />
         Create Tryout
       </Button>
-      <Table columns={columns} dataSource={tryoutData} loading={isLoading} />
+      <Table rowKey="tryout_id" columns={columns} dataSource={tryoutData} loading={isLoading} scroll={{ x: true }} />
 
       <ModalCreateTryout
         showModal={showModal}

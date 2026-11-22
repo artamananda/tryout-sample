@@ -1,0 +1,408 @@
+/*
+ * TELISIK global styles, shared by the web app and the CMS.
+ * Colors and sizes come from theme.ts; keep the two files in sync.
+ */
+:root {
+  --tl-primary: #2563eb;
+  --tl-navy: #0b1f4d;
+  --tl-navy-deep: #081638;
+  --tl-accent: #f5b301;
+  --tl-ink: #0f172a;
+  --tl-muted: #64748b;
+  --tl-line: #e2e8f0;
+  --tl-surface: #ffffff;
+  --tl-canvas: #f4f6fb;
+  --tl-radius: 14px;
+  --tl-shadow: 0 1px 2px rgba(15, 23, 42, 0.04), 0 4px 16px rgba(15, 23, 42, 0.05);
+  --tl-sider-width: 256px;
+  --tl-sider-collapsed: 76px;
+  --tl-gutter: 24px;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html,
+body,
+#root {
+  min-height: 100%;
+}
+
+body {
+  margin: 0;
+  background: var(--tl-canvas);
+  color: var(--tl-ink);
+  font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial,
+    sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+img {
+  max-width: 100%;
+}
+
+/* ---------------------------------------------------------------- shell */
+
+.tl-shell {
+  min-height: 100vh;
+}
+
+.tl-sider.ant-layout-sider {
+  position: fixed !important;
+  inset: 0 auto 0 0;
+  height: 100vh;
+  z-index: 100;
+  overflow: hidden;
+  box-shadow: 4px 0 24px rgba(8, 22, 56, 0.18);
+}
+
+.tl-sider .ant-layout-sider-children {
+  display: flex;
+  flex-direction: column;
+}
+
+.tl-brand {
+  height: 64px;
+  flex: 0 0 64px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 0 20px;
+  color: #fff;
+  font-weight: 800;
+  letter-spacing: 0.5px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+  white-space: nowrap;
+  overflow: hidden;
+}
+
+.tl-brand.is-collapsed {
+  justify-content: center;
+  padding: 0;
+}
+
+.tl-brand-wordmark {
+  height: 38px;
+  width: auto;
+  max-width: 180px;
+  object-fit: contain;
+}
+
+.tl-brand-icon {
+  height: 40px;
+  width: 40px;
+  object-fit: contain;
+}
+
+.tl-brand-tag {
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: 1px;
+  color: var(--tl-navy);
+  background: var(--tl-accent);
+  border-radius: 6px;
+  padding: 2px 6px;
+}
+
+.tl-sider-menu {
+  flex: 1;
+  overflow-y: auto;
+  overflow-x: hidden;
+  padding: 12px 0;
+}
+
+.tl-sider-menu .ant-menu {
+  border-inline-end: none !important;
+}
+
+.tl-sider-menu .ant-menu-item-group-title {
+  color: rgba(226, 232, 240, 0.45);
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.8px;
+  text-transform: uppercase;
+  padding-inline: 22px !important;
+}
+
+.tl-sider-footer {
+  padding: 14px 20px;
+  font-size: 11px;
+  color: rgba(226, 232, 240, 0.5);
+  border-top: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.tl-main {
+  margin-left: var(--tl-sider-width);
+  transition: margin-left 0.2s ease;
+  min-height: 100vh;
+}
+
+.tl-shell.is-collapsed .tl-main {
+  margin-left: var(--tl-sider-collapsed);
+}
+
+.tl-header.ant-layout-header {
+  position: sticky;
+  top: 0;
+  z-index: 90;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  border-bottom: 1px solid var(--tl-line);
+  backdrop-filter: saturate(180%) blur(8px);
+  background: rgba(255, 255, 255, 0.92);
+  line-height: normal;
+}
+
+.tl-header-title {
+  flex: 1;
+  min-width: 0;
+  font-weight: 700;
+  font-size: 16px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.tl-header-user {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  cursor: pointer;
+  padding: 6px 8px;
+  border-radius: 10px;
+  max-width: 260px;
+}
+
+.tl-header-user:hover {
+  background: #f1f5f9;
+}
+
+.tl-header-user-text {
+  line-height: 1.2;
+  min-width: 0;
+}
+
+.tl-header-user-text strong,
+.tl-header-user-text span {
+  display: block;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.tl-header-user-text span {
+  font-size: 12px;
+  color: var(--tl-muted);
+}
+
+.tl-content {
+  padding: var(--tl-gutter);
+  max-width: 1440px;
+  width: 100%;
+  margin: 0 auto;
+}
+
+.tl-mobile-drawer .ant-drawer-body {
+  padding: 0;
+  background: var(--tl-navy);
+  display: flex;
+  flex-direction: column;
+}
+
+/* ---------------------------------------------------------------- pages */
+
+.tl-page {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.tl-page-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+  flex-wrap: wrap;
+}
+
+.tl-page-header h1 {
+  margin: 0;
+  font-size: 22px;
+  font-weight: 800;
+  line-height: 1.3;
+}
+
+.tl-page-header p {
+  margin: 4px 0 0;
+  color: var(--tl-muted);
+}
+
+.tl-page-header-extra {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  align-items: center;
+}
+
+.tl-card.ant-card,
+.tl-page .ant-card {
+  border-radius: var(--tl-radius);
+  border-color: var(--tl-line);
+  box-shadow: var(--tl-shadow);
+}
+
+.tl-stat {
+  display: flex;
+  gap: 14px;
+  align-items: flex-start;
+}
+
+.tl-stat-icon {
+  width: 44px;
+  height: 44px;
+  flex: 0 0 44px;
+  border-radius: 12px;
+  display: grid;
+  place-items: center;
+  font-size: 20px;
+}
+
+.tl-stat-label {
+  color: var(--tl-muted);
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.tl-stat-value {
+  font-size: 24px;
+  font-weight: 800;
+  line-height: 1.25;
+  word-break: break-word;
+}
+
+.tl-stat-delta {
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.tl-stat-delta.is-up {
+  color: #16a34a;
+}
+
+.tl-stat-delta.is-down {
+  color: #dc2626;
+}
+
+.tl-stat-delta.is-flat {
+  color: var(--tl-muted);
+}
+
+.tl-chart-card .ant-card-body {
+  padding: 12px 16px 16px;
+}
+
+.tl-chart-empty {
+  display: grid;
+  place-items: center;
+  color: var(--tl-muted);
+}
+
+/* Tables scroll horizontally on small screens instead of breaking the page. */
+.tl-page .ant-table-wrapper {
+  max-width: 100%;
+}
+
+/* Page titles written as antd <Title level={2|3}> match PageHeader. */
+.tl-content h2.ant-typography,
+.tl-content h3.ant-typography {
+  font-size: 22px;
+  font-weight: 800;
+  line-height: 1.3;
+}
+
+/* Common spacing for cards stacked directly in a page. */
+.tl-content .ant-card + .ant-card {
+  margin-top: 16px;
+}
+
+.tl-page .ant-card + .ant-card {
+  margin-top: 0;
+}
+
+/* ---------------------------------------------------------------- responsive */
+
+@media (max-width: 991px) {
+  :root {
+    --tl-gutter: 16px;
+  }
+
+  .tl-main,
+  .tl-shell.is-collapsed .tl-main {
+    margin-left: 0;
+  }
+
+  .tl-header.ant-layout-header {
+    padding: 0 12px;
+  }
+
+  .tl-header-user-text {
+    display: none;
+  }
+}
+
+@media (max-width: 575px) {
+  .tl-page-header h1 {
+    font-size: 19px;
+  }
+
+  .tl-content h2.ant-typography,
+  .tl-content h3.ant-typography {
+    font-size: 19px;
+  }
+
+  .tl-page-header-extra {
+    width: 100%;
+  }
+
+  .tl-page-header-extra > .ant-btn:not(.ant-btn-icon-only),
+  .tl-page-header-extra > .ant-select {
+    flex: 1 1 auto;
+  }
+
+  .tl-card.ant-card .ant-card-body {
+    padding: 14px;
+  }
+
+  /* Icon above the numbers so long amounts keep one line. */
+  .tl-stat {
+    flex-direction: column;
+    gap: 8px;
+  }
+
+  .tl-stat-value {
+    white-space: nowrap;
+  }
+
+  .tl-stat-icon {
+    width: 34px;
+    height: 34px;
+    flex-basis: 34px;
+    font-size: 16px;
+    border-radius: 10px;
+  }
+
+  .tl-stat-label {
+    font-size: 12px;
+  }
+
+  .tl-stat-value {
+    font-size: 18px;
+  }
+
+  .ant-modal {
+    max-width: calc(100vw - 24px);
+  }
+}

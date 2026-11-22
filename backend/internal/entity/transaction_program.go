@@ -7,16 +7,18 @@ import (
 )
 
 type TransactionProgram struct {
-	TransactionProgramID uuid.UUID `json:"user_program_id"`
-	UserID               uuid.UUID `json:"user_id"`
-	User                 User      `json:"user" gorm:"foreignKey:UserID;references:UserID"`
-	ProgramID            uuid.UUID `json:"program_id"`
-	Program              Program   `json:"program" gorm:"foreignKey:ProgramID;references:ProgramID"`
-	InvoiceNumber        string    `json:"invoice_number"`
-	Status               string    `json:"status"`
-	Motivation           string    `json:"motivation"`
-	CreatedAt            time.Time `json:"created_at"`
-	UpdatedAt            time.Time `json:"updated_at"`
+	TransactionProgramID uuid.UUID  `json:"user_program_id"`
+	UserID               uuid.UUID  `json:"user_id"`
+	User                 User       `json:"user" gorm:"foreignKey:UserID;references:UserID"`
+	ProgramID            uuid.UUID  `json:"program_id"`
+	Program              Program    `json:"program" gorm:"foreignKey:ProgramID;references:ProgramID"`
+	PackageID            *uuid.UUID `json:"package_id"`
+	BonusTryouts         int        `json:"bonus_tryouts"`
+	InvoiceNumber        string     `json:"invoice_number"`
+	Status               string     `json:"status"`
+	Motivation           string     `json:"motivation"`
+	CreatedAt            time.Time  `json:"created_at"`
+	UpdatedAt            time.Time  `json:"updated_at"`
 }
 
 func (TransactionProgram) TableName() string {

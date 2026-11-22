@@ -36,6 +36,8 @@ func (repository *TryoutRepository) Update(ctx context.Context, tryout entity.Tr
 		"token":        tryout.Token,
 		"is_published": tryout.IsPublished,
 		"show_score":   tryout.ShowScore,
+		"sequence":     tryout.Sequence,
+		"scoring_mode": tryout.ScoringMode,
 		"updated_at":   tryout.UpdatedAt,
 	}).Error
 	exception.PanicLogging(err)
@@ -71,4 +73,11 @@ func (repository *TryoutRepository) FindAll(ctx context.Context, params model.Fi
 
 	query.Find(&tryouts)
 	return tryouts
+}
+
+// FindByProgram lists the tryouts of a program in TO order.
+func (repository *TryoutRepository) FindByProgram(ctx context.Context, programID uuid.UUID) ([]entity.Tryout, error) {
+	var tryouts []entity.Tryout
+	err := repository.DB.WithContext(ctx).Where("program_id = ?", programID).Order("sequence ASC, start_time ASC").Find(&tryouts).Error
+	return tryouts, err
 }

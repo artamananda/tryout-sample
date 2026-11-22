@@ -3,7 +3,7 @@ import DashboardScreen from '../screens/Dashboard';
 import LoginScreen from '../screens/Auth/Login';
 import NotFoundScreen from '../screens/NotFound';
 import PublicRoute from './PublicRoute';
-import { Suspense } from 'react';
+import { lazy, Suspense } from 'react';
 import { Spin } from 'antd';
 import PrivateRoute from './PrivateRoute';
 import AppLayout from '../screens/Layout/AppLayout';
@@ -11,6 +11,9 @@ import TryoutScreen from '../screens/Tryout';
 import RegisterScreen from '../screens/Auth/Register';
 import ForgotPasswordScreen from '../screens/Auth/ForgotPassword';
 import TryoutRoute from './TryoutRoute';
+
+// Loaded on demand: it carries the chart library.
+const ParticipantDashboard = lazy(() => import('../screens/ParticipantDashboard'));
 import HomeScreen from '../screens/Home';
 import ELibraryScreen from '../screens/ELibrary';
 import ReadScreen from '../screens/ELibrary/Read';
@@ -20,6 +23,13 @@ import BankSoalScreen from '../screens/BankSoal';
 import LearningVideoScreen from '../screens/LearningVideo';
 import MyTryoutScoreScreen from '../screens/Tryout/MyScore';
 import ProfileScreen from '../screens/Profile';
+import PackagesScreen, { CurrentPackagesRedirect } from '../screens/Packages';
+import MyOrdersScreen from '../screens/Orders';
+import OrderDetailScreen from '../screens/Orders/Detail';
+import SKDResultScreen from '../screens/Tryout/SKDResult';
+import TryoutReviewScreen from '../screens/Tryout/Review';
+import MyProgramScreen from '../screens/MyProgram';
+import CertificateScreen from '../screens/Certificate';
 
 const RootNavigator = () => {
   return (
@@ -86,7 +96,7 @@ const RootNavigator = () => {
             path="/dashboard"
             element={
               <PrivateRoute loginPath="/login">
-                <DashboardScreen />
+                <ParticipantDashboard />
               </PrivateRoute>
             }
           />
@@ -123,6 +133,56 @@ const RootNavigator = () => {
             element={
               <PrivateRoute loginPath="/login">
                 <LearningVideoScreen />
+              </PrivateRoute>
+            }
+          />
+
+          {/* Price lists are public so links from ads work without login. */}
+          <Route path="/paket" element={<CurrentPackagesRedirect />} />
+          <Route path="/program/:programId/paket" element={<PackagesScreen />} />
+          <Route path="/sertifikat/:number" element={<CertificateScreen />} />
+
+          <Route
+            path="/program-saya"
+            element={
+              <PrivateRoute loginPath="/login">
+                <MyProgramScreen />
+              </PrivateRoute>
+            }
+          />
+
+          <Route
+            path="/pesanan"
+            element={
+              <PrivateRoute loginPath="/login">
+                <MyOrdersScreen />
+              </PrivateRoute>
+            }
+          />
+
+          <Route
+            path="/pesanan/:orderNumber"
+            element={
+              <PrivateRoute loginPath="/login">
+                <OrderDetailScreen />
+              </PrivateRoute>
+            }
+          />
+
+          <Route
+            path="/tryout/:id/hasil-skd"
+            element={
+              <PrivateRoute loginPath="/login">
+                <SKDResultScreen />
+              </PrivateRoute>
+            }
+          />
+
+          <Route
+            path="/tryout/:id/pembahasan"
+            element={
+              <PrivateRoute loginPath="/login">
+                <TryoutReviewScreen />
               </PrivateRoute>
             }
           />

@@ -11,6 +11,10 @@ export interface TryoutProps {
   updated_at: Date | string;
   token: string;
   show_score?: boolean;
+  sequence?: number;
+  scoring_mode?: 'irt' | 'skd' | string;
+  has_access?: boolean;
+  locked_reason?: string;
 }
 
 export interface FetchAllTryoutsResponse extends BaseResponsePaginationProps<TryoutProps> {

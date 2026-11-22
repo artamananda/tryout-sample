@@ -164,3 +164,9 @@ func (s *Scheduler) TriggerQuestionGenerator() error {
 func (s *Scheduler) TriggerGenerateForType(typeCode string, count int) (int, error) {
 	return jobs.NewQuestionGenerator(s.config, s.bankSoalRepo, s.systemConfigRepo).RunForType(typeCode, count)
 }
+
+// AddFunc registers an extra job (spec in Asia/Jakarta time).
+func (s *Scheduler) AddFunc(spec string, cmd func()) error {
+	_, err := s.cronRunner.AddFunc(spec, cmd)
+	return err
+}

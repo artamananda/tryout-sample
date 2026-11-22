@@ -1,11 +1,17 @@
 package main
 
 import (
+	"context"
+	"log"
+	"time"
+
 	"github.com/artamananda/tryout-sample/internal/config"
 	"github.com/artamananda/tryout-sample/internal/controller"
 	"github.com/artamananda/tryout-sample/internal/cron"
 	"github.com/artamananda/tryout-sample/internal/exception"
+	"github.com/artamananda/tryout-sample/internal/helper"
 	"github.com/artamananda/tryout-sample/internal/model"
+	"github.com/artamananda/tryout-sample/internal/payment"
 	"github.com/artamananda/tryout-sample/internal/repository"
 	"github.com/artamananda/tryout-sample/internal/service"
 	"github.com/aws/aws-sdk-go-v2/feature/s3/manager"
@@ -18,10 +24,10 @@ import (
 	_ "github.com/artamananda/tryout-sample/docs"
 )
 
-const APP_VERSION = "0.7.0"
+const APP_VERSION = "0.8.0"
 
 // @title Tryout Sample
-// @version 0.7.0
+// @version 0.8.0
 // @description API Documentation for Telisik Tryout
 // @termsOfService http://swagger.io/terms/
 // @contact.name Artamananda
@@ -70,6 +76,11 @@ func main() {
 	chatArtifactRepository := repository.NewChatArtifactRepository(db)
 	learningVideoRepository := repository.NewLearningVideoRepository(db)
 	systemConfigRepository := repository.NewSystemConfigRepository(db)
+	packageRepository := repository.NewPackageRepository(db)
+	orderRepository := repository.NewOrderRepository(db)
+	liveClassRepository := repository.NewLiveClassRepository(db)
+	mentoringRepository := repository.NewMentoringRepository(db)
+	growthRepository := repository.NewGrowthRepository(db)
 
 	// Cron Scheduler
 	scheduler := cron.NewScheduler(
@@ -90,8 +101,74 @@ func main() {
 	userAnswerService := service.NewUserAnswerService(&userAnswerRepository)
 	transactionTryoutService := service.NewTransactionTryoutService(&transactionRepository)
 	programService := service.NewProgramService(&programRepository, uploader)
+	programService.PackageRepository = &packageRepository
+	accessService := service.NewAccessService(&transactionProgramRepository, &packageRepository)
+	packageService := service.NewPackageService(&packageRepository, &programRepository, &orderRepository, &accessService)
+	orderService := service.NewOrderService(
+		&orderRepository,
+		&packageRepository,
+		&programRepository,
+		&userRepository,
+		&transactionProgramRepository,
+		&accessService,
+		// Only the bridge base URL is configured; endpoints are fixed in the client.
+		payment.NewBridgeClient(initConfig.Get("PAYMENT_BRIDGE_URL")),
+	)
+	skdResultService := service.NewSKDResultService(&tryoutRepository, &questionRepository, &userAnswerRepository, &transactionRepository, &userRepository)
+	liveClassService := service.NewLiveClassService(&liveClassRepository, &programRepository, &accessService)
+	mentoringService := service.NewMentoringService(&mentoringRepository, &userRepository, &programRepository, &accessService)
+	growthService := service.NewGrowthService(&growthRepository, &userRepository, &orderRepository, &programRepository, &packageRepository, &transactionProgramRepository, &accessService, skdResultService)
+	mailConfig := model.SendOtpConfig{
+		SmtpHost:     initConfig.Get("GOMAIL_SMTP_HOST"),
+		SmtpPort:     initConfig.Get("GOMAIL_SMTP_PORT"),
+		SenderName:   initConfig.Get("GOMAIL_SENDER_NAME"),
+		AuthEmail:    initConfig.Get("GOMAIL_AUTH_EMAIL"),
+		AuthPassword: initConfig.Get("GOMAIL_AUTH_PASSWORD"),
+	}
+	weeklyReportService := &service.WeeklyReportService{
+		DB:                           db,
+		ProgramRepository:            &programRepository,
+		TransactionProgramRepository: &transactionProgramRepository,
+		PackageRepository:            &packageRepository,
+		LiveClassRepository:          &liveClassRepository,
+		MentoringRepository:          &mentoringRepository,
+		SystemConfigRepository:       &systemConfigRepository,
+		SKDResultService:             skdResultService,
+		SendMail: func(to string, subject string, html string) error {
+			return helper.SendMail(mailConfig, to, subject, html)
+		},
+		WebURL: initConfig.Get("WEB_BASE_URL"),
+		Now:    time.Now,
+	}
+	tutorFeeService := &service.TutorFeeService{
+		ProgramRepository:            &programRepository,
+		OrderRepository:              &orderRepository,
+		TransactionProgramRepository: &transactionProgramRepository,
+		PackageRepository:            &packageRepository,
+		LiveClassRepository:          &liveClassRepository,
+		MentoringRepository:          &mentoringRepository,
+		Now:                          time.Now,
+	}
+	analyticsService := &service.AnalyticsService{
+		DB:                  db,
+		TryoutRepository:    &tryoutRepository,
+		LiveClassRepository: &liveClassRepository,
+		SKDResultService:    skdResultService,
+		Now:                 time.Now,
+	}
+	// Weekly progress email: Sunday 19:00 WIB.
+	if err := scheduler.AddFunc("0 19 * * 0", func() {
+		result, err := weeklyReportService.Run(context.Background(), "", false)
+		if err != nil {
+			log.Printf("weekly report run failed: %v", err)
+			return
+		}
+		log.Printf("weekly report: %d sent, %d skipped, %d failed", result.Sent, result.Skipped, result.Failed)
+	}); err != nil {
+		log.Printf("failed to schedule weekly report: %v", err)
+	}
 	transactionProgramService := service.NewTransactionProgramService(&transactionProgramRepository, &programRepository)
-	registerProgramService := service.NewRegisterProgramService(&userService, &programService, &transactionProgramService, uploader)
+	registerProgramService := service.NewRegisterProgramService(&userService, &programService, &transactionProgramService, &packageRepository, uploader)
 	ebookService := service.NewEbookService(&ebookRepository, uploader)
 	aiService := service.NewAIService(initConfig, &chatLogRepository, &aiExampleRepository, &chatArtifactRepository, &systemConfigRepository)
 	extractionService := service.NewExtractionService(initConfig)
@@ -100,11 +177,11 @@ func main() {
 	systemConfigService := service.NewSystemConfigService(&systemConfigRepository)
 
 	userController := controller.NewUserController(&userService, initConfig)
-	tryoutController := controller.NewTryoutController(&tryoutService, initConfig)
+	tryoutController := controller.NewTryoutController(&tryoutService, &accessService, initConfig)
 	tryoutResultController := controller.NewTryoutResultController(&tryoutResultService, initConfig)
-	questionController := controller.NewQuestionController(&questionService, &transactionTryoutService, initConfig)
+	questionController := controller.NewQuestionController(&questionService, &transactionTryoutService, &accessService, &tryoutRepository, initConfig)
 	userAnswerController := controller.NewUserAnswerController(&userAnswerService, &transactionTryoutService, initConfig)
-	transactionTryoutController := controller.NewTransactionTryoutController(&transactionTryoutService, &tryoutService, &tryoutResultService, &transactionProgramRepository, initConfig)
+	transactionTryoutController := controller.NewTransactionTryoutController(&transactionTryoutService, &tryoutService, &tryoutResultService, &transactionProgramRepository, &accessService, skdResultService, initConfig)
 	programController := controller.NewProgramController(&programService, initConfig)
 	transactionProgramController := controller.NewTransactionProgramController(&transactionProgramService, initConfig)
 	registerProgramController := controller.NewRegisterProgramController(&registerProgramService, initConfig)
@@ -114,6 +191,13 @@ func main() {
 	learningVideoController := controller.NewLearningVideoController(&learningVideoService, initConfig)
 	systemConfigController := controller.NewSystemConfigController(systemConfigService, initConfig)
 	adminController := controller.NewAdminController(scheduler, initConfig)
+	packageController := controller.NewPackageController(&packageService, initConfig)
+	orderController := controller.NewOrderController(&orderService, initConfig)
+	skdResultController := controller.NewSKDResultController(skdResultService, initConfig)
+	liveClassController := controller.NewLiveClassController(&liveClassService, initConfig)
+	mentoringController := controller.NewMentoringController(&mentoringService, initConfig)
+	analyticsController := controller.NewAnalyticsController(analyticsService, initConfig)
+	growthController := controller.NewGrowthController(&growthService, weeklyReportService, tutorFeeService, &systemConfigRepository, initConfig)
 
 	userController.Route(app)
 	tryoutController.Route(app)
@@ -130,6 +214,13 @@ func main() {
 	bankSoalController.Route(app)
 	systemConfigController.Route(app)
 	adminController.Route(app)
+	packageController.Route(app)
+	orderController.Route(app)
+	skdResultController.Route(app)
+	liveClassController.Route(app)
+	mentoringController.Route(app)
+	growthController.Route(app)
+	analyticsController.Route(app)
 
 	app.Get("/", func(c *fiber.Ctx) error {
 		return c.Status(fiber.StatusCreated).JSON(model.GeneralResponse{

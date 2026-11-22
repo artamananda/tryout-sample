@@ -1,7 +1,8 @@
-import Dashboard from "../../components/Dashboard/Dashboard";
+import { lazy } from "react";
 
-const DashboardScreen = () => {
-  return <Dashboard />;
-};
+// Loaded on demand: it carries the chart library.
+const AnalyticsDashboard = lazy(() => import("./AnalyticsDashboard"));
+
+const DashboardScreen = () => <AnalyticsDashboard />;
 
 export default DashboardScreen;

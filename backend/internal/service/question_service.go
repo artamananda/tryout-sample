@@ -44,7 +44,12 @@ func (service *QuestionService) Create(ctx context.Context, request model.Create
 		IsOptions:     request.IsOptions,
 		Options:       request.Options,
 		CorrectAnswer: request.CorrectAnswer,
+		Explanation:   request.Explanation,
 		Points:        request.Points,
+	}
+	question.OptionScores, err = normalizeOptionScores(request.OptionScores, request.Options)
+	if err != nil {
+		return model.QuestionResponse{}, err
 	}
 
 	question, err = service.QuestionRepository.Create(ctx, question)
@@ -64,6 +69,8 @@ func (service *QuestionService) Create(ctx context.Context, request model.Create
 		ImageUrl:      question.ImageUrl,
 		Options:       question.Options,
 		CorrectAnswer: question.CorrectAnswer,
+		OptionScores:  toIntSlice(question.OptionScores),
+		Explanation:   question.Explanation,
 		Points:        question.Points,
 	}, nil
 }
@@ -90,6 +97,15 @@ func (service *QuestionService) Update(ctx context.Context, request model.Update
 	question.Options = request.Options
 	question.CorrectAnswer = request.CorrectAnswer
 	question.Points = request.Points
+	if request.Explanation != nil {
+		question.Explanation = *request.Explanation
+	}
+	if request.OptionScores != nil {
+		question.OptionScores, err = normalizeOptionScores(request.OptionScores, request.Options)
+		if err != nil {
+			return model.QuestionResponse{}, err
+		}
+	}
 	question.UpdatedAt = time.Now()
 
 	question, err = service.QuestionRepository.Update(ctx, question)
@@ -111,6 +127,8 @@ func (service *QuestionService) Update(ctx context.Context, request model.Update
 		IsOptions:     question.IsOptions,
 		Options:       question.Options,
 		CorrectAnswer: question.CorrectAnswer,
+		OptionScores:  toIntSlice(question.OptionScores),
+		Explanation:   question.Explanation,
 		Points:        question.Points,
 	}, nil
 }
@@ -156,6 +174,8 @@ func (service *QuestionService) UpdateImage(ctx context.Context, request model.U
 		IsOptions:     question.IsOptions,
 		Options:       question.Options,
 		CorrectAnswer: question.CorrectAnswer,
+		OptionScores:  toIntSlice(question.OptionScores),
+		Explanation:   question.Explanation,
 		Points:        question.Points,
 	}, nil
 }
@@ -189,6 +209,8 @@ func (service *QuestionService) FindByID(ctx context.Context, questionID string)
 		IsOptions:     question.IsOptions,
 		Options:       question.Options,
 		CorrectAnswer: question.CorrectAnswer,
+		OptionScores:  toIntSlice(question.OptionScores),
+		Explanation:   question.Explanation,
 		Points:        question.Points,
 	}, nil
 }
@@ -216,6 +238,8 @@ func (service *QuestionService) FindByTryoutID(ctx context.Context, tryoutID str
 			IsOptions:     question.IsOptions,
 			Options:       question.Options,
 			CorrectAnswer: question.CorrectAnswer,
+			OptionScores:  toIntSlice(question.OptionScores),
+			Explanation:   question.Explanation,
 			Points:        question.Points,
 		})
 	}
@@ -245,6 +269,8 @@ func (service *QuestionService) FindAll(ctx context.Context) ([]model.QuestionRe
 				IsOptions:     question.IsOptions,
 				Options:       question.Options,
 				CorrectAnswer: question.CorrectAnswer,
+				OptionScores:  toIntSlice(question.OptionScores),
+				Explanation:   question.Explanation,
 				Points:        question.Points,
 			},
 		)
