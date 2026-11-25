@@ -124,8 +124,11 @@ const ListTryout = () => {
               message.error('Tryout belum mulai!');
             } else {
               setId(record.tryout_id);
+              // The API sends the token only while the tryout is open for this
+              // participant; otherwise they type the one shared by the admin.
+              setAutoToken(Boolean(record.token));
               form.setFieldValue('tryout_id', record.tryout_id);
-              form.setFieldValue('token', '');
+              form.setFieldValue('token', record.token || '');
               showModal(record.title);
             }
           }}
@@ -182,6 +185,7 @@ const ListTryout = () => {
 
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [modalTitle, setModalTitle] = useState('Input Token');
+  const [autoToken, setAutoToken] = useState(false);
   const [form] = Form.useForm();
 
   const showModal = (modalTitle: string) => {
@@ -237,6 +241,7 @@ const ListTryout = () => {
           setIsModalOpen(false);
         }}
         onOk={form.submit}
+        okText={autoToken ? 'Mulai Tryout' : 'OK'}
       >
         <Form
           form={form}
@@ -252,10 +257,20 @@ const ListTryout = () => {
           <Form.Item<FieldType>
             label="Token"
             name="token"
-            rules={[{ required: true, message: 'Please input your token!' }]}
+            hidden={autoToken}
+            rules={[{ required: true, message: 'Masukkan token tryout!' }]}
           >
             <Input />
           </Form.Item>
+          {autoToken && (
+            <Alert
+              type="success"
+              showIcon
+              style={{ marginBottom: 16 }}
+              message="Token sudah tersedia untuk Anda"
+              description="Tryout ini termasuk dalam paket Anda dan sedang dibuka. Tekan Mulai Tryout untuk mulai mengerjakan."
+            />
+          )}
           <Alert
             type="warning"
             showIcon
@@ -270,7 +285,7 @@ const ListTryout = () => {
                     listStylePosition: 'outside'
                   }}
                 >
-                  <li>Tryout akan langsung dimulai setelah token dikirim.</li>
+                  <li>Tryout akan langsung dimulai setelah Anda menekan tombol mulai.</li>
                   <li>
                     Pastikan koneksi internet stabil sebelum menekan tombol
                     mulai.

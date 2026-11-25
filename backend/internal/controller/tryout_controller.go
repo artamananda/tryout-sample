@@ -1,6 +1,8 @@
 package controller
 
 import (
+	"time"
+
 	"github.com/artamananda/tryout-sample/internal/config"
 	"github.com/artamananda/tryout-sample/internal/entity"
 	"github.com/artamananda/tryout-sample/internal/helper"
@@ -24,7 +26,7 @@ func (controller TryoutController) Route(app *fiber.App) {
 	app.Post("/v1/api/tryout", middleware.AuthenticateJWT([]string{"admin"}, controller.Config), controller.Create)
 	app.Patch("/v1/api/tryout/:id", middleware.AuthenticateJWT([]string{"admin"}, controller.Config), controller.Update)
 	app.Delete("/v1/api/tryout/:id", middleware.AuthenticateJWT([]string{"admin"}, controller.Config), controller.Delete)
-	app.Get("/v1/api/tryout/:id", controller.FindById)
+	app.Get("/v1/api/tryout/:id", middleware.OptionalJWT(controller.Config), controller.FindById)
 	app.Get("/v1/api/tryout", middleware.AuthenticateJWT([]string{"admin", "user"}, controller.Config), controller.FindAll)
 }
 
@@ -128,6 +130,11 @@ func (controller TryoutController) FindById(c *fiber.Ctx) error {
 	if err != nil {
 		return err
 	}
+	// This route is public; only admins may read the token here. Participants
+	// get it from the tryout list once the tryout is open for them.
+	if authUser, ok := middleware.GetAuthUser(c); !ok || !authUser.IsAdmin() {
+		result.Token = ""
+	}
 	return c.Status(fiber.StatusOK).JSON(model.GeneralResponse{
 		Code:    200,
 		Message: "Success",
@@ -177,9 +184,8 @@ func (controller TryoutController) FindAll(c *fiber.Ctx) error {
 	if err != nil {
 		return err
 	}
+	now := controller.AccessService.Now()
 	for i := range result {
-		// The token is what participants must type in; never send it to them.
-		result[i].Token = ""
 		access := controller.AccessService.Evaluate(entity.Tryout{
 			ProgramID: result[i].ProgramID,
 			Sequence:  result[i].Sequence,
@@ -187,6 +193,11 @@ func (controller TryoutController) FindAll(c *fiber.Ctx) error {
 		hasAccess := access.HasAccess
 		result[i].HasAccess = &hasAccess
 		result[i].LockedReason = access.Reason
+		// The token is handed out only to participants whose package covers the
+		// tryout, and only while it is open, so nobody has to share it by hand.
+		if !tokenVisible(result[i], hasAccess, now) {
+			result[i].Token = ""
+		}
 	}
 
 	return success(c, fiber.StatusOK, map[string]interface{}{
@@ -195,4 +206,16 @@ func (controller TryoutController) FindAll(c *fiber.Ctx) error {
 		"prev":    nil,
 		"results": result,
 	})
+}
+
+// tokenVisible reports whether a participant may see the tryout token: the
+// tryout is published, covered by their package and inside its open window.
+func tokenVisible(tryout model.TryoutResponse, hasAccess bool, now time.Time) bool {
+	if !hasAccess || !tryout.IsPublished {
+		return false
+	}
+	if tryout.StartTime.IsZero() || tryout.EndTime.IsZero() {
+		return false
+	}
+	return !now.Before(tryout.StartTime) && now.Before(tryout.EndTime)
 }
