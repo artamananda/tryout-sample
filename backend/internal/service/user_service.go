@@ -88,7 +88,8 @@ func hashPassword(password string) (string, error) {
 
 func (service *UserService) createUser(ctx context.Context, user entity.User) (model.RegisterResponse, error) {
 	created, err := service.UserRepository.Create(ctx, user)
-	if errors.Is(err, repository.ErrAccountAlreadyExists) {
+	// The unique index catches two sign-ups with the same username at once.
+	if errors.Is(err, repository.ErrAccountAlreadyExists) || isUsernameConflict(err) {
 		return model.RegisterResponse{}, exception.BadRequestError{Message: "email atau username sudah digunakan"}
 	}
 	if err != nil {
@@ -108,7 +109,7 @@ func (service *UserService) Create(ctx context.Context, request model.RegisterRe
 	}
 
 	return service.createUser(ctx, entity.User{
-		Username:   strings.TrimSpace(request.Username),
+		Username:   normalizeUsername(request.Username),
 		Name:       strings.TrimSpace(request.Name),
 		Email:      strings.ToLower(strings.TrimSpace(request.Email)),
 		Password:   hashedPassword,
@@ -150,7 +151,7 @@ func (service *UserService) buildProfileChanges(ctx context.Context, user entity
 	trimmed := func(value *string) string { return strings.TrimSpace(*value) }
 
 	if fields.Username != nil {
-		username := trimmed(fields.Username)
+		username := normalizeUsername(*fields.Username)
 		if username == "" {
 			return nil, exception.BadRequestError{Message: "username tidak boleh kosong"}
 		}
@@ -240,6 +241,16 @@ func (service *UserService) buildProfileChanges(ctx context.Context, user entity
 	return changes, nil
 }
 
+// normalizeUsername is how every username is stored: trimmed and lowercase,
+// so "Dzaki" and "dzaki" are the same account name.
+func normalizeUsername(username string) string {
+	return strings.ToLower(strings.TrimSpace(username))
+}
+
+func isUsernameConflict(err error) bool {
+	return err != nil && strings.Contains(err.Error(), "users_username_unique")
+}
+
 func isValidUsername(username string) bool {
 	for _, r := range username {
 		isLetter := (r >= 'a' && r <= 'z') || (r >= 'A' && r <= 'Z')
@@ -257,6 +268,9 @@ func (service *UserService) applyChanges(ctx context.Context, user entity.User, 
 		if err := service.UserRepository.UpdateFields(ctx, user.UserID, changes); err != nil {
 			if strings.Contains(err.Error(), "users_phone_number_unique") {
 				return model.GetUserResponse{}, exception.BadRequestError{Message: "nomor WhatsApp sudah digunakan akun lain"}
+			}
+			if isUsernameConflict(err) {
+				return model.GetUserResponse{}, exception.BadRequestError{Message: "username sudah digunakan"}
 			}
 			return model.GetUserResponse{}, err
 		}
@@ -512,7 +526,7 @@ func (service *UserService) SelfRegister(ctx context.Context, request model.Self
 	}
 
 	email := strings.ToLower(strings.TrimSpace(request.Email))
-	username := strings.TrimSpace(request.Username)
+	username := normalizeUsername(request.Username)
 	if !isValidUsername(username) {
 		return model.RegisterResponse{}, exception.BadRequestError{Message: "username hanya boleh berisi huruf, angka, titik, dan garis bawah"}
 	}

@@ -224,13 +224,14 @@ const ProfileScreen = () => {
           <Form.Item
             name="username"
             label="Username"
+            normalize={(value: string) => (value || '').toLowerCase()}
             rules={[
               { required: true, message: 'Username wajib diisi' },
               { min: 3, message: 'Username minimal 3 karakter' },
               { max: 50, message: 'Username maksimal 50 karakter' },
               {
-                pattern: /^[a-zA-Z0-9_.]+$/,
-                message: 'Hanya huruf, angka, titik, dan garis bawah'
+                pattern: /^[a-z0-9_.]+$/,
+                message: 'Hanya huruf kecil, angka, titik, dan garis bawah'
               }
             ]}
           >

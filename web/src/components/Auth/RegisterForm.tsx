@@ -14,12 +14,12 @@ const RegisterForm = () => {
   const [otp, setOtp] = useState<string[]>();
 
   const validateUsername = (rule: any, value: string) => {
-    const regex = /^[a-zA-Z0-9_]+$/;
+    const regex = /^[a-z0-9_.]+$/;
     if (!value || regex.test(value)) {
       return Promise.resolve();
     }
     return Promise.reject(
-      'Username hanya boleh huruf, angka, atau underscore.'
+      'Username hanya boleh huruf kecil, angka, titik, atau garis bawah.'
     );
   };
 
@@ -97,6 +97,7 @@ const RegisterForm = () => {
         <Form.Item
           name="username"
           label="Username"
+          normalize={(value: string) => (value || '').toLowerCase()}
           rules={[
             {
               required: true,
