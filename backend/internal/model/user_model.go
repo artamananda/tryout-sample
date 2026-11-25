@@ -84,27 +84,28 @@ type ChangePasswordRequest struct {
 }
 
 type GetUserResponse struct {
-	UserID         uuid.UUID `json:"user_id"`
-	Username       string    `json:"username"`
-	Name           string    `json:"name"`
-	Email          string    `json:"email"`
-	Role           string    `json:"role"`
-	PhoneNumber    string    `json:"phone_number"`
-	Gender         string    `json:"gender"`
-	BirthDate      string    `json:"birth_date"`
-	LastEducation  string    `json:"last_education"`
-	Major          string    `json:"major"`
-	TargetAgency   string    `json:"target_agency"`
-	TargetPosition string    `json:"target_position"`
-	NISN           string    `json:"nisn"`
-	Grade          string    `json:"grade"`
-	School         string    `json:"school"`
-	Regency        string    `json:"regency"`
-	Province       string    `json:"province"`
-	PictureURL     string    `json:"picture_url"`
-	LastLogin      time.Time `json:"last_login"`
-	CreatedAt      time.Time `json:"created_at"`
-	UpdatedAt      time.Time `json:"updated_at"`
+	UserID         uuid.UUID  `json:"user_id"`
+	Username       string     `json:"username"`
+	Name           string     `json:"name"`
+	Email          string     `json:"email"`
+	Role           string     `json:"role"`
+	PhoneNumber    string     `json:"phone_number"`
+	Gender         string     `json:"gender"`
+	BirthDate      string     `json:"birth_date"`
+	LastEducation  string     `json:"last_education"`
+	Major          string     `json:"major"`
+	TargetAgency   string     `json:"target_agency"`
+	TargetPosition string     `json:"target_position"`
+	NISN           string     `json:"nisn"`
+	Grade          string     `json:"grade"`
+	School         string     `json:"school"`
+	Regency        string     `json:"regency"`
+	Province       string     `json:"province"`
+	PictureURL     string     `json:"picture_url"`
+	Badges         UserBadges `json:"badges"`
+	LastLogin      time.Time  `json:"last_login"`
+	CreatedAt      time.Time  `json:"created_at"`
+	UpdatedAt      time.Time  `json:"updated_at"`
 }
 
 // RegisterResponse and UpdateUserResponse share the user response shape.
@@ -114,6 +115,8 @@ type UpdateUserResponse = GetUserResponse
 type FindAllUserRequest struct {
 	Search string `json:"search"`
 	Role   string `json:"role"`
+	// Verified limits the list to users with (true) or without (false) the blue check.
+	Verified *bool `json:"verified"`
 }
 
 type CheckByEmailRequest struct {
@@ -128,4 +131,37 @@ type ResetPasswordRequest struct {
 	Email       string `json:"email" validate:"required,email"`
 	Otp         string `json:"otp" validate:"required"`
 	NewPassword string `json:"new_password" validate:"required,min=6,max=72"`
+}
+
+// VerifiedLabels are the reasons an admin may give the blue check for.
+var VerifiedLabels = map[string]string{
+	"owner":       "Owner TELISIK",
+	"tutor":       "Tutor",
+	"berprestasi": "Siswa Berprestasi",
+}
+
+// UserBadges are the badges shown next to a user's name.
+type UserBadges struct {
+	// Verified is the blue check; only admins grant it.
+	Verified *VerifiedBadge `json:"verified,omitempty"`
+	// ProfileComplete is true once every field in ProfileMissing is filled.
+	ProfileComplete bool     `json:"profile_complete"`
+	ProfileMissing  []string `json:"profile_missing,omitempty"`
+	// Package is the highest paid package the user holds, if any.
+	Package *PackageBadge `json:"package,omitempty"`
+}
+
+type VerifiedBadge struct {
+	Label      string    `json:"label"`
+	LabelName  string    `json:"label_name"`
+	VerifiedAt time.Time `json:"verified_at"`
+}
+
+type PackageBadge struct {
+	Code string `json:"code"`
+	Name string `json:"name"`
+}
+
+type SetVerificationRequest struct {
+	Label string `json:"label" validate:"required,oneof=owner tutor berprestasi"`
 }

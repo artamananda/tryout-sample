@@ -78,6 +78,13 @@ func (repository *UserRepository) FindAll(ctx context.Context, params model.Find
 	if params.Role != "" {
 		query = query.Where("role = ?", params.Role)
 	}
+	if params.Verified != nil {
+		if *params.Verified {
+			query = query.Where("verified_at IS NOT NULL")
+		} else {
+			query = query.Where("verified_at IS NULL")
+		}
+	}
 	query = query.Order("created_at DESC")
 	query.Find(&users)
 	return users
@@ -219,4 +226,31 @@ func (repository *UserRepository) SetReferralCodeIfEmpty(ctx context.Context, us
 		return "", errors.New("referral code was not saved")
 	}
 	return *user.ReferralCode, nil
+}
+
+// PackageBadges returns, per user, the most expensive paid package they hold
+// in any program. Users with only free packages are left out.
+func (repository *UserRepository) PackageBadges(ctx context.Context, userIDs []uuid.UUID) (map[uuid.UUID]model.PackageBadge, error) {
+	badges := map[uuid.UUID]model.PackageBadge{}
+	if len(userIDs) == 0 {
+		return badges, nil
+	}
+	var rows []struct {
+		UserID uuid.UUID
+		Code   string
+		Name   string
+	}
+	err := repository.DB.WithContext(ctx).Raw(`
+		SELECT DISTINCT ON (tp.user_id) tp.user_id, p.code, p.name
+		FROM transaction_programs tp
+		JOIN packages p ON p.package_id = tp.package_id
+		WHERE tp.user_id IN ? AND tp.status = 'PAID' AND p.price > 0
+		ORDER BY tp.user_id, p.price DESC, p.sort_order DESC`, userIDs).Scan(&rows).Error
+	if err != nil {
+		return nil, err
+	}
+	for _, row := range rows {
+		badges[row.UserID] = model.PackageBadge{Code: row.Code, Name: row.Name}
+	}
+	return badges, nil
 }

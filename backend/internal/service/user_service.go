@@ -16,6 +16,7 @@ import (
 	"github.com/artamananda/tryout-sample/internal/model"
 	"github.com/artamananda/tryout-sample/internal/repository"
 	"github.com/aws/aws-sdk-go-v2/feature/s3/manager"
+	"github.com/google/uuid"
 	"golang.org/x/crypto/bcrypt"
 )
 
@@ -47,6 +48,95 @@ func NewUserService(userRepository *repository.UserRepository, uploader *manager
 	}
 }
 
+// profileBadgeFields are the profile fields needed for the "Profil Lengkap"
+// badge, keyed by the JSON field name the web form uses.
+var profileBadgeFields = []struct {
+	key    string
+	filled func(entity.User) bool
+}{
+	{"name", func(u entity.User) bool { return strings.TrimSpace(u.Name) != "" }},
+	{"phone_number", func(u entity.User) bool { return strings.TrimSpace(u.PhoneNumber) != "" }},
+	{"gender", func(u entity.User) bool { return strings.TrimSpace(u.Gender) != "" }},
+	{"birth_date", func(u entity.User) bool { return u.BirthDate != nil && !u.BirthDate.IsZero() }},
+	{"last_education", func(u entity.User) bool { return strings.TrimSpace(u.LastEducation) != "" }},
+	{"province", func(u entity.User) bool { return strings.TrimSpace(u.Province) != "" }},
+	{"regency", func(u entity.User) bool { return strings.TrimSpace(u.Regency) != "" }},
+	{"target_agency", func(u entity.User) bool { return strings.TrimSpace(u.TargetAgency) != "" }},
+}
+
+// UserBadgesOf builds the badges of a user. The package badge needs the
+// user's memberships, so callers that have it pass it in.
+func UserBadgesOf(user entity.User, pkg *model.PackageBadge) model.UserBadges {
+	badges := model.UserBadges{Package: pkg}
+	for _, field := range profileBadgeFields {
+		if !field.filled(user) {
+			badges.ProfileMissing = append(badges.ProfileMissing, field.key)
+		}
+	}
+	badges.ProfileComplete = len(badges.ProfileMissing) == 0
+	if user.VerifiedAt != nil && user.VerifiedLabel != nil {
+		badges.Verified = &model.VerifiedBadge{
+			Label:      *user.VerifiedLabel,
+			LabelName:  model.VerifiedLabels[*user.VerifiedLabel],
+			VerifiedAt: *user.VerifiedAt,
+		}
+	}
+	return badges
+}
+
+// withPackageBadges adds the package badge to user responses in one query.
+func (service *UserService) withPackageBadges(ctx context.Context, responses []model.GetUserResponse) []model.GetUserResponse {
+	ids := make([]uuid.UUID, 0, len(responses))
+	for _, response := range responses {
+		ids = append(ids, response.UserID)
+	}
+	badges, err := service.UserRepository.PackageBadges(ctx, ids)
+	if err != nil {
+		// Badges are decoration; never fail the request over them.
+		log.Printf("package badges: %v", err)
+		return responses
+	}
+	for i := range responses {
+		if badge, ok := badges[responses[i].UserID]; ok {
+			responses[i].Badges.Package = &model.PackageBadge{Code: badge.Code, Name: badge.Name}
+		}
+	}
+	return responses
+}
+
+func (service *UserService) withPackageBadge(ctx context.Context, response model.GetUserResponse) model.GetUserResponse {
+	return service.withPackageBadges(ctx, []model.GetUserResponse{response})[0]
+}
+
+// SetVerification gives a user the blue check. Only admins call this.
+func (service *UserService) SetVerification(ctx context.Context, userID string, adminID uuid.UUID, request model.SetVerificationRequest) (model.GetUserResponse, error) {
+	if err := common.Validate(request); err != nil {
+		return model.GetUserResponse{}, exception.BadRequestError{Message: "label verifikasi harus owner, tutor, atau berprestasi"}
+	}
+	user, err := service.UserRepository.FindById(ctx, userID)
+	if err != nil {
+		return model.GetUserResponse{}, exception.NotFoundError{Message: err.Error()}
+	}
+	return service.applyChanges(ctx, user, map[string]interface{}{
+		"verified_label": request.Label,
+		"verified_at":    time.Now(),
+		"verified_by":    adminID,
+	})
+}
+
+// RemoveVerification takes the blue check away.
+func (service *UserService) RemoveVerification(ctx context.Context, userID string) (model.GetUserResponse, error) {
+	user, err := service.UserRepository.FindById(ctx, userID)
+	if err != nil {
+		return model.GetUserResponse{}, exception.NotFoundError{Message: err.Error()}
+	}
+	return service.applyChanges(ctx, user, map[string]interface{}{
+		"verified_label": nil,
+		"verified_at":    nil,
+		"verified_by":    nil,
+	})
+}
+
 // ToUserResponse maps a user entity to its public representation.
 func ToUserResponse(user entity.User) model.GetUserResponse {
 	birthDate := ""
@@ -72,6 +162,7 @@ func ToUserResponse(user entity.User) model.GetUserResponse {
 		Regency:        user.Regency,
 		Province:       user.Province,
 		PictureURL:     user.PictureURL,
+		Badges:         UserBadgesOf(user, nil),
 		LastLogin:      user.LastLogin,
 		CreatedAt:      user.CreatedAt,
 		UpdatedAt:      user.UpdatedAt,
@@ -290,7 +381,7 @@ func (service *UserService) applyChanges(ctx context.Context, user entity.User, 
 	if err != nil {
 		return model.GetUserResponse{}, exception.NotFoundError{Message: err.Error()}
 	}
-	return ToUserResponse(updated), nil
+	return service.withPackageBadge(ctx, ToUserResponse(updated)), nil
 }
 
 // Update is used by admins. Only the fields present in the request change.
@@ -416,7 +507,7 @@ func (service *UserService) FindById(ctx context.Context, userId string) (model.
 		return model.GetUserResponse{}, exception.NotFoundError{Message: err.Error()}
 	}
 
-	return ToUserResponse(user), nil
+	return service.withPackageBadge(ctx, ToUserResponse(user)), nil
 }
 
 func (service *UserService) FindAll(ctx context.Context, params model.FindAllUserRequest) []model.GetUserResponse {
@@ -426,7 +517,7 @@ func (service *UserService) FindAll(ctx context.Context, params model.FindAllUse
 	for _, user := range users {
 		userResponses = append(userResponses, ToUserResponse(user))
 	}
-	return userResponses
+	return service.withPackageBadges(ctx, userResponses)
 }
 
 func (service *UserService) Authentication(ctx context.Context, request model.LoginRequest) (entity.User, error) {

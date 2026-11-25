@@ -36,6 +36,8 @@ import {
   UpdateMyProfileRequest,
   UserProperties
 } from '../../types/user.type';
+import UserBadges from '../../components/kit/UserBadges';
+import { PROFILE_FIELD_LABELS } from '../../types/badge.type';
 import './Profile.css';
 
 const { Title, Text } = Typography;
@@ -493,6 +495,9 @@ const ProfileScreen = () => {
               <Tag color="blue">{RoleList[profile.role] || profile.role}</Tag>
               <Text type="secondary">@{profile.username}</Text>
             </div>
+            <div style={{ marginTop: 8 }}>
+              <UserBadges badges={profile.badges} />
+            </div>
           </div>
           <Upload {...pictureUploadProps}>
             <Button icon={<CameraOutlined />} loading={isUploading}>
@@ -501,6 +506,21 @@ const ProfileScreen = () => {
           </Upload>
         </div>
       </Card>
+
+      {profile.badges && !profile.badges.profile_complete && (
+        <Alert
+          type="info"
+          showIcon
+          message="Lengkapi profil untuk mendapatkan lencana Profil Lengkap"
+          description={
+            'Masih kosong: ' +
+            (profile.badges.profile_missing || [])
+              .map((key) => PROFILE_FIELD_LABELS[key] || key)
+              .join(', ') +
+            '.'
+          }
+        />
+      )}
 
       <Card>
         <Tabs

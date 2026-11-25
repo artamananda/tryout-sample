@@ -6,6 +6,8 @@ import { Excel } from "antd-table-saveas-excel";
 import { useNavigate, useParams } from "react-router-dom";
 import { apiGetSKDRanking } from "../../api/package";
 import { getErrorMessage } from "../../helpers/errorHandler";
+import UserBadges, { VerifiedMark } from "../../components/kit/UserBadges";
+import type { UserBadges as UserBadgesData } from "../../types/badge.type";
 
 const { Title, Text } = Typography;
 
@@ -15,6 +17,7 @@ type RankingRow = {
   name: string;
   phone_number: string;
   province: string;
+  badges?: UserBadgesData;
   scores: Record<string, number>;
   total_score: number;
   passed_all: boolean;
@@ -39,7 +42,19 @@ const SKDRankingScreen = () => {
 
   const columns: TableProps<RankingRow>["columns"] = [
     { title: "Peringkat", dataIndex: "rank", width: 90 },
-    { title: "Nama", dataIndex: "name" },
+    {
+      title: "Nama",
+      dataIndex: "name",
+      render: (_, row) => (
+        <Space direction="vertical" size={2}>
+          <Text strong>
+            {row.name}
+            <VerifiedMark badges={row.badges} />
+          </Text>
+          <UserBadges badges={row.badges ? { ...row.badges, verified: undefined } : undefined} hideProfile compact />
+        </Space>
+      ),
+    },
     { title: "WhatsApp", dataIndex: "phone_number" },
     { title: "Provinsi", dataIndex: "province" },
     { title: "TWK", render: (_, row) => row.scores.twk },
@@ -58,6 +73,8 @@ const SKDRankingScreen = () => {
     const rows = ranking.rows.map((row) => ({
       rank: row.rank,
       name: row.name,
+      verified: row.badges?.verified?.label_name || "",
+      package: row.badges?.package?.name || "",
       phone_number: row.phone_number,
       province: row.province,
       twk: row.scores.twk,
@@ -71,7 +88,19 @@ const SKDRankingScreen = () => {
       .addSheet("ranking")
       .addColumns([
         { title: "Peringkat", dataIndex: "rank" },
-        { title: "Nama", dataIndex: "name" },
+        {
+      title: "Nama",
+      dataIndex: "name",
+      render: (_, row) => (
+        <Space direction="vertical" size={2}>
+          <Text strong>
+            {row.name}
+            <VerifiedMark badges={row.badges} />
+          </Text>
+          <UserBadges badges={row.badges ? { ...row.badges, verified: undefined } : undefined} hideProfile compact />
+        </Space>
+      ),
+    },
         { title: "WhatsApp", dataIndex: "phone_number" },
         { title: "Provinsi", dataIndex: "province" },
         { title: "TWK", dataIndex: "twk" },

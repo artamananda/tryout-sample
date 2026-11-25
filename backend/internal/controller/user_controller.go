@@ -9,6 +9,7 @@ import (
 	"github.com/artamananda/tryout-sample/internal/model"
 	"github.com/artamananda/tryout-sample/internal/service"
 	"github.com/gofiber/fiber/v2"
+	"github.com/google/uuid"
 )
 
 type UserController struct {
@@ -44,6 +45,8 @@ func (controller UserController) Route(app *fiber.App) {
 	app.Post("/v1/api/users", adminOnly, controller.CreateBulk)
 	app.Patch("/v1/api/user/:id", adminOnly, controller.Update)
 	app.Delete("/v1/api/user/:id", adminOnly, controller.Delete)
+	app.Put("/v1/api/user/:id/verification", adminOnly, controller.SetVerification)
+	app.Delete("/v1/api/user/:id/verification", adminOnly, controller.RemoveVerification)
 	app.Get("/v1/api/user/:id", loggedIn, controller.FindById)
 	app.Get("/v1/api/user", adminOnly, controller.FindAll)
 }
@@ -175,6 +178,53 @@ func (controller UserController) Update(c *fiber.Ctx) error {
 	return success(c, fiber.StatusOK, response)
 }
 
+// SetVerification gives a user the blue check.
+// @Summary Give a user the blue check
+// @Description Admin only. label is owner, tutor or berprestasi.
+// @Tags Users
+// @Accept json
+// @Produce json
+// @Param id path string true "User ID"
+// @Param request body model.SetVerificationRequest true "Request Body"
+// @Security JWT
+// @Success 200 {object} model.GeneralResponse
+// @Router /user/{id}/verification [put]
+func (controller UserController) SetVerification(c *fiber.Ctx) error {
+	authUser, err := requireAuthUser(c)
+	if err != nil {
+		return err
+	}
+	adminID, err := uuid.Parse(authUser.UserID)
+	if err != nil {
+		return exception.UnauthorizedError{Message: "invalid token"}
+	}
+	var request model.SetVerificationRequest
+	if err := parseBody(c, &request); err != nil {
+		return err
+	}
+	result, err := controller.UserService.SetVerification(c.Context(), c.Params("id"), adminID, request)
+	if err != nil {
+		return err
+	}
+	return success(c, fiber.StatusOK, result)
+}
+
+// RemoveVerification takes the blue check away.
+// @Summary Remove a user's blue check
+// @Tags Users
+// @Produce json
+// @Param id path string true "User ID"
+// @Security JWT
+// @Success 200 {object} model.GeneralResponse
+// @Router /user/{id}/verification [delete]
+func (controller UserController) RemoveVerification(c *fiber.Ctx) error {
+	result, err := controller.UserService.RemoveVerification(c.Context(), c.Params("id"))
+	if err != nil {
+		return err
+	}
+	return success(c, fiber.StatusOK, result)
+}
+
 // Delete handles deleting an existing user.
 // @Summary Delete an existing user
 // @Description Delete an existing user by ID
@@ -235,6 +285,7 @@ func (controller UserController) FindAll(c *fiber.Ctx) error {
 		Search: c.Query("search"),
 		Role:   c.Query("role"),
 	}
+	params.Verified, _ = helper.StrToBoolPtr(c.Query("verified"))
 
 	result := controller.UserService.FindAll(c.Context(), params)
 	return success(c, fiber.StatusOK, map[string]interface{}{

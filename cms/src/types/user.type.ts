@@ -1,4 +1,5 @@
 import { BaseResponsePaginationProps } from "./config.type";
+import type { UserBadges } from "./badge.type";
 
 export interface UserProps {
   user_id: string;
@@ -16,6 +17,7 @@ export interface UserProps {
   school?: string;
   regency?: string;
   province?: string;
+  badges?: UserBadges;
   last_login?: Date | string;
   created_at?: Date | string;
 }

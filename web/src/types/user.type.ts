@@ -1,3 +1,4 @@
+import type { UserBadges } from './badge.type';
 export type EUserStatus = 'active' | 'inactive';
 
 export type Gender = 'male' | 'female' | '';
@@ -23,6 +24,7 @@ export interface UserProperties {
   regency: string;
   province: string;
   picture_url: string;
+  badges?: UserBadges;
   created_at: Date | string;
   updated_at?: Date | string;
 }

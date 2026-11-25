@@ -14,3 +14,15 @@ export async function apiGetUsers() {
     message.error(error);
   }
 }
+
+/** Gives a user the blue check (admin only). label: owner | tutor | berprestasi. */
+export async function apiSetVerification(userId: string, label: string) {
+  const res = await httpRequest.put(`/user/${userId}/verification`, { label });
+  return res.data.payload;
+}
+
+/** Takes the blue check away from a user (admin only). */
+export async function apiRemoveVerification(userId: string) {
+  const res = await httpRequest.delete(`/user/${userId}/verification`);
+  return res.data.payload;
+}

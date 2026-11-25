@@ -21,6 +21,7 @@ import type { MenuProps } from 'antd';
 import { Avatar, Button, Drawer, Dropdown, Grid, Layout, Menu, Modal, Spin } from 'antd';
 import { Outlet, useLocation, useNavigate } from 'react-router-dom';
 import { useAuthUser, useIsAuthenticated, useSignOut } from 'react-auth-kit';
+import { VerifiedMark } from '../../components/kit/UserBadges';
 import logoWordmark from '../../assets/logo-wordmark.png';
 import logoIcon from '../../assets/logo-icon.png';
 import FooterCopyright from '../../components/Footer';
@@ -225,7 +226,10 @@ const AppLayout = () => {
               <div className="tl-header-user" role="button" tabIndex={0}>
                 <Avatar src={user.picture_url || undefined} icon={<UserOutlined />} style={{ background: '#2563eb' }} />
                 <div className="tl-header-user-text">
-                  <strong>{user.name}</strong>
+                  <strong>
+                    {user.name}
+                    <VerifiedMark badges={user.badges} size={14} />
+                  </strong>
                   <span>{user.email}</span>
                 </div>
               </div>

@@ -41,6 +41,7 @@ type SKDRankingRow struct {
 	Name        string         `json:"name"`
 	PhoneNumber string         `json:"phone_number,omitempty"`
 	Province    string         `json:"province"`
+	Badges      UserBadges     `json:"badges"`
 	Scores      map[string]int `json:"scores"`
 	TotalScore  int            `json:"total_score"`
 	PassedAll   bool           `json:"passed_all"`

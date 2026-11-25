@@ -167,6 +167,7 @@ type rankedParticipant struct {
 	Name       string
 	Phone      string
 	Province   string
+	Badges     model.UserBadges
 	Score      SKDScore
 	FinishedAt time.Time
 	Rank       int
@@ -300,11 +301,22 @@ func (service *SKDResultService) ranking(ctx context.Context, tryoutID string) (
 	for _, user := range users {
 		userByID[user.UserID] = user
 	}
+	packageBadges, err := service.UserRepository.PackageBadges(ctx, userIDs)
+	if err != nil {
+		return skdRanking{}, err
+	}
 	for i := range participants {
 		user := userByID[participants[i].UserID]
 		participants[i].Name = user.Name
 		participants[i].Phone = user.PhoneNumber
 		participants[i].Province = user.Province
+		var pkg *model.PackageBadge
+		if badge, ok := packageBadges[user.UserID]; ok {
+			pkg = &badge
+		}
+		badges := UserBadgesOf(user, pkg)
+		badges.ProfileMissing = nil // private; the ranking only shows the badge
+		participants[i].Badges = badges
 	}
 
 	sort.SliceStable(participants, func(i, j int) bool { return skdBetter(participants[i], participants[j]) })
@@ -407,6 +419,7 @@ func (service *SKDResultService) Ranking(ctx context.Context, tryoutID string) (
 			Name:        participant.Name,
 			PhoneNumber: participant.Phone,
 			Province:    participant.Province,
+			Badges:      participant.Badges,
 			Scores:      participant.Score.ByCode,
 			TotalScore:  participant.Score.Total,
 			PassedAll:   participant.Score.PassedAll,
