@@ -1,5 +1,5 @@
 import { useEffect } from "react";
-import { Table, Tag, Typography } from "antd";
+import { Space, Table, Tag, Typography } from "antd";
 import type { TableProps } from "antd";
 import { useNavigate } from "react-router-dom";
 import useFetchList from "../../hooks/useFetchList";
@@ -42,12 +42,24 @@ const TryOutResultScreen = () => {
       dataIndex: "score",
       key: "score",
       render: (_, record) => (
-        <Link
-          underline
-          onClick={() => navigate("/tryout-score/" + record.tryout_id)}
-        >
-          {record.title} - Score
-        </Link>
+        <Space size="middle" wrap>
+          <Link
+            underline
+            onClick={() => navigate("/tryout-score/" + record.tryout_id)}
+          >
+            {record.title} - Score
+          </Link>
+          {record.scoring_mode === "skd" && (
+            <Link
+              underline
+              onClick={() =>
+                navigate("/tryout/" + record.tryout_id + "/skd-ranking")
+              }
+            >
+              Ranking SKD
+            </Link>
+          )}
+        </Space>
       ),
     },
     {

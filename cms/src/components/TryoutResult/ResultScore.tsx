@@ -20,7 +20,15 @@ const ResultScore = () => {
   const [newDataSource, setNewDataSource] = useState<TableRowData[]>([]);
   const [isLoading, setIsLoading] = useState(true);
 
+  // UTBK-style scores are coloured against 350; SKD scores against the BKN
+  // passing grade of each subtest (the total row has no passing grade).
   const minScore = 350;
+  const isSKD = resultData?.scoring_mode === "skd";
+  const passed = (subtest: string, value: string | number) => {
+    if (!isSKD) return Number(value) > minScore;
+    const passingGrade = resultData?.passing_grades?.[subtest];
+    return passingGrade === undefined ? null : Number(value) >= passingGrade;
+  };
 
   useEffect(() => {
     const fetchTryoutResult = async () => {
@@ -50,6 +58,11 @@ const ResultScore = () => {
       render: (value: string) => (
         <div style={{ fontWeight: "bold" }}>
           {value ? value?.toUpperCase() : "-"}
+          {isSKD && resultData?.passing_grades?.[value] !== undefined && (
+            <div style={{ fontWeight: 400, fontSize: 12, color: "#64748b" }}>
+              PG {resultData.passing_grades[value]}
+            </div>
+          )}
         </div>
       ),
     },
@@ -57,16 +70,20 @@ const ResultScore = () => {
       title: participant.name,
       dataIndex: participant.user_id,
       key: participant.user_id,
-      render: (value: string | number) => (
-        <div
-          style={{
-            color: Number(value) > minScore ? "green" : "red",
-            textAlign: "center",
-          }}
-        >
-          {value?.toString() || ""}
-        </div>
-      ),
+      render: (value: string | number, row: TableRowData) => {
+        const ok = passed(String(row.subtest), value);
+        return (
+          <div
+            style={{
+              color: ok === null ? "inherit" : ok ? "green" : "red",
+              fontWeight: ok === null ? 700 : 400,
+              textAlign: "center",
+            }}
+          >
+            {value?.toString() || ""}
+          </div>
+        );
+      },
     })),
   ];
 

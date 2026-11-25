@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"math"
 	"sort"
+	"strconv"
 	"strings"
 	"time"
 
@@ -44,13 +45,24 @@ func NewTryoutResultService(
 	}
 }
 
+// FindByTryoutID returns the result matrix of a tryout. While the tryout is
+// open, answers still change, so the result is always rebuilt; once it has
+// closed, a cache built after the close (with the current scoring mode) is
+// reused.
 func (service *TryoutResultService) FindByTryoutID(ctx context.Context, tryoutID string) (model.TryoutResultResponse, error) {
-	cache, err := service.TryoutResultCacheRepository.FindByTryoutID(ctx, tryoutID)
-	if err == nil {
-		var cachedResult model.TryoutResultResponse
-		unmarshalErr := json.Unmarshal(cache.Payload, &cachedResult)
-		if unmarshalErr == nil {
-			return cachedResult, nil
+	tryout, err := service.TryoutRepository.FindById(ctx, tryoutID)
+	if err != nil {
+		return model.TryoutResultResponse{}, err
+	}
+	closed := !tryout.EndTime.IsZero() && time.Now().After(tryout.EndTime)
+
+	if closed {
+		cache, cacheErr := service.TryoutResultCacheRepository.FindByTryoutID(ctx, tryoutID)
+		if cacheErr == nil && cache.GeneratedAt.After(tryout.EndTime) {
+			var cachedResult model.TryoutResultResponse
+			if json.Unmarshal(cache.Payload, &cachedResult) == nil && cachedResult.ScoringMode == scoringModeOf(tryout) {
+				return cachedResult, nil
+			}
 		}
 	}
 
@@ -59,9 +71,18 @@ func (service *TryoutResultService) FindByTryoutID(ctx context.Context, tryoutID
 		return model.TryoutResultResponse{}, err
 	}
 
-	_ = service.saveToCache(ctx, result)
+	if closed {
+		_ = service.saveToCache(ctx, result)
+	}
 
 	return result, nil
+}
+
+func scoringModeOf(tryout entity.Tryout) string {
+	if tryout.ScoringMode == entity.ScoringModeSKD {
+		return entity.ScoringModeSKD
+	}
+	return entity.ScoringModeIRT
 }
 
 func (service *TryoutResultService) RebuildAndCacheByTryoutID(ctx context.Context, tryoutID string) (model.TryoutResultResponse, error) {
@@ -124,7 +145,7 @@ func (service *TryoutResultService) saveToCache(ctx context.Context, result mode
 }
 
 func (service *TryoutResultService) BuildByTryoutID(ctx context.Context, tryoutID string) (model.TryoutResultResponse, error) {
-	_, err := service.TryoutRepository.FindById(ctx, tryoutID)
+	tryout, err := service.TryoutRepository.FindById(ctx, tryoutID)
 	if err != nil {
 		return model.TryoutResultResponse{}, err
 	}
@@ -199,6 +220,10 @@ func (service *TryoutResultService) BuildByTryoutID(ctx context.Context, tryoutI
 			answerByQuestionAndUser[questionID] = map[string]string{}
 		}
 		answerByQuestionAndUser[questionID][userID] = answer.UserAnswer
+	}
+
+	if scoringModeOf(tryout) == entity.ScoringModeSKD {
+		return buildSKDResult(tryoutID, questions, participants, answerByQuestionAndUser), nil
 	}
 
 	type subtestAccumulator struct {
@@ -324,9 +349,90 @@ func (service *TryoutResultService) BuildByTryoutID(ctx context.Context, tryoutI
 	return model.TryoutResultResponse{
 		TryoutID:     tryoutID,
 		GeneratedAt:  time.Now(),
+		ScoringMode:  entity.ScoringModeIRT,
 		Participants: participants,
 		ResultRows:   resultRows,
 		ScoreRows:    scoreRows,
 		UserSummary:  userSummary,
 	}, nil
+}
+
+// buildSKDResult scores a tryout with the BKN SKD rules. In the answer matrix
+// TWK/TIU questions are marked V/X and TKP questions show the points (1-5) of
+// the chosen option. Score rows are TWK, TIU, TKP and the total.
+func buildSKDResult(
+	tryoutID string,
+	questions []entity.Question,
+	participants []model.TryoutResultParticipant,
+	answerByQuestionAndUser map[string]map[string]string,
+) model.TryoutResultResponse {
+	resultRows := make([]model.TryoutResultAnswerRow, 0, len(questions))
+	answersByUser := map[string]map[uuid.UUID]string{}
+	for _, participant := range participants {
+		answersByUser[participant.UserID] = map[uuid.UUID]string{}
+	}
+
+	for _, question := range questions {
+		subtest := strings.ToLower(strings.TrimSpace(question.Type))
+		questionAnswers := answerByQuestionAndUser[question.QuestionID.String()]
+		marks := map[string]string{}
+		for _, participant := range participants {
+			answer := strings.TrimSpace(questionAnswers[participant.UserID])
+			if answer == "" {
+				marks[participant.UserID] = "-"
+				continue
+			}
+			answersByUser[participant.UserID][question.QuestionID] = answer
+			points, correct := ScoreSKDQuestion(question, answer)
+			switch {
+			case subtest == "tkp":
+				marks[participant.UserID] = strconv.Itoa(points)
+			case correct:
+				marks[participant.UserID] = "V"
+			default:
+				marks[participant.UserID] = "X"
+			}
+		}
+		resultRows = append(resultRows, model.TryoutResultAnswerRow{
+			QuestionID: question.QuestionID.String(),
+			LocalID:    question.LocalID,
+			Subtest:    subtest,
+			Marks:      marks,
+		})
+	}
+
+	passingGrades := map[string]int{}
+	scoreRows := make([]model.TryoutResultScoreRow, 0, len(SKDSubtests)+1)
+	for _, subtest := range SKDSubtests {
+		passingGrades[subtest.Code] = subtest.PassingGrade
+		scoreRows = append(scoreRows, model.TryoutResultScoreRow{Subtest: subtest.Code, Scores: map[string]int{}})
+	}
+	totalRow := model.TryoutResultScoreRow{Subtest: "total", Scores: map[string]int{}}
+
+	userSummary := make([]model.TryoutResultUserSummary, 0, len(participants))
+	for _, participant := range participants {
+		score := ScoreSKD(questions, answersByUser[participant.UserID])
+		for i, subtest := range SKDSubtests {
+			scoreRows[i].Scores[participant.UserID] = score.ByCode[subtest.Code]
+		}
+		totalRow.Scores[participant.UserID] = score.Total
+		userSummary = append(userSummary, model.TryoutResultUserSummary{
+			UserID:        participant.UserID,
+			Name:          participant.Name,
+			SubtestScores: score.ByCode,
+			TotalScore:    score.Total,
+			AvgScore:      math.Round(float64(score.Total)/float64(len(SKDSubtests))*100) / 100,
+		})
+	}
+
+	return model.TryoutResultResponse{
+		TryoutID:      tryoutID,
+		GeneratedAt:   time.Now(),
+		ScoringMode:   entity.ScoringModeSKD,
+		PassingGrades: passingGrades,
+		Participants:  participants,
+		ResultRows:    resultRows,
+		ScoreRows:     append(scoreRows, totalRow),
+		UserSummary:   userSummary,
+	}
 }

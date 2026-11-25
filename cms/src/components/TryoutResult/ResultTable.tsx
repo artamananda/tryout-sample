@@ -12,6 +12,21 @@ interface TableRowData {
 
 type FixedType = "left" | "right" | boolean;
 
+// TKP weights run from 1 (weakest option) to 5 (best option).
+const tkpColors: Record<string, string> = {
+  "1": "#dc2626",
+  "2": "#f97316",
+  "3": "#eab308",
+  "4": "#65a30d",
+  "5": "#16a34a",
+};
+
+const markColor = (value: string) => {
+  if (value === "V") return "green";
+  if (value === "X") return "red";
+  return tkpColors[value] || "gray";
+};
+
 const ResultTable = () => {
   const tryoutId = window.location.href.split("/").pop();
   const [resultData, setResultData] = useState<TryoutResultPayload | null>(
@@ -78,8 +93,8 @@ const ResultTable = () => {
       render: (value: string) => (
         <div
           style={{
-            backgroundColor:
-              value === "X" ? "red" : value === "V" ? "green" : "gray",
+            // V/X for right/wrong; SKD TKP answers show their weight 1-5.
+            backgroundColor: markColor(value),
             color: "white",
             textAlign: "center",
             borderRadius: "200px",

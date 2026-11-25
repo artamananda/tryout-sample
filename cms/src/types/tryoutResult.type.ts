@@ -28,6 +28,10 @@ export interface TryoutResultUserSummary {
 export interface TryoutResultPayload {
   tryout_id: string;
   generated_at: string;
+  /** "irt" = UTBK-style 350-1000 per subtest, "skd" = BKN points. */
+  scoring_mode?: "irt" | "skd";
+  /** SKD passing grade per subtest (twk, tiu, tkp); SKD only. */
+  passing_grades?: Record<string, number>;
   participants: TryoutResultParticipant[];
   result_rows: TryoutResultAnswerRow[];
   score_rows: TryoutResultScoreRow[];

@@ -38,10 +38,15 @@ type TryoutUserResultResponse struct {
 }
 
 type TryoutResultResponse struct {
-	TryoutID     string                    `json:"tryout_id"`
-	GeneratedAt  time.Time                 `json:"generated_at"`
-	Participants []TryoutResultParticipant `json:"participants"`
-	ResultRows   []TryoutResultAnswerRow   `json:"result_rows"`
-	ScoreRows    []TryoutResultScoreRow    `json:"score_rows"`
-	UserSummary  []TryoutResultUserSummary `json:"user_summary"`
+	TryoutID    string    `json:"tryout_id"`
+	GeneratedAt time.Time `json:"generated_at"`
+	// ScoringMode is "irt" (UTBK-style 350-1000 per subtest) or "skd" (BKN
+	// points: TWK/TIU 5 per correct answer, TKP 1-5 per option).
+	ScoringMode string `json:"scoring_mode"`
+	// PassingGrades holds the SKD passing grade per subtest (SKD only).
+	PassingGrades map[string]int            `json:"passing_grades,omitempty"`
+	Participants  []TryoutResultParticipant `json:"participants"`
+	ResultRows    []TryoutResultAnswerRow   `json:"result_rows"`
+	ScoreRows     []TryoutResultScoreRow    `json:"score_rows"`
+	UserSummary   []TryoutResultUserSummary `json:"user_summary"`
 }
