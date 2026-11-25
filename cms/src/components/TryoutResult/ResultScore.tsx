@@ -3,6 +3,7 @@ import { Excel } from "antd-table-saveas-excel";
 import { useEffect, useState } from "react";
 import { apiGetTryoutResult } from "../../api/tryoutResult";
 import { TryoutResultPayload } from "../../types/tryoutResult.type";
+import UserName from "../kit/UserName";
 
 interface TableRowData {
   [key: string]: string | number;
@@ -67,7 +68,7 @@ const ResultScore = () => {
       ),
     },
     ...participants.map((participant) => ({
-      title: participant.name,
+      title: <UserName userId={participant.user_id} name={participant.name} showPackage={false} />,
       dataIndex: participant.user_id,
       key: participant.user_id,
       render: (value: string | number, row: TableRowData) => {

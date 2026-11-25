@@ -26,12 +26,12 @@ export type MentoringSlot = {
   status: string;
   meeting_url?: string;
   notes?: string;
-  booked_by?: { name: string; email: string; phone_number: string };
+  booked_by?: { user_id: string; name: string; email: string; phone_number: string };
 };
 
 export type GuaranteeClaim = {
   claim_id: string;
-  user?: { name: string; email: string; phone_number: string };
+  user?: { user_id: string; name: string; email: string; phone_number: string };
   program_id: string;
   first_score: number;
   last_score: number;
@@ -64,8 +64,11 @@ export const apiGetGuaranteeClaims = async (status?: string) =>
 export const apiReviewGuaranteeClaim = async (id: string, data: Record<string, unknown>) =>
   (await httpRequest.patch(`/admin/guarantee-claims/${id}`, data)).data?.payload;
 
-export const apiGetWeeklyNote = async () => (await httpRequest.get("/admin/weekly-report/note")).data?.payload?.note as string;
-export const apiSetWeeklyNote = async (note: string) => httpRequest.put("/admin/weekly-report/note", { note });
+export type WeeklySettings = { note: string; subject: string; default_subject: string };
+export const apiGetWeeklySettings = async () =>
+  (await httpRequest.get("/admin/weekly-report/note")).data?.payload as WeeklySettings;
+export const apiSetWeeklySettings = async (note: string, subject: string) =>
+  (await httpRequest.put("/admin/weekly-report/note", { note, subject })).data?.payload as WeeklySettings;
 export const apiRunWeeklyReport = async (programId: string | undefined, dryRun: boolean) => {
   const query = new URLSearchParams();
   if (programId) query.append("program_id", programId);

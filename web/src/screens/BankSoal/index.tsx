@@ -1,4 +1,4 @@
-import { useEffect, useState, useMemo } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import {
   Row,
   Col,
@@ -114,13 +114,18 @@ const BankSoalScreen = ({ category }: BankSoalScreenProps) => {
     setPageTitle(title);
     document.title = `${title} - Telisik`;
     // Updating query triggers a re-fetch inside useFetchList
-    setQuery((prev: any) => ({ ...prev, category: category || '', offset: 0 }));
+    setQuery((prev: any) => ({ ...prev, category: category || '', type: undefined, offset: 0 }));
     setSelectedType('');
   }, [category]);
 
   const handleTypeChange = (value: string) => {
     setSelectedType(value);
     setCurrentPage(1);
+    // Guests only get a few questions, so ask the API for that type instead
+    // of filtering the few already loaded (which may all be another type).
+    if (isGuestPreview) {
+      setQuery((prev: any) => ({ ...prev, type: value || undefined, offset: 0 }));
+    }
   };
 
   const dynamicFilterOptions = useMemo(() => {
@@ -140,13 +145,20 @@ const BankSoalScreen = ({ category }: BankSoalScreenProps) => {
     return options;
   }, [category]);
 
+  // Guests reload the list per type, so keep the counts of the unfiltered
+  // list; otherwise every other type would show "0 soal" after filtering.
+  const unfilteredCounts = useRef<Record<string, number>>({});
   const typeCounts = useMemo(() => {
     const counts: Record<string, number> = {};
     questions.forEach((q) => {
       if (q.type) counts[q.type] = (counts[q.type] || 0) + 1;
     });
-    return counts;
-  }, [questions]);
+    if (!isGuestPreview || !selectedType) {
+      unfilteredCounts.current = counts;
+      return counts;
+    }
+    return unfilteredCounts.current;
+  }, [questions, isGuestPreview, selectedType]);
 
   const filteredQuestions = useMemo(() => {
     return questions

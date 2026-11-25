@@ -28,6 +28,7 @@ import {
   MentoringSlot,
 } from "../../api/programOps";
 import { getErrorMessage } from "../../helpers/errorHandler";
+import UserName from "../../components/kit/UserName";
 
 const { Title, Text, Link } = Typography;
 
@@ -120,7 +121,7 @@ const MentoringScreen = () => {
       render: (_, row) =>
         row.booked_by ? (
           <Space direction="vertical" size={0}>
-            <Text>{row.booked_by.name}</Text>
+            <UserName userId={row.booked_by.user_id} name={row.booked_by.name} />
             <Text type="secondary">{row.booked_by.email}</Text>
             {row.booked_by.phone_number && (
               <Link href={`https://wa.me/${row.booked_by.phone_number}`} target="_blank" rel="noreferrer">

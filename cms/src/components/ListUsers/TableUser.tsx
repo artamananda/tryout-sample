@@ -5,7 +5,8 @@ import { MoreOutlined, UserOutlined } from "@ant-design/icons";
 import dayjs from "dayjs";
 import useFetchList from "../../hooks/useFetchList";
 import { UserProps } from "../../types/user.type";
-import UserBadges, { VerifiedMark } from "../kit/UserBadges";
+import UserBadges from "../kit/UserBadges";
+import UserName, { forgetUserBadges } from "../kit/UserName";
 import { VERIFIED_LABELS } from "../../types/badge.type";
 import { apiRemoveVerification, apiSetVerification } from "../../api/user";
 import { getErrorMessage } from "../../helpers/errorHandler";
@@ -34,8 +35,10 @@ const TableUser = (props: { role?: string }) => {
   const [saving, setSaving] = useState(false);
 
   // Replace one row with the user the API sent back after a badge change.
-  const replaceUser = (updated: UserProps) =>
+  const replaceUser = (updated: UserProps) => {
+    forgetUserBadges(updated.user_id);
     setData((rows) => rows.map((row) => (row.user_id === updated.user_id ? { ...row, ...updated } : row)));
+  };
 
   const openVerification = (user: UserProps) => {
     setLabel(user.badges?.verified?.label || "tutor");
@@ -85,11 +88,8 @@ const TableUser = (props: { role?: string }) => {
         <Space size={10}>
           <Avatar size={36} src={record.picture_url || undefined} icon={<UserOutlined />} style={{ background: "#2563eb", flex: "none" }} />
           <div style={{ minWidth: 0 }}>
-            <div style={{ display: "flex", alignItems: "center", fontWeight: 600 }}>
-              <span style={{ overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", maxWidth: 190 }} title={record.name}>
-                {record.name}
-              </span>
-              <VerifiedMark badges={record.badges} size={15} />
+            <div style={{ maxWidth: 200 }}>
+              <UserName userId={record.user_id} name={record.name} badges={record.badges} showPackage={false} />
             </div>
             <Text type="secondary" style={{ fontSize: 12 }}>
               @{record.username}

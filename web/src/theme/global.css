@@ -218,6 +218,52 @@ img {
   display: inline-flex !important;
 }
 
+/* ---------------------------------------------------------------- names & badges */
+
+/* Blue check: centred on the text line wherever it sits. */
+.tl-verified-mark {
+  display: inline-flex;
+  align-items: center;
+  flex: none;
+  margin-left: 4px;
+  line-height: 0;
+  vertical-align: middle;
+  cursor: help;
+}
+
+/* Name + blue check + package on one line, all vertically centred. */
+.tl-user-name {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  max-width: 100%;
+  min-width: 0;
+  vertical-align: middle;
+}
+
+.tl-user-name.is-strong {
+  font-weight: 600;
+}
+
+.tl-user-name-text {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.tl-user-name .tl-verified-mark {
+  margin-left: 0;
+}
+
+.tl-user-name-tag.ant-tag {
+  margin: 0;
+  font-weight: 500;
+  font-size: 11px;
+  line-height: 18px;
+  padding-inline: 6px;
+}
+
 .tl-content {
   padding: var(--tl-gutter);
   max-width: 1440px;

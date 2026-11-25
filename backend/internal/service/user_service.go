@@ -108,6 +108,46 @@ func (service *UserService) withPackageBadge(ctx context.Context, response model
 	return service.withPackageBadges(ctx, []model.GetUserResponse{response})[0]
 }
 
+// BadgesByIDs returns the public badges of many users at once (for lists of
+// names). The missing-profile-fields list is private and left out.
+func (service *UserService) BadgesByIDs(ctx context.Context, rawIDs []string) (map[string]model.UserBadges, error) {
+	ids := make([]uuid.UUID, 0, len(rawIDs))
+	seen := map[uuid.UUID]bool{}
+	for _, raw := range rawIDs {
+		id, err := uuid.Parse(strings.TrimSpace(raw))
+		if err != nil || seen[id] {
+			continue
+		}
+		seen[id] = true
+		ids = append(ids, id)
+	}
+	if len(ids) > 200 {
+		return nil, exception.BadRequestError{Message: "maksimal 200 user sekaligus"}
+	}
+	result := map[string]model.UserBadges{}
+	if len(ids) == 0 {
+		return result, nil
+	}
+	users, err := service.UserRepository.FindByIDs(ctx, ids)
+	if err != nil {
+		return nil, err
+	}
+	packages, err := service.UserRepository.PackageBadges(ctx, ids)
+	if err != nil {
+		return nil, err
+	}
+	for _, user := range users {
+		var pkg *model.PackageBadge
+		if badge, ok := packages[user.UserID]; ok {
+			pkg = &badge
+		}
+		badges := UserBadgesOf(user, pkg)
+		badges.ProfileMissing = nil
+		result[user.UserID.String()] = badges
+	}
+	return result, nil
+}
+
 // SetVerification gives a user the blue check. Only admins call this.
 func (service *UserService) SetVerification(ctx context.Context, userID string, adminID uuid.UUID, request model.SetVerificationRequest) (model.GetUserResponse, error) {
 	if err := common.Validate(request); err != nil {

@@ -6,7 +6,7 @@ import { Excel } from "antd-table-saveas-excel";
 import { useNavigate, useParams } from "react-router-dom";
 import { apiGetSKDRanking } from "../../api/package";
 import { getErrorMessage } from "../../helpers/errorHandler";
-import UserBadges, { VerifiedMark } from "../../components/kit/UserBadges";
+import UserName from "../../components/kit/UserName";
 import type { UserBadges as UserBadgesData } from "../../types/badge.type";
 
 const { Title, Text } = Typography;
@@ -46,13 +46,7 @@ const SKDRankingScreen = () => {
       title: "Nama",
       dataIndex: "name",
       render: (_, row) => (
-        <Space direction="vertical" size={2}>
-          <Text strong>
-            {row.name}
-            <VerifiedMark badges={row.badges} />
-          </Text>
-          <UserBadges badges={row.badges} hideVerified hideProfile compact />
-        </Space>
+        <UserName userId={row.user_id} name={row.name} badges={row.badges} />
       ),
     },
     { title: "WhatsApp", dataIndex: "phone_number" },

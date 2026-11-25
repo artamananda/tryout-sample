@@ -1,58 +1,40 @@
-import React, { useEffect, useState, useMemo } from "react";
-import {
-  Row,
-  Col,
-  Card,
-  Input,
-  Typography,
-  Select,
-  Tag,
-  Spin,
-  Empty,
-  Radio,
-  Divider,
-  Button,
-  Pagination,
-  Dropdown,
-  message,
-} from "antd";
+import { useEffect, useMemo, useState } from "react";
+import { Button, Card, Dropdown, Empty, Input, Pagination, Select, Skeleton, Space, Spin, Tag, Tooltip, Typography, message } from "antd";
 import type { MenuProps } from "antd";
 import {
-  BookOutlined,
-  QuestionCircleOutlined,
-  FilterOutlined,
-  CheckCircleOutlined,
-  EditOutlined,
-  ThunderboltOutlined,
+  CheckCircleFilled,
   DownOutlined,
+  EditOutlined,
+  PlusOutlined,
+  RobotOutlined,
+  SearchOutlined,
+  ThunderboltOutlined,
 } from "@ant-design/icons";
+import dayjs from "dayjs";
 import useFetchList from "../../hooks/useFetchList";
-import { QuestionProps } from "../../types/question";
 import ModalUpdateBankSoal from "./ModalUpdateBankSoal";
 import ModalCreateBankSoal from "./ModalCreateBankSoal";
 import { BankSoalResponse } from "../../types/ai.type";
-import {
-  getCustomTypes,
-  KNOWN_TYPE_LABELS,
-  UTBK_QUESTION_TYPES,
-  SKD_QUESTION_TYPES,
-  UTBK_TYPE_CODES,
-  SKD_TYPE_CODES,
-  getQuestionTypeName,
-} from "./questionTypes";
+import { KNOWN_TYPE_LABELS, UTBK_QUESTION_TYPES, SKD_QUESTION_TYPES, getQuestionTypeName } from "./questionTypes";
 import { apiTriggerGenerate } from "../../api/admin";
+import PageHeader from "../../components/kit/PageHeader";
 
-const { Title, Text } = Typography;
-const { Search } = Input;
+const { Text } = Typography;
 
-const getTypeColor = (type: string) => {
-  const colors: Record<string, string> = {
-    kpu: "blue", ppu: "green", pbm: "purple",
-    pku: "orange", ind: "red", ing: "cyan", mtk: "magenta",
-    twk: "gold", tiu: "geekblue", tkp: "lime",
-  };
-  return colors[type] || "default";
+const TYPE_COLORS: Record<string, string> = {
+  kpu: "blue", ppu: "green", pbm: "purple", pku: "orange", ind: "red", ing: "cyan", mtk: "magenta",
+  twk: "gold", tiu: "geekblue", tkp: "lime",
 };
+
+/** Index of the correct option: by text, or a legacy single-letter answer. */
+const correctIndex = (question: BankSoalResponse) => {
+  const answer = String(question.correct_answer || "").trim().toLowerCase();
+  const byText = (question.options || []).findIndex((option) => String(option || "").trim().toLowerCase() === answer);
+  if (byText >= 0) return byText;
+  return answer.length === 1 ? answer.charCodeAt(0) - 97 : -1;
+};
+
+const stripLetter = (option: string) => String(option || "").replace(/^[A-E]\.\s*/, "");
 
 interface BankSoalScreenProps {
   category?: "utbk" | "skd";
@@ -60,46 +42,32 @@ interface BankSoalScreenProps {
 
 const BankSoalScreen = ({ category }: BankSoalScreenProps) => {
   const [selectedType, setSelectedType] = useState<string>("");
-  const [expandedQuestion, setExpandedQuestion] = useState<string | null>(null);
-  const [showAnswer, setShowAnswer] = useState<Record<string, boolean>>({});
-
-  // Edit State
-  const [isEditModalOpen, setIsEditModalOpen] = useState(false);
-  const [currentEditingQuestion, setCurrentEditingQuestion] =
-    useState<BankSoalResponse | null>(null);
-
-  // Create State
+  const [expanded, setExpanded] = useState<Record<string, boolean>>({});
+  const [editing, setEditing] = useState<BankSoalResponse | null>(null);
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
-
-  // Generate State
   const [generatingType, setGeneratingType] = useState<string | null>(null);
+  const [searchText, setSearchText] = useState("");
+  const [sortBy, setSortBy] = useState("newest");
+  const [currentPage, setCurrentPage] = useState(1);
+  const [pageSize, setPageSize] = useState(10);
 
-  const {
-    data: questions,
-    setSearch,
-    isLoading,
-    setQuery,
-  } = useFetchList<BankSoalResponse>({
+  const { data: questions, isLoading, setQuery } = useFetchList<BankSoalResponse>({
     endpoint: "bank-soal",
     initialQuery: category ? { category } : {},
   });
 
-  const pageTitle = category === "skd"
-    ? "Bank Soal SKD CPNS"
-    : category === "utbk"
-    ? "Bank Soal UTBK"
-    : "Bank Soal";
+  const pageTitle = category === "skd" ? "Bank Soal SKD CPNS" : category === "utbk" ? "Bank Soal UTBK" : "Bank Soal";
+  const typeList = category === "skd" ? SKD_QUESTION_TYPES : category === "utbk" ? UTBK_QUESTION_TYPES : [...UTBK_QUESTION_TYPES, ...SKD_QUESTION_TYPES];
 
   useEffect(() => {
     document.title = `${pageTitle} - CMS`;
-    // Update query so useFetchList re-fetches with the correct category
     setQuery((prev: any) => ({ ...prev, category: category || "", offset: 0 }));
     setSelectedType("");
+    setCurrentPage(1);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [category]);
 
-  const handleTypeChange = (value: string) => {
-    setSelectedType(value);
-  };
+  useEffect(() => setCurrentPage(1), [selectedType, searchText, sortBy]);
 
   const handleGenerate = async (typeCode: string) => {
     setGeneratingType(typeCode);
@@ -111,567 +79,292 @@ const BankSoalScreen = ({ category }: BankSoalScreenProps) => {
     }
   };
 
-  const generateMenuItems: MenuProps["items"] = (
-    category === "skd" ? SKD_QUESTION_TYPES : UTBK_QUESTION_TYPES
-  ).map(({ value, label }) => ({
+  const generateMenuItems: MenuProps["items"] = typeList.map(({ value, label }) => ({
     key: value,
     label: (
-      <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-        <Tag color={getTypeColor(value)} style={{ margin: 0, fontSize: 11 }}>
+      <Space>
+        <Tag color={TYPE_COLORS[value]} style={{ margin: 0 }}>
           {value.toUpperCase()}
         </Tag>
-        <span style={{ fontSize: 13 }}>{label}</span>
-        {generatingType === value && (
-          <Spin size="small" style={{ marginLeft: "auto" }} />
-        )}
-      </div>
+        {label}
+        {generatingType === value && <Spin size="small" />}
+      </Space>
     ),
     onClick: () => handleGenerate(value),
     disabled: generatingType !== null,
   }));
 
-  // Filters & Pagination
-  const [searchText, setSearchText] = useState("");
-  const [sortBy, setSortBy] = useState("newest");
-  const [currentPage, setCurrentPage] = useState(1);
-  const [pageSize, setPageSize] = useState(10);
-
-  // Build dynamic filter options scoped to the current category
-  const dynamicFilterOptions = useMemo(() => {
-    const relevantTypes = category === "skd"
-      ? SKD_QUESTION_TYPES
-      : category === "utbk"
-      ? UTBK_QUESTION_TYPES
-      : Object.entries(KNOWN_TYPE_LABELS).map(([value, label]) => ({ value, label }));
-
-    const options = [{ value: "", label: "Semua Jenis" }];
-    relevantTypes.forEach(({ value, label }) => {
-      options.push({ value, label });
+  const typeCounts = useMemo(() => {
+    const counts: Record<string, number> = {};
+    questions.forEach((question) => {
+      counts[question.type] = (counts[question.type] || 0) + 1;
     });
-    return options;
-  }, [category]);
+    return counts;
+  }, [questions]);
 
-  const filteredQuestions = questions
-    .filter((q) => {
-      const matchType = selectedType ? q.type === selectedType : true;
-      const matchText = q.text.toLowerCase().includes(searchText.toLowerCase());
-      return matchType && matchText;
-    })
-    .sort((a: any, b: any) => {
-      // Using any casting safely if created_at missing, default to 0
-      const dateA = new Date(a.created_at || 0).getTime();
-      const dateB = new Date(b.created_at || 0).getTime();
-      if (sortBy === "newest") return dateB - dateA;
-      if (sortBy === "oldest") return dateA - dateB;
-      return 0;
-    });
+  const filteredQuestions = useMemo(() => {
+    const search = searchText.trim().toLowerCase();
+    return questions
+      .filter((question) => (selectedType ? question.type === selectedType : true))
+      .filter((question) => (search ? String(question.text || "").toLowerCase().includes(search) : true))
+      .sort((a, b) => {
+        const diff = new Date(b.created_at || 0).getTime() - new Date(a.created_at || 0).getTime();
+        return sortBy === "oldest" ? -diff : diff;
+      });
+  }, [questions, selectedType, searchText, sortBy]);
 
-  const paginatedQuestions = filteredQuestions.slice(
-    (currentPage - 1) * pageSize,
-    currentPage * pageSize,
-  );
+  const pageQuestions = filteredQuestions.slice((currentPage - 1) * pageSize, currentPage * pageSize);
 
-  const toggleAnswer = (questionId: string) => {
-    setShowAnswer((prev) => ({
-      ...prev,
-      [questionId]: !prev[questionId],
-    }));
+  const renderOptions = (question: BankSoalResponse) => {
+    const isTKP = question.type === "tkp";
+    const correct = correctIndex(question);
+    const scores = question.option_scores || [];
+    return (
+      <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+        {(question.options || []).map((option, index) => {
+          const isCorrect = !isTKP && index === correct;
+          const score = isTKP ? scores[index] ?? Math.max(1, 5 - index) : undefined;
+          return (
+            <div
+              key={index}
+              style={{
+                display: "flex",
+                alignItems: "flex-start",
+                gap: 12,
+                padding: "10px 12px",
+                borderRadius: 10,
+                border: `1px solid ${isCorrect ? "#86efac" : "var(--tl-line)"}`,
+                background: isCorrect ? "#f0fdf4" : "#fff",
+              }}
+            >
+              <span
+                style={{
+                  flex: "none",
+                  width: 26,
+                  height: 26,
+                  borderRadius: 8,
+                  display: "grid",
+                  placeItems: "center",
+                  fontWeight: 700,
+                  fontSize: 13,
+                  background: isCorrect ? "#16a34a" : "#f1f5f9",
+                  color: isCorrect ? "#fff" : "#475569",
+                }}
+              >
+                {String.fromCharCode(65 + index)}
+              </span>
+              <span style={{ flex: 1, minWidth: 0, lineHeight: 1.6, color: "var(--tl-ink)" }}>{stripLetter(option)}</span>
+              {isCorrect && <CheckCircleFilled style={{ color: "#16a34a", marginTop: 5 }} />}
+              {score !== undefined && (
+                <Tooltip title="Bobot TKP">
+                  <Tag color={score >= 5 ? "green" : score >= 3 ? "gold" : "default"} style={{ margin: 0 }}>
+                    {score}
+                  </Tag>
+                </Tooltip>
+              )}
+            </div>
+          );
+        })}
+      </div>
+    );
   };
 
   return (
-    <div
-      style={{
-        padding: "20px 0",
-        minHeight: "100vh",
-        background: "#f8f9fa",
-        fontFamily: "Inter, sans-serif",
-      }}
-    >
-      <div style={{ width: "100%", padding: "0 16px" }}>
-        {/* Header */}
-        <div
-          style={{
-            display: "flex",
-            justifyContent: "space-between",
-            alignItems: "center",
-            marginBottom: 32,
-          }}
-        >
-          <div>
-            <Title
-              level={2}
-              style={{ margin: 0, color: "#1f1f1f", fontWeight: 700 }}
-            >
-              {pageTitle}
-            </Title>
-            <Text type="secondary" style={{ fontSize: 16 }}>
-              {category === "skd"
-                ? "Kelola soal SKD CPNS (TWK, TIU, TKP)"
-                : category === "utbk"
-                ? "Kelola soal UTBK (KPU, PPU, PBM, PKU, IND, ING, MTK)"
-                : "Manage and organize your question repository"}
-            </Text>
-          </div>
-          <div style={{ display: "flex", gap: 10 }}>
-            <Dropdown
-              menu={{ items: generateMenuItems }}
-              trigger={["click"]}
-              placement="bottomRight"
-            >
-              <Button
-                size="large"
-                loading={generatingType !== null}
-                style={{
-                  border: "1.5px solid #8C59F1",
-                  color: "#8C59F1",
-                  fontWeight: 600,
-                  borderRadius: 12,
-                  height: 48,
-                  padding: "0 20px",
-                }}
-                icon={<ThunderboltOutlined />}
-              >
-                Generate Soal <DownOutlined style={{ fontSize: 11 }} />
+    <div className="tl-page">
+      <PageHeader
+        title={pageTitle}
+        subtitle={
+          category === "skd"
+            ? "Kelola soal SKD CPNS: TWK, TIU, dan TKP."
+            : category === "utbk"
+            ? "Kelola soal UTBK: KPU, PPU, PBM, PKU, IND, ING, MTK."
+            : "Kelola semua soal."
+        }
+        extra={
+          <>
+            <Dropdown menu={{ items: generateMenuItems }} trigger={["click"]} placement="bottomRight">
+              <Button icon={<ThunderboltOutlined />} loading={generatingType !== null}>
+                Generate Soal <DownOutlined />
               </Button>
             </Dropdown>
-            <Button
-              type="primary"
-              size="large"
-              style={{
-                background: "linear-gradient(135deg, #8C59F1 0%, #9e73f8 100%)",
-                border: "none",
-                boxShadow: "0 4px 14px rgba(140, 89, 241, 0.3)",
-                fontWeight: 600,
-                borderRadius: 12,
-                height: 48,
-                padding: "0 24px",
-              }}
-              icon={<CheckCircleOutlined />}
-              onClick={() => setIsCreateModalOpen(true)}
-            >
-              Add New Question
+            <Button type="primary" icon={<PlusOutlined />} onClick={() => setIsCreateModalOpen(true)}>
+              Tambah Soal
             </Button>
-          </div>
+          </>
+        }
+      />
+
+      <Card className="tl-card">
+        <div style={{ display: "flex", flexWrap: "wrap", gap: 12 }}>
+          <Input
+            placeholder="Cari teks soal"
+            prefix={<SearchOutlined style={{ color: "var(--tl-muted)" }} />}
+            allowClear
+            value={searchText}
+            onChange={(event) => setSearchText(event.target.value)}
+            style={{ flex: "1 1 260px" }}
+          />
+          <Select
+            style={{ width: 280 }}
+            value={selectedType}
+            onChange={setSelectedType}
+            options={[{ value: "", label: "Semua jenis" }, ...typeList.map(({ value, label }) => ({ value, label: KNOWN_TYPE_LABELS[value] || label }))]}
+          />
+          <Select
+            style={{ width: 160 }}
+            value={sortBy}
+            onChange={setSortBy}
+            options={[
+              { label: "Terbaru", value: "newest" },
+              { label: "Terlama", value: "oldest" },
+            ]}
+          />
         </div>
+        <Space size={[8, 8]} wrap style={{ marginTop: 14 }}>
+          <Tag.CheckableTag checked={!selectedType} onChange={() => setSelectedType("")}>
+            Semua · {questions.length}
+          </Tag.CheckableTag>
+          {typeList.map(({ value }) => (
+            <Tag.CheckableTag key={value} checked={selectedType === value} onChange={() => setSelectedType(selectedType === value ? "" : value)}>
+              {value.toUpperCase()} · {typeCounts[value] || 0}
+            </Tag.CheckableTag>
+          ))}
+        </Space>
+      </Card>
 
-        {/* Toolbar */}
-        <Card
-          bordered={false}
-          bodyStyle={{ padding: "24px 32px" }}
-          style={{
-            marginBottom: 24,
-            borderRadius: 20,
-            boxShadow: "0 4px 20px rgba(0,0,0,0.03)",
-            background: "#fff",
-          }}
-        >
-          <Row gutter={24} align="middle">
-            <Col flex={1}>
-              <Input
-                placeholder="Search questions..."
-                prefix={
-                  <FilterOutlined style={{ color: "#ccc", fontSize: 18 }} />
-                }
-                size="large"
-                style={{
-                  borderRadius: 12,
-                  backgroundColor: "#f9f9f9",
-                  border: "1px solid #eee",
-                }}
-                value={searchText}
-                onChange={(e) => setSearchText(e.target.value)}
-                allowClear
-              />
-            </Col>
-            <Col>
-              <Select
-                placeholder="Filter Type"
-                size="large"
-                allowClear
-                style={{ width: 240 }}
-                value={selectedType}
-                onChange={setSelectedType}
-                options={dynamicFilterOptions}
-                className="custom-select"
-              />
-            </Col>
-            <Col>
-              <Select
-                placeholder="Sort By"
-                size="large"
-                style={{ width: 180 }}
-                value={sortBy}
-                onChange={setSortBy}
-                options={[
-                  { label: "Newest First", value: "newest" },
-                  { label: "Oldest First", value: "oldest" },
-                ]}
-              />
-            </Col>
-          </Row>
+      {isLoading ? (
+        <Card className="tl-card">
+          <Skeleton active paragraph={{ rows: 6 }} />
         </Card>
+      ) : filteredQuestions.length === 0 ? (
+        <Card className="tl-card">
+          <Empty description="Tidak ada soal yang cocok dengan filter." />
+        </Card>
+      ) : (
+        <>
+          {pageQuestions.map((question, position) => {
+            const isOpen = Boolean(expanded[question.bank_soal_id]);
+            const isTKP = question.type === "tkp";
+            const correct = correctIndex(question);
+            const number = (currentPage - 1) * pageSize + position + 1;
+            return (
+              <Card key={question.bank_soal_id} className="tl-card" bodyStyle={{ padding: 20 }}>
+                <div style={{ display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap", marginBottom: 12 }}>
+                  <Text strong style={{ color: "var(--tl-muted)" }}>
+                    #{number}
+                  </Text>
+                  <Tag color={TYPE_COLORS[question.type] || "default"} style={{ margin: 0 }}>
+                    {getQuestionTypeName(question.type)}
+                  </Tag>
+                  {question.is_ai_generated && (
+                    <Tag icon={<RobotOutlined />} color="purple" style={{ margin: 0 }}>
+                      AI
+                    </Tag>
+                  )}
+                  {question.created_at && (
+                    <Text type="secondary" style={{ fontSize: 12 }}>
+                      {dayjs(question.created_at).locale("id").format("D MMM YYYY")}
+                    </Text>
+                  )}
+                  <span style={{ flex: 1 }} />
+                  <Button size="small" icon={<EditOutlined />} onClick={() => setEditing(question)}>
+                    Edit
+                  </Button>
+                </div>
 
-        {/* Content */}
-        {isLoading ? (
-          <div style={{ textAlign: "center", padding: 80 }}>
-            <Spin
-              size="large"
-              indicator={
-                <div style={{ fontSize: 40, color: "#8C59F1" }}>⚡</div>
-              }
-            />
-            <div style={{ marginTop: 24, color: "#999", fontWeight: 500 }}>
-              Loading questions...
-            </div>
-          </div>
-        ) : (
-          <>
-            <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
-              {paginatedQuestions.map((q) => (
-                <Card
-                  key={q.bank_soal_id}
-                  bordered={false}
-                  hoverable
-                  style={{
-                    borderRadius: 20,
-                    boxShadow: "0 2px 8px rgba(0,0,0,0.02)",
-                    overflow: "hidden",
-                    border: "1px solid #f0f0f0",
-                    transition: "all 0.2s ease",
-                  }}
-                  bodyStyle={{ padding: "24px" }}
-                  onClick={() => {
-                    if (expandedQuestion === q.bank_soal_id)
-                      setExpandedQuestion(null);
-                    else setExpandedQuestion(q.bank_soal_id);
-                  }}
-                >
-                  <div
-                    style={{
-                      display: "flex",
-                      gap: 20,
-                      alignItems: "flex-start",
-                    }}
-                  >
-                    <div
-                      style={{
-                        width: 48,
-                        height: 48,
-                        borderRadius: 14,
-                        background: "#f9f0ff",
-                        display: "flex",
-                        alignItems: "center",
-                        justifyContent: "center",
-                        color: "#8C59F1",
-                        fontSize: 20,
-                        flexShrink: 0,
-                      }}
-                    >
-                      <QuestionCircleOutlined />
-                    </div>
-                    <div style={{ flex: 1 }}>
-                      <div
-                        style={{
-                          display: "flex",
-                          justifyContent: "space-between",
-                          marginBottom: 12,
-                        }}
-                      >
-                        <div
-                          style={{
-                            display: "flex",
-                            gap: 8,
-                            alignItems: "center",
-                          }}
-                        >
-                          <Tag
-                            color="purple"
-                            style={{
-                              border: "none",
-                              background: "#f0e6ff",
-                              color: "#8C59F1",
-                              fontWeight: 600,
-                              borderRadius: 6,
-                              padding: "2px 10px",
-                            }}
-                          >
-                            {getQuestionTypeName(q.type)}
-                          </Tag>
-                          <Text type="secondary" style={{ fontSize: 13 }}>
-                            ID: {(q.bank_soal_id || "").substring(0, 8)}...
-                          </Text>
-                        </div>
-                        <Button
-                          icon={<EditOutlined />}
-                          shape="circle"
-                          size="large"
-                          style={{ color: "#666", border: "1px solid #eee" }}
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            setCurrentEditingQuestion(q as any);
-                            setIsEditModalOpen(true);
-                          }}
-                        />
-                      </div>
-
-                      <Typography.Paragraph
-                        ellipsis={{ rows: 2, expandable: true, symbol: "more" }}
-                        style={{
-                          fontSize: 16,
-                          fontWeight: 500,
-                          color: "#222",
-                          marginBottom: 16,
-                          lineHeight: 1.6,
-                        }}
-                      >
-                        <div dangerouslySetInnerHTML={{ __html: q.text }} />
-                      </Typography.Paragraph>
-
-                      {/* Options Preview */}
-                      <div
-                        style={{
-                          display: "grid",
-                          gridTemplateColumns: "1fr 1fr",
-                          gap: 16,
-                          background: "#fafafa",
-                          padding: 16,
-                          borderRadius: 12,
-                        }}
-                      >
-                        <div>
-                          <Text
-                            type="secondary"
-                            style={{
-                              fontSize: 12,
-                              display: "block",
-                              marginBottom: 4,
-                            }}
-                          >
-                            CORRECT ANSWER
-                          </Text>
-                          <div
-                            style={{
-                              fontWeight: 700,
-                              color: "#52c41a",
-                              fontSize: 15,
-                            }}
-                          >
-                            {q.correct_answer}
-                          </div>
-                        </div>
-                        <div>
-                          <Text
-                            type="secondary"
-                            style={{
-                              fontSize: 12,
-                              display: "block",
-                              marginBottom: 4,
-                            }}
-                          >
-                            OPTIONS
-                          </Text>
-                          <div
-                            style={{
-                              fontWeight: 600,
-                              color: "#444",
-                              fontSize: 15,
-                            }}
-                          >
-                            {Array.isArray(q.options) ? q.options.length : 0}{" "}
-                            Choices
-                          </div>
-                        </div>
-                      </div>
-
-                      {/* Expansion for full details */}
-                      {expandedQuestion === q.bank_soal_id && (
-                        <div
-                          style={{
-                            marginTop: 24,
-                            borderTop: "1px solid #eee",
-                            paddingTop: 16,
-                          }}
-                        >
-                          <Title
-                            level={5}
-                            style={{
-                              fontSize: 14,
-                              color: "#999",
-                              marginBottom: 12,
-                            }}
-                          >
-                            FULL PREVIEW
-                          </Title>
-                          {q.image_url && (
-                            <img
-                              src={q.image_url}
-                              alt="Q"
-                              style={{
-                                maxWidth: "100%",
-                                borderRadius: 8,
-                                marginBottom: 16,
-                              }}
-                            />
-                          )}
-                          <div
-                            style={{
-                              display: "flex",
-                              flexDirection: "column",
-                              gap: 8,
-                            }}
-                          >
-                            {q.options?.map((opt: string, i: number) => {
-                              const char = String.fromCharCode(65 + i);
-                              const normalizedCorrect = String(
-                                q.correct_answer || "",
-                              )
-                                .trim()
-                                .toLowerCase();
-                              const normalizedOption = String(opt || "")
-                                .trim()
-                                .toLowerCase();
-                              const isLegacyLabel =
-                                normalizedCorrect.length === 1 &&
-                                normalizedCorrect === char.toLowerCase();
-                              const isCor =
-                                normalizedOption === normalizedCorrect ||
-                                isLegacyLabel;
-                              return (
-                                <div
-                                  key={i}
-                                  style={{
-                                    padding: "10px 14px",
-                                    borderRadius: 8,
-                                    background: isCor ? "#f6ffed" : "#fff",
-                                    border: isCor
-                                      ? "1px solid #b7eb8f"
-                                      : "1px solid #eee",
-                                    display: "flex",
-                                    gap: 12,
-                                  }}
-                                >
-                                  <span
-                                    style={{
-                                      fontWeight: 600,
-                                      color: isCor ? "#52c41a" : "#666",
-                                    }}
-                                  >
-                                    {char}.
-                                  </span>
-                                  <span style={{ color: "#333" }}>
-                                    {opt.replace(/^[A-E]\.\s*/, "")}
-                                  </span>
-                                  {isCor && (
-                                    <CheckCircleOutlined
-                                      style={{
-                                        color: "#52c41a",
-                                        marginLeft: "auto",
-                                      }}
-                                    />
-                                  )}
-                                </div>
-                              );
-                            })}
-                          </div>
-
-                          {/* Pembahasan / Explanation */}
-                          {q.explanation && (
-                            <div
-                              style={{
-                                marginTop: 20,
-                                padding: 16,
-                                background: "#fff9e6",
-                                borderRadius: 12,
-                                border: "1px solid #ffe58f",
-                              }}
-                            >
-                              <Text
-                                type="secondary"
-                                style={{
-                                  fontSize: 12,
-                                  display: "block",
-                                  marginBottom: 8,
-                                  fontWeight: 600,
-                                  color: "#d48806",
-                                }}
-                              >
-                                💡 PEMBAHASAN
-                              </Text>
-                              <div
-                                style={{ color: "#444", lineHeight: 1.6 }}
-                                dangerouslySetInnerHTML={{
-                                  __html: q.explanation,
-                                }}
-                              />
-                            </div>
-                          )}
-                        </div>
-                      )}
-                    </div>
-                  </div>
-                </Card>
-              ))}
-
-              {filteredQuestions.length === 0 && (
+                {/* The question is HTML; clamp it with CSS so it never cuts mid-markup. */}
                 <div
                   style={{
-                    padding: 60,
-                    textAlign: "center",
-                    background: "#fff",
-                    borderRadius: 20,
+                    fontSize: 15,
+                    lineHeight: 1.7,
+                    color: "var(--tl-ink)",
+                    whiteSpace: "pre-line",
+                    overflowWrap: "anywhere",
+                    ...(isOpen
+                      ? {}
+                      : { display: "-webkit-box", WebkitLineClamp: 4, WebkitBoxOrient: "vertical" as const, overflow: "hidden" }),
                   }}
-                >
-                  <Empty description="No questions found matching your filters" />
-                </div>
-              )}
-            </div>
-
-            {/* Pagination */}
-            {filteredQuestions.length > 0 && (
-              <div
-                style={{
-                  display: "flex",
-                  justifyContent: "center",
-                  marginTop: 40,
-                  paddingBottom: 40,
-                }}
-              >
-                <Pagination
-                  current={currentPage}
-                  pageSize={pageSize}
-                  total={filteredQuestions.length}
-                  onChange={setCurrentPage}
-                  showSizeChanger
-                  onShowSizeChange={(_, size) => setPageSize(size)}
-                  showTotal={(total) => `Total ${total} questions`}
+                  dangerouslySetInnerHTML={{ __html: question.text }}
                 />
-              </div>
-            )}
-          </>
-        )}
-      </div>
 
-      {/* Edit Modal */}
-      {isEditModalOpen && currentEditingQuestion && (
+                {isOpen ? (
+                  <div style={{ marginTop: 16, display: "flex", flexDirection: "column", gap: 16 }}>
+                    {question.image_url && (
+                      <img src={question.image_url} alt="Gambar soal" style={{ maxWidth: "100%", borderRadius: 10 }} />
+                    )}
+                    {renderOptions(question)}
+                    {question.explanation && (
+                      <div style={{ padding: 16, borderRadius: 12, background: "#fffbeb", border: "1px solid #fde68a" }}>
+                        <Text strong style={{ color: "#b45309", display: "block", marginBottom: 6 }}>
+                          Pembahasan
+                        </Text>
+                        <div style={{ lineHeight: 1.7 }} dangerouslySetInnerHTML={{ __html: question.explanation }} />
+                      </div>
+                    )}
+                  </div>
+                ) : (
+                  <Space size={8} wrap style={{ marginTop: 12 }}>
+                    <Tag style={{ margin: 0 }}>{(question.options || []).length} pilihan</Tag>
+                    {isTKP ? (
+                      <Tag color="lime" style={{ margin: 0 }}>
+                        Bobot TKP 1–5
+                      </Tag>
+                    ) : correct >= 0 ? (
+                      <Tag color="green" style={{ margin: 0 }}>
+                        Kunci: {String.fromCharCode(65 + correct)}
+                      </Tag>
+                    ) : (
+                      <Tag color="red" style={{ margin: 0 }}>
+                        Kunci tidak cocok dengan pilihan
+                      </Tag>
+                    )}
+                    {question.explanation && <Tag style={{ margin: 0 }}>Ada pembahasan</Tag>}
+                  </Space>
+                )}
+
+                <div style={{ marginTop: 8 }}>
+                  <Button
+                    type="link"
+                    style={{ paddingInline: 0 }}
+                    onClick={() => setExpanded((prev) => ({ ...prev, [question.bank_soal_id]: !isOpen }))}
+                  >
+                    {isOpen ? "Ringkas" : "Lihat soal lengkap & pilihan jawaban"}
+                  </Button>
+                </div>
+              </Card>
+            );
+          })}
+
+          <div style={{ display: "flex", justifyContent: "center" }}>
+            <Pagination
+              current={currentPage}
+              pageSize={pageSize}
+              total={filteredQuestions.length}
+              onChange={(page, size) => {
+                setCurrentPage(page);
+                setPageSize(size);
+              }}
+              showSizeChanger
+              showTotal={(total) => `${total} soal`}
+            />
+          </div>
+        </>
+      )}
+
+      {editing && (
         <ModalUpdateBankSoal
-          isModalOpen={isEditModalOpen}
-          setIsModalOpen={setIsEditModalOpen}
-          questionData={currentEditingQuestion}
-          onSuccess={() => {
-            // Reload page to reflect changes
-            window.location.reload();
-          }}
+          isModalOpen={Boolean(editing)}
+          setIsModalOpen={(open: boolean) => !open && setEditing(null)}
+          questionData={editing}
+          onSuccess={() => window.location.reload()}
         />
       )}
 
-      {/* Create Modal */}
       <ModalCreateBankSoal
         isModalOpen={isCreateModalOpen}
         setIsModalOpen={setIsCreateModalOpen}
         category={category}
-        onSuccess={() => {
-          window.location.reload();
-        }}
+        onSuccess={() => window.location.reload()}
       />
     </div>
   );

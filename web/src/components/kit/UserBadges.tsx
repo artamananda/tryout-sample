@@ -3,7 +3,7 @@ import { CrownFilled, IdcardFilled } from '@ant-design/icons';
 import type { UserBadges as UserBadgesData } from '../../types/badge.type';
 
 /** Colour per paid package, from the entry package up to the top one. */
-const PACKAGE_COLORS: Record<string, string> = {
+export const PACKAGE_COLORS: Record<string, string> = {
   premium: 'blue',
   unggulan: 'purple',
   eksekutif: 'gold',
@@ -20,7 +20,7 @@ const VerifiedSeal = ({ size }: { size: number }) => (
     height={size}
     role="img"
     aria-label="Terverifikasi"
-    style={{ flex: 'none', display: 'inline-block', verticalAlign: '-0.15em' }}
+    style={{ display: 'block', flex: 'none' }}
   >
     <path
       fill={VERIFIED_COLOR}
@@ -44,7 +44,7 @@ const VerifiedSeal = ({ size }: { size: number }) => (
 export const VerifiedMark = ({ badges, size = 16 }: { badges?: UserBadgesData; size?: number }) =>
   badges?.verified ? (
     <Tooltip title={`Terverifikasi · ${badges.verified.label_name || badges.verified.label}`}>
-      <span className="tl-verified-mark" style={{ display: 'inline-flex', marginLeft: 4, flex: 'none', cursor: 'help' }}>
+      <span className="tl-verified-mark">
         <VerifiedSeal size={size} />
       </span>
     </Tooltip>

@@ -1,47 +1,33 @@
-import React, { useEffect } from "react";
-import { Card, Typography } from "antd";
-import { RobotOutlined } from "@ant-design/icons";
+import { useEffect } from "react";
+import { Card } from "antd";
 import AIChatView from "../../components/AIChat/AIChatView";
 
-const { Title } = Typography;
-
+/** The page title already shows in the app header, so the chat fills the page. */
 const AIChatScreen = () => {
   useEffect(() => {
     document.title = "AI Generator - CMS";
   }, []);
 
   return (
-    <div
+    <Card
+      className="tl-card"
       style={{
-        height: "calc(100vh - 100px)",
+        height: "calc(100vh - 64px - 2 * var(--tl-gutter))",
+        minHeight: 480,
         display: "flex",
         flexDirection: "column",
+        overflow: "hidden",
+      }}
+      bodyStyle={{
+        flex: 1,
+        display: "flex",
+        flexDirection: "column",
+        padding: 24,
+        overflow: "hidden",
       }}
     >
-      <div style={{ marginBottom: 16 }}>
-        <Title level={2}>
-          <RobotOutlined style={{ marginRight: 12, color: "#8C59F1" }} />
-          AI Generator
-        </Title>
-      </div>
-      <Card
-        style={{
-          flex: 1,
-          display: "flex",
-          flexDirection: "column",
-          overflow: "hidden",
-        }}
-        bodyStyle={{
-          flex: 1,
-          display: "flex",
-          flexDirection: "column",
-          padding: 24,
-          overflow: "hidden",
-        }}
-      >
-        <AIChatView />
-      </Card>
-    </div>
+      <AIChatView />
+    </Card>
   );
 };
 

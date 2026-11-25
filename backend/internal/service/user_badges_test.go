@@ -38,3 +38,9 @@ func TestUserBadgesOf(t *testing.T) {
 	assert.Equal(t, &model.VerifiedBadge{Label: "tutor", LabelName: "Tutor", VerifiedAt: verifiedAt}, badges.Verified)
 	assert.Equal(t, "platinum", badges.Package.Code)
 }
+
+func TestWeeklyReportSubject(t *testing.T) {
+	assert.Equal(t, "Progres mingguan SKD Gelombang 1", WeeklyReportSubject("", "Ani", "SKD Gelombang 1"))
+	assert.Equal(t, "Halo Ani, ini progres SKD Gelombang 1", WeeklyReportSubject("Halo {nama}, ini progres {program}", " Ani ", "SKD Gelombang 1"))
+	assert.Equal(t, "Baris satu dua", WeeklyReportSubject("Baris\nsatu  dua", "", ""), "line breaks never reach the email header")
+}

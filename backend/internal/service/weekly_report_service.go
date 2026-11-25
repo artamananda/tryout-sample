@@ -20,6 +20,24 @@ import (
 // weekly email ("informasi terbaru").
 const WeeklyReportNoteKey = "weekly_report_note"
 
+// WeeklyReportSubjectKey is the system config holding the email subject.
+// {nama} and {program} are replaced per participant.
+const WeeklyReportSubjectKey = "weekly_report_subject"
+
+// DefaultWeeklyReportSubject is used while no subject is configured.
+const DefaultWeeklyReportSubject = "Progres mingguan {program}"
+
+// WeeklyReportSubject fills in the subject template for one participant.
+func WeeklyReportSubject(template string, name string, program string) string {
+	template = strings.TrimSpace(template)
+	if template == "" {
+		template = DefaultWeeklyReportSubject
+	}
+	subject := strings.NewReplacer("{nama}", strings.TrimSpace(name), "{program}", program).Replace(template)
+	// Line breaks in a subject would break the email header.
+	return strings.Join(strings.Fields(subject), " ")
+}
+
 type WeeklyReportResult struct {
 	WeekStart  string   `json:"week_start"`
 	Recipients int      `json:"recipients"`
@@ -146,10 +164,13 @@ func (service *WeeklyReportService) Run(ctx context.Context, programID string, d
 	result := WeeklyReportResult{WeekStart: week.Format("2006-01-02"), DryRun: dryRun}
 
 	programs := service.ProgramRepository.FindAll(ctx, model.FindAllProgramsRequest{})
-	note := ""
+	note, subjectTemplate := "", ""
 	if service.SystemConfigRepository != nil {
 		if config, err := service.SystemConfigRepository.FindByKey(ctx, WeeklyReportNoteKey); err == nil {
 			note = strings.TrimSpace(config.Value)
+		}
+		if config, err := service.SystemConfigRepository.FindByKey(ctx, WeeklyReportSubjectKey); err == nil {
+			subjectTemplate = config.Value
 		}
 	}
 
@@ -204,7 +225,7 @@ func (service *WeeklyReportService) Run(ctx context.Context, programID string, d
 				var html string
 				html, err = helper.TemplateWeeklyReport(data)
 				if err == nil {
-					err = service.SendMail(member.User.Email, "Progres mingguan "+program.Name, html)
+					err = service.SendMail(member.User.Email, WeeklyReportSubject(subjectTemplate, member.User.Name, program.Name), html)
 				}
 			}
 

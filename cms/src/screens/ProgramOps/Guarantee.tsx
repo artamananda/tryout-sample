@@ -3,6 +3,7 @@ import { Button, Form, Input, message, Modal, Select, Space, Table, Tag, Typogra
 import dayjs from "dayjs";
 import { apiGetGuaranteeClaims, apiGetPrograms, apiReviewGuaranteeClaim, GuaranteeClaim } from "../../api/programOps";
 import { getErrorMessage } from "../../helpers/errorHandler";
+import UserName from "../../components/kit/UserName";
 
 const { Title, Text } = Typography;
 
@@ -67,7 +68,7 @@ const GuaranteeScreen = () => {
             title: "Peserta",
             render: (_, row: GuaranteeClaim) => (
               <Space direction="vertical" size={0}>
-                <Text>{row.user?.name}</Text>
+                <UserName userId={row.user?.user_id} name={row.user?.name || "-"} />
                 <Text type="secondary">{row.user?.email}</Text>
                 <Text type="secondary">{row.user?.phone_number}</Text>
               </Space>

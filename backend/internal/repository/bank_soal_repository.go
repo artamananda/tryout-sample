@@ -84,7 +84,10 @@ func (repository *BankSoalRepository) FindByType(ctx context.Context, questionTy
 	return bankSoals, nil
 }
 
-func (repository *BankSoalRepository) FindPreview(ctx context.Context, questionType string, limit int, includeUsed bool) ([]entity.BankSoal, error) {
+// FindPreview returns the newest questions for the public preview. types
+// (a category's question types) is applied in SQL before the limit, so a
+// category or type filter always gets up to limit matching questions.
+func (repository *BankSoalRepository) FindPreview(ctx context.Context, questionType string, types []string, limit int, includeUsed bool) ([]entity.BankSoal, error) {
 	var bankSoals []entity.BankSoal
 
 	query := repository.DB.WithContext(ctx).Order("created_at DESC")
@@ -93,6 +96,9 @@ func (repository *BankSoalRepository) FindPreview(ctx context.Context, questionT
 	}
 	if questionType != "" {
 		query = query.Where("type = ?", questionType)
+	}
+	if len(types) > 0 {
+		query = query.Where("type IN ?", types)
 	}
 	if limit > 0 {
 		query = query.Limit(limit)

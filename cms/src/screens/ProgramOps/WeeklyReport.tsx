@@ -1,32 +1,51 @@
 import { useEffect, useState } from "react";
 import { Alert, Button, Card, Descriptions, Input, message, Select, Space, Typography } from "antd";
-import { apiGetPrograms, apiGetWeeklyNote, apiRunWeeklyReport, apiSetWeeklyNote } from "../../api/programOps";
+import { apiGetPrograms, apiGetWeeklySettings, apiRunWeeklyReport, apiSetWeeklySettings } from "../../api/programOps";
 import { getErrorMessage } from "../../helpers/errorHandler";
 
-const { Title, Text } = Typography;
+const { Text } = Typography;
+
+const DEFAULT_SUBJECT = "Progres mingguan {program}";
 
 type RunResult = { week_start: string; recipients: number; sent: number; skipped: number; failed: number; dry_run: boolean; errors?: string[] };
 
 const WeeklyReportScreen = () => {
   const [note, setNote] = useState("");
+  const [subject, setSubject] = useState("");
+  const [defaultSubject, setDefaultSubject] = useState(DEFAULT_SUBJECT);
+  const [isSaving, setIsSaving] = useState(false);
   const [programs, setPrograms] = useState<{ program_id: string; name: string }[]>([]);
   const [programId, setProgramId] = useState<string>();
   const [result, setResult] = useState<RunResult>();
   const [isRunning, setIsRunning] = useState(false);
 
   useEffect(() => {
-    apiGetWeeklyNote().then((value) => setNote(value || "")).catch(() => undefined);
+    apiGetWeeklySettings()
+      .then((settings) => {
+        setNote(settings?.note || "");
+        setSubject(settings?.subject || "");
+        setDefaultSubject(settings?.default_subject || DEFAULT_SUBJECT);
+      })
+      .catch(() => undefined);
     apiGetPrograms().then(setPrograms).catch(() => setPrograms([]));
   }, []);
 
-  const saveNote = async () => {
+  const saveSettings = async () => {
     try {
-      await apiSetWeeklyNote(note);
-      message.success("Catatan disimpan");
+      setIsSaving(true);
+      await apiSetWeeklySettings(note, subject);
+      message.success("Pengaturan email disimpan");
     } catch (err) {
       message.error(getErrorMessage(err));
+    } finally {
+      setIsSaving(false);
     }
   };
+
+  const firstProgram = programs[0]?.name || "SKD CPNS Gelombang 1";
+  const subjectPreview = (subject.trim() || defaultSubject)
+    .replace(/\{nama\}/g, "Budi Santoso")
+    .replace(/\{program\}/g, firstProgram);
 
   const run = async (dryRun: boolean) => {
     try {
@@ -41,16 +60,40 @@ const WeeklyReportScreen = () => {
 
   return (
     <div style={{ maxWidth: 760 }}>
-      <Title level={3}>Email Progres Mingguan</Title>
       <Text type="secondary">
         Terkirim otomatis setiap Minggu pukul 19.00 WIB ke peserta paket dengan email progres (Eksekutif, Platinum). Isi: skor tiap
         TO, tren, peringkat, subtes terlemah, dan jadwal 7 hari ke depan. Satu email per peserta per minggu.
       </Text>
 
-      <Card title="Informasi terbaru (ditambahkan ke semua email)" style={{ marginTop: 16 }}>
-        <Input.TextArea rows={4} maxLength={2000} showCount value={note} onChange={(event) => setNote(event.target.value)} />
-        <Button type="primary" style={{ marginTop: 12 }} onClick={saveNote}>
-          Simpan Catatan
+      <Card title="Isi email" style={{ marginTop: 16 }}>
+        <Text strong>Subject</Text>
+        <Input
+          style={{ marginTop: 6 }}
+          maxLength={150}
+          showCount
+          placeholder={defaultSubject}
+          value={subject}
+          onChange={(event) => setSubject(event.target.value)}
+        />
+        <Text type="secondary" style={{ display: "block", marginTop: 4 }}>
+          Pakai <code>{"{nama}"}</code> untuk nama peserta dan <code>{"{program}"}</code> untuk nama program. Kosongkan untuk
+          memakai bawaan.
+        </Text>
+        <Alert style={{ marginTop: 8 }} type="info" showIcon message={<>Contoh subject: <b>{subjectPreview}</b></>} />
+
+        <Text strong style={{ display: "block", marginTop: 20 }}>
+          Informasi terbaru (ditambahkan ke semua email)
+        </Text>
+        <Input.TextArea
+          style={{ marginTop: 6 }}
+          rows={4}
+          maxLength={2000}
+          showCount
+          value={note}
+          onChange={(event) => setNote(event.target.value)}
+        />
+        <Button type="primary" style={{ marginTop: 12 }} loading={isSaving} onClick={saveSettings}>
+          Simpan
         </Button>
       </Card>
 

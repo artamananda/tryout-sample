@@ -1,6 +1,8 @@
 package controller
 
 import (
+	"strings"
+
 	"github.com/artamananda/tryout-sample/internal/config"
 	"github.com/artamananda/tryout-sample/internal/exception"
 	"github.com/artamananda/tryout-sample/internal/middleware"
@@ -220,9 +222,16 @@ func (controller GrowthController) RunWeeklyReport(c *fiber.Ctx) error {
 
 type weeklyNoteRequest struct {
 	Note string `json:"note"`
+	// Subject is optional; omit it to keep the current subject.
+	Subject *string `json:"subject"`
 }
 
-// GetWeeklyNote returns the announcement added to every weekly email.
+func weeklySettings(note, subject string) map[string]string {
+	return map[string]string{"note": note, "subject": subject, "default_subject": service.DefaultWeeklyReportSubject}
+}
+
+// GetWeeklyNote returns the weekly email settings: the announcement added to
+// every email and the subject template.
 // @Summary Get the weekly email note (admin)
 // @Tags Growth
 // @Produce json
@@ -230,11 +239,14 @@ type weeklyNoteRequest struct {
 // @Success 200 {object} model.GeneralResponse
 // @Router /admin/weekly-report/note [get]
 func (controller GrowthController) GetWeeklyNote(c *fiber.Ctx) error {
-	note := ""
+	note, subject := "", ""
 	if config, err := controller.SystemConfigRepository.FindByKey(c.Context(), service.WeeklyReportNoteKey); err == nil {
 		note = config.Value
 	}
-	return success(c, fiber.StatusOK, map[string]string{"note": note})
+	if config, err := controller.SystemConfigRepository.FindByKey(c.Context(), service.WeeklyReportSubjectKey); err == nil {
+		subject = config.Value
+	}
+	return success(c, fiber.StatusOK, weeklySettings(note, subject))
 }
 
 // SetWeeklyNote sets the announcement added to every weekly email.
@@ -253,10 +265,24 @@ func (controller GrowthController) SetWeeklyNote(c *fiber.Ctx) error {
 	if len(request.Note) > 2000 {
 		return exception.BadRequestError{Message: "catatan maksimal 2000 karakter"}
 	}
+	subject := ""
+	if request.Subject != nil {
+		subject = strings.TrimSpace(*request.Subject)
+		if len(subject) > 150 {
+			return exception.BadRequestError{Message: "subject maksimal 150 karakter"}
+		}
+	}
 	if err := controller.SystemConfigRepository.Upsert(c.Context(), service.WeeklyReportNoteKey, request.Note); err != nil {
 		return err
 	}
-	return success(c, fiber.StatusOK, map[string]string{"note": request.Note})
+	if request.Subject != nil {
+		if err := controller.SystemConfigRepository.Upsert(c.Context(), service.WeeklyReportSubjectKey, subject); err != nil {
+			return err
+		}
+	} else if config, err := controller.SystemConfigRepository.FindByKey(c.Context(), service.WeeklyReportSubjectKey); err == nil {
+		subject = config.Value
+	}
+	return success(c, fiber.StatusOK, weeklySettings(request.Note, subject))
 }
 
 // MyPrograms lists the programs the user belongs to, with their package.

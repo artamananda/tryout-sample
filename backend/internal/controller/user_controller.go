@@ -1,6 +1,8 @@
 package controller
 
 import (
+	"strings"
+
 	"github.com/artamananda/tryout-sample/internal/common"
 	"github.com/artamananda/tryout-sample/internal/config"
 	"github.com/artamananda/tryout-sample/internal/exception"
@@ -47,6 +49,7 @@ func (controller UserController) Route(app *fiber.App) {
 	app.Delete("/v1/api/user/:id", adminOnly, controller.Delete)
 	app.Put("/v1/api/user/:id/verification", adminOnly, controller.SetVerification)
 	app.Delete("/v1/api/user/:id/verification", adminOnly, controller.RemoveVerification)
+	app.Get("/v1/api/user-badges", loggedIn, controller.Badges)
 	app.Get("/v1/api/user/:id", loggedIn, controller.FindById)
 	app.Get("/v1/api/user", adminOnly, controller.FindAll)
 }
@@ -176,6 +179,23 @@ func (controller UserController) Update(c *fiber.Ctx) error {
 		return err
 	}
 	return success(c, fiber.StatusOK, response)
+}
+
+// Badges returns the badges of many users, for lists of names.
+// @Summary Badges of many users
+// @Description ids is a comma-separated list of user ids (max 200).
+// @Tags Users
+// @Produce json
+// @Param ids query string true "User IDs"
+// @Security JWT
+// @Success 200 {object} model.GeneralResponse
+// @Router /user-badges [get]
+func (controller UserController) Badges(c *fiber.Ctx) error {
+	result, err := controller.UserService.BadgesByIDs(c.Context(), strings.Split(c.Query("ids"), ","))
+	if err != nil {
+		return err
+	}
+	return success(c, fiber.StatusOK, result)
 }
 
 // SetVerification gives a user the blue check.

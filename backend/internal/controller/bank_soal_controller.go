@@ -279,24 +279,16 @@ func (controller BankSoalController) FindPreview(c *fiber.Ctx) error {
 		limit = 20
 	}
 
-	result, err := controller.BankSoalService.FindPreview(c.Context(), questionType, limit, includeUsed)
+	var types []string
+	if category != "" {
+		types = entity.GetTypesByCategory(category)
+	}
+	// Category and type are filtered in SQL before the limit; filtering the
+	// limited rows here left a type filter empty when the newest rows were
+	// of other types.
+	result, err := controller.BankSoalService.FindPreview(c.Context(), questionType, types, limit, includeUsed)
 	if err != nil {
 		return err
-	}
-
-	// Filter by category if provided
-	if category != "" {
-		allowedTypes := make(map[string]bool)
-		for _, t := range entity.GetTypesByCategory(category) {
-			allowedTypes[t] = true
-		}
-		filtered := result[:0]
-		for _, q := range result {
-			if allowedTypes[q.Type] {
-				filtered = append(filtered, q)
-			}
-		}
-		result = filtered
 	}
 
 	resultCount, err := controller.BankSoalService.CountByCategory(c.Context(), category)

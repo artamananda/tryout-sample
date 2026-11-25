@@ -6,6 +6,7 @@ import dayjs from "dayjs";
 import { apiGetOrders, apiMarkOrderPaid } from "../../api/package";
 import { getErrorMessage } from "../../helpers/errorHandler";
 import { formatRupiah, ORDER_STATUS_COLOR, OrderProps } from "../../types/package.type";
+import UserName from "../../components/kit/UserName";
 
 const { Title, Text, Link } = Typography;
 const PAGE_SIZE = 50;
@@ -75,7 +76,7 @@ const OrdersScreen = () => {
       title: "Peserta",
       render: (_, order) => (
         <Space direction="vertical" size={0}>
-          <Text>{order.user?.name}</Text>
+          <UserName userId={order.user?.user_id} name={order.user?.name || "-"} />
           <Text type="secondary">{order.user?.email}</Text>
           {order.user?.phone_number && (
             <Link href={`https://wa.me/${order.user.phone_number}`} target="_blank" rel="noreferrer">

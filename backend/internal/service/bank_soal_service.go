@@ -257,8 +257,8 @@ func (service *BankSoalService) GetUniqueTypes(ctx context.Context) ([]string, e
 	return service.BankSoalRepository.GetUniqueTypes(ctx)
 }
 
-func (service *BankSoalService) FindPreview(ctx context.Context, questionType string, limit int, includeUsed bool) ([]model.BankSoalResponse, error) {
-	bankSoals, err := service.BankSoalRepository.FindPreview(ctx, questionType, limit, includeUsed)
+func (service *BankSoalService) FindPreview(ctx context.Context, questionType string, types []string, limit int, includeUsed bool) ([]model.BankSoalResponse, error) {
+	bankSoals, err := service.BankSoalRepository.FindPreview(ctx, questionType, types, limit, includeUsed)
 	if err != nil {
 		return nil, err
 	}

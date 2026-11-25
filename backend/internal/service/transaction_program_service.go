@@ -207,6 +207,8 @@ func (service *TransactionProgramService) FindAll(ctx context.Context, params mo
 			Status:               transactionProgram.Status,
 			Motivation:           transactionProgram.Motivation,
 			InvoiceNumber:        transactionProgram.InvoiceNumber,
+			PackageID:            transactionProgram.PackageID,
+			BonusTryouts:         transactionProgram.BonusTryouts,
 			CreatedAt:            transactionProgram.CreatedAt,
 			UpdatedAt:            transactionProgram.UpdatedAt,
 		})

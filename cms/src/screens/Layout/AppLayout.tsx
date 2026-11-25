@@ -26,6 +26,7 @@ import { useAuthUser, useSignOut } from "react-auth-kit";
 import logoWordmark from "../../assets/logo-wordmark.png";
 import logoIcon from "../../assets/logo-icon.png";
 import FooterCopyright from "../../components/Footer";
+import UserName from "../../components/kit/UserName";
 
 const { Content, Header, Sider } = Layout;
 const { useBreakpoint } = Grid;
@@ -222,7 +223,9 @@ const AppLayout = () => {
             <div className="tl-header-user" role="button" tabIndex={0}>
               <Avatar src={user?.picture_url || undefined} icon={<UserOutlined />} style={{ background: "#2563eb" }} />
               <div className="tl-header-user-text">
-                <strong>{user?.name || "Admin"}</strong>
+                <strong className="tl-header-user-line">
+                  <UserName userId={user?.user_id} name={user?.name || "Admin"} showPackage={false} strong={false} />
+                </strong>
                 <span>{user?.email || ""}</span>
               </div>
             </div>

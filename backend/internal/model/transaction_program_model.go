@@ -22,8 +22,11 @@ type TransactionProgramResponse struct {
 	Status               string          `json:"status"`
 	Motivation           string          `json:"motivation"`
 	InvoiceNumber        string          `json:"invoice_number"`
-	CreatedAt            time.Time       `json:"created_at"`
-	UpdatedAt            time.Time       `json:"updated_at"`
+	// PackageID is the participant's current package in the program, if any.
+	PackageID    *uuid.UUID `json:"package_id"`
+	BonusTryouts int        `json:"bonus_tryouts"`
+	CreatedAt    time.Time  `json:"created_at"`
+	UpdatedAt    time.Time  `json:"updated_at"`
 }
 
 type FindAllTransactionProgramsRequest struct {
