@@ -89,7 +89,7 @@ func hashPassword(password string) (string, error) {
 func (service *UserService) createUser(ctx context.Context, user entity.User) (model.RegisterResponse, error) {
 	created, err := service.UserRepository.Create(ctx, user)
 	// The unique index catches two sign-ups with the same username at once.
-	if errors.Is(err, repository.ErrAccountAlreadyExists) || isUsernameConflict(err) {
+	if errors.Is(err, repository.ErrAccountAlreadyExists) || isUsernameConflict(err) || isEmailConflict(err) {
 		return model.RegisterResponse{}, exception.BadRequestError{Message: "email atau username sudah digunakan"}
 	}
 	if err != nil {
@@ -99,6 +99,8 @@ func (service *UserService) createUser(ctx context.Context, user entity.User) (m
 }
 
 func (service *UserService) Create(ctx context.Context, request model.RegisterRequest) (model.RegisterResponse, error) {
+	// Stray spaces around a typed email must not fail the email format check.
+	request.Email = strings.TrimSpace(request.Email)
 	if err := common.Validate(request); err != nil {
 		return model.RegisterResponse{}, err
 	}
@@ -127,6 +129,7 @@ func (service *UserService) CreateBulk(ctx context.Context, requests []model.Reg
 	responses := []model.RegisterResponse{}
 
 	for _, request := range requests {
+		request.Email = strings.TrimSpace(request.Email)
 		if err := common.Validate(request); err != nil {
 			return responses, err
 		}
@@ -251,6 +254,10 @@ func isUsernameConflict(err error) bool {
 	return err != nil && strings.Contains(err.Error(), "users_username_unique")
 }
 
+func isEmailConflict(err error) bool {
+	return err != nil && strings.Contains(err.Error(), "users_email_unique")
+}
+
 func isValidUsername(username string) bool {
 	for _, r := range username {
 		isLetter := (r >= 'a' && r <= 'z') || (r >= 'A' && r <= 'Z')
@@ -271,6 +278,9 @@ func (service *UserService) applyChanges(ctx context.Context, user entity.User, 
 			}
 			if isUsernameConflict(err) {
 				return model.GetUserResponse{}, exception.BadRequestError{Message: "username sudah digunakan"}
+			}
+			if isEmailConflict(err) {
+				return model.GetUserResponse{}, exception.BadRequestError{Message: "email sudah digunakan"}
 			}
 			return model.GetUserResponse{}, err
 		}
@@ -480,6 +490,8 @@ func isOtpBypass() bool {
 }
 
 func (service *UserService) SendOtp(ctx context.Context, otpConfig model.SendOtpConfig, request model.CreateUserOtpRequest) (model.UserOtpResponse, error) {
+	// Stray spaces around a typed email must not fail the email format check.
+	request.Email = strings.TrimSpace(request.Email)
 	if err := common.Validate(request); err != nil {
 		return model.UserOtpResponse{}, exception.ValidationError{Message: err.Error()}
 	}
@@ -521,6 +533,8 @@ func (service *UserService) CheckOtp(ctx context.Context, email string, otpReq s
 }
 
 func (service *UserService) SelfRegister(ctx context.Context, request model.SelfRegisterRequest) (model.RegisterResponse, error) {
+	// Stray spaces around a typed email must not fail the email format check.
+	request.Email = strings.TrimSpace(request.Email)
 	if err := common.Validate(request); err != nil {
 		return model.RegisterResponse{}, err
 	}
@@ -562,6 +576,8 @@ func (service *UserService) SelfRegister(ctx context.Context, request model.Self
 }
 
 func (service *UserService) CheckByEmail(ctx context.Context, request model.CheckByEmailRequest) (bool, error) {
+	// Stray spaces around a typed email must not fail the email format check.
+	request.Email = strings.TrimSpace(request.Email)
 	if err := common.Validate(request); err != nil {
 		return false, err
 	}
@@ -579,6 +595,8 @@ func (service *UserService) FindByEmail(ctx context.Context, email string) (enti
 }
 
 func (service *UserService) SendPasswordResetOtp(ctx context.Context, otpConfig model.SendOtpConfig, request model.ForgotPasswordRequest) (model.UserOtpResponse, error) {
+	// Stray spaces around a typed email must not fail the email format check.
+	request.Email = strings.TrimSpace(request.Email)
 	if err := common.Validate(request); err != nil {
 		return model.UserOtpResponse{}, exception.ValidationError{Message: err.Error()}
 	}
@@ -609,6 +627,8 @@ func (service *UserService) SendPasswordResetOtp(ctx context.Context, otpConfig 
 }
 
 func (service *UserService) ResetPassword(ctx context.Context, request model.ResetPasswordRequest) error {
+	// Stray spaces around a typed email must not fail the email format check.
+	request.Email = strings.TrimSpace(request.Email)
 	if err := common.Validate(request); err != nil {
 		return exception.ValidationError{Message: err.Error()}
 	}
