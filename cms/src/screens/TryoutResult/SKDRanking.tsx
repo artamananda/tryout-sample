@@ -51,7 +51,7 @@ const SKDRankingScreen = () => {
             {row.name}
             <VerifiedMark badges={row.badges} />
           </Text>
-          <UserBadges badges={row.badges ? { ...row.badges, verified: undefined } : undefined} hideProfile compact />
+          <UserBadges badges={row.badges} hideVerified hideProfile compact />
         </Space>
       ),
     },
@@ -88,19 +88,9 @@ const SKDRankingScreen = () => {
       .addSheet("ranking")
       .addColumns([
         { title: "Peringkat", dataIndex: "rank" },
-        {
-      title: "Nama",
-      dataIndex: "name",
-      render: (_, row) => (
-        <Space direction="vertical" size={2}>
-          <Text strong>
-            {row.name}
-            <VerifiedMark badges={row.badges} />
-          </Text>
-          <UserBadges badges={row.badges ? { ...row.badges, verified: undefined } : undefined} hideProfile compact />
-        </Space>
-      ),
-    },
+        { title: "Nama", dataIndex: "name" },
+        { title: "Terverifikasi", dataIndex: "verified" },
+        { title: "Paket", dataIndex: "package" },
         { title: "WhatsApp", dataIndex: "phone_number" },
         { title: "Provinsi", dataIndex: "province" },
         { title: "TWK", dataIndex: "twk" },

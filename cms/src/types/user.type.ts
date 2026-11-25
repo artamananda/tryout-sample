@@ -17,6 +17,7 @@ export interface UserProps {
   school?: string;
   regency?: string;
   province?: string;
+  picture_url?: string;
   badges?: UserBadges;
   last_login?: Date | string;
   created_at?: Date | string;

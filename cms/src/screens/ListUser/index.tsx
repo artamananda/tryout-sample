@@ -1,15 +1,6 @@
 import TableUser from "../../components/ListUsers/TableUser";
-import { Typography } from "antd";
 
-const { Title } = Typography;
-
-const ListUserScreen = () => {
-  return (
-    <div>
-      <Title style={{ fontWeight: "bold" }}>List User</Title>
-      <TableUser role="user" />
-    </div>
-  );
-};
+/** The page title already shows in the app header. */
+const ListUserScreen = () => <TableUser role="user" />;
 
 export default ListUserScreen;

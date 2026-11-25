@@ -198,6 +198,26 @@ img {
   color: var(--tl-muted);
 }
 
+/* Name and blue check on one line: a long name gets "..." so the check
+   always stays visible right after it. */
+.tl-header-user-text .tl-header-user-line {
+  display: flex;
+  align-items: center;
+  min-width: 0;
+}
+
+.tl-header-user-text .tl-header-user-name {
+  font-style: normal;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.tl-header-user-text .tl-verified-mark {
+  display: inline-flex !important;
+}
+
 .tl-content {
   padding: var(--tl-gutter);
   max-width: 1440px;

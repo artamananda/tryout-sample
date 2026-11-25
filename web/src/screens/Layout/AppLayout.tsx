@@ -226,9 +226,11 @@ const AppLayout = () => {
               <div className="tl-header-user" role="button" tabIndex={0}>
                 <Avatar src={user.picture_url || undefined} icon={<UserOutlined />} style={{ background: '#2563eb' }} />
                 <div className="tl-header-user-text">
-                  <strong>
-                    {user.name}
-                    <VerifiedMark badges={user.badges} size={14} />
+                  <strong className="tl-header-user-line">
+                    <em className="tl-header-user-name" title={user.name}>
+                      {user.name}
+                    </em>
+                    <VerifiedMark badges={user.badges} size={15} />
                   </strong>
                   <span>{user.email}</span>
                 </div>

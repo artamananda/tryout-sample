@@ -36,7 +36,7 @@ import {
   UpdateMyProfileRequest,
   UserProperties
 } from '../../types/user.type';
-import UserBadges from '../../components/kit/UserBadges';
+import UserBadges, { VerifiedMark } from '../../components/kit/UserBadges';
 import { PROFILE_FIELD_LABELS } from '../../types/badge.type';
 import './Profile.css';
 
@@ -489,14 +489,17 @@ const ProfileScreen = () => {
             icon={<UserOutlined />}
           />
           <div className="profile-header-info">
-            <h2>{profile.name}</h2>
+            <h2>
+              {profile.name}
+              <VerifiedMark badges={profile.badges} size={20} />
+            </h2>
             <div className="profile-header-email">{profile.email}</div>
             <div style={{ marginTop: 6 }}>
               <Tag color="blue">{RoleList[profile.role] || profile.role}</Tag>
               <Text type="secondary">@{profile.username}</Text>
             </div>
             <div style={{ marginTop: 8 }}>
-              <UserBadges badges={profile.badges} />
+              <UserBadges badges={profile.badges} hideVerified />
             </div>
           </div>
           <Upload {...pictureUploadProps}>
