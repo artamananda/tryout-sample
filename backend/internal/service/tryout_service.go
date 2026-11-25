@@ -13,7 +13,6 @@ import (
 	"github.com/artamananda/tryout-sample/internal/helper"
 	"github.com/artamananda/tryout-sample/internal/model"
 	"github.com/artamananda/tryout-sample/internal/repository"
-	"github.com/google/uuid"
 	pq "github.com/lib/pq"
 )
 
@@ -59,15 +58,21 @@ func (service *TryoutService) Create(ctx context.Context, request model.CreateTr
 		tryout.ScoringMode = entity.ScoringModeIRT
 	}
 
-	tryout = service.TryoutRepository.Create(ctx, tryout)
-
-	generatedQuestionCount := 0
+	// Pick the questions first so a shortage in the bank soal fails before
+	// anything is saved.
+	var questions []entity.Question
 	if request.GenerateFromBankSoal {
-		generatedQuestionCount, err = service.generateQuestionsFromBankSoal(ctx, tryout.TryoutID, request.BankSoalDistribution)
+		questions, err = service.questionsFromBankSoal(ctx, request.BankSoalDistribution)
 		if err != nil {
 			return model.TryoutResponse{}, err
 		}
 	}
+
+	tryout, err = service.TryoutRepository.Create(ctx, tryout, questions)
+	if err != nil {
+		return model.TryoutResponse{}, err
+	}
+	generatedQuestionCount := len(questions)
 
 	return model.TryoutResponse{
 		TryoutID:               tryout.TryoutID,
@@ -255,22 +260,23 @@ func (service *TryoutService) CheckTryoutToken(ctx context.Context, tryoutID str
 	return false
 }
 
-func (service *TryoutService) generateQuestionsFromBankSoal(
+// questionsFromBankSoal picks random bank soal questions per type; the
+// questions are saved later together with the tryout.
+func (service *TryoutService) questionsFromBankSoal(
 	ctx context.Context,
-	tryoutID uuid.UUID,
 	distribution []model.CreateTryoutBankSoalItemRequest,
-) (int, error) {
+) ([]entity.Question, error) {
 	if len(distribution) == 0 {
-		return 0, exception.ValidationError{Message: "bank_soal_distribution is required when generate_from_bank_soal is true"}
+		return nil, exception.ValidationError{Message: "bank_soal_distribution is required when generate_from_bank_soal is true"}
 	}
 
 	aggregated := map[string]int{}
 	for _, item := range distribution {
 		if item.Type == "" {
-			return 0, exception.ValidationError{Message: "bank_soal_distribution.type is required"}
+			return nil, exception.ValidationError{Message: "bank_soal_distribution.type is required"}
 		}
 		if item.Count <= 0 {
-			return 0, exception.ValidationError{Message: "bank_soal_distribution.count must be greater than 0"}
+			return nil, exception.ValidationError{Message: "bank_soal_distribution.count must be greater than 0"}
 		}
 		aggregated[item.Type] += item.Count
 	}
@@ -287,11 +293,11 @@ func (service *TryoutService) generateQuestionsFromBankSoal(
 		count := aggregated[questionType]
 		bankSoals, err := service.BankSoalRepository.FindRandomAvailableByType(ctx, questionType, count)
 		if err != nil {
-			return 0, err
+			return nil, err
 		}
 
 		if len(bankSoals) < count {
-			return 0, exception.ValidationError{
+			return nil, exception.ValidationError{
 				Message: fmt.Sprintf("bank soal tipe %s tersedia %d, dibutuhkan %d", questionType, len(bankSoals), count),
 			}
 		}
@@ -300,7 +306,6 @@ func (service *TryoutService) generateQuestionsFromBankSoal(
 			options, optionScores := shuffleOptions(bankSoal.Type, bankSoal.Options, bankSoal.OptionScores)
 			bankSoalID := bankSoal.BankSoalID
 			questionsToCreate = append(questionsToCreate, entity.Question{
-				TryoutID:      tryoutID,
 				BankSoalID:    &bankSoalID,
 				LocalID:       localID,
 				Type:          bankSoal.Type,
@@ -318,15 +323,10 @@ func (service *TryoutService) generateQuestionsFromBankSoal(
 	}
 
 	if len(questionsToCreate) == 0 {
-		return 0, exception.ValidationError{Message: "no questions generated from bank soal"}
+		return nil, exception.ValidationError{Message: "no questions generated from bank soal"}
 	}
 
-	_, err := service.QuestionRepository.CreateBatch(ctx, questionsToCreate)
-	if err != nil {
-		return 0, err
-	}
-
-	return len(questionsToCreate), nil
+	return questionsToCreate, nil
 }
 
 // shuffleOptions puts the options of a generated question in random order so

@@ -19,11 +19,28 @@ func NewTryoutRepository(DB *gorm.DB) TryoutRepository {
 	return TryoutRepository{DB: DB}
 }
 
-func (repository *TryoutRepository) Create(ctx context.Context, tryout entity.Tryout) entity.Tryout {
+// Create saves a tryout together with its questions (if any) in one
+// transaction, so a failed insert never leaves a tryout without its questions
+// or questions pointing at a tryout that was not saved.
+func (repository *TryoutRepository) Create(ctx context.Context, tryout entity.Tryout, questions []entity.Question) (entity.Tryout, error) {
 	tryout.TryoutID = uuid.New()
-	err := repository.DB.WithContext(ctx).Create(&tryout).Error
-	exception.PanicLogging(err)
-	return tryout
+	err := repository.DB.WithContext(ctx).Transaction(func(tx *gorm.DB) error {
+		if err := tx.Create(&tryout).Error; err != nil {
+			return err
+		}
+		if len(questions) == 0 {
+			return nil
+		}
+		for i := range questions {
+			questions[i].QuestionID = uuid.New()
+			questions[i].TryoutID = tryout.TryoutID
+		}
+		return tx.Create(&questions).Error
+	})
+	if err != nil {
+		return entity.Tryout{}, err
+	}
+	return tryout, nil
 }
 
 func (repository *TryoutRepository) Update(ctx context.Context, tryout entity.Tryout) entity.Tryout {

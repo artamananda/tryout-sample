@@ -2,6 +2,7 @@ package repository
 
 import (
 	"context"
+	"errors"
 	"regexp"
 	"testing"
 
@@ -30,8 +31,31 @@ func TestTryoutRepository_Create(t *testing.T) {
 			WillReturnResult(sqlmock.NewResult(1, 1))
 		mock.ExpectCommit()
 
-		result := repo.Create(ctx, tryout)
+		result, err := repo.Create(ctx, tryout, nil)
+		assert.NoError(t, err)
 		assert.NotEqual(t, uuid.Nil, result.TryoutID)
+	})
+
+	t.Run("returns the insert error instead of a tryout", func(t *testing.T) {
+		mock.ExpectBegin()
+		mock.ExpectExec(regexp.QuoteMeta(`INSERT INTO "tryouts"`)).
+			WillReturnError(errors.New(`column "scoring_mode" does not exist`))
+		mock.ExpectRollback()
+
+		_, err := repo.Create(ctx, entity.Tryout{Title: "Broken"}, []entity.Question{{LocalID: 1}})
+		assert.ErrorContains(t, err, "scoring_mode")
+		assert.NoError(t, mock.ExpectationsWereMet(), "questions must not be inserted")
+	})
+
+	t.Run("saves questions in the same transaction", func(t *testing.T) {
+		mock.ExpectBegin()
+		mock.ExpectExec(regexp.QuoteMeta(`INSERT INTO "tryouts"`)).WillReturnResult(sqlmock.NewResult(1, 1))
+		mock.ExpectExec(regexp.QuoteMeta(`INSERT INTO "questions"`)).WillReturnError(errors.New("fk violation"))
+		mock.ExpectRollback()
+
+		_, err := repo.Create(ctx, entity.Tryout{Title: "With questions"}, []entity.Question{{LocalID: 1}})
+		assert.Error(t, err)
+		assert.NoError(t, mock.ExpectationsWereMet(), "tryout insert must be rolled back")
 	})
 }
 
