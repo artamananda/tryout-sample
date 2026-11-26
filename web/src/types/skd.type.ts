@@ -34,3 +34,32 @@ export const SKD_SUBTEST_NAMES: Record<string, string> = {
   tiu: 'Tes Intelegensia Umum',
   tkp: 'Tes Karakteristik Pribadi'
 };
+
+/** One participant in the public SKD ranking (no contact details). */
+export interface SKDLeaderboardRow {
+  rank: number;
+  user_id: string;
+  name: string;
+  picture_url: string;
+  province: string;
+  badges?: import('./badge.type').UserBadges;
+  scores: Record<string, number>;
+  total_score: number;
+  passed_all: boolean;
+  is_me: boolean;
+}
+
+export interface SKDLeaderboardProps {
+  tryout_id: string;
+  title: string;
+  is_final: boolean;
+  final_at: string;
+  participants: number;
+  province?: string;
+  provinces: { province: string; participants: number }[];
+  page: number;
+  limit: number;
+  rows: SKDLeaderboardRow[];
+  me?: SKDLeaderboardRow;
+  generated_at: string;
+}

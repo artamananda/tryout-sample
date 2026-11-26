@@ -74,3 +74,38 @@ type SKDTryoutProgress struct {
 	StartTime    time.Time      `json:"start_time"`
 	EndTime      time.Time      `json:"end_time"`
 }
+
+// SKDLeaderboardRow is one participant in the public ranking. It has no
+// contact details.
+type SKDLeaderboardRow struct {
+	Rank       int            `json:"rank"`
+	UserID     string         `json:"user_id"`
+	Name       string         `json:"name"`
+	PictureURL string         `json:"picture_url"`
+	Province   string         `json:"province"`
+	Badges     UserBadges     `json:"badges"`
+	Scores     map[string]int `json:"scores"`
+	TotalScore int            `json:"total_score"`
+	PassedAll  bool           `json:"passed_all"`
+	IsMe       bool           `json:"is_me"`
+}
+
+type SKDProvinceCount struct {
+	Province     string `json:"province"`
+	Participants int    `json:"participants"`
+}
+
+type SKDLeaderboardResponse struct {
+	TryoutID     string              `json:"tryout_id"`
+	Title        string              `json:"title"`
+	IsFinal      bool                `json:"is_final"`
+	FinalAt      time.Time           `json:"final_at"`
+	Participants int                 `json:"participants"`
+	Province     string              `json:"province,omitempty"`
+	Provinces    []SKDProvinceCount  `json:"provinces"`
+	Page         int                 `json:"page"`
+	Limit        int                 `json:"limit"`
+	Rows         []SKDLeaderboardRow `json:"rows"`
+	Me           *SKDLeaderboardRow  `json:"me,omitempty"`
+	GeneratedAt  time.Time           `json:"generated_at"`
+}

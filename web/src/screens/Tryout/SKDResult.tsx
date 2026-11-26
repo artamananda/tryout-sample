@@ -12,7 +12,7 @@ import {
   Tag,
   Typography
 } from 'antd';
-import { ArrowLeftOutlined, BookOutlined, TrophyOutlined } from '@ant-design/icons';
+import { ArrowLeftOutlined, BookOutlined, TeamOutlined, TrophyOutlined } from '@ant-design/icons';
 import { useNavigate, useParams } from 'react-router-dom';
 import dayjs from 'dayjs';
 import { getMySKDResult } from '../../api/skd';
@@ -87,6 +87,14 @@ const SKDResultScreen = () => {
                 {result.province}: {result.province_rank} dari {result.province_participants}
               </Text>
             )}
+            <Button
+              type="link"
+              icon={<TeamOutlined />}
+              style={{ paddingInline: 0, display: 'block' }}
+              onClick={() => navigate(`/tryout/${result.tryout_id}/peringkat`)}
+            >
+              Lihat peringkat semua peserta
+            </Button>
           </Card>
         </Col>
         <Col xs={24} md={8}>

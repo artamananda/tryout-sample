@@ -1,0 +1,130 @@
+.tl-rank {
+  display: inline-grid;
+  place-items: center;
+  min-width: 30px;
+  height: 30px;
+  padding: 0 6px;
+  border-radius: 999px;
+  font-weight: 800;
+  color: var(--tl-ink);
+  background: #f1f5f9;
+}
+
+.tl-rank.is-medal {
+  color: #fff;
+}
+
+.tl-leaderboard-me.ant-card {
+  border-color: #fcd34d;
+  background: linear-gradient(135deg, #fffbeb 0%, #ffffff 60%);
+}
+
+.tl-leaderboard-me-row {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+.tl-leaderboard-me-rank {
+  font-size: 26px;
+  font-weight: 800;
+  line-height: 1.2;
+}
+
+.tl-leaderboard-me-rank span {
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--tl-muted);
+}
+
+/* Top three: 2nd, 1st, 3rd so the winner stands in the middle. */
+.tl-podium {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 16px;
+  align-items: end;
+}
+
+.tl-podium-card.ant-card .ant-card-body {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  text-align: center;
+  padding: 24px 16px 20px;
+  position: relative;
+}
+
+.tl-podium-card.is-rank-1 {
+  order: 2;
+  border-color: #fcd34d;
+  box-shadow: 0 10px 30px rgba(245, 179, 1, 0.18);
+}
+
+.tl-podium-card.is-rank-1 .ant-card-body {
+  padding-top: 32px;
+  padding-bottom: 28px;
+}
+
+.tl-podium-card.is-rank-2 {
+  order: 1;
+}
+
+.tl-podium-card.is-rank-3 {
+  order: 3;
+}
+
+.tl-podium-card.is-me {
+  outline: 2px solid #2563eb;
+}
+
+.tl-podium-medal {
+  position: absolute;
+  top: 10px;
+  left: 50%;
+  transform: translateX(-50%) translateY(-50%);
+  width: 30px;
+  height: 30px;
+  border-radius: 999px;
+  display: grid;
+  place-items: center;
+  color: #fff;
+  font-weight: 800;
+  box-shadow: 0 4px 10px rgba(15, 23, 42, 0.15);
+}
+
+.tl-podium-name {
+  max-width: 100%;
+  min-width: 0;
+  display: flex;
+  justify-content: center;
+}
+
+.tl-podium-score {
+  font-size: 28px;
+  font-weight: 800;
+  line-height: 1.1;
+  color: var(--tl-navy);
+}
+
+.tl-leaderboard-row-me > td {
+  background: #eff6ff !important;
+}
+
+@media (max-width: 575px) {
+  .tl-podium {
+    gap: 8px;
+  }
+
+  .tl-podium-card.ant-card .ant-card-body {
+    padding: 20px 8px 14px;
+  }
+
+  .tl-podium-score {
+    font-size: 20px;
+  }
+
+  .tl-leaderboard-me-rank {
+    font-size: 22px;
+  }
+}

@@ -27,6 +27,7 @@ import PackagesScreen, { CurrentPackagesRedirect } from '../screens/Packages';
 import MyOrdersScreen from '../screens/Orders';
 import OrderDetailScreen from '../screens/Orders/Detail';
 import SKDResultScreen from '../screens/Tryout/SKDResult';
+import SKDLeaderboardScreen from '../screens/Tryout/SKDLeaderboard';
 import TryoutReviewScreen from '../screens/Tryout/Review';
 import MyProgramScreen from '../screens/MyProgram';
 import CertificateScreen from '../screens/Certificate';
@@ -165,6 +166,15 @@ const RootNavigator = () => {
             element={
               <PrivateRoute loginPath="/login">
                 <OrderDetailScreen />
+              </PrivateRoute>
+            }
+          />
+
+          <Route
+            path="/tryout/:id/peringkat"
+            element={
+              <PrivateRoute loginPath="/login">
+                <SKDLeaderboardScreen />
               </PrivateRoute>
             }
           />

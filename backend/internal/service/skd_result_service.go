@@ -167,6 +167,7 @@ type rankedParticipant struct {
 	Name       string
 	Phone      string
 	Province   string
+	PictureURL string
 	Badges     model.UserBadges
 	Score      SKDScore
 	FinishedAt time.Time
@@ -310,6 +311,7 @@ func (service *SKDResultService) ranking(ctx context.Context, tryoutID string) (
 		participants[i].Name = user.Name
 		participants[i].Phone = user.PhoneNumber
 		participants[i].Province = user.Province
+		participants[i].PictureURL = user.PictureURL
 		var pkg *model.PackageBadge
 		if badge, ok := packageBadges[user.UserID]; ok {
 			pkg = &badge
@@ -435,6 +437,91 @@ func (service *SKDResultService) Ranking(ctx context.Context, tryoutID string) (
 		Rows:         rows,
 		GeneratedAt:  ranking.GeneratedAt,
 	}, nil
+}
+
+// Leaderboard is the public SKD ranking every logged-in user may see: rank,
+// name, photo, badges, province and scores. Phone numbers and emails stay in
+// the admin ranking. province limits it to one province (ranked within it);
+// me is the viewer's own row when they took part.
+func (service *SKDResultService) Leaderboard(ctx context.Context, tryoutID string, viewerID string, province string, page int, limit int) (model.SKDLeaderboardResponse, error) {
+	ranking, err := service.ranking(ctx, tryoutID)
+	if err != nil {
+		return model.SKDLeaderboardResponse{}, err
+	}
+	if limit <= 0 || limit > 100 {
+		limit = 50
+	}
+	if page <= 0 {
+		page = 1
+	}
+	province = strings.TrimSpace(province)
+
+	rows := make([]model.SKDLeaderboardRow, 0, len(ranking.Participants))
+	provinceCounts := map[string]int{}
+	var previous *rankedParticipant
+	for i := range ranking.Participants {
+		participant := ranking.Participants[i]
+		if participant.Province != "" {
+			provinceCounts[participant.Province]++
+		}
+		if province != "" && !strings.EqualFold(participant.Province, province) {
+			continue
+		}
+		rank := participant.Rank
+		if province != "" {
+			// Rank within the province; tied participants share a rank.
+			rank = len(rows) + 1
+			if previous != nil && skdTied(participant, *previous) {
+				rank = rows[len(rows)-1].Rank
+			}
+			previous = &ranking.Participants[i]
+		}
+		rows = append(rows, model.SKDLeaderboardRow{
+			Rank:       rank,
+			UserID:     participant.UserID.String(),
+			Name:       participant.Name,
+			PictureURL: participant.PictureURL,
+			Province:   participant.Province,
+			Badges:     participant.Badges,
+			Scores:     participant.Score.ByCode,
+			TotalScore: participant.Score.Total,
+			PassedAll:  participant.Score.PassedAll,
+			IsMe:       participant.UserID.String() == viewerID,
+		})
+	}
+
+	response := model.SKDLeaderboardResponse{
+		TryoutID:     tryoutID,
+		Title:        ranking.Tryout.Title,
+		IsFinal:      service.isFinal(ranking.Tryout),
+		FinalAt:      ranking.Tryout.EndTime,
+		Participants: len(rows),
+		Province:     province,
+		Page:         page,
+		Limit:        limit,
+		GeneratedAt:  ranking.GeneratedAt,
+		Rows:         []model.SKDLeaderboardRow{},
+	}
+	for i := range rows {
+		if rows[i].IsMe {
+			me := rows[i]
+			response.Me = &me
+		}
+	}
+	for name, count := range provinceCounts {
+		response.Provinces = append(response.Provinces, model.SKDProvinceCount{Province: name, Participants: count})
+	}
+	sort.Slice(response.Provinces, func(i, j int) bool { return response.Provinces[i].Province < response.Provinces[j].Province })
+
+	start := (page - 1) * limit
+	if start < len(rows) {
+		end := start + limit
+		if end > len(rows) {
+			end = len(rows)
+		}
+		response.Rows = rows[start:end]
+	}
+	return response, nil
 }
 
 // ProgramProgress returns the user's SKD result for every SKD tryout of a

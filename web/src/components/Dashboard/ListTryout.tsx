@@ -176,7 +176,10 @@ const ListTryout = () => {
         ) : isSKD(record) ? (
           <Space>
             <Button size="small" onClick={() => navigate('/tryout/' + record.tryout_id + '/hasil-skd')}>
-              Hasil & Peringkat
+              Hasil Saya
+            </Button>
+            <Button size="small" type="primary" ghost onClick={() => navigate('/tryout/' + record.tryout_id + '/peringkat')}>
+              Peringkat
             </Button>
           </Space>
         ) : null
